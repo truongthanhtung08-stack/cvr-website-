@@ -36,9 +36,7 @@ export default function MapPaneGoogle({
   zoom,
   locked,
   onHong,
-  cao: caoRieng,
 }: {
-  cao?: string; // chiều cao khung bản đồ riêng (trang dự án thấp hơn — 30/10/2026); mặc định như cũ
   query: string;
   zoom: number;
   // Khách chưa chạm vào bản đồ → khoá cử chỉ để ngón tay lướt qua vẫn cuộn trang.
@@ -184,7 +182,7 @@ export default function MapPaneGoogle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sanSang]);
 
-  const cao = caoRieng ?? "h-[260px] w-full sm:h-[320px]";
+  const cao = "h-[260px] w-full sm:h-[320px]";
 
   // ── BẢN ĐỒ GOOGLE NHÚNG (đường đang chạy) ─────────────────────────────────
   // Bản đồ Google THẬT: có ghim đỏ, phóng to / thu nhỏ / kéo / xem vệ tinh ngay

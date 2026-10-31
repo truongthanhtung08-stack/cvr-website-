@@ -296,7 +296,6 @@ export type Project = {
   locationCu?: string;
   /** Chỉ phường + tỉnh/thành theo hệ MỚI (không số nhà, đường) — thẻ Dự án nổi bật */
   diaChiMoi?: string;
-  mapPin?: string; // điểm admin ghim trên bản đồ (toạ độ) — bản đồ trang dự án lấy đúng điểm này
   priceFrom: string;
   type: string;
   status: string;

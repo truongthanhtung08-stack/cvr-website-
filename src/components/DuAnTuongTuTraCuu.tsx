@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useHomeSection } from "@/components/HomeExpand";
 import { TheDuAnDoc } from "@/components/TraCuuDuAn";
-import PhanTrang from "@/components/PhanTrang";
+// Danh sách "Xem thêm" = ĐÚNG DẠNG TRANG DANH SÁCH DỰ ÁN MẶC ĐỊNH (chủ dự án 30/10/2026): thanh tìm + lọc, thẻ dự án, cột khu vực,
+// 10 dự án / trang — nạp khi bấm Xem thêm (không tải sẵn lúc mở trang dự án)
+const ProjectsBrowser = dynamic(() => import("@/components/ProjectsBrowser"));
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
 
 // "DỰ ÁN TƯƠNG TỰ" trang dự án tra cứu — CHUẨN khối có "Xem thêm" (chủ dự án 30/10/2026): slide tối đa 8 thẻ dự án (thẻ dọc cùng
@@ -15,18 +17,15 @@ export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: s
   const { expanded, hidden, toggle } = useHomeSection("du-an-tuong-tu");
   if (hidden || ds.length === 0) return null;
 
-  // "Xem thêm" = CÙNG BỐ CỤC THẺ với dải slide (chủ dự án 31/10/2026: dự án tương tự một bố cục thẻ): lưới 4 thẻ / hàng,
-  // thẻ trong hàng cao bằng nhau, 12 dự án / trang
-  if (expanded) return <DanhSachTuongTu ds={ds} />;
+  if (expanded) return <div className="pt-1"><ProjectsBrowser projects={[]} articles={[]} traCuu={ds} danhSachNoiBat tieuDeDs="Dự án tương tự" /></div>;
 
   return (
-    // PC cách đều như mọi phần trang dự án: 48 px trên, tiêu đề → thẻ 20 px (chủ dự án 31/10/2026)
-    <section id={id} className="mt-6 scroll-mt-14 sm:mt-12">
+    <section id={id} className="mt-6 scroll-mt-14 sm:mt-14">
       <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án tương tự</h2>
       {/* Slide: điện thoại 1 thẻ (lộ thẻ kế), máy tính bảng 2, máy tính 4 — vuốt / cuộn ngang */}
-      <ul className="no-scrollbar -mx-4 mt-4 grid snap-x snap-mandatory scroll-px-4 auto-cols-[80%] grid-flow-col items-start gap-x-4 overflow-x-auto px-4 py-2 sm:mx-0 sm:mt-3 sm:scroll-px-0 sm:auto-cols-[calc(50%-10px)] sm:gap-x-5 sm:px-0 lg:auto-cols-[calc(25%-15px)]">
+      <ul className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 py-2 sm:mx-0 sm:scroll-px-0 sm:gap-5 sm:px-0">
         {ds.slice(0, SLIDE).map((x) => (
-          <li key={x.slug} className="snap-start"><TheDuAnDoc d={x} /></li>
+          <li key={x.slug} className="w-[80%] shrink-0 snap-start sm:w-[calc(50%-10px)] lg:w-[calc(25%-15px)]"><TheDuAnDoc d={x} /></li>
         ))}
       </ul>
       {/* "Xem thêm" chỉ khi còn dự án ngoài slide (30/10/2026) */}
@@ -40,23 +39,6 @@ export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: s
         </button>
       </div>
       )}
-    </section>
-  );
-}
-
-const MOI_TRANG = 12;
-function DanhSachTuongTu({ ds }: { ds: DongTraCuu[] }) {
-  const [trang, setTrang] = useState(1);
-  const tong = Math.max(1, Math.ceil(ds.length / MOI_TRANG));
-  return (
-    <section className="pt-1">
-      <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án tương tự</h2>
-      <ul className="mt-4 grid grid-cols-1 items-start gap-x-4 gap-y-6 sm:mt-5 sm:grid-cols-2 sm:gap-x-5 lg:grid-cols-4">
-        {ds.slice((trang - 1) * MOI_TRANG, trang * MOI_TRANG).map((x) => (
-          <li key={x.slug}><TheDuAnDoc d={x} /></li>
-        ))}
-      </ul>
-      <PhanTrang hienTai={trang} tong={tong} doiTrang={(t) => { setTrang(t); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
     </section>
   );
 }
