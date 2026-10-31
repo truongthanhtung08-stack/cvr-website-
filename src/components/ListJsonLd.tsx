@@ -51,7 +51,7 @@ export function ProjectListJsonLd({ items, heading, path }: { items: Project[]; 
       position: i + 1,
       url: `${SITE}/du-an/${p.slug}`,
       name: p.name,
-      image: tuyetDoi(p.image),
+      ...(p.image ? { image: tuyetDoi(p.image) } : {}),
     })),
   };
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;

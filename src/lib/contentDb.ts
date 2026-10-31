@@ -18,7 +18,6 @@ import { chuThuan } from "@/lib/chuThuan";
 import type { ArticleRow, ProjectRow } from "@/lib/contentAdmin";
 
 const ARTICLE_PLACEHOLDER = "/images/segments/canho1.jpg";
-const PROJECT_PLACEHOLDER = "/images/segments/canho2.jpg";
 
 // Nguồn thông tin hồ sơ dự án: chỉ ghi TÊN TRANG (vinpearl.com, melia.com…) — không in nguyên chuỗi ghi chú + đường dẫn dài (30/10/2026)
 function tenNguon(nguon: string): string {
@@ -163,7 +162,8 @@ function projectRowToProject(r: ProjectRow): Project {
     // thay thế — trống thì trang dự án ẩn mục đó. Hồ sơ nổi bật giữ như cũ.
     // Tình trạng = ĐÚNG Admin ghi; trống thì web ghi "Đang cập nhật" — không tự gán "Đang mở bán" (chủ dự án 31/10/2026: một nguồn = Admin)
     status: r.status_text || "",
-    image: asset(photos[0] ?? PROJECT_PLACEHOLDER),
+    // Chưa có ảnh → "" (chủ dự án 31/10/2026: "chưa có ảnh thì để trống") — thẻ hiện khung xám + biểu tượng, KHÔNG ảnh mẫu
+    image: photos[0] ? asset(photos[0]) : "",
     developer: r.developer || "Đang cập nhật",
     scale: (r.scale ?? []).filter((s) => s && s.label && s.value),
     amenities: (r.amenities ?? []).filter(Boolean),

@@ -85,8 +85,14 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
           >
             {homeProjects.map((p) => (
               <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
-                <div className="relative aspect-[16/9] w-full overflow-hidden">
-                  <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" chay={false} />
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-cvr-surface">
+                  {p.image ? (
+                    <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" chay={false} />
+                  ) : (
+                    // Chưa có ảnh: khung xám + biểu tượng (chủ dự án 31/10/2026: "chưa có ảnh thì để trống")
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
+                  )}
                   <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                 </div>
                 <div className="flex flex-1 flex-col p-4">
@@ -140,7 +146,8 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                       className="card-lux group relative flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux hover:-translate-y-2 shadow-lux-hover"
                     >
                       <span className="card-sheen" aria-hidden />
-                      <div className="relative aspect-[3/2] overflow-hidden sm:aspect-[4/3]">
+                      <div className="relative aspect-[3/2] overflow-hidden bg-cvr-surface sm:aspect-[4/3]">
+                        {p.image ? (
                         <Image
                           // Thẻ dự án rộng ~25vw — dùng BẢN NHỎ. Bản gốc (có tấm 469 KB)
                           // vẫn được tải về mà không hiện ra, đo trên web thật 14/09/2026.
@@ -150,6 +157,10 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                           sizes="(max-width: 768px) 100vw, 25vw"
                           className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
                         />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
+                        )}
                         {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ VIP, màu theo cấp; dự án thường ghi sau loại hình */}
                         <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                       </div>
