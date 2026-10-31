@@ -5,6 +5,13 @@
 
 ---
 
+## ⭐ QUY TRÌNH HẰNG NGÀY — MỘT NGUỒN DUY NHẤT (anh chốt 31/10/2026: "gom về một mối, một nguồn, xuyên suốt")
+
+**Nguồn duy nhất: `D:\Coastal Land\SEO\Plan SEO - pSEO\chi-tiet\quy-trinh-3-ben.md` mục 11.00.** Mọi phiên ĐỌC mục đó trước khi làm bất cứ việc gì trong ngày. Không chép quy trình sang chỗ khác (CLAUDE.md, memory, KE-HOACH-SEO.md, VIEC.md chỉ trỏ về đây); đổi quy trình → sửa thẳng mục 11.00.
+Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phiên nào cũng được → Điều phối làm tiếp chỗ đang dở; "Bắt đầu từ đầu" mới làm lại) · **"Kiểm"** (Điều phối giao phiên con KIỂM kiểm theo chuẩn SEO, nhận kết quả, báo "Xong — up được") · **"Push"** (Điều phối push một lần). Chỉ anh đưa lên web. Việc cần anh: `CAN-ANH-DUYET.md`.
+
+---
+
 ## ⛔⛔⛔ VIỆC PHẢI LÀM TRƯỚC — mọi phiên, trước mọi câu trả lời và mọi thao tác (chủ dự án yêu cầu 31/10/2026)
 
 1. **Kiểm môi trường trước khi làm:** Chrome của anh đã kết nối chưa · Search Console vào được chưa · git (commit chờ Push, nhánh) · web thật · máy xem thử. Thiếu cái nào → báo ngay, không làm bằng công cụ khác rồi kết luận.
@@ -13,12 +20,13 @@
 4. **Kiểm chứng bằng công cụ Google:** Search Console (URL Inspection, Page indexing, Sitemap, Hiệu suất, Liên kết), tra Google. Mã / curl / máy đo chỉ để lọc danh sách, không phải bằng chứng.
 5. **Không kiểm chứng thì không nói.** Cấm "khoảng", "có thể", "sắp". Câu đã nói mà sai → ghi đính chính vào `D:\Coastal Land\SEO\Plan SEO - pSEO\chi-tiet\nhat-ky.md`.
 6. **Gọi đúng 3 mảng: Mua bán · Cho thuê · Dự án.** Tin đăng chi tiết thuộc Mua bán hoặc Cho thuê; trang lọc = trang danh sách.
-7. **Xin index là việc HẰNG NGÀY của điều phối.** Trước khi index: kiểm web · Search Console · kế hoạch SEO, pSEO · URL Inspection · đối chiếu Page indexing để phát hiện lỗi. Index theo chuẩn Google, trong giới hạn Google cho phép, hàng loạt theo pSEO, **làm hết một lần, không lắc nhắc**; chỉ index khi web đủ điều kiện. **Thứ tự: tin thuộc Mua bán, Cho thuê trước** (tin đăng chi tiết + trang danh sách), xong mới đến Dự án, Tin tức. Sổ: `THEO-DOI-INDEX.md`.
+7. **Xin index là việc HẰNG NGÀY — phiên con SEO – pSEO làm hết trên Chrome của anh (đã đăng nhập Search Console), Điều phối kiểm lại** (anh 31/10: "cái này là SEO… lên Chrome và làm hết"). Trước khi index: kiểm web · Search Console · kế hoạch SEO, pSEO · URL Inspection · đối chiếu Page indexing để phát hiện lỗi. Index theo chuẩn Google, trong giới hạn Google cho phép, hàng loạt theo pSEO, **làm hết một lần, không lắc nhắc**; chỉ index khi web đủ điều kiện. **Thứ tự: tin thuộc Mua bán, Cho thuê trước** (tin đăng chi tiết + trang danh sách), xong mới đến Dự án, Tin tức. Sổ: `THEO-DOI-INDEX.md`.
 7b. **Đường dẫn chuẩn Google trước khi index** (Google "Sử dụng URL mang tính mô tả"; anh chốt 31/10): tin đăng chi tiết = chữ mô tả + mã ngắn, vd `/bat-dong-san/ban-can-ho-2pn-ph-nha-trang-view-bien-59140f1a`; đường dẫn cũ (mã số) chuyển hướng 301 sang mới; sitemap + canonical + mọi link trong web dùng đường mới; xong mới xin index. Cấm xin index đường dẫn chỉ có mã số.
+7c. **Bàn giao giữa các phiên (anh chốt 31/10):** phiên NHẬN bàn giao thì nhận và LÀM NGAY việc dở (đọc tệp bàn giao, làm hết), xong mới tiếp việc với anh — không chờ anh nhắc. Phiên GIAO không báo anh kiểu "đã gửi, bên kia chưa đọc"; giao đủ (tệp bàn giao + tin nhắn) rồi báo một dòng việc đã giao.
 8. **Trong khi làm ghi nhật ký** (`chi-tiet\nhat-ky.md`): việc đã làm · lỗi phát hiện · nguyên nhân · lý do · giải pháp · cần bổ sung gì. Làm xong mới báo anh, một lần. Không giải thích vòng vo, không nói "đã ghi nhận" rồi làm sai.
-9. **ĐỌC QUY TRÌNH TRƯỚC KHI LÀM — bước nào của ai** (31/10): mở đúng mục quy trình của việc đó (đăng tin, dự án → `chi-tiet\quy-trinh-3-ben.md` 11.0B; push → mục 0B) → bước của anh thì báo "đến bước anh", KHÔNG tự làm; lệnh mơ hồ so với quy trình → hỏi một câu. **Nạp dự án, đăng tin, duyệt = ANH; Claude chỉ kiểm trước (bước A) và sau (bước C, F).** (Bài học 31/10: tự vào Admin nạp dự án.)
-10. **Báo ngắn, đúng 3 mục: Xong · Chưa xong · Cần gì** (31/10). Việc anh giao thì làm HẾT rồi mới báo. Nói ít, chỉ cái cần, không giải thích lại.
-11. **Điều phối chính = phiên "ĐIỀU PHỐI CÔNG VIỆC HẰNG NGÀY"** (`local_29599553-f08e-4fa5-a473-919f702b941e`, anh giao 31/10). Mọi phiên khác bàn giao về đây (đã xong · còn dở, dừng ở bước nào · tệp, nhánh, commit · việc chờ anh duyệt); **chỉ phiên điều phối push**, khi anh nhắn "Push".
+9. **ĐỌC QUY TRÌNH TRƯỚC KHI LÀM — bước nào của ai** (31/10): mở đúng mục quy trình của việc đó (đăng tin, dự án → `chi-tiet\quy-trinh-3-ben.md` 11.0B; push → mục 0B) → bước của anh thì báo "đến bước anh", KHÔNG tự làm; lệnh mơ hồ so với quy trình → hỏi một câu. Ai làm bước nào: CHỈ theo `quy-trinh-3-ben.md` 11.00 (nguồn duy nhất). (Bài học 31/10: tự vào Admin nạp dự án khi anh chưa giao.)
+10. **Báo ngắn, đúng 3 mục: Xong · Chưa xong · Cần gì** (31/10). Mục "Cần gì" chỉ trỏ tới dòng trong `CAN-ANH-DUYET.md` (cách ghi: 11.00). Việc anh giao thì làm HẾT rồi mới báo. Nói ít, chỉ cái cần, không giải thích lại.
+11. **Điều phối chính = phiên "ĐIỀU PHỐI CÔNG VIỆC HẰNG NGÀY"** (`local_29599553-f08e-4fa5-a473-919f702b941e`, anh giao 31/10). **Điều phối KHÔNG trực tiếp làm việc — chỉ giao việc cho các phiên, nhận bàn giao, xử lý, và làm việc với anh** (anh 31/10); việc làm (đo SEO, xin index, kiểm đợt, sửa mã) do phiên con làm. Mọi phiên khác bàn giao về đây (đã xong · còn dở, dừng ở bước nào · tệp, nhánh, commit · việc chờ anh duyệt); **chỉ phiên điều phối push**, khi anh nhắn "Push". **Gom cả ngày, push MỘT lần cuối ngày — không hỏi "Push không?" sau từng việc** (anh 31/10: "không lắc nhắc").
 12. **LỖI CỦA PHIÊN ĐIỀU PHỐI 31/10 — ĐỪNG LẶP** (anh: "lỗi gì ghi hết vào CLAUDE.md"):
     - Anh hỏi mà không trả lời ngay, tự làm trước (ghi bộ nhớ, bật máy xem thử 3001) → **anh hỏi thì trả lời đúng câu đó trước; anh bảo kiểm thì chỉ kiểm.**
     - Hiểu sai ý anh nhiều lần, trả lời vòng vo, phải hỏi lại 4–5 lần mới ra một câu "đảm trách được" → **trả lời một câu thẳng; chưa hiểu thì hỏi lại một câu ngắn.**
@@ -26,6 +34,7 @@
     - Báo cáo dài, nhiều bảng, giải thích lại → **luật 10.**
     - Được giao kiểm đợt mà chỉ đọc, không làm phần sửa của mình → **kiểm là làm trọn phần của Claude (bước A 11.0B), chỉ để lại việc của anh.**
     - Tự vào Admin định nạp dự án — bước của anh, không đọc quy trình → **luật 9.**
+    - Dựng lịch máy tự chạy từ 7h, trái luật "anh là người bắt đầu" (0D1) → **mọi lịch máy chỉ chạy khi dòng đầu `RA\VIEC.md` đã có ngày hôm nay (anh đã nhắn "Bắt đầu"); việc cấm của từng bên: `quy-trinh-3-ben.md` 11.00.**
     - Ghi tệp ổ D: chèn nhầm chỗ (tệp xuống dòng kiểu Windows) · viết câu chưa kiểm vào trả lời Cowork rồi phải sửa → **ghi xong đọc lại đúng chỗ; câu nào cũng phải có căn cứ đã xem.**
 
 ---
@@ -395,10 +404,12 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ## 0D1. 🔑 HỆ THỐNG LÀM VIỆC HẰNG NGÀY + KẾ HOẠCH TỪ KHOÁ (chủ dự án chốt 28/10/2026 — đơn giản, thống nhất)
 
+> ⛔ **[31/10] Thứ tự một ngày + ai làm gì: CHỈ theo `chi-tiet\quy-trinh-3-ben.md` mục 11.00 (nguồn duy nhất, mục "⭐ QUY TRÌNH HẰNG NGÀY" đầu tệp này). Phần dưới (bước 0 + 6 bước, "Bắt đầu" = Claude làm, việc dở 28/10, luật từ khoá) là lịch sử + luật từ khoá; chỗ nào khác 11.00 thì bỏ. Luật từ khoá 1–8 vẫn dùng.**
+
 > **MỘT CHỖ:** `D:\Coastal Land\SEO\Plan SEO - pSEO\` — `KE-HOACH-SEO.md` (chủ dự án xem, sửa, giao việc) · `chi-tiet\` (phần đầy đủ, Claude
 > đọc) · `TRA-GOOGLE.csv` · `HE-THONG-TU-KHOA.xlsx` · `may-tu-khoa\` · sơ đồ `QUY-TRINH-LAM-VIEC-HANG-NGAY.html`. Không bên nào làm việc từ chỗ khác.
 >
-> **MỖI NGÀY — BƯỚC 0 + 6 BƯỚC (chỉnh 29/10):** ⓪ Anh mở máy làm TRƯỚC TIÊN: `Plan SEO - pSEO\CAN-ANH-DUYET.md` (tệp riêng), ghi quyết định ·
+> ⛔ **[ĐÃ THAY 31/10 bằng `chi-tiet\quy-trinh-3-ben.md` mục 11.00 — đoạn dưới chỉ là lịch sử]** **MỖI NGÀY — BƯỚC 0 + 6 BƯỚC (chỉnh 29/10):** ⓪ Anh mở máy làm TRƯỚC TIÊN: `Plan SEO - pSEO\CAN-ANH-DUYET.md` (tệp riêng), ghi quyết định ·
 > ① Anh: khi cần sửa `KE-HOACH-SEO.md`, lưu → nhắn Claude trên máy **"Bắt đầu"** (Claude làm NGAY các dòng anh vừa quyết ở ⓪, ghi vào
 > `chi-tiet\yeu-cau-chu-du-an.md`, chuyển xuống "Đã xử lý") · ② Claude: ĐO TRƯỚC (Search Console + tra Google 3 từ khoá) rồi mới giao → `SEO\RA\VIEC.md`
 > · ③ Anh: duyệt `VIEC.md` → nhắn Cowork · ④ Cowork: chỉ làm việc trong `VIEC.md` → lưu `SEO\DA-DUYET\<ddmmyyyy>\` · ⑤ Anh nhắn Claude **"Kiểm"** → Anh + Claude: kiểm →
