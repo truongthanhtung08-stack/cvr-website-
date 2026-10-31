@@ -25,7 +25,7 @@ export function truongBatBuoc(p: { name: string; location?: string; type?: strin
 /** Tên trường khi báo thiếu (màn nạp dự án hàng loạt chặn đúng các trường này — anh 31/10/2026, D42) */
 export const TEN_TRUONG: Record<keyof TruongBatBuoc, string> = {
   ten: "tên dự án",
-  diaChi: "địa chỉ",
+  diaChi: "địa chỉ (gồm vị trí / toạ độ)",
   loaiHinh: "loại hình",
   tinhTrang: "tình trạng",
   chuDauTu: "chủ đầu tư",
