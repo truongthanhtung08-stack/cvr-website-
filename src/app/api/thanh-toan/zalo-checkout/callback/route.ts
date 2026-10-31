@@ -40,6 +40,7 @@ export async function POST(req: Request) {
     if (Number(d.resultCode) === 1) {
       await baoLoi({
         noi: "zalo-checkout",
+        khach: true,
         mucDo: "chet",
         tomTat: "Zalo báo đã thu tiền nhưng KHÔNG tìm thấy đơn nạp — ví chưa được cộng",
         chiTiet: `orderId Zalo ${d.orderId}, transId ${d.transId}, số tiền ${d.amount}`,
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
     if (loiVi) {
       await baoLoi({
         noi: "zalo-checkout",
+        khach: true,
         mucDo: "chet",
         tomTat: "Đơn Zalo đã ghi ĐÃ THANH TOÁN nhưng cộng ví thất bại",
         chiTiet: `Đơn ${don.id} — ${loiVi.message}`,

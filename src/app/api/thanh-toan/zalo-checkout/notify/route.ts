@@ -20,6 +20,7 @@ export async function POST(req: Request) {
 
   await baoLoi({
     noi: "zalo-checkout",
+    khach: true,
     mucDo: "nang",
     tomTat: `Khách chọn ${d.method === "BANK" ? "chuyển khoản ngân hàng" : d.method} khi nạp ví trong Zalo Mini App`,
     chiTiet: `orderId Zalo ${d.orderId}`,

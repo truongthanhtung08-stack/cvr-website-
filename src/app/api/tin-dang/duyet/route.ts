@@ -446,6 +446,7 @@ export async function POST(request: Request) {
   if (loiSo) {
     await baoLoi({
       noi: "duyet-tin",
+      khach: true,
       mucDo: "chet",
       tomTat: "Đã trừ tiền khách nhưng KHÔNG ghi được sổ doanh thu",
       chiTiet: `Tin ${id} — ${loiSo.message}`,
@@ -560,6 +561,7 @@ async function baoKhach(
       const loiZbs = /-137|charge failure/i.test(chiTiet);
       await baoLoi({
         noi: "duyet-tin",
+        khach: true,
         mucDo: "nang",
         tomTat: "Duyệt tin xong nhưng không gửi được thông báo cho người đăng",
         chiTiet,
@@ -578,6 +580,7 @@ async function baoKhach(
   } catch (e) {
     await baoLoi({
       noi: "duyet-tin",
+      khach: true,
       mucDo: "nang",
       tomTat: "Gửi thông báo duyệt tin cho khách bị lỗi",
       chiTiet: String(e),

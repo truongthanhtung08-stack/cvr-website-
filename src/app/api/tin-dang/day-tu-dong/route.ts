@@ -79,6 +79,7 @@ export async function GET(request: Request) {
   if (hong.length) {
     await baoLoi({
       noi: "day-tu-dong",
+      khach: true,
       mucDo: "nang",
       tomTat: `Tự đẩy tin: ${hong.length} tin không đẩy được`,
       chiTiet: hong.slice(0, 10).join(" · "),

@@ -124,6 +124,7 @@ export async function POST(request: Request) {
   if (loiSo) {
     await baoLoi({
       noi: "mua-goi-up",
+      khach: true,
       mucDo: "chet",
       tomTat: "Đã trừ tiền gói đẩy nhưng KHÔNG ghi được sổ doanh thu",
       chiTiet: `Tin ${id} — ${loiSo.message}`,

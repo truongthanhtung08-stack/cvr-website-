@@ -63,6 +63,8 @@ function dungTin(table: string, r: Record<string, unknown>): Tin | null {
 
   if (table === "projects") {
     if (status !== "pending") return null;
+    // Dự án nạp hàng loạt (hồ sơ dạng thẻ, csvDuAn) là việc nội bộ → chỉ hiện ở Admin, không email (chủ dự án 31/10/2026)
+    if ((r.details as { dangThe?: boolean } | null)?.dangThe) return null;
     return {
       tieuDe: "Dự án mới chờ duyệt",
       dong: [`Tên dự án: ${chu(r.name) || "(không có tên)"}`],

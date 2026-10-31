@@ -142,6 +142,7 @@ export async function GET(request: Request) {
   if (!ketQua.flat().some((k) => k.daGui)) {
     await baoLoi({
       noi: "nhac-xuat-hoa-don",
+      khach: true, // quên xuất hoá đơn cho khách là vi phạm
       mucDo: "chet",
       tomTat: `Không gửi được lời nhắc xuất ${soTo} tờ hóa đơn`,
       chiTiet: ketQua.flat().map((k) => `${k.kenh}: ${k.lyDo ?? "không rõ"}`).join(" · "),

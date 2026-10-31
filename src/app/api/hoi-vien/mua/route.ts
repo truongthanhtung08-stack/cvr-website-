@@ -86,6 +86,7 @@ export async function POST(request: Request) {
   if (loiSo) {
     await baoLoi({
       noi: "mua-hoi-vien",
+      khach: true,
       mucDo: "chet",
       tomTat: "Đã trừ tiền mua gói hội viên nhưng KHÔNG ghi được sổ doanh thu",
       chiTiet: `Gói ${d?.hoi_vien_id} — ${loiSo.message}`,

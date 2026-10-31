@@ -112,6 +112,7 @@ export async function layAccessToken(epLamMoi = false): Promise<string | null> {
     if (!kq.access_token || !kq.refresh_token) {
       await baoLoi({
         noi: "zalo-oa",
+        khach: true,
         mucDo: "chet",
         tomTat: "Không làm mới được token Zalo OA — mã OTP đăng nhập đang chết",
         chiTiet: JSON.stringify(kq).slice(0, 300),
@@ -137,6 +138,7 @@ export async function layAccessToken(epLamMoi = false): Promise<string | null> {
       // không giữ được → một tiếng nữa hết hạn là chết, phải cấp quyền lại tay.
       await baoLoi({
         noi: "zalo-oa",
+        khach: true,
         mucDo: "chet",
         tomTat: "LƯU TOKEN ZALO MỚI THẤT BẠI — refresh token cũ đã mất hiệu lực",
         chiTiet: error.message,

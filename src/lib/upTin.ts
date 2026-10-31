@@ -162,6 +162,7 @@ export async function xuLyUpCho(admin: SupabaseClient, userId: string): Promise<
   } catch (e) {
     await baoLoi({
       noi: "up-tin-cho-nap",
+      khach: true,
       mucDo: "nang",
       tomTat: "Tự gửi đăng lại tin sau khi nạp tiền bị lỗi",
       chiTiet: String(e),

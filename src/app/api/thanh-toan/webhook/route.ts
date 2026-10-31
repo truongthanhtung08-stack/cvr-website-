@@ -115,6 +115,7 @@ export async function POST(req: Request) {
     if (thanhCong) {
       await baoLoi({
         noi: "payos-webhook",
+        khach: true,
         mucDo: "chet",
         tomTat: "Tiền đã về nhưng KHÔNG biết của khách nào — ví chưa được cộng",
         chiTiet: `Mã đơn PayOS ${orderCode}, số tiền ${body.data.amount ?? "?"}`,
@@ -220,6 +221,7 @@ export async function POST(req: Request) {
     if (loiVi) {
       await baoLoi({
         noi: "payos-webhook",
+        khach: true,
         mucDo: "chet",
         tomTat: "Đơn đã ghi ĐÃ THANH TOÁN nhưng cộng ví cho khách thất bại",
         chiTiet: `Đơn ${don.id} — ${loiVi.message}`,

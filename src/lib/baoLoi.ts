@@ -44,6 +44,12 @@ export type SuCo = {
   /** Việc phải làm tay để cứu. */
   canLam?: string;
   /**
+   * Lỗi đụng tới KHÁCH HÀNG (tiền khách, khách không đăng nhập được, khách không nhận được báo…) → gửi email.
+   * Không ghi = việc NỘI BỘ: chỉ ghi sổ, hiện ở Admin → Tổng quan, không email (chủ dự án 31/10/2026: "chỉ email
+   * những gì có lỗi liên quan đến khách hàng").
+   */
+  khach?: boolean;
+  /**
    * Khoá gộp email. Mặc định = noi + tomTat. Truyền tay khi muốn tách riêng
    * từng đối tượng (vd mỗi đơn hàng một khoá) để lỗi này không nuốt mất lỗi kia.
    */
@@ -63,8 +69,8 @@ export async function baoLoi(t: SuCo): Promise<void> {
 
   try {
     const daBaoGanDay = await ghiSo(khoa, t);
-    // Lỗi 'nhẹ' chỉ ghi sổ, không làm phiền hòm thư.
-    if (t.mucDo !== "nhe" && !daBaoGanDay) await guiMail(khoa, t);
+    // Lỗi 'nhẹ' và việc nội bộ chỉ ghi sổ (hiện ở Tổng quan), không làm phiền hòm thư.
+    if (canEmail(t) && !daBaoGanDay) await guiMail(khoa, t);
   } catch (e) {
     console.error("[su-co] báo lỗi thất bại (bỏ qua để không hỏng việc đang chạy):", e);
   }
@@ -113,11 +119,13 @@ async function ghiSo(khoa: string, t: SuCo): Promise<boolean> {
     can_lam: t.canLam ?? null,
     // Đánh dấu đã báo NGAY tại đây: có gửi mail hay không thì lần sau cũng phải
     // đợi hết giờ. Ghi sau khi gửi thì hai lỗi cùng lúc sẽ gửi hai mail.
-    bao_luc: t.mucDo !== "nhe" && !conMoi ? new Date().toISOString() : null,
+    bao_luc: canEmail(t) && !conMoi ? new Date().toISOString() : null,
   });
 
   return conMoi;
 }
+
+const canEmail = (t: SuCo) => t.mucDo !== "nhe" && t.khach === true;
 
 async function guiMail(khoa: string, t: SuCo): Promise<void> {
   const key = process.env.RESEND_API_KEY;

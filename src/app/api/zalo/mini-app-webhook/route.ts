@@ -39,6 +39,7 @@ export async function POST(req: Request) {
   if (suKien === "user.revoke.consent") {
     await baoLoi({
       noi: "zalo-mini-app",
+      khach: true, // khách yêu cầu xoá dữ liệu
       mucDo: "nang",
       tomTat: "Khách rút lại sự đồng ý và yêu cầu xoá dữ liệu Zalo Mini App",
       chiTiet: `userId Zalo ${data.userId} · appId ${data.appId}${khoa ? "" : " · (chưa cắm ZALO_MINIAPP_API_KEY — chưa xác thực chữ ký)"}`,
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
     });
   } else if (suKien === "versions.review.done") {
     // Trạng thái âm = BỊ TỪ CHỐI (đo 29/09: bản 27 bị từ chối, Zalo gửi -1). Kết quả xét duyệt
-    // là việc admin phải xử lý → mức "nang" để có email về hòm thư công ty.
+    // là việc admin phải xử lý — nội bộ, chỉ hiện ở Admin → Tổng quan (không email, chủ dự án 31/10/2026).
     const biTuChoi = Number(data.status) < 0;
     await baoLoi({
       noi: "zalo-mini-app",

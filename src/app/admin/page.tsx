@@ -11,6 +11,8 @@ type Stats = {
   khachChoDuyet: number;
   // Tin đăng — null khi bảng listings chưa tạo
   tinPending: number | null; tinLive: number | null;
+  // Tin nạp hàng loạt chờ chủ duyệt (ẩn + choChuDuyet) — tách riêng để bấm vào đúng trang Tin chờ duyệt
+  tinNap: number | null;
   // Yêu cầu khách hàng chưa xử lý — null khi bảng chưa tạo
   yeuCauMoi: number | null;
   // Dự án khách gửi chờ duyệt — LUẬT: mọi tin & dự án phải được duyệt mới publish
@@ -45,7 +47,7 @@ export default function AdminDashboard() {
     const supabase = createClient();
     (async () => {
       const weekAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-      const [total, newWeek, khachChoDuyet, agents, tinPending, tinLive, yeuCauMoi, duAnPending] = await Promise.all([
+      const [total, newWeek, khachChoDuyet, agents, tinPending, tinLive, yeuCauMoi, duAnPending, tinNap] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
@@ -56,6 +58,7 @@ export default function AdminDashboard() {
         supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("customer_requests").select("*", { count: "exact", head: true }).eq("status", "moi"),
         supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "hidden").eq("details->>choChuDuyet", "true"),
       ]);
       setStats({
         total: total.count ?? 0,
@@ -67,8 +70,19 @@ export default function AdminDashboard() {
         tinLive: tinLive.error ? null : tinLive.count ?? 0,
         yeuCauMoi: yeuCauMoi.error ? null : yeuCauMoi.count ?? 0,
         duAnPending: duAnPending.error ? null : duAnPending.count ?? 0,
+        tinNap: tinNap.error ? null : tinNap.count ?? 0,
       });
     })();
+  }, []);
+
+  // TỰ KIỂM TIN — trước đây chỉ gửi email 8h sáng; nay là việc nội bộ, hiện ngay ở đây mỗi lần mở Tổng quan
+  // (chủ dự án 31/10/2026: "chỉ cần hiện cảnh báo lên hệ thống, đúng chỗ"). Một lần đọc bảng tin mỗi lần mở trang admin.
+  const [loiTuKiem, setLoiTuKiem] = useState(0);
+  useEffect(() => {
+    fetch("/api/admin/kiem-tin")
+      .then((r) => r.json())
+      .then((j: { ok?: boolean; loi?: unknown[] }) => setLoiTuKiem(j.ok ? j.loi?.length ?? 0 : 0))
+      .catch(() => {});
   }, []);
 
   // ── VIỆC CẦN LÀM ─────────────────────────────────────────────────────────
@@ -77,7 +91,9 @@ export default function AdminDashboard() {
   // Nay việc nào đang chờ thì hiện thành DÒNG BẤM ĐƯỢC, đi thẳng tới nơi xử lý.
   // LUẬT: mọi tin đăng và mọi dự án đều phải được quản trị viên duyệt mới lên web.
   const viec = [
-    { n: stats?.tinPending ?? 0, chu: "tin đăng chờ duyệt", href: "/admin/tin-dang?trang-thai=pending" },
+    { n: (stats?.tinPending ?? 0) - (stats?.tinNap ?? 0), chu: "tin khách đăng chờ duyệt", href: "/admin/tin-dang?trang-thai=pending" },
+    { n: stats?.tinNap ?? 0, chu: "tin nạp hàng loạt chờ duyệt", href: "/admin/tin-dang/duyet-nap" },
+    { n: loiTuKiem, chu: "lỗi Tự kiểm tin", href: "/admin/tin-dang" },
     { n: chuaChuan?.length ?? 0, chu: "tin chưa đạt chuẩn SEO", href: "#tin-chua-chuan" },
     { n: stats?.duAnPending ?? 0, chu: "dự án chờ duyệt", href: "/admin/du-an" },
     { n: stats?.yeuCauMoi ?? 0, chu: "yêu cầu khách hàng mới", href: "/admin/yeu-cau" },

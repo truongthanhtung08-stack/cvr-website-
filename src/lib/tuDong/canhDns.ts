@@ -76,6 +76,7 @@ export const viecCanhDns: Viec = {
       const nang = sai.some((c) => c.mucDo === "chet");
       await baoLoi({
         noi: "canh-dns",
+        khach: nang, // tên miền mất hẳn = khách không vào được web
         mucDo: nang ? "chet" : "nang",
         tomTat: `${sai.length} bản ghi tên miền SAI hoặc BIẾN MẤT`,
         chiTiet: sai.map((c) => `${c.ten} (${c.loai}) — cần có "${c.mong}"`).join(" · "),

@@ -92,6 +92,7 @@ export async function POST(request: Request) {
     const daBiet = /-120|permission|not have permission|-124|-201/i.test(kq.lyDo ?? "");
     await baoLoi({
       noi: "sms-hook",
+      khach: true,
       mucDo: daBiet ? "nhe" : "chet",
       tomTat: daBiet
         ? "Zalo chưa cho gửi ZNS (gói OA chưa đủ) — khách không nhận được mã qua Zalo"

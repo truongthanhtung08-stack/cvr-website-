@@ -158,6 +158,7 @@ export async function POST(request: Request) {
   if (loiSo) {
     await baoLoi({
       noi: "day-tin",
+      khach: true,
       mucDo: "chet",
       tomTat: "Đã trừ tiền đẩy tin nhưng KHÔNG ghi được sổ doanh thu",
       chiTiet: `Tin ${id} — ${loiSo.message}`,
