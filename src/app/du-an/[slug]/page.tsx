@@ -91,11 +91,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!p) {
     // Bậc 1 (21/10/2026): dự án mới chỉ có tên từ tin — khách xem được, Google CHƯA lập chỉ mục (trang mỏng) tới khi có hồ sơ
     const coban = duAnTuTin(await getListings().catch(() => []), slug);
-    if (!coban) {
-      // Trang demo tra cứu (chỉ máy dev) — tên thẻ trình duyệt đúng tên dự án mẫu
-      const demo = process.env.NODE_ENV !== "production" ? DU_AN_DEMO[slug] : undefined;
-      return { title: demo?.name ?? "Không tìm thấy dự án", robots: { index: false, follow: true } };
-    }
+    if (!coban) return { title: "Không tìm thấy dự án", robots: { index: false, follow: true } };
     return {
       title: tieuDeGoogle(coban.ten),
       description: catMoTa(`Dự án ${coban.ten} tại ${coban.viTri}.`),
@@ -207,9 +203,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
 
   // ── Nhánh 2: trang chi tiết một dự án ──
-  const [hoSoDb, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
-  // DEMO trang dự án tra cứu — CHỈ chạy trên máy (npx next dev), web thật không có đường này (chủ dự án 31/10/2026: "làm demo")
-  const hoSo = hoSoDb ?? (process.env.NODE_ENV !== "production" ? DU_AN_DEMO[slug] ?? null : null);
+  const [hoSo, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
   // MỘT KHUÔN cho mọi dự án (chủ dự án 30/10/2026): dự án nổi bật giữ nguyên trang đã dựng; dự án TRA CỨU (hồ sơ dạng thẻ, hoặc
   // dự án mới chỉ biết từ tin) chạy ĐÚNG khuôn đó — hồ sơ bổ sung tới đâu hiện tới đó, cái gì chưa có thì ẩn.
   const coban = hoSo ? null : duAnTuTin(listings, slug);
@@ -289,10 +283,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Dự án không có tin nào → để TRỐNG, tuyệt đối KHÔNG độn tin của dự án khác vào.
   // Cùng với tin KHÁCH TỰ GHI ĐÚNG TÊN dự án này (chưa có mã vì lúc đăng dự án chưa có trang) —
   // tạo trang dự án xong là tin tự về đây (chủ dự án 15/10/2026).
-  const projectListings = slug === "demo-tra-cuu" && !hoSoDb
-    // DEMO (chỉ máy dev): mượn tin căn hộ Đà Nẵng — mỗi nhóm Mua bán / Cho thuê hơn 8 tin để xem dải trượt + "Xem thêm" khi dự án nhiều tin
-    ? listings.filter((x) => /Đà Nẵng/.test(x.location) && /căn hộ|chung cư|condotel/i.test(x.type))
-    : listings.filter((x) => x.projectSlug === p.slug || cungDuAn(x.projectSlug, p.slug)
+  const projectListings = listings.filter((x) => x.projectSlug === p.slug || cungDuAn(x.projectSlug, p.slug)
     || (!x.projectSlug && !!x.projectName && normalizeVi(x.projectName) === normalizeVi(p.name)));
   // THỨ TỰ MỘT CHUẨN CẢ WEB (chốt 23/10/2026): cấp tin trước, cùng cấp theo mốc gần nhất (đăng / đẩy) — getListings đã xếp theo mốc,
   // sortListings "moi" xếp cấp giữ nguyên mốc. Dải trượt lấy 8 tin đầu, "Xem thêm" giữ đúng thứ tự này từ tin số 1 (chủ dự án 31/10/2026)
@@ -816,29 +807,3 @@ function Section({ id, title, children }: { id: string; title: string; children:
     </section>
   );
 }
-
-
-
-// Dữ liệu DEMO dự án tra cứu (CHỈ máy dev) — đủ trường hợp: nhiều ảnh + thông tin thêm · 1 ảnh, chỉ trường bắt buộc ·
-// không ảnh, tên + địa chỉ dài, chỉ trường bắt buộc (dự án chỉ biết từ tin: xem trang thật /du-an/apec-mandala-wyndham-binh-thuan)
-const DEMO_GOC = { priceFrom: "Liên hệ", dangThe: true, scale: [], amenities: [], overview: [] };
-const DU_AN_DEMO: Record<string, Project> = {
-  "demo-tra-cuu": {
-    ...DEMO_GOC, slug: "demo-tra-cuu", name: "Dự án mẫu tra cứu (demo)", location: "Đường Bạch Đằng, Phường Hải Châu, Đà Nẵng",
-    type: "Căn hộ", status: "Đang mở bán", developer: "Công ty CP ABC", image: "/images/tin/2.jpg",
-    photos: ["/images/tin/2.jpg", "/anh/listings/0d4c189f3293a590dd96286f-1784682958486-201631-4.1.webp", "/images/tin/1.jpg"],
-    scale: [{ label: "Diện tích dự án", value: "1,2 ha" }, { label: "Quy mô", value: "2 tòa cao 22 tầng" }, { label: "Bàn giao", value: "Quý IV/2026" }],
-    amenities: ["Hồ bơi", "Phòng gym", "Công viên"], mapPin: "16.0717,108.2244",
-    // Mô tả DÀI (chỉ để thử thu gọn "Xem thêm" của trang tra cứu khi Admin nhập nhiều thông tin)
-    overview: Array.from({ length: 8 }, (_, i) => `Đoạn giới thiệu mẫu số ${i + 1} — chỉ để xem bố cục trang dự án tra cứu khi Admin nhập mô tả dài: vị trí, quy mô, tiện ích, pháp lý, tiến độ, chính sách bán hàng của dự án.`),
-  },
-  "demo-tra-cuu-1-anh": {
-    ...DEMO_GOC, slug: "demo-tra-cuu-1-anh", name: "Dự án mẫu một ảnh (demo)", location: "Phường An Hải, Đà Nẵng",
-    type: "Căn hộ", status: "", developer: "", image: "/images/tin/1.jpg", photos: ["/images/tin/1.jpg"],
-  },
-  "demo-tra-cuu-khong-anh": {
-    ...DEMO_GOC, slug: "demo-tra-cuu-khong-anh", name: "Khu đô thị mẫu không ảnh có tên dự án rất dài để thử xuống dòng (demo)",
-    location: "Lô A1-A5 đường Nguyễn Tất Thành nối dài, Phường Hải Vân, Đà Nẵng", type: "", status: "Sắp mở bán",
-    developer: "Công ty Cổ phần Đầu tư Phát triển Đô thị mẫu", image: "", photos: [],
-  },
-};
