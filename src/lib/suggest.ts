@@ -7,6 +7,7 @@ import { provinces, oldProvinces } from "@/lib/locations";
 import { provincesNew, daCoDiaDanh } from "@/lib/diaDanhNguon";
 import { propertyTypeOptions, normalizeVi } from "@/lib/filters";
 import { featuredListings, projects, articles } from "@/lib/data";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 export type SuggestKind = "Gợi ý" | "Khu vực" | "Mục đích" | "Loại hình" | "Sản phẩm" | "Dự án" | "Tin tức";
 
@@ -114,7 +115,7 @@ for (const t of propertyTypeOptions) {
 for (const it of featuredListings) {
   ENTRIES.push({
     label: it.title, kind: "Sản phẩm", sub: it.location,
-    href: `/bat-dong-san/${it.id}`, keyword: it.title,
+    href: duongDanTin(it), keyword: it.title,
     norm: toNorm(`${it.title} ${it.location} ${it.type}`), primary: toNorm(it.title),
   });
 }

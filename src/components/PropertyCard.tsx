@@ -12,6 +12,7 @@ import { freshText, type Listing } from "@/lib/data";
 import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { thongSoTheoCap } from "@/lib/thongSoThe";
 import { tierFromBadge, getTier, HUY_HIEU_CLS } from "@/lib/packages";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 // Tên NGƯỜI ĐĂNG hiển thị trên thẻ: lấy từ tin thật (details.contact.name —
 // là tên KHÁCH HÀNG kể cả khi admin đăng giùm). Tin không có tên → "Coastal Land".
@@ -93,7 +94,7 @@ export default function PropertyCard({
   const khungThe = `flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 ${item.hetHan ? "opacity-70" : ""}`;
   const the = (
     <Link
-      href={`/bat-dong-san/${item.id}`}
+      href={duongDanTin(item)}
       // Dấu cho bộ đếm lượt hiển thị nhận ra đây là thẻ tin (src/lib/hienThi.ts).
       data-tin={item.id}
       // Khung thẻ Apple thuần: viền tóc cvr-line + bóng mềm — KHÔNG viền màu theo cấp.
@@ -215,7 +216,7 @@ export default function PropertyCard({
               </span>
               {/* HÀNG NGƯỜI ĐĂNG — MỘT MẪU CHO MỌI CẤP (chủ dự án 23/10/2026): ảnh + tên · ngày đăng · Thích · Chia sẻ */}
               <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0" />
-              <ShareButtons title={item.title} duongDan={`/bat-dong-san/${item.id}`} moLen nutCls="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-cvr-ink transition hover:bg-cvr-surface" />
+              <ShareButtons title={item.title} duongDan={duongDanTin(item)} moLen nutCls="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-cvr-ink transition hover:bg-cvr-surface" />
             </div></div>
           </>
         ) : (<>
@@ -286,7 +287,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
   const rowDesc = moTaHang ? soDongMoTa(item) : 0;
   return (
     <Link
-      href={`/bat-dong-san/${item.id}`}
+      href={duongDanTin(item)}
       // Dấu cho bộ đếm lượt hiển thị nhận ra đây là thẻ tin (src/lib/hienThi.ts).
       data-tin={item.id}
       // ĐIỆN THOẠI: ảnh TRÊN – nội dung DƯỚI (xếp dọc).

@@ -4,6 +4,7 @@ import { baoIndexNow } from "@/lib/indexNow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quetTinHetHan } from "@/lib/hetHanTin";
 import { baoLoi } from "@/lib/baoLoi";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 // ════════════════════════════════════════════════════════════════════════════
 // QUÉT TIN HẾT HẠN — MỖI PHÚT (vercel.json; 03/10/2026 chủ dự án: "đúng giờ đúng ngày là áp dụng")
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
     // trg_listings_updated_at luôn ghi updated_at nên đây là mốc tin cậy cho mọi đường đổi.
     const { data: dsDoi, count: vuaDoi } = await admin
       .from("listings")
-      .select("id", { count: "exact" })
+      .select("id,title", { count: "exact" })
       .gt("updated_at", new Date(Date.now() - 75_000).toISOString())
       // Tin nháp (kể cả tự lưu vài giây một lần khi khách đang gõ) không hiện ra ngoài —
       // không tính, kẻo xoá bản lưu sẵn mỗi phút, tốn đọc Supabase vô ích.
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
       .lte("published_at", new Date().toISOString());
     if ((vuaDoi ?? 0) + (vuaLen ?? 0) > 0) revalidateTag("listings", "max");
     // Báo Bing các trang tin vừa đổi (IndexNow) — chỉ khi có đổi thật, không thêm lệnh nào lúc yên.
-    if (dsDoi?.length) await baoIndexNow(dsDoi.map((r: { id: string }) => `/bat-dong-san/${r.id}`));
+    if (dsDoi?.length) await baoIndexNow(dsDoi.map((r: { id: string; title: string | null }) => duongDanTin(r)));
     return NextResponse.json({ ok: true, ...kq, lamMoi: vuaDoi ?? 0 });
   } catch (e) {
     await baoLoi({

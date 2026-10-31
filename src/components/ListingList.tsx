@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Listing } from "@/lib/data";
 import { tenLoaiHinh } from "@/lib/filters";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 // Danh sách tin DẠNG LIST (kiểu Batdongsan): mỗi tin 1 hàng ngang — ảnh nhỏ bên trái,
 // tiêu đề · giá · diện tích · khu vực bên phải. Dùng cho "Tin đăng mới nhất" trang dự án.
@@ -11,7 +12,7 @@ export default function ListingList({ items }: { items: Listing[] }) {
       {items.map((l) => (
         <li key={l.id}>
           <Link
-            href={`/bat-dong-san/${l.id}`}
+            href={duongDanTin(l)}
             // Dấu cho bộ đếm lượt hiển thị (src/lib/hienThi.ts).
             data-tin={l.id}
             // MOBILE: thẻ DỌC — ảnh trên, nội dung dưới. DESKTOP: giữ hàng ngang.

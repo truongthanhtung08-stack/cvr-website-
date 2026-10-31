@@ -11,6 +11,7 @@ import { baoLoi } from "@/lib/baoLoi";
 import type { TierId } from "@/lib/packages";
 import { homNayVn } from "@/lib/gioVn";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 // ============================================================================
 // DUYỆT TIN — TRỪ VÍ + GHI DOANH THU + BÁO KHÁCH
@@ -173,7 +174,7 @@ export async function POST(request: Request) {
       .eq("id", id);
     if (error) return loi(error.message, 500);
     revalidateTag("listings", "max"); // tin vừa lên sóng → purge cache để hiện NGAY
-    await baoIndexNow([`/bat-dong-san/${id}`]); // báo Bing có trang mới (IndexNow)
+    await baoIndexNow([duongDanTin({ id, title: tin.title })]); // báo Bing có trang mới (IndexNow)
     // Mẫu ZNS "tin đã duyệt" khai 3 tham số nên cả 3 đều PHẢI có giá trị —
     // trước đây chỗ này truyền so_du rỗng, Zalo từ chối cả tin. Tin miễn phí
     // không trừ tiền nên số dư giữ nguyên, vẫn đọc ra để báo cho đúng.
@@ -472,7 +473,7 @@ export async function POST(request: Request) {
   if (loiLen) return loi("Đã trừ tiền nhưng không đăng được tin: " + loiLen.message, 500);
 
   revalidateTag("listings", "max"); // tin trả phí vừa lên sóng → purge cache để hiện NGAY
-  await baoIndexNow([`/bat-dong-san/${id}`]); // báo Bing có trang mới (IndexNow)
+  await baoIndexNow([duongDanTin({ id, title: tin.title })]); // báo Bing có trang mới (IndexNow)
 
   // ── 9. BÁO KHÁCH (bắt buộc) ───────────────────────────────────────────────
   const kq = await baoKhach(admin, tin.owner_id, {

@@ -8,6 +8,7 @@ import { khuVucList, khuVucTrongDiem, slugKhuVuc, timKhuVuc } from "@/lib/khuVuc
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 import { banGocCua, tinDatChuan, trangIndex } from "@/lib/pseo";
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 // TỰ LÀM MỚI MỖI GIỜ. Trước đây để `force-static` (di sản thời GitHub Pages):
 // sitemap chỉ sinh 1 lần lúc build, nên MỌI tin/dự án/bài viết đăng sau lần
@@ -153,14 +154,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const tatCaTin = [...listings, ...tinHetHan];
     for (const l of listings.filter((x) => tinDatChuan(x) && !banGocCua(x, tatCaTin))) {
       dynamic.push({
-        url: `${SITE}/bat-dong-san/${l.id}`, lastModified: ngayTin(l), changeFrequency: "weekly", priority: 0.7,
+        url: `${SITE}${duongDanTin(l)}`, lastModified: ngayTin(l), changeFrequency: "weekly", priority: 0.7,
         images: anhTuyetDoi(l.image),
       });
     }
     // TIN HẾT HẠN cũng khai (chủ dự án 08/10/2026): trang vẫn mở, vẫn lập chỉ mục.
     for (const l of tinHetHan.filter((x) => tinDatChuan(x) && !banGocCua(x, tatCaTin))) {
       dynamic.push({
-        url: `${SITE}/bat-dong-san/${l.id}`, lastModified: ngayTin(l), changeFrequency: "monthly", priority: 0.5,
+        url: `${SITE}${duongDanTin(l)}`, lastModified: ngayTin(l), changeFrequency: "monthly", priority: 0.5,
         images: anhTuyetDoi(l.image),
       });
     }

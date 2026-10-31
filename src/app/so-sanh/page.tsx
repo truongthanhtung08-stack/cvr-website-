@@ -10,6 +10,7 @@ import { listingSummary, type Listing } from "@/lib/data";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { useCompare } from "@/lib/useCompare";
 import { useListingsByIds } from "@/lib/useListingsByIds";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 // Trang SO SÁNH bất động sản (III.2) — bảng song song thông số.
 export default function ComparePage() {
@@ -89,7 +90,7 @@ export default function ComparePage() {
                                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                               </button>
                             </div>
-                            <Link href={`/bat-dong-san/${l.id}`} className="mt-2 line-clamp-2 block text-left text-sm font-semibold text-cvr-ink hover:text-cvr-blue-ink">
+                            <Link href={duongDanTin(l)} className="mt-2 line-clamp-2 block text-left text-sm font-semibold text-cvr-ink hover:text-cvr-blue-ink">
                               {l.title}
                             </Link>
                           </div>
@@ -113,7 +114,7 @@ export default function ComparePage() {
                     <td className="p-3" />
                     {items.map((l) => (
                       <td key={l.id} className="p-3 align-top">
-                        <Link href={`/bat-dong-san/${l.id}`} className="inline-block rounded-lg bg-cvr-ink px-4 py-2 text-xs font-semibold text-white transition hover:bg-cvr-body">
+                        <Link href={duongDanTin(l)} className="inline-block rounded-lg bg-cvr-ink px-4 py-2 text-xs font-semibold text-white transition hover:bg-cvr-body">
                           Xem chi tiết
                         </Link>
                       </td>
