@@ -4,7 +4,6 @@ import { baoIndexNow } from "@/lib/indexNow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quetTinHetHan } from "@/lib/hetHanTin";
 import { baoLoi } from "@/lib/baoLoi";
-import { SU_CO } from "@/lib/chuThongBao";
 import { duongDanTin } from "@/lib/duongDanTin";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -50,9 +49,9 @@ export async function GET(request: Request) {
     await baoLoi({
       noi: "het-han-tin",
       mucDo: "nang",
-      tomTat: SU_CO.quetHetHan.tomTat,
+      tomTat: "Quét tin hết hạn (mỗi giờ) bị lỗi",
       chiTiet: e instanceof Error ? e.message : String(e),
-      hauQua: SU_CO.quetHetHan.hauQua,
+      hauQua: "Tin quá hạn vẫn hiển thị cho tới lần quét thành công kế tiếp.",
       canLam: "Xem log Vercel của /api/tin-dang/het-han.",
       khoa: `het-han-tin:${new Date().toISOString().slice(0, 13)}`,
     });

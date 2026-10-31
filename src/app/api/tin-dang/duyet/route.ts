@@ -8,7 +8,6 @@ import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuy
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
-import { SU_CO } from "@/lib/chuThongBao";
 import type { TierId } from "@/lib/packages";
 import { homNayVn } from "@/lib/gioVn";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
@@ -447,11 +446,10 @@ export async function POST(request: Request) {
   if (loiSo) {
     await baoLoi({
       noi: "duyet-tin",
-      khach: true,
       mucDo: "chet",
-      tomTat: SU_CO.doanhThuDuyetTin.tomTat,
+      tomTat: "Đã trừ tiền khách nhưng KHÔNG ghi được sổ doanh thu",
       chiTiet: `Tin ${id} — ${loiSo.message}`,
-      hauQua: SU_CO.doanhThuDuyetTin.hauQua,
+      hauQua: "Tờ khai thuế quý này thiếu một khoản thu, và khách sẽ không được xuất hóa đơn.",
       canLam: `Vào /admin/hoa-don-thue → ghi tay khoản ${vnd(tien.tongTra)} của tin "${tin.title}".`,
       khoa: `duyet-tin:doanh-thu:${id}`, // mỗi tin một cảnh báo riêng, không nuốt của nhau
     });
@@ -562,11 +560,12 @@ async function baoKhach(
       const loiZbs = /-137|charge failure/i.test(chiTiet);
       await baoLoi({
         noi: "duyet-tin",
-        khach: true,
         mucDo: "nang",
-        tomTat: SU_CO.baoKhachDuyet.tomTat,
+        tomTat: "Duyệt tin xong nhưng không gửi được thông báo cho người đăng",
         chiTiet,
-        hauQua: SU_CO.baoKhachDuyet.hauQua(tinBao.daTru),
+        hauQua: tinBao.daTru
+          ? "Khách bị trừ tiền mà không biết tin đã lên sóng."
+          : "Người đăng không biết tin đã lên web (tin miễn phí, không trừ tiền).",
         canLam:
           `Tin "${tinBao.title ?? ""}" /bat-dong-san/${tinBao.id} — ` +
           (loiZbs
@@ -579,11 +578,10 @@ async function baoKhach(
   } catch (e) {
     await baoLoi({
       noi: "duyet-tin",
-      khach: true,
       mucDo: "nang",
-      tomTat: SU_CO.baoKhachDuyet.tomTat,
+      tomTat: "Gửi thông báo duyệt tin cho khách bị lỗi",
       chiTiet: String(e),
-      hauQua: SU_CO.baoKhachDuyet.hauQua(true),
+      hauQua: "Khách bị trừ tiền mà không biết tin đã lên sóng.",
       canLam: "Liên hệ khách bằng tay, rồi xem lại khoá Resend / Zalo.",
     });
     return [];

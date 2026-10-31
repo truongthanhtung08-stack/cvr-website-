@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { guiZns } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
-import { SU_CO } from "@/lib/chuThongBao";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // ============================================================================
@@ -93,13 +92,12 @@ export async function POST(request: Request) {
     const daBiet = /-120|permission|not have permission|-124|-201/i.test(kq.lyDo ?? "");
     await baoLoi({
       noi: "sms-hook",
-      khach: true,
       mucDo: daBiet ? "nhe" : "chet",
       tomTat: daBiet
-        ? SU_CO.maDangNhapGoiOa.tomTat
-        : SU_CO.maDangNhap.tomTat,
+        ? "Zalo chưa cho gửi ZNS (gói OA chưa đủ) — khách không nhận được mã qua Zalo"
+        : "Không gửi được mã OTP qua Zalo — khách đang không đăng nhập được",
       chiTiet: kq.lyDo,
-      hauQua: SU_CO.maDangNhap.hauQua,
+      hauQua: "Khách đăng nhập bằng số điện thoại sẽ không nhận được mã.",
       canLam: daBiet
         ? "Zalo chỉ cho gửi ZNS qua API từ gói OA Tăng trưởng (2,5 triệu/năm). Hoặc chuyển mã sang SMS/email — xem ghi chú trong tệp này."
         : "Kiểm tra token Zalo OA và số dư ZNS. Trong lúc chờ, bảo khách đăng nhập bằng Google hoặc email.",

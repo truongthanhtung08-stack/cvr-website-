@@ -3,7 +3,7 @@
 
 import { tierRank } from "./packages";
 import { tenTinhTuongDuong, chuanTen, chuanTenCap } from "./locations";
-import { dungODienTichXayDung, dienTichSanThat, oLoaiCon } from "./listingSpec";
+import { dungODienTichXayDung, dienTichSanThat } from "./listingSpec";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LOẠI HÌNH (sản phẩm) PHÂN THEO MỤC ĐÍCH — chuẩn Brief + Kế hoạch V3.
@@ -59,22 +59,6 @@ export function lapCha(v: string | null | undefined, type: string | null | undef
   const cha = new Set(normalizeVi(nhomCuaLoaiHinh(type, purpose)).split(/[^a-z0-9]+/).filter(Boolean));
   const chu = normalizeVi(v ?? "").split(/[^a-z0-9]+/).filter(Boolean);
   return chu.length > 0 && chu.every((w) => cha.has(w));
-}
-
-// LOẠI CON QUYẾT ĐỊNH LOẠI HÌNH trong cùng mục cha (cây cha – con, 31/10/2026). Loại con không có trong danh sách của loại hình đang
-// ghi mà là tên / loại con của ĐÚNG MỘT loại hình anh em → trả loại hình đó + tên loại con chuẩn của nó; không thì null (giữ nguyên).
-// Gốc lỗi: cây đổi 30/10 ("Căn hộ dịch vụ" tách thành loại hình riêng) mà tin cũ còn "Căn hộ · Căn hộ dịch vụ"; tệp nạp ghi
-// "Chung cư" cho căn Penthouse, Studio (loại con của "Căn hộ"). Nạp hàng loạt dùng hàm này.
-export function loaiHinhTheoLoaiCon(type: string, purpose: string | null | undefined, loaiCon: string | null | undefined): { type: string; loaiCon: string } | null {
-  const v = (loaiCon ?? "").trim().toLowerCase();
-  if (!v) return null;
-  const md = purpose === "thue" ? "thue" : "ban";
-  const coTrong = (t: string) => oLoaiCon(t, md)?.options?.find((x) => x.toLowerCase() === v);
-  if (coTrong(type)) return null;
-  const nhom = typeGroupsFor(md).find((g) => g.items.includes(type));
-  const anhEm = (nhom?.items ?? []).filter((t) => t !== type && (t.toLowerCase() === v || coTrong(t)));
-  if (anhEm.length !== 1) return null;
-  return { type: anhEm[0], loaiCon: coTrong(anhEm[0]) ?? "" };
 }
 
 // Chọn bộ danh mục theo mục đích (dùng cho FilterBar trên từng trang)

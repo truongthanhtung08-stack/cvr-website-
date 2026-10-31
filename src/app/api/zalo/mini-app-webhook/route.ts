@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { baoLoi } from "@/lib/baoLoi";
-import { SU_CO } from "@/lib/chuThongBao";
 
 // ============================================================================
 // WEBHOOK ZALO MINI APP — khai ở Quản lý Zalo App → Open APIs → Webhook URL:
@@ -40,26 +39,25 @@ export async function POST(req: Request) {
   if (suKien === "user.revoke.consent") {
     await baoLoi({
       noi: "zalo-mini-app",
-      khach: true, // khách yêu cầu xoá dữ liệu
       mucDo: "nang",
-      tomTat: SU_CO.xoaDuLieuMiniApp.tomTat,
+      tomTat: "Khách rút lại sự đồng ý và yêu cầu xoá dữ liệu Zalo Mini App",
       chiTiet: `userId Zalo ${data.userId} · appId ${data.appId}${khoa ? "" : " · (chưa cắm ZALO_MINIAPP_API_KEY — chưa xác thực chữ ký)"}`,
-      hauQua: SU_CO.xoaDuLieuMiniApp.hauQua,
+      hauQua: "Đã cam kết ở /bao-mat: xoá dữ liệu gắn với tài khoản Mini App trong 30 ngày.",
       canLam: "Tìm tài khoản đăng nhập bằng Mini App của khách này, xoá dữ liệu cá nhân theo yêu cầu, trả lời khách nếu có liên hệ.",
       khoa: `zalo-mini-app:revoke:${data.userId}`,
     });
   } else if (suKien === "versions.review.done") {
     // Trạng thái âm = BỊ TỪ CHỐI (đo 29/09: bản 27 bị từ chối, Zalo gửi -1). Kết quả xét duyệt
-    // là việc admin phải xử lý — nội bộ, chỉ hiện ở Admin → Tổng quan (không email, chủ dự án 31/10/2026).
+    // là việc admin phải xử lý → mức "nang" để có email về hòm thư công ty.
     const biTuChoi = Number(data.status) < 0;
     await baoLoi({
       noi: "zalo-mini-app",
       mucDo: "nang",
-      tomTat: SU_CO.miniAppDuyet(String(data.versionId), biTuChoi),
+      tomTat: `Mini App phiên bản ${data.versionId} ${biTuChoi ? "BỊ ZALO TỪ CHỐI" : "đã được Zalo duyệt"} (trạng thái ${data.status})`,
       canLam: biTuChoi
         ? "Mở miniapp.zaloplatforms.com → Danh sách phiên bản / Quản lý xác thực để xem lý do, sửa rồi gửi lại."
         : "Mở miniapp.zaloplatforms.com để phát hành phiên bản.",
-      chiTiet: `Trạng thái ${data.status}. ${String(data.description ?? "")}`,
+      chiTiet: String(data.description ?? ""),
       khoa: `zalo-mini-app:review:${data.versionId}`,
     });
   }

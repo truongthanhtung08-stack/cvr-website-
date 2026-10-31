@@ -7,7 +7,6 @@ import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, bangTheoMucDich, goiUpNhieuLuot, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
-import { SU_CO } from "@/lib/chuThongBao";
 import { getTier, type TierId } from "@/lib/packages";
 import { soNgayConDay } from "@/lib/luotUp";
 
@@ -125,11 +124,10 @@ export async function POST(request: Request) {
   if (loiSo) {
     await baoLoi({
       noi: "mua-goi-up",
-      khach: true,
       mucDo: "chet",
-      tomTat: SU_CO.doanhThuGoiDay.tomTat,
+      tomTat: "Đã trừ tiền gói đẩy nhưng KHÔNG ghi được sổ doanh thu",
       chiTiet: `Tin ${id} — ${loiSo.message}`,
-      hauQua: SU_CO.doanhThuGoiDay.hauQua,
+      hauQua: "Tờ khai thuế thiếu một khoản thu, khách cũng không được xuất hóa đơn khoản này.",
       canLam: `Vào /admin/hoa-don-thue → ghi tay khoản ${vnd(tien.tongTra)} (gói đẩy "${tin.title}").`,
       khoa: `mua-goi-up:doanh-thu:${id}:${Date.now()}`,
     });

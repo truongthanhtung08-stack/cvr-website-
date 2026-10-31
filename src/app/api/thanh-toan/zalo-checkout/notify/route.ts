@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { baoLoi } from "@/lib/baoLoi";
-import { SU_CO } from "@/lib/chuThongBao";
 import { khoaCheckout, macNotify } from "@/lib/zaloCheckout";
 
 // ============================================================================
@@ -21,11 +20,10 @@ export async function POST(req: Request) {
 
   await baoLoi({
     noi: "zalo-checkout",
-    khach: true,
     mucDo: "nang",
-    tomTat: SU_CO.zaloChuyenKhoan.tomTat(d.method === "BANK" ? "chuyển khoản ngân hàng" : String(d.method)),
+    tomTat: `Khách chọn ${d.method === "BANK" ? "chuyển khoản ngân hàng" : d.method} khi nạp ví trong Zalo Mini App`,
     chiTiet: `orderId Zalo ${d.orderId}`,
-    hauQua: SU_CO.zaloChuyenKhoan.hauQua,
+    hauQua: "Tiền chuyển khoản không tự vào ví — phải đối soát tay.",
     canLam: `Đối chiếu sao kê; nhận tiền rồi thì cộng ví tay và cập nhật đơn ${d.orderId} ở Mini App → Checkout SDK.`,
     khoa: `zalo-checkout:bank:${d.orderId}`,
   });

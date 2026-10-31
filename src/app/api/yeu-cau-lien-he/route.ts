@@ -4,7 +4,6 @@ import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { guiThongBao, MAU_CO_NGUOI_QUAN_TAM } from "@/lib/thongBao";
 import { baoAdmin } from "@/lib/baoAdmin";
 import { duongDanTin } from "@/lib/duongDanTin";
-import { EMAIL } from "@/lib/chuThongBao";
 
 // ════════════════════════════════════════════════════════════════════════════
 // TIN HẾT HẠN — "GỬI YÊU CẦU LIÊN HỆ" (như Batdongsan, 03/10/2026)
@@ -60,12 +59,12 @@ export async function POST(req: Request) {
 
   if (!chu || chu.role === "admin") {
     // Tin đăng hộ: người đăng là admin — báo ngay MỌI yêu cầu (email nội bộ, không tốn Zalo).
-    await baoAdmin(EMAIL.khachHoiTin(maTin), [
+    await baoAdmin(`Khách yêu cầu liên hệ — tin hết hạn ${maTin}`, [
       {
         tieuDe: tin.title,
         dong: [`Khách: ${ten}`, `Số điện thoại: ${sdt}`, `Lúc: ${luc}`],
         link: `https://coastalland.vn${duongDanTin(tin)}`,
-        nhanLink: EMAIL.xemTin,
+        nhanLink: "Xem tin",
       },
     ]);
     return NextResponse.json({ ok: true });

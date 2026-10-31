@@ -247,8 +247,8 @@ export default function ProjectsBrowser({
   // trang chủ) — chủ dự án 30/10/2026; dự án tra cứu xếp theo tên A, B, C (dongTraCuu)
   const xepVip = useMemo(() => sortProjectsByTier(projects), [projects]);
   const hits = searchAny(xepVip, q, {
-    // "TỪ" CỦA DỰ ÁN = TÊN DỰ ÁN + TÊN CHỦ ĐẦU TƯ (chủ dự án 01/11/2026) — chuỗi chính, khớp ở đây ăn điểm cao nhất
-    ten: (p) => `${p.name} ${p.developer}`,
+    // TÊN dự án = chuỗi chính (khớp ở đây ăn điểm cao nhất)
+    ten: (p) => `${p.name} ${p.type}`,
     // Vùng dò ĐẦY ĐỦ: thêm MÔ TẢ, quy mô và TIỆN ÍCH XUNG QUANH — trước đây chỉ
     // dò tên + chủ đầu tư + địa chỉ nên "view biển", "gần biển"… không bao giờ
     // khớp dù mô tả dự án có ghi rõ.

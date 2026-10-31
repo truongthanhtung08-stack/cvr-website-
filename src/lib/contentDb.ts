@@ -18,6 +18,7 @@ import { chuThuan } from "@/lib/chuThuan";
 import type { ArticleRow, ProjectRow } from "@/lib/contentAdmin";
 
 const ARTICLE_PLACEHOLDER = "/images/segments/canho1.jpg";
+const PROJECT_PLACEHOLDER = "/images/segments/canho2.jpg";
 
 // Nguồn thông tin hồ sơ dự án: chỉ ghi TÊN TRANG (vinpearl.com, melia.com…) — không in nguyên chuỗi ghi chú + đường dẫn dài (30/10/2026)
 function tenNguon(nguon: string): string {
@@ -148,7 +149,6 @@ function projectRowToProject(r: ProjectRow): Project {
     .filter((f) => f && f.image)
     .map((f) => ({ label: f.label ?? "", image: asset(f.image), note: f.note ?? "" }));
   const dev = d.developerInfo;
-  const traCuu = !!d.dangThe || (d.tier ?? "basic") === "basic" || !photos.length; // phân loại một chỗ (31/10/2026)
   return {
     slug: r.slug,
     name: r.name,
@@ -163,18 +163,15 @@ function projectRowToProject(r: ProjectRow): Project {
     // thay thế — trống thì trang dự án ẩn mục đó. Hồ sơ nổi bật giữ như cũ.
     // Tình trạng = ĐÚNG Admin ghi; trống thì web ghi "Đang cập nhật" — không tự gán "Đang mở bán" (chủ dự án 31/10/2026: một nguồn = Admin)
     status: r.status_text || "",
-    // Chưa có ảnh → "" (chủ dự án 31/10/2026: "chưa có ảnh thì để trống") — thẻ hiện khung xám + biểu tượng, KHÔNG ảnh mẫu
-    image: photos[0] ? asset(photos[0]) : "",
+    image: asset(photos[0] ?? PROJECT_PLACEHOLDER),
     developer: r.developer || "Đang cập nhật",
     scale: (r.scale ?? []).filter((s) => s && s.label && s.value),
     amenities: (r.amenities ?? []).filter(Boolean),
-    overview: overview.length ? overview : traCuu ? [] : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
+    overview: overview.length ? overview : d.dangThe ? [] : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
     ...(photos.length ? { photos: photos.map(asset) } : {}),
     ...(videos.length ? { videos } : {}),
     tier: d.tier ?? "basic",
-    // NỔI BẬT = dự án VIP anh nâng (Diamond / Gold / Silver) VÀ đã có ảnh; còn lại là TRA CỨU (chủ dự án 31/10/2026: "nổi bật theo VIP,
-    // tra cứu A–Z") — MỘT chỗ phân loại, mọi trang đọc theo. Trước đây hồ sơ tạo bằng form Admin tự thành nổi bật (thiếu dấu dangThe).
-    ...(traCuu ? { dangThe: true } : {}),
+    ...(d.dangThe ? { dangThe: true } : {}),
     // Chỉ trả contact khi admin ĐÃ nhập ít nhất SĐT hoặc email — không có thì
     // trang dự án bỏ hẳn khối liên hệ (không hiện số tổng đài bịa).
     ...(d.contact && (d.contact.phone?.trim() || d.contact.email?.trim())

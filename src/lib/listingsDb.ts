@@ -120,8 +120,21 @@ function tierHieuLuc(r: Row): Row["tier"] {
   return new Date(r.tier_expires_at).getTime() < Date.now() ? "basic" : r.tier;
 }
 
-// Tin chưa có ảnh → để TRỐNG (chủ dự án 31/10/2026: "cấm dùng ảnh dùng chung") — trước đây gán ảnh mẫu theo loại hình
-// (canho1, datnen1, villa1…) nên nhiều tin khác nhau hiện cùng một ảnh. Thẻ / trang tin tự hiện khung xám + biểu tượng (AnhChay).
+// Ảnh đại diện khi tin chưa có ảnh (admin đăng nhanh chưa kịp upload)
+const PLACEHOLDER_IMAGE = "/images/segments/canho1.jpg";
+
+// ẢNH TẠM THEO LOẠI HÌNH — tin gốc không có ảnh nào (rất hay gặp với tin gom
+// hàng loạt) vẫn lên web được, và ảnh minh hoạ ít nhất đúng phân khúc thay vì
+// luôn là ảnh căn hộ. Chủ dự án xin được ảnh thật rồi tải lại là ảnh thật thay chỗ.
+const ANH_TAM_THEO_LOAI: { khop: RegExp; anh: string }[] = [
+  { khop: /đất nền|đất nền dự án|đất thổ|đất ở/i, anh: "/images/segments/datnen1.jpg" },
+  { khop: /đất công nghiệp|đất nông nghiệp/i, anh: "/images/segments/datcn1.jpg" },
+  { khop: /kho|nhà xưởng|kho bãi/i, anh: "/images/segments/kho1.jpg" },
+  { khop: /villa|biệt thự/i, anh: "/images/segments/villa1.jpg" },
+  { khop: /condotel/i, anh: "/images/segments/condotel1.jpg" },
+  { khop: /nhà mặt phố|shophouse|nhà phố thương mại|mặt bằng|cửa hàng|văn phòng/i, anh: "/images/segments/nhapho1.jpg" },
+  { khop: /nhà riêng|nhà trọ|phòng trọ/i, anh: "/images/segments/nhapho2.jpg" },
+];
 
 // ẢNH (không video) theo thứ tự hiển thị. Tin admin ĐĂNG HỘ có details.anh_bia = ảnh hợp khung
 // 4:3 nhất trong 5 ảnh đầu (chủ dự án 09/10/2026) → đưa lên đầu. Tin khách tự đăng giữ ảnh khách chọn.
@@ -129,6 +142,11 @@ function anhTheoThuTu(r: Row): string[] {
   const ds = r.images.filter((s) => !isVideoUrl(s));
   const bia = (r.details as { anh_bia?: string } | null)?.anh_bia;
   return bia && ds.includes(bia) ? [bia, ...ds.filter((s) => s !== bia)] : ds;
+}
+
+function anhTam(loaiHinh: string | null): string {
+  const t = loaiHinh ?? "";
+  return ANH_TAM_THEO_LOAI.find((x) => x.khop.test(t))?.anh ?? PLACEHOLDER_IMAGE;
 }
 
 // Số kiểu VN: 7.2 → "7,2" · 1500 → "1.500"
@@ -221,13 +239,8 @@ function rowToListing(r: Row): Listing {
     // (luật 15/10: VIP song song kỳ Basic). Trang tin đọc hai mốc này → hiện "Hiệu lực = ngày nâng · Hết hạn = hết VIP".
     // Ở đây trả đúng hạn CỦA TIN (CLAUDE.md 0.1 ③④⑤): hết hạn = muộn hơn giữa hạn VIP và hạn Basic; hiệu lực = postedAt
     // bên dưới (ngày lên web gốc). Không đổi dữ liệu, không đổi luật.
-    // KHÁCH CHỌN GÓI THƯỜNG (details.plan.khuyenMai === false — không theo chương trình): nâng gói = đăng gói mới, MỘT hạn = hạn gói
-    // đang chạy (chủ dự án 01/11/2026: "khách muốn gì chọn cái đó, up = nâng gói, khách chọn chương trình thì áp đúng chương trình").
-    // Tin theo chương trình giữ hạn kỳ chương trình như cũ.
-    hetHanLuc: (r.details as { plan?: { khuyenMai?: boolean } } | null)?.plan?.khuyenMai === false
-      ? r.tier_expires_at ?? null
-      : ((a?: string | null, b?: string | null) => (a && b ? (Date.parse(b) > Date.parse(a) ? b : a) : (a ?? b ?? null)))(
-        r.tier_expires_at, typeof r.details?.han_basic === "string" ? r.details.han_basic : null),
+    hetHanLuc: ((a?: string | null, b?: string | null) => (a && b ? (Date.parse(b) > Date.parse(a) ? b : a) : (a ?? b ?? null)))(
+      r.tier_expires_at, typeof r.details?.han_basic === "string" ? r.details.han_basic : null),
     hangTin: tierHieuLuc(r),
     areaM2: r.area_m2 ?? null,
     builtAreaM2: r.built_area_m2 ?? null,
@@ -288,7 +301,7 @@ function rowToListing(r: Row): Listing {
     diaGioi: { ward: r.ward ?? "", district: r.district ?? "", province: r.province ?? "" },
     type: r.type,
     // Ảnh đại diện = ẢNH đầu tiên (bỏ qua video nếu đứng trước)
-    image: anhTheoThuTu(r)[0] ? asset(anhTheoThuTu(r)[0]) : "",
+    image: asset(anhTheoThuTu(r)[0] ?? anhTam(r.type)),
     // Số ẢNH thật (không tính video) → badge "📷 n" đúng thay vì cứng "1"
     imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
     // Có ít nhất 1 video → thẻ hiện nhãn "▶ Video"
@@ -361,18 +374,9 @@ async function napSoNgayCt(): Promise<void> {
   } catch { /* giữ số cũ */ }
 }
 function ngayLenWebTinNang(r: Row): string {
-  // Mốc lên web cũ ghi lúc nâng VIP (ListingForm, 31/10/2026) — có thì dùng thẳng, không suy ra
-  const ghi = (r.details as { len_web_luc?: string } | null)?.len_web_luc;
-  if (typeof ghi === "string") return ghi;
-  // Tin nâng trước khi có khoá trên: hạn Basic − số ngày gói Basic của CHÍNH tin (details.plan.days)
-  const hb = r.details?.han_basic, soNgay = (r.details as { plan?: { days?: number } } | null)?.plan?.days;
-  if (typeof hb === "string" && typeof soNgay === "number" && soNgay > 0) return new Date(Date.parse(hb) - soNgay * 86_400_000).toISOString();
   const het = [r.tier_expires_at, typeof r.details?.han_basic === "string" ? r.details.han_basic : null]
     .filter((x): x is string => !!x).sort((a, b) => Date.parse(a) - Date.parse(b)).pop();
-  const suyRa = het && SO_NGAY_CT ? new Date(Date.parse(het) - SO_NGAY_CT * 86_400_000).toISOString() : r.created_at;
-  // Suy theo số ngày chương trình miễn phí chỉ đúng với tin miễn phí; tin khách trả gói khác ngày → ra ngày TRƯỚC cả lúc khách
-  // tạo tin (9A5DA44A: tạo 31/10, hiện 11/10). Không bao giờ sớm hơn created_at.
-  return Date.parse(suyRa) < Date.parse(r.created_at) ? r.created_at : suyRa;
+  return het && SO_NGAY_CT ? new Date(Date.parse(het) - SO_NGAY_CT * 86_400_000).toISOString() : r.created_at;
 }
 
 async function rest(query: string): Promise<Row[] | null> {
@@ -572,7 +576,7 @@ function rowToDetail(r: Row): ListingFull {
   // YouTube/Vimeo thì asset() giữ nguyên.
   const videos = r.images.filter(isVideoUrl).map(asset);
   const imageOnly = anhTheoThuTu(r);
-  const imgs = imageOnly; // chưa có ảnh → [] (không ảnh mẫu, 31/10/2026)
+  const imgs = imageOnly.length ? imageOnly : [anhTam(r.type)];
   // Bộ mục theo LOẠI HÌNH, tách sẵn THÔNG TIN CHÍNH và ĐẶC ĐIỂM. Tin cho thuê
   // có thêm phần điện/nước/thời gian vào ở. Mục nào người đăng để trống thì lọc
   // bỏ luôn — trang tin không bao giờ hiện ô rỗng.
@@ -581,7 +585,7 @@ function rowToDetail(r: Row): ListingFull {
       // Nhãn gọn, đơn vị ghép vào số ("Mặt tiền (chiều ngang): 4,16 m") — trước ghi kiểu ô nhập liệu "Mặt tiền (chiều ngang) (m): 4,16" (20/10/2026)
       .map((f) => {
         // Loại con hiện theo TÊN CHUẨN (chuanLoaiCon — cùng danh sách form khách, admin, nạp hàng loạt; 29/10/2026)
-        const v = O_LOAI_CON.includes(f.key) ? chuanLoaiCon(gon(d.specs?.[f.key])) : gon(d.specs?.[f.key]);
+        const v = f.key === "landType" || f.key === "loaiCanho" ? chuanLoaiCon(gon(d.specs?.[f.key])) : gon(d.specs?.[f.key]);
         // Trang tin ghi nhãn gọn "Mặt tiền", "Chiều dài" (chủ dự án 21/10/2026); form đăng tin giữ chú thích trong ngoặc
         return { label: f.label.replace(/\s*\((chiều ngang|chiều sâu)\)$/, ""), value: v && f.unit && /^[\d.,\s]+$/.test(v) ? `${v} ${f.unit}` : v };
       })
