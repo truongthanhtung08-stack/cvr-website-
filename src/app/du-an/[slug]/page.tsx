@@ -236,6 +236,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // ĐỊA CHỈ ĐẦY ĐỦ: hồ sơ ghi địa chỉ chi tiết ở dòng "Địa chỉ" của bảng thông số (vd "Giao lộ Nguyễn Đình Thi với 29/3, phường Hòa Xuân,
   // Đà Nẵng") mà ô số nhà/đường trống → dùng dòng đó: hiện dưới tên dự án + định vị bản đồ đúng chỗ (chủ dự án 30/10/2026)
   const diaChiHoSo = p.scale.find((s) => laDiaChi(s.label))?.value?.trim();
+  const coDiaChi = !!giaTriThat(p.location) && giaTriThat(p.location) !== "Đang cập nhật";
   const diaChiDu = diaChiHoSo && diaChiHoSo.length > giaTriThat(p.location).length ? diaChiHoSo : giaTriThat(p.location) || "Đang cập nhật";
   const mapQuery = p.mapPin ?? `${giaTriThat(diaChiDu) || province}, Việt Nam`;
 
@@ -322,7 +323,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const coMucTongQuan = traCuu ? p.overview.length > 0 || !!p.capNhat : hangThongSo.length > 0;
   const nav = [
     ...(coMucTongQuan ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
-    ...(!traCuu || p.mapPin ? [{ id: "vi-tri", label: "Vị trí" }] : []),
+    ...(!traCuu || p.mapPin || coDiaChi ? [{ id: "vi-tri", label: "Vị trí" }] : []),
     ...(p.amenities.length ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
     ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
@@ -512,8 +513,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
-              {/* Tra cứu: trang chỉ ảnh · tên · thông tin cơ bản; bản đồ chỉ khi Admin ghim toạ độ (chủ dự án 31/10/2026) */}
-              {(!traCuu || !!p.mapPin) && (
+              {/* Tra cứu: bản đồ TỰ TRỎ theo địa chỉ hồ sơ (chủ dự án 31/10/2026 tối: "địa chỉ nhập vào bản đồ tự trỏ đến theo cấu trúc",
+                  không cần toạ độ); chưa có địa chỉ thì ẩn */}
+              {(!traCuu || !!p.mapPin || coDiaChi) && (
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
                 <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:h-[320px]" />
               </Section>
