@@ -16,7 +16,7 @@ import { chuanHoaDiaChiCu } from "@/lib/diaChiHaiHe";
 import { slugify } from "@/lib/contentAdmin";
 // Bộ đặc điểm theo loại hình — để ghi số tầng / mặt tiền / đường vào đúng ô của
 // từng loại bất động sản, y như khi đăng tay bằng form.
-import { fieldsFor, coDonGiaM2, mauSoCuaLoaiHinh, chuanLoaiCon, loaiConTheoLoiKhach } from "@/lib/listingSpec";
+import { fieldsFor, coDonGiaM2, mauSoCuaLoaiHinh, chuanLoaiCon, loaiConTheoLoiKhach, oLoaiCon } from "@/lib/listingSpec";
 // SỐ ĐIỆN THOẠI — cùng một hàm với ô nhập trong admin và số hiện trên trang tin,
 // nên file của Cowork, cơ sở dữ liệu và web luôn ghi giống hệt nhau (0 + 10 số).
 import { chuanHoaSdt, laSdtVN, tachNhieuSdt } from "@/lib/phone";
@@ -615,8 +615,14 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   datSpec(lay(COT.chieuDai), COT.chieuDai, "depth");
   datSpec(lay(COT.namXayDung), COT.namXayDung, "builtYear");
   datSpec(lay(COT.tangSo), COT.tangSo, "floor");
-  datSpec(loaiConDung(COT.loaiCanHo, "loaiCanho"), COT.loaiCanHo, "loaiCanho");
-  datSpec(loaiConDung(COT.loaiDat, "landType"), COT.loaiDat, "landType");
+  // Loại con ghi vào ĐÚNG ô loại con của loại hình (oLoaiCon); Cowork ghi ở cột loai_can_ho hay loai_dat đều nhận (31/10/2026)
+  {
+    const o = oLoaiCon(loaiHinhChuan, mucDich);
+    const [dau, sau] = o?.key === "landType" ? [COT.loaiDat, COT.loaiCanHo] : [COT.loaiCanHo, COT.loaiDat];
+    const cot = lay(dau).trim() ? dau : sau;
+    if (o) datSpec(loaiConDung(cot, o.key), cot, o.key);
+    else datSpec(lay(cot), cot, "loaiCanho");
+  }
   datSpec(lay(COT.loiVao), COT.loiVao, "access");
   // Kho · nhà xưởng · bãi — bộ đặc điểm riêng, phần lớn là tin CHO THUÊ.
   datSpec(lay(COT.dienTichSuDung), COT.dienTichSuDung, "usableArea");

@@ -681,6 +681,12 @@ export function loaiConTheoLoiKhach(khoa: string, dangGhi: string, loiKhach: str
 // Các ô LOẠI CON (mục đầu Đặc điểm) — trang tin dựa vào đây để hiện dòng loại cụ thể dưới "Loại hình" (nhóm cha)
 export const O_LOAI_CON = ["loaiCanho", "landType", "loaiNha", "loaiNghiDuong", "loaiPhong", "loaiVanPhong", "khoLoai"];
 
+// Ô loại con CỦA loại hình này (mỗi loại hình đúng một ô — cây cha – con 30/10/2026). Nạp hàng loạt ghi loại con vào ô này, không
+// cứng hai ô căn hộ / đất (lỗi 31/10/2026: loại con Condotel, nhà, villa, homestay, văn phòng, phòng trọ bị bỏ khi nạp).
+export function oLoaiCon(type: string, purpose?: string): Field | undefined {
+  return fieldsFor(type, purpose).find((f) => O_LOAI_CON.includes(f.key));
+}
+
 export function specForType(type: string): CategorySpec {
   const t = type.toLowerCase();
   return categorySpecs.find((c) => c.match.some((m) => t.includes(m))) ?? genericSpec;

@@ -585,7 +585,7 @@ function rowToDetail(r: Row): ListingFull {
       // Nhãn gọn, đơn vị ghép vào số ("Mặt tiền (chiều ngang): 4,16 m") — trước ghi kiểu ô nhập liệu "Mặt tiền (chiều ngang) (m): 4,16" (20/10/2026)
       .map((f) => {
         // Loại con hiện theo TÊN CHUẨN (chuanLoaiCon — cùng danh sách form khách, admin, nạp hàng loạt; 29/10/2026)
-        const v = f.key === "landType" || f.key === "loaiCanho" ? chuanLoaiCon(gon(d.specs?.[f.key])) : gon(d.specs?.[f.key]);
+        const v = O_LOAI_CON.includes(f.key) ? chuanLoaiCon(gon(d.specs?.[f.key])) : gon(d.specs?.[f.key]);
         // Trang tin ghi nhãn gọn "Mặt tiền", "Chiều dài" (chủ dự án 21/10/2026); form đăng tin giữ chú thích trong ngoặc
         return { label: f.label.replace(/\s*\((chiều ngang|chiều sâu)\)$/, ""), value: v && f.unit && /^[\d.,\s]+$/.test(v) ? `${v} ${f.unit}` : v };
       })
