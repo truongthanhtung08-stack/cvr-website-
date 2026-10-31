@@ -25,12 +25,11 @@ import { provinceOf, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
-import { duAnThuocNhom, findCategory, projectCategories, rentCategories, saleCategories, type Category } from "@/lib/categories";
-import { lienKetCho } from "@/lib/pseo";
+import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn, sortListings } from "@/lib/filters";
 import { xepThongSo } from "@/lib/thongSoDuAn";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
-import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
+import { giaTriThat } from "@/lib/truongDuAn";
 import TabTimKiemPhoBien from "@/components/TabTimKiemPhoBien";
 import { demTinTheoKhuVuc, khuVucList, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { catMoTa, tieuDeGoogle } from "@/lib/thang";
@@ -302,36 +301,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const hasRelated = projectListings.length > 0;
 
   const tinhDuAn = timKhuVuc(slugKhuVuc(province));
-  // pSEO — MỘT HỆ THỐNG, MỘT KHỐI LIÊN KẾT (chủ dự án 31/10/2026): khối "Tìm kiếm phổ biến" của web (tab + lưới link, máy chủ vẽ sẵn) gom
-  // ① tin của dự án + trang mua bán / cho thuê cùng loại, cùng tỉnh ② hệ trang dự án: Dự án tại <tỉnh> · loại hình · chủ đầu tư · dự án cùng tỉnh.
-  // Chỉ trang đang có tin / dự án (đã qua cổng chất lượng).
+  // pSEO — khối "Tìm kiếm phổ biến" ở trang dự án CHỈ theo trường của dự án (chủ dự án 31/10/2026, D30: "dự án chỉ theo khu vực, loại hình
+  // + các trường khác"): Dự án tại <tỉnh> · Theo loại hình · Theo chủ đầu tư — link về trang danh sách dự án đã có. Không tab Mua bán / Cho thuê,
+  // không từ khoá ghép tin (tin của dự án đã có khối riêng #tin-du-an). Chỉ trang đang có dự án (đã qua cổng chất lượng).
   const cacDuAnTinh = dongTraCuu(listings, tatCaDuAn).filter((d) => d.tinh === province && !cungDuAn(d.slug, p.slug))
     .sort((x, y) => y.ban + y.thue - (x.ban + x.thue));
   const loaiCuaDuAn = projectCategories.filter((c) => duAnThuocNhom([p], c).length > 0).map((c) => c.slug);
-  // ① Tin của dự án + trang mua bán / cho thuê cùng loại hình, cùng tỉnh (phường của dự án trước) — từ khoá [mục đích] [loại] [dự án] [nơi]
-  const loaiNhieuNhat = (ds: typeof listings) => {
-    const dem = new Map<string, number>();
-    for (const l of ds) if (l.type) dem.set(l.type, (dem.get(l.type) ?? 0) + 1);
-    return [...dem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
-  };
-  const phuongDA = normalizeVi(diaChiDu.split(",").find((x) => /phường|xã/i.test(x)) ?? "").trim();
-  const tabTin = !tinhDuAn ? [] : ([["ban", "Mua bán", "Bán", relBan], ["thue", "Cho thuê", "Cho thuê", relThue]] as const).map(([muc, ten, chu, tin]) => {
-    const loai = loaiNhieuNhat([...tin]) || (muc === "ban" ? giaTriThat(p.type) : "");
-    const dsCat = muc === "thue" ? rentCategories : saleCategories;
-    const cat = loai ? dsCat.find((c) => c.types.includes(loai)) ?? dsCat.find((c) => c.types.some((t) => normalizeVi(loai).includes(normalizeVi(t)))) : undefined;
-    const tenLoai = loai ? loaiHinhThe(loai.split(" / ")[0]).toLocaleLowerCase("vi") : "";
-    const tenDA = normalizeVi(p.name).includes(normalizeVi(province)) ? p.name : `${p.name} ${province}`;
-    const goc = cat ? lienKetCho({ muc, tinh: tinhDuAn }, listings).filter((g) => g.tieuDe === "Theo loại hình").flatMap((g) => g.links)
-      .filter((l) => l.href.split("/")[2] === cat.slug) : [];
-    const tuKhoa = cat ? lienKetCho({ muc, tinh: tinhDuAn, cat }, listings).filter((g) => g.tieuDe === "Tìm kiếm theo từ khoá").flatMap((g) => g.links)
-      .sort((a, b) => Number(!!phuongDA && normalizeVi(b.day ?? b.nhan).includes(phuongDA)) - Number(!!phuongDA && normalizeVi(a.day ?? a.nhan).includes(phuongDA))) : [];
-    return { ten, links: [
-      ...(tin.length ? [{ href: "#tin-du-an", nhan: [chu, tenLoai && !normalizeVi(p.name).includes(normalizeVi(tenLoai)) ? tenLoai : "", tenDA].filter(Boolean).join(" ") }] : []),
-      ...[...goc, ...tuKhoa].map((l) => ({ href: l.href, nhan: l.day ?? l.nhan })),
-    ].slice(0, 12) };
-  });
   const tabTuKhoa = [
-    ...tabTin,
     { ten: `Dự án tại ${province}`, links: [
       ...(tinhDuAn ? [{ href: `/du-an/${tinhDuAn.slug}`, nhan: `Dự án tại ${province}` }] : []),
       ...cacDuAnTinh.slice(0, 23).map((d) => ({ href: `/du-an/${d.slug}`, nhan: d.ten })),
