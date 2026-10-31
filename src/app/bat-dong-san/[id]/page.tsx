@@ -1,7 +1,7 @@
 import AvatarMacDinh, { tenKhongCoChu } from "@/components/AvatarMacDinh";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
@@ -29,7 +29,8 @@ import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { giuCum } from "@/lib/chuThuong";
-import { getListing, getListings, getListingsHetHan, getListingDetail, tinDaHetHan } from "@/lib/listingsDb";
+import { getListing, getListings, getListingsHetHan, getListingDetail, tinDaHetHan, idTuDuongDan } from "@/lib/listingsDb";
+import { duongDanTin } from "@/lib/duongDanTin";
 import { banGocCua, lienKetCho, tinDatChuan, tinhCuaTin, phuongCuaTin, duongDanPhanCap, THANH_PHO } from "@/lib/pseo";
 import { rentCategories, saleCategories } from "@/lib/categories";
 import { khuVucList } from "@/lib/khuVuc";
@@ -160,6 +161,17 @@ function tieuDeSeo(tieuDe: string, location: string, price: string, area = ""): 
     const cat = t.slice(0, Math.max(choConLai, 24));
     const khoang = cat.lastIndexOf(" ");
     t = (khoang > 14 ? cat.slice(0, khoang) : cat).replace(/[\s,\-–—:;.]+$/, "");
+    // Không cắt giữa một tên riêng nhiều chữ ("PH Nha | Trang" → mất "Trang"): chữ cuối còn giữ và chữ kế tiếp
+    // đều viết hoa → giữ trọn tên nếu chỉ dài hơn chút (≤ 10 ký tự); dài hơn thì giữ cách cắt cũ.
+    const goc = lamSachTieuDe(tieuDe).split(/\s+/);
+    const giu = t.split(/\s+/).length;
+    const hoa = (w?: string) => !!w && /^\p{Lu}/u.test(w);
+    if (hoa(goc[giu - 1]) && hoa(goc[giu])) {
+      let het = giu;
+      while (hoa(goc[het]) && !/[,;:.]$/.test(goc[het - 1])) het++;
+      const dai = goc.slice(0, het).join(" ").replace(/[\s,\-–—:;.]+$/, "");
+      if (dai.length <= choConLai + 10) t = dai;
+    }
     // Cắt trúng giữa cụm giá ("… giá 3.6") thì bỏ hẳn cụm đó — giá đầy đủ đã nằm ở đuôi.
     t = t.replace(/\s+(giá|gia|chỉ|chi)(\s+[\d.,]+)?$/i, "").replace(/[\s,\-–—:;.]+$/, "");
   }
@@ -167,8 +179,8 @@ function tieuDeSeo(tieuDe: string, location: string, price: string, area = ""): 
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const l = await getListing(id); // B2: đọc Supabase, fallback dữ liệu mẫu
+  const id = await idTuDuongDan((await params).id); // đường dẫn chữ mô tả + mã ngắn (src/lib/duongDanTin.ts)
+  const l = id ? await getListing(id) : null; // B2: đọc Supabase, fallback dữ liệu mẫu
   if (!l) return { title: "Không tìm thấy", robots: { index: false, follow: true } };
   // Mô tả cũng dùng bản đã làm sạch — cùng lý do với thẻ <title> ở trên.
   // Google hiển thị khoảng 155 ký tự; bản cũ dài 331 nên câu chốt "Hình thật, liên
@@ -189,14 +201,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title: tieuDeGoogle(tieuDe),
     description: desc,
-    alternates: { canonical: `/bat-dong-san/${banGoc?.id ?? id}` },
+    alternates: { canonical: duongDanTin(banGoc ?? l) },
     // CHƯA ĐẠT CHUẨN THÌ KHÔNG CHO GOOGLE LẬP CHỈ MỤC (chủ dự án 15/10/2026: "không đủ chất lượng
     // không hiển thị"): dưới 3 ảnh thật hoặc mô tả quá sơ sài. Khách vẫn xem tin bình thường.
     ...(tinDatChuan(l) ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
       title: tieuDe,
       description: desc,
-      url: `/bat-dong-san/${id}`,
+      url: duongDanTin(l),
       type: "website",
       ...(l.image ? { images: [{ url: l.image, alt: l.title }] } : {}),
     },
@@ -209,9 +221,14 @@ function chuaToiNgay(iso: string): boolean {
 }
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const doan = (await params).id;
+  const id = await idTuDuongDan(doan);
+  if (!id) notFound();
   const [dGoc, hetHan] = await Promise.all([getListingDetail(id), tinDaHetHan(id)]); // DỮ LIỆU THẬT: ảnh, đặc điểm, tiện ích, người đăng
   if (!dGoc) notFound();
+  // Đường cũ (mã đầy đủ) hoặc tiêu đề đã đổi → chuyển hướng vĩnh viễn sang đường chuẩn (Google coi như 301)
+  const duongChuan = duongDanTin(dGoc.listing);
+  if (`/bat-dong-san/${decodeURIComponent(doan)}` !== duongChuan) permanentRedirect(duongChuan);
   // Tin HẸN NGÀY ĐĂNG chưa tới ngày ("Chờ hiển thị") — chưa công khai.
   if (dGoc.listing.postedAt && chuaToiNgay(dGoc.listing.postedAt)) notFound();
   // TIN HẾT HẠN: liên hệ tạm ẩn — kể cả số người đăng TỰ GHI trong mô tả ("Liên hệ 0905…").
@@ -274,7 +291,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     name: tieuDe1Dong,
     description: `${tieuDe1Dong} tại ${l.location}. Diện tích ${l.area}, giá ${l.price}.`,
     // URL tuyệt đối + ngày đăng: Google nối đúng schema với trang + có tín hiệu độ tươi.
-    url: `https://coastalland.vn/bat-dong-san/${l.id}`,
+    url: `https://coastalland.vn${duongDanTin(l)}`,
     image: d.images,
     ...(l.postedAt ? { datePosted: l.postedAt } : {}),
     address: {
@@ -392,7 +409,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Đường dẫn cấp: CHỈ dữ liệu cho Google (JSON-LD), không hiện dòng chữ trên trang — chủ dự án 18/10/2026 */}
-      <BreadcrumbJsonLd items={[...duongDanCap, { name: tieuDe1Dong, href: `/bat-dong-san/${l.id}` }]} />
+      <BreadcrumbJsonLd items={[...duongDanCap, { name: tieuDe1Dong, href: duongDanTin(l) }]} />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
         <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">

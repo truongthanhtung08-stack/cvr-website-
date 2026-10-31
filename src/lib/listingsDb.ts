@@ -22,6 +22,7 @@ import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
 import { chuoiDiaChiBanDo } from "@/lib/diaChiBanDo";
 import { moTaThe } from "@/lib/trichMoTa";
+import { tachMaTin } from "@/lib/duongDanTin";
 
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
@@ -484,6 +485,16 @@ export async function getListingsThe(): Promise<Listing[]> {
     const ngan = moTaThe(l);
     return ngan ? { ...the, desc: ngan } : the;
   });
+}
+
+// Đường dẫn trang tin (src/lib/duongDanTin.ts) → mã tin đầy đủ. Mã ngắn 8 ký tự tra theo khoảng mã
+// (mã tin là UUID); trùng hai tin (gần như không xảy ra) → không đoán, trả null.
+export async function idTuDuongDan(doan: string): Promise<string | null> {
+  const t = tachMaTin(doan);
+  if (!t) return null;
+  if ("id" in t) return t.id;
+  const rows = await rest(`select=id&id=gte.${t.ma}-0000-0000-0000-000000000000&id=lte.${t.ma}-ffff-ffff-ffff-ffffffffffff&limit=2`);
+  return rows?.length === 1 ? rows[0].id : null;
 }
 
 // Một tin theo id (trang chi tiết) — fallback tìm trong dữ liệu mẫu

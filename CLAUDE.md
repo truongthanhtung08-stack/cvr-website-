@@ -5,6 +5,20 @@
 
 ---
 
+## ⛔⛔⛔ VIỆC PHẢI LÀM TRƯỚC — mọi phiên, trước mọi câu trả lời và mọi thao tác (chủ dự án yêu cầu 31/10/2026)
+
+1. **Kiểm môi trường trước khi làm:** Chrome của anh đã kết nối chưa · Search Console vào được chưa · git (commit chờ Push, nhánh) · web thật · máy xem thử. Thiếu cái nào → báo ngay, không làm bằng công cụ khác rồi kết luận.
+2. **Làm trên CHROME CỦA ANH** (đã đăng nhập sẵn Search Console, Google). Không dùng trình duyệt trong app.
+3. **KIỂM TRA WEB LÀ BẮT BUỘC:** mở trang thật trên Chrome, xem bằng mắt trước khi nói số tin, trang rỗng/đủ, nội dung, hết hạn; trước khi xin index.
+4. **Kiểm chứng bằng công cụ Google:** Search Console (URL Inspection, Page indexing, Sitemap, Hiệu suất, Liên kết), tra Google. Mã / curl / máy đo chỉ để lọc danh sách, không phải bằng chứng.
+5. **Không kiểm chứng thì không nói.** Cấm "khoảng", "có thể", "sắp". Câu đã nói mà sai → ghi đính chính vào `D:\Coastal Land\SEO\Plan SEO - pSEO\chi-tiet\nhat-ky.md`.
+6. **Gọi đúng 3 mảng: Mua bán · Cho thuê · Dự án.** Tin đăng chi tiết thuộc Mua bán hoặc Cho thuê; trang lọc = trang danh sách.
+7. **Xin index là việc HẰNG NGÀY của điều phối.** Trước khi index: kiểm web · Search Console · kế hoạch SEO, pSEO · URL Inspection · đối chiếu Page indexing để phát hiện lỗi. Index theo chuẩn Google, trong giới hạn Google cho phép, hàng loạt theo pSEO, **làm hết một lần, không lắc nhắc**; chỉ index khi web đủ điều kiện. **Thứ tự: tin thuộc Mua bán, Cho thuê trước** (tin đăng chi tiết + trang danh sách), xong mới đến Dự án, Tin tức. Sổ: `THEO-DOI-INDEX.md`.
+7b. **Đường dẫn chuẩn Google trước khi index** (Google "Sử dụng URL mang tính mô tả"; anh chốt 31/10): tin đăng chi tiết = chữ mô tả + mã ngắn, vd `/bat-dong-san/ban-can-ho-2pn-ph-nha-trang-view-bien-59140f1a`; đường dẫn cũ (mã số) chuyển hướng 301 sang mới; sitemap + canonical + mọi link trong web dùng đường mới; xong mới xin index. Cấm xin index đường dẫn chỉ có mã số.
+8. **Trong khi làm ghi nhật ký** (`chi-tiet\nhat-ky.md`): việc đã làm · lỗi phát hiện · nguyên nhân · lý do · giải pháp · cần bổ sung gì. Làm xong mới báo anh, một lần. Không giải thích vòng vo, không nói "đã ghi nhận" rồi làm sai.
+
+---
+
 ## 0. NGUYÊN TẮC LÀM VIỆC (áp dụng cho mọi task — theo Andrej Karpathy)
 
 > Bốn nguyên tắc cốt lõi: **suy nghĩ trước khi code, đơn giản trước, sửa tối thiểu, có mục tiêu đo được.**
