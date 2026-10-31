@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import LichChonNgay from "@/components/LichChonNgay";
 import LoginForm from "@/components/LoginForm";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
+import { LienKetQuyDinh } from "@/components/NangGoiTin";
 import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
 import MucAnHien, { goiYDanhSach } from "@/components/MucAnHien";
 import ChonCoTim from "@/components/ChonCoTim";
@@ -38,7 +39,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, chuongTrinhTvMoi, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, quotePrice, soAnhToiDa, soVideoToiDa, vnd, loaiVoucherTin } from "@/lib/billing";
+import { bangTheoMucDich, chuNangGoi, chuongTrinhTvMoi, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, quotePrice, soAnhToiDa, soVideoToiDa, vnd, loaiVoucherTin } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -1831,6 +1832,8 @@ export default function PostListingForm() {
                 </button>
               }
             />
+            {/* Dòng liên kết quy định (chủ dự án 01/11/2026) — chữ từ Admin; mở tab mới, không rời form */}
+            {(billing.nangGoi?.chu || process.env.NODE_ENV !== "production") && <LienKetQuyDinh chu={chuNangGoi(billing).lienKetQuyDinh} className="mt-2" />}
             {/* TIN HIỂN THỊ (chủ dự án 23/10/2026: "phần dưới báo giá chỉ đưa mục Tin hiển thị vào thôi"; "làm cái bảng xem — bấm vào xem,
                 bấm X tắt"; "để nút này ở đâu cho hợp lý"): chữ bấm cùng hàng dòng VAT, ngay dưới bảng giá (canhVat), bấm mở BẢNG NỔI thẻ tin mẫu (tới đúng gói đang chọn). Đóng: X · chạm ra ngoài · nút
                 Quay lại điện thoại (useKhoaCuon ở trên). */}

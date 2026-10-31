@@ -29,6 +29,10 @@ export default function BangGiaGoiTin({
   onXemBangQuyenLoi,
   kieuBaoGia,
   canhVat,
+  khoaCap,
+  giaKhach,
+  anQuyDinh,
+  capDangChay,
 }: {
   plans: Plan[];
   chon?: { tier: TierId | ""; days: number };
@@ -43,6 +47,14 @@ export default function BangGiaGoiTin({
   kieuBaoGia?: boolean;
   /** Cùng hàng, bên phải dòng "Giá đã gồm VAT" (bước chọn gói khi đăng tin: chữ bấm "Tin hiển thị"). */
   canhVat?: React.ReactNode;
+  /** NÂNG GÓI (01/11/2026): cấp đang chạy + cấp thấp hơn — hiện mờ, không chọn được. */
+  khoaCap?: TierId[];
+  /** NÂNG GÓI: số khách trả cuối cùng (đã gồm VAT) của ô — thay giá gói; null = giữ giá gói. */
+  giaKhach?: (tier: TierId, days: number) => number | null;
+  /** Màn đã có dòng liên kết quy định riêng (Nâng gói) → không lặp chữ "Quy định gói tin" dưới bảng. */
+  anQuyDinh?: boolean;
+  /** NÂNG GÓI: cấp tin khách đang chạy — đánh dấu dưới tên cột (bảng ma trận). */
+  capDangChay?: TierId;
 }) {
   const [moQuyDinh, setMoQuyDinh] = useState(false);
   // Cấp tin đang mở xem mốc ngày (điện thoại). Mặc định = cấp đang có gói chọn.
@@ -58,6 +70,8 @@ export default function BangGiaGoiTin({
   // GIÁ LUÔN LÀ SỐ KHÁCH TRẢ (đã gồm VAT) — bỏ nút gạt VAT và số −% dưới giá ở mọi nơi (chủ dự án 22/10/2026 tối: "con số
   // dưới −% có tác dụng gì"; báo giá rối) → một dòng "Giá đã gồm 8% VAT" dưới bảng.
   const hienGia = (gia: number) => tachThue(gia).tongTra;
+  const giaO = (tier: TierId, days: number, gia: number) => giaKhach?.(tier, days) ?? hienGia(gia);
+  const khoa = (tier: TierId) => !!khoaCap?.includes(tier);
   // MỨC GIẢM % THEO SỐ NGÀY (chủ dự án 22/10/2026 tối: "bảng giá theo ngày có mức giảm % phải để vào"): so đơn giá/ngày của mốc
   // với đơn giá/ngày của mốc NGẮN NHẤT có phí cùng loại tin. Không giảm (hoặc mốc ngắn nhất) thì không hiện.
   const giamPhanTram = (p: Plan, days: number, price: number): number => {
@@ -97,8 +111,9 @@ export default function BangGiaGoiTin({
                   <button
                     type="button"
                     aria-expanded={dang}
+                    disabled={khoa(p.tierId)}
                     onClick={() => setCapXem(dang ? "" : p.tierId)}
-                    className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left"
+                    className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left disabled:cursor-default disabled:opacity-40"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <NhanGoi id={p.tierId} heSo={false} />
@@ -126,7 +141,7 @@ export default function BangGiaGoiTin({
                             className={`min-w-0 rounded-xl border px-1 py-2 text-center transition disabled:cursor-default ${dangChon ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : "border-cvr-line bg-white"}`}
                           >
                             <span className="block text-[12px] text-cvr-body">{term.days} ngày</span>
-                            <span className="mt-0.5 block whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
+                            <span className="mt-0.5 block whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(giaO(p.tierId, term.days, term.price)) : "0 ₫"}</span>
                             {giamPhanTram(p, term.days, term.price) > 0 && <span className="mt-0.5 block">{nhanGiam(giamPhanTram(p, term.days, term.price))}</span>}
                           </button>
                         );
@@ -148,6 +163,7 @@ export default function BangGiaGoiTin({
                   <th key={p.tierId} className="border-b border-l border-cvr-line px-2 py-3.5 text-center sm:px-3">
                     {/* Tên gói + hệ số X dưới tên (chủ dự án 10/10 + 22/10/2026) — một kiểu cho cả web (NhanGoi) */}
                     <NhanGoi id={p.tierId} />
+                    {capDangChay === p.tierId && <span className="mt-1 block text-[11px] font-semibold text-cvr-blue-ink">Gói đang chạy</span>}
                     {!onChon && !kieuBaoGia && (
                     <button type="button" onClick={() => setXemDacDiem(p.tierId)} className="mt-0.5 text-[11px] font-semibold text-cvr-blue-ink underline-offset-2 hover:underline">
                       Đặc điểm
@@ -171,13 +187,13 @@ export default function BangGiaGoiTin({
                   // Hệ số tiếp cận X luôn hiện dưới mỗi mức giá (chủ dự án 09/10/2026)
                   const noiDung = (
                     <span className="flex flex-col items-center gap-0.5">
-                      <span className="font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
+                      <span className="font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(giaO(p.tierId, ngay, term.price)) : "0 ₫"}</span>
                       {nhanGiam(giamPhanTram(p, ngay, term.price))}
                     </span>
                   );
                   return (
                     <td key={p.tierId} className="border-l border-cvr-line/70 p-1.5 text-center">
-                      {onChon ? (
+                      {onChon && !khoa(p.tierId) ? (
                         <button
                           type="button"
                           onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, ngay))}
@@ -192,7 +208,7 @@ export default function BangGiaGoiTin({
                           </span>
                         </button>
                       ) : (
-                        <div className="px-2 py-2.5">{noiDung}</div>
+                        <div className={`px-2 py-2.5 ${khoa(p.tierId) ? "opacity-40" : ""}`}>{noiDung}</div>
                       )}
                     </td>
                   );
@@ -247,7 +263,7 @@ export default function BangGiaGoiTin({
       <div className="mt-3 flex items-center justify-between gap-3">
       <p className="text-[12.5px] text-cvr-muted">
         Giá đã gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
-        {QUY_DINH.length > 0 && !kieuBaoGia && (
+        {QUY_DINH.length > 0 && !kieuBaoGia && !anQuyDinh && (
           <>
             {" · "}
             <button type="button" onClick={() => setMoQuyDinh(!moQuyDinh)} aria-expanded={moQuyDinh} className="font-semibold text-cvr-blue-ink">

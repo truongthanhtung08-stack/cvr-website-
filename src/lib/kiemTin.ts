@@ -15,6 +15,8 @@ import type { TierId } from "@/lib/packages";
 // MỌI ĐƯỜNG ĐẶT HẠN TIN (rà 22/10/2026 — thêm đường mới phải thêm vào đây, không thì Tự kiểm báo nhầm mỗi sáng):
 //   1. Duyệt tin (api/tin-dang/duyet): published_at = lúc duyệt, hạn = published_at + số ngày gói / chương trình.
 //   2. Admin sửa / nâng hạng (trigger tin_luon_co_han): published_at = now(), hạn = published_at + so_ngay_hien_thi.
+//      Nâng VIP từ Basic đang chạy (ListingForm): ghi details.han_basic (hạn Basic gốc, chạy song song) + details.len_web_luc
+//      (ngày lên web gốc — trang tin ghi "Hiệu lực" theo khoá này, 31/10/2026).
 //   3. Hết VIP về Basic (hetHanTin): hạn = hạn kỳ Basic gốc, published_at GIỮ ngày nâng VIP → ghi details.ha_vip_luc, ở đây bỏ đếm.
 //   4. Đăng lại / Up tin (upTin): xoá hạn, về chờ duyệt → lại đi đường 1.
 // ============================================================================

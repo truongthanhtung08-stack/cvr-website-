@@ -25,12 +25,11 @@ import { provinceOf, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
-import { duAnThuocNhom, findCategory, projectCategories, rentCategories, saleCategories, type Category } from "@/lib/categories";
-import { lienKetCho } from "@/lib/pseo";
+import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn, sortListings } from "@/lib/filters";
 import { xepThongSo } from "@/lib/thongSoDuAn";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
-import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
+import { giaTriThat } from "@/lib/truongDuAn";
 import TabTimKiemPhoBien from "@/components/TabTimKiemPhoBien";
 import { demTinTheoKhuVuc, khuVucList, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { catMoTa, tieuDeGoogle } from "@/lib/thang";
@@ -92,11 +91,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!p) {
     // Bậc 1 (21/10/2026): dự án mới chỉ có tên từ tin — khách xem được, Google CHƯA lập chỉ mục (trang mỏng) tới khi có hồ sơ
     const coban = duAnTuTin(await getListings().catch(() => []), slug);
-    if (!coban) {
-      // Trang demo tra cứu (chỉ máy dev) — tên thẻ trình duyệt đúng tên dự án mẫu
-      const demo = process.env.NODE_ENV !== "production" ? DU_AN_DEMO[slug] : undefined;
-      return { title: demo?.name ?? "Không tìm thấy dự án", robots: { index: false, follow: true } };
-    }
+    if (!coban) return { title: "Không tìm thấy dự án", robots: { index: false, follow: true } };
     return {
       title: tieuDeGoogle(coban.ten),
       description: catMoTa(`Dự án ${coban.ten} tại ${coban.viTri}.`),
@@ -208,9 +203,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
 
   // ── Nhánh 2: trang chi tiết một dự án ──
-  const [hoSoDb, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
-  // DEMO trang dự án tra cứu — CHỈ chạy trên máy (npx next dev), web thật không có đường này (chủ dự án 31/10/2026: "làm demo")
-  const hoSo = hoSoDb ?? (process.env.NODE_ENV !== "production" ? DU_AN_DEMO[slug] ?? null : null);
+  const [hoSo, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
   // MỘT KHUÔN cho mọi dự án (chủ dự án 30/10/2026): dự án nổi bật giữ nguyên trang đã dựng; dự án TRA CỨU (hồ sơ dạng thẻ, hoặc
   // dự án mới chỉ biết từ tin) chạy ĐÚNG khuôn đó — hồ sơ bổ sung tới đâu hiện tới đó, cái gì chưa có thì ẩn.
   const coban = hoSo ? null : duAnTuTin(listings, slug);
@@ -243,6 +236,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // ĐỊA CHỈ ĐẦY ĐỦ: hồ sơ ghi địa chỉ chi tiết ở dòng "Địa chỉ" của bảng thông số (vd "Giao lộ Nguyễn Đình Thi với 29/3, phường Hòa Xuân,
   // Đà Nẵng") mà ô số nhà/đường trống → dùng dòng đó: hiện dưới tên dự án + định vị bản đồ đúng chỗ (chủ dự án 30/10/2026)
   const diaChiHoSo = p.scale.find((s) => laDiaChi(s.label))?.value?.trim();
+  const coDiaChi = !!giaTriThat(p.location) && giaTriThat(p.location) !== "Đang cập nhật";
   const diaChiDu = diaChiHoSo && diaChiHoSo.length > giaTriThat(p.location).length ? diaChiHoSo : giaTriThat(p.location) || "Đang cập nhật";
   const mapQuery = p.mapPin ?? `${giaTriThat(diaChiDu) || province}, Việt Nam`;
 
@@ -290,10 +284,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Dự án không có tin nào → để TRỐNG, tuyệt đối KHÔNG độn tin của dự án khác vào.
   // Cùng với tin KHÁCH TỰ GHI ĐÚNG TÊN dự án này (chưa có mã vì lúc đăng dự án chưa có trang) —
   // tạo trang dự án xong là tin tự về đây (chủ dự án 15/10/2026).
-  const projectListings = slug === "demo-tra-cuu" && !hoSoDb
-    // DEMO (chỉ máy dev): mượn tin căn hộ Đà Nẵng — mỗi nhóm Mua bán / Cho thuê hơn 8 tin để xem dải trượt + "Xem thêm" khi dự án nhiều tin
-    ? listings.filter((x) => /Đà Nẵng/.test(x.location) && /căn hộ|chung cư|condotel/i.test(x.type))
-    : listings.filter((x) => x.projectSlug === p.slug || cungDuAn(x.projectSlug, p.slug)
+  const projectListings = listings.filter((x) => x.projectSlug === p.slug || cungDuAn(x.projectSlug, p.slug)
     || (!x.projectSlug && !!x.projectName && normalizeVi(x.projectName) === normalizeVi(p.name)));
   // THỨ TỰ MỘT CHUẨN CẢ WEB (chốt 23/10/2026): cấp tin trước, cùng cấp theo mốc gần nhất (đăng / đẩy) — getListings đã xếp theo mốc,
   // sortListings "moi" xếp cấp giữ nguyên mốc. Dải trượt lấy 8 tin đầu, "Xem thêm" giữ đúng thứ tự này từ tin số 1 (chủ dự án 31/10/2026)
@@ -302,36 +293,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const hasRelated = projectListings.length > 0;
 
   const tinhDuAn = timKhuVuc(slugKhuVuc(province));
-  // pSEO — MỘT HỆ THỐNG, MỘT KHỐI LIÊN KẾT (chủ dự án 31/10/2026): khối "Tìm kiếm phổ biến" của web (tab + lưới link, máy chủ vẽ sẵn) gom
-  // ① tin của dự án + trang mua bán / cho thuê cùng loại, cùng tỉnh ② hệ trang dự án: Dự án tại <tỉnh> · loại hình · chủ đầu tư · dự án cùng tỉnh.
-  // Chỉ trang đang có tin / dự án (đã qua cổng chất lượng).
+  // pSEO — khối "Tìm kiếm phổ biến" ở trang dự án CHỈ theo trường của dự án (chủ dự án 31/10/2026, D30: "dự án chỉ theo khu vực, loại hình
+  // + các trường khác"): Dự án tại <tỉnh> · Theo loại hình · Theo chủ đầu tư — link về trang danh sách dự án đã có. Không tab Mua bán / Cho thuê,
+  // không từ khoá ghép tin (tin của dự án đã có khối riêng #tin-du-an). Chỉ trang đang có dự án (đã qua cổng chất lượng).
   const cacDuAnTinh = dongTraCuu(listings, tatCaDuAn).filter((d) => d.tinh === province && !cungDuAn(d.slug, p.slug))
     .sort((x, y) => y.ban + y.thue - (x.ban + x.thue));
   const loaiCuaDuAn = projectCategories.filter((c) => duAnThuocNhom([p], c).length > 0).map((c) => c.slug);
-  // ① Tin của dự án + trang mua bán / cho thuê cùng loại hình, cùng tỉnh (phường của dự án trước) — từ khoá [mục đích] [loại] [dự án] [nơi]
-  const loaiNhieuNhat = (ds: typeof listings) => {
-    const dem = new Map<string, number>();
-    for (const l of ds) if (l.type) dem.set(l.type, (dem.get(l.type) ?? 0) + 1);
-    return [...dem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
-  };
-  const phuongDA = normalizeVi(diaChiDu.split(",").find((x) => /phường|xã/i.test(x)) ?? "").trim();
-  const tabTin = !tinhDuAn ? [] : ([["ban", "Mua bán", "Bán", relBan], ["thue", "Cho thuê", "Cho thuê", relThue]] as const).map(([muc, ten, chu, tin]) => {
-    const loai = loaiNhieuNhat([...tin]) || (muc === "ban" ? giaTriThat(p.type) : "");
-    const dsCat = muc === "thue" ? rentCategories : saleCategories;
-    const cat = loai ? dsCat.find((c) => c.types.includes(loai)) ?? dsCat.find((c) => c.types.some((t) => normalizeVi(loai).includes(normalizeVi(t)))) : undefined;
-    const tenLoai = loai ? loaiHinhThe(loai.split(" / ")[0]).toLocaleLowerCase("vi") : "";
-    const tenDA = normalizeVi(p.name).includes(normalizeVi(province)) ? p.name : `${p.name} ${province}`;
-    const goc = cat ? lienKetCho({ muc, tinh: tinhDuAn }, listings).filter((g) => g.tieuDe === "Theo loại hình").flatMap((g) => g.links)
-      .filter((l) => l.href.split("/")[2] === cat.slug) : [];
-    const tuKhoa = cat ? lienKetCho({ muc, tinh: tinhDuAn, cat }, listings).filter((g) => g.tieuDe === "Tìm kiếm theo từ khoá").flatMap((g) => g.links)
-      .sort((a, b) => Number(!!phuongDA && normalizeVi(b.day ?? b.nhan).includes(phuongDA)) - Number(!!phuongDA && normalizeVi(a.day ?? a.nhan).includes(phuongDA))) : [];
-    return { ten, links: [
-      ...(tin.length ? [{ href: "#tin-du-an", nhan: [chu, tenLoai && !normalizeVi(p.name).includes(normalizeVi(tenLoai)) ? tenLoai : "", tenDA].filter(Boolean).join(" ") }] : []),
-      ...[...goc, ...tuKhoa].map((l) => ({ href: l.href, nhan: l.day ?? l.nhan })),
-    ].slice(0, 12) };
-  });
   const tabTuKhoa = [
-    ...tabTin,
     { ten: `Dự án tại ${province}`, links: [
       ...(tinhDuAn ? [{ href: `/du-an/${tinhDuAn.slug}`, nhan: `Dự án tại ${province}` }] : []),
       ...cacDuAnTinh.slice(0, 23).map((d) => ({ href: `/du-an/${d.slug}`, nhan: d.ten })),
@@ -355,7 +323,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const coMucTongQuan = traCuu ? p.overview.length > 0 || !!p.capNhat : hangThongSo.length > 0;
   const nav = [
     ...(coMucTongQuan ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
-    ...(!traCuu || p.mapPin ? [{ id: "vi-tri", label: "Vị trí" }] : []),
+    ...(!traCuu || p.mapPin || coDiaChi ? [{ id: "vi-tri", label: "Vị trí" }] : []),
     ...(p.amenities.length ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
     ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
@@ -535,17 +503,19 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
                 </div>
                 )}
-                {/* Ngày cập nhật + nguồn — cuối khối Tổng quan (mẫu 30/10/2026; trước nằm dưới địa chỉ) */}
+                {/* Ngày cập nhật — cuối khối Tổng quan (mẫu 30/10/2026). Nguồn (tên trang khác) chỉ giữ trong Admin, không hiện cho
+                    khách (chủ dự án 31/10/2026: chấn chỉnh cách lọc nội dung) */}
                 {p.capNhat && (
-                  <p className="mt-4 text-[13px] text-cvr-faint">Cập nhật ngày {p.capNhat}{p.nguon ? ` · Nguồn: ${p.nguon}` : ""}</p>
+                  <p className="mt-4 text-[13px] text-cvr-faint">Cập nhật ngày {p.capNhat}</p>
                 )}
               </Section>
               )}
 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
-              {/* Tra cứu: trang chỉ ảnh · tên · thông tin cơ bản; bản đồ chỉ khi Admin ghim toạ độ (chủ dự án 31/10/2026) */}
-              {(!traCuu || !!p.mapPin) && (
+              {/* Tra cứu: bản đồ TỰ TRỎ theo địa chỉ hồ sơ (chủ dự án 31/10/2026 tối: "địa chỉ nhập vào bản đồ tự trỏ đến theo cấu trúc",
+                  không cần toạ độ); chưa có địa chỉ thì ẩn */}
+              {(!traCuu || !!p.mapPin || coDiaChi) && (
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
                 <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:h-[320px]" />
               </Section>
@@ -840,29 +810,3 @@ function Section({ id, title, children }: { id: string; title: string; children:
     </section>
   );
 }
-
-
-
-// Dữ liệu DEMO dự án tra cứu (CHỈ máy dev) — đủ trường hợp: nhiều ảnh + thông tin thêm · 1 ảnh, chỉ trường bắt buộc ·
-// không ảnh, tên + địa chỉ dài, chỉ trường bắt buộc (dự án chỉ biết từ tin: xem trang thật /du-an/apec-mandala-wyndham-binh-thuan)
-const DEMO_GOC = { priceFrom: "Liên hệ", dangThe: true, scale: [], amenities: [], overview: [] };
-const DU_AN_DEMO: Record<string, Project> = {
-  "demo-tra-cuu": {
-    ...DEMO_GOC, slug: "demo-tra-cuu", name: "Dự án mẫu tra cứu (demo)", location: "Đường Bạch Đằng, Phường Hải Châu, Đà Nẵng",
-    type: "Căn hộ", status: "Đang mở bán", developer: "Công ty CP ABC", image: "/images/tin/2.jpg",
-    photos: ["/images/tin/2.jpg", "/anh/listings/0d4c189f3293a590dd96286f-1784682958486-201631-4.1.webp", "/images/tin/1.jpg"],
-    scale: [{ label: "Diện tích dự án", value: "1,2 ha" }, { label: "Quy mô", value: "2 tòa cao 22 tầng" }, { label: "Bàn giao", value: "Quý IV/2026" }],
-    amenities: ["Hồ bơi", "Phòng gym", "Công viên"], mapPin: "16.0717,108.2244",
-    // Mô tả DÀI (chỉ để thử thu gọn "Xem thêm" của trang tra cứu khi Admin nhập nhiều thông tin)
-    overview: Array.from({ length: 8 }, (_, i) => `Đoạn giới thiệu mẫu số ${i + 1} — chỉ để xem bố cục trang dự án tra cứu khi Admin nhập mô tả dài: vị trí, quy mô, tiện ích, pháp lý, tiến độ, chính sách bán hàng của dự án.`),
-  },
-  "demo-tra-cuu-1-anh": {
-    ...DEMO_GOC, slug: "demo-tra-cuu-1-anh", name: "Dự án mẫu một ảnh (demo)", location: "Phường An Hải, Đà Nẵng",
-    type: "Căn hộ", status: "", developer: "", image: "/images/tin/1.jpg", photos: ["/images/tin/1.jpg"],
-  },
-  "demo-tra-cuu-khong-anh": {
-    ...DEMO_GOC, slug: "demo-tra-cuu-khong-anh", name: "Khu đô thị mẫu không ảnh có tên dự án rất dài để thử xuống dòng (demo)",
-    location: "Lô A1-A5 đường Nguyễn Tất Thành nối dài, Phường Hải Vân, Đà Nẵng", type: "", status: "Sắp mở bán",
-    developer: "Công ty Cổ phần Đầu tư Phát triển Đô thị mẫu", image: "", photos: [],
-  },
-};

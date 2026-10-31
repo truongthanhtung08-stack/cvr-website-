@@ -3,12 +3,13 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import AnhChay from "@/components/AnhChay";
-import { chuThuan } from "@/lib/chuThuan";
 import Link from "next/link";
 import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
 import type { Project, Article } from "@/lib/data";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import Pager from "@/components/Pager";
+import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
+import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 
 // ── KHỐI DỰ ÁN DÙNG CHUNG (trang chủ · "Dự án liên quan" ở trang chi tiết) ────
@@ -19,12 +20,6 @@ import { useHomeSection } from "@/components/HomeExpand";
 //   · Bấm "Thu gọn" để quay lại slide.
 
 const TIER_RANK: Record<string, number> = { diamond: 0, gold: 1, silver: 2, basic: 3 };
-const TIER_ACCENT: Record<string, string> = {
-  diamond: "#d7263d",
-  gold: "#c9a24a",
-  silver: "#0071e3",
-};
-const TIER_SHORT: Record<string, string> = { diamond: "Diamond", gold: "Gold", silver: "Silver" };
 
 // Xếp theo cấp VIP, giữ nguyên thứ tự gốc (mới nhất trước) khi cùng cấp.
 export function sortProjectsByTier(list: Project[]): Project[] {
@@ -32,18 +27,6 @@ export function sortProjectsByTier(list: Project[]): Project[] {
     .map((p, i) => ({ p, i, r: TIER_RANK[p.tier ?? "basic"] ?? 3 }))
     .sort((a, b) => a.r - b.r || a.i - b.i)
     .map((e) => e.p);
-}
-
-function TierBadge({ tier }: { tier?: string }) {
-  if (!tier || tier === "basic") return null;
-  return (
-    <span
-      className="absolute left-3 top-3 rounded-full px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 ring-white/25 backdrop-blur-md"
-      style={{ backgroundColor: TIER_ACCENT[tier] }}
-    >
-      {TIER_SHORT[tier]}
-    </span>
-  );
 }
 
 function PinIcon() {
@@ -55,6 +38,26 @@ function PinIcon() {
   );
 }
 
+// CHỮ DƯỚI ẢNH THEO THẺ DỰ ÁN MỘT CHUẨN (chủ dự án 30–31/10/2026, như TheDuAnDoc): chỉ Vị trí có biểu tượng · "Loại hình:" ·
+// "Tiến độ:" (dự án thường; VIP ở nhãn trên ảnh) · dòng cuối Chủ đầu tư + giá, gạch trên · trống ghi "Đang cập nhật" mờ
+function ChuTheChuan({ p }: { p: Project }) {
+  const dong = (nhan: string, gt: string) => (
+    <p className="mt-1 truncate text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">{nhan}:</span> <span className={gt ? "" : "text-cvr-faint"}>{gt || "Đang cập nhật"}</span></p>
+  );
+  return (
+    <>
+      <h3 className="font-semibold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{p.name}</h3>
+      <p className="mt-1 flex items-start gap-1 text-[13px] text-cvr-muted"><PinIcon /><span className="min-w-0">{giaTriThat(p.location) || "Đang cập nhật"}</span></p>
+      {dong("Loại hình", loaiHinhThe(p.type))}
+      {!capVip(p.tier) && dong("Tiến độ", giaTriThat(p.status))}
+      <div className="mt-3 flex items-start justify-between gap-3 border-t border-cvr-line pt-2.5 text-[13px] text-cvr-body">
+        <span className="min-w-0"><span className="font-semibold text-cvr-ink">Chủ đầu tư:</span> <span className={giaTriThat(p.developer) ? "" : "text-cvr-faint"}>{giaTriThat(p.developer) || "Đang cập nhật"}</span></span>
+        <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-cvr-gold-ink">{p.priceFrom}</span>
+      </div>
+    </>
+  );
+}
+
 // Thẻ dự án dạng lưới/slide — ảnh TRÊN, nội dung DƯỚI (kiểu điện thoại)
 export function ProjectCard({ p }: { p: Project }) {
   return (
@@ -63,23 +66,17 @@ export function ProjectCard({ p }: { p: Project }) {
       className="group flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line"
     >
       <div className="relative aspect-[3/2] overflow-hidden bg-cvr-surface sm:aspect-[16/10]">
-        <AnhChay chay={false} images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="(max-width: 640px) 86vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-        <TierBadge tier={p.tier} />
-        <span className="absolute right-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
-          {p.status}
-        </span>
+        {p.image ? (
+          <AnhChay chay={false} images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="(max-width: 640px) 86vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+        ) : (
+          // Chưa có ảnh: khung xám + biểu tượng (chủ dự án 31/10/2026)
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
+        )}
+        <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
-          {p.name}
-        </h3>
-        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-cvr-muted">
-          <PinIcon /><span className="line-clamp-1">{p.location}</span>
-        </p>
-        <div className="mt-2.5 flex items-baseline justify-between gap-2">
-          <span className="text-[15px] font-semibold text-cvr-ink">{p.priceFrom}</span>
-          <span className="text-[13px] text-cvr-body">{p.type}</span>
-        </div>
+        <ChuTheChuan p={p} />
       </div>
     </Link>
   );
@@ -94,22 +91,16 @@ export function ProjectRow({ p }: { p: Project }) {
       className="group flex flex-col gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
     >
       <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-[4/3] sm:w-[38%] sm:min-w-[240px] sm:max-w-[420px]">
-        <AnhChay chay={false} images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="(max-width: 640px) 100vw, 38vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-        <TierBadge tier={p.tier} />
+        {p.image ? (
+          <AnhChay chay={false} images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="(max-width: 640px) 100vw, 38vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
+        )}
+        <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-base">
-          {p.name}
-        </h3>
-        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-cvr-muted">
-          <PinIcon /><span className="line-clamp-1">{p.location}</span>
-        </p>
-        <p className="mt-1.5 hidden text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{chuThuan(p.overview[0])}</p>
-        <div className="mt-auto flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-2">
-          <span className="text-[15px] font-semibold text-cvr-ink">{p.priceFrom}</span>
-          <span className="text-[13px] text-cvr-body">{p.type}</span>
-          <span className="text-[13px] text-cvr-muted">{p.status}</span>
-        </div>
+        <ChuTheChuan p={p} />
       </div>
     </Link>
   );

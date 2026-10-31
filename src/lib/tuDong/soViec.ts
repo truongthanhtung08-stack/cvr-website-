@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 
 // ════════════════════════════════════════════════════════════════════════════
 // SỔ VIỆC ĐỊNH KỲ — MÁY TỰ LÀM, KHÔNG CẦN AI NHỚ
@@ -79,7 +80,7 @@ export async function chayCacViec(
       await baoLoi({
         noi: `tu-dong:${viec.ma}`,
         mucDo: "nang",
-        tomTat: `Việc tự động "${viec.ten}" chạy hỏng`,
+        tomTat: SU_CO.viecTuDong(viec.ten),
         chiTiet: loi.slice(0, 500),
         hauQua: viec.hauQua,
         canLam: `Mở /api/hoa-don/nhac-xuat bằng tay để chạy lại, hoặc xem nhật ký ở /admin.`,

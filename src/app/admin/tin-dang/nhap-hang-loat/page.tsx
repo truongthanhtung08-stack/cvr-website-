@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
@@ -14,7 +14,30 @@ import {
   type ParsedRow,
 } from "@/lib/csvTin";
 import { docXlsx, docXlsxTheoTen } from "@/lib/docXlsx";
-import { docDuAnTuBang, type DongDuAn } from "@/lib/csvDuAn";
+import { docDuAnTuBang, anhTepCuaDong, type DongDuAn } from "@/lib/csvDuAn";
+import { lapKeHoach, thucHienNap, type KeHoachDuAn } from "@/lib/napDuAn";
+import { khopHoSoDuAn, type HoSoDuAn } from "@/lib/khopDuAn";
+
+// TIN GHI DỰ ÁN → PHẢI KHỚP HỒ SƠ ĐÃ CÓ (anh 31/10/2026, D32): khớp một hồ sơ cùng tỉnh thì lưu đúng mã + tên hồ sơ;
+// không khớp / khớp nhiều → báo đỏ đúng dòng, không tự đặt mã mới (src/lib/khopDuAn.ts). Hồ sơ trong sheet "Dự án" cùng tệp cũng tính.
+async function ganHoSoDuAn(ds: ParsedRow[], sheetDuAn: DongDuAn[]): Promise<ParsedRow[]> {
+  const coDuAn = (r: ParsedRow) => (r.payload.details as { project?: string } | undefined)?.project;
+  if (!ds.some(coDuAn)) return ds;
+  const { data, error } = await createClient().from("projects").select("slug,name,province");
+  const hoSo: HoSoDuAn[] = [
+    ...((data ?? []) as HoSoDuAn[]),
+    ...sheetDuAn.filter((d) => d.payload).map((d) => ({ slug: d.slug, name: d.ten, province: (d.payload!.province as string) || null })),
+  ];
+  return ds.map((r) => {
+    const ma = coDuAn(r);
+    if (!ma) return r;
+    const ct = r.payload.details as { project: string; projectName?: string };
+    if (error) return { ...r, loi: [...r.loi, `không đọc được danh sách hồ sơ dự án: ${error.message}`] };
+    const k = khopHoSoDuAn(ct.projectName || ma, ma, r.payload.province as string | null, hoSo);
+    if ("loi" in k) return { ...r, loi: [...r.loi, k.loi] };
+    return { ...r, payload: { ...r.payload, details: { ...ct, project: k.hoSo.slug, projectName: k.hoSo.name } } };
+  });
+}
 import { docDoanhNghiepTuBang, type DongDoanhNghiep } from "@/lib/hoSoDoanhNghiep";
 import { chuanHoaSdt } from "@/lib/phone";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
@@ -22,6 +45,7 @@ import { freeDangChay, soAnhToiDa, soVideoToiDa } from "@/lib/billing";
 import { isVideoUrl } from "@/lib/media";
 import { useBilling } from "@/lib/useBilling";
 import type { TierId } from "@/lib/packages";
+import { NAP } from "@/lib/chuThongBao";
 
 // Lấy lại TÊN TỆP GỐC từ một link trong kho ảnh: kho lưu dạng
 // "<mốc thời gian>-<số ngẫu nhiên>-<tên tệp>" nên bỏ hai cụm đầu là ra tên gốc.
@@ -75,6 +99,22 @@ export default function NhapHangLoatPage() {
   const anhTheoTen = new Map<string, { ten: string; url: string }>();
   for (const a of anhDaTai) anhTheoTen.set(a.ten.trim().toLowerCase(), a);
   const anhDaTaiLoc = [...anhTheoTen.values()];
+
+  // Sheet "Dự án": ảnh dự án lấy từ cùng lượt ảnh đã tải (tên <mã dự án>.jpg hoặc tên ghi ở cột anh), so với hồ sơ đã có trên web
+  // (chỉ đọc) — cùng luật Admin → Dự án → Nạp hàng loạt (napDuAn.ts: dự án mới vào Chờ duyệt, hồ sơ đã có chỉ điền ô trống).
+  const anhDuAn = (d: DongDuAn) => anhTepCuaDong(d, anhDaTaiLoc.map((a) => ({ name: a.ten, url: a.url })));
+  const [keHoachDuAnDoc, setKeHoachDuAn] = useState<KeHoachDuAn[]>([]);
+  const keHoachDuAn = duAn.length ? keHoachDuAnDoc : [];
+  useEffect(() => {
+    if (!duAn.length) return;
+    let huy = false;
+    lapKeHoach(createClient(), duAn, (d) => {
+      const a = anhDuAn(d);
+      return { co: a.tep.length > 0 || d.anhLink.length > 0, thieu: a.thieu };
+    }).then((k) => { if (!huy) setKeHoachDuAn(k); }).catch(() => { if (!huy) setKeHoachDuAn([]); });
+    return () => { huy = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duAn, anhDaTai]);
 
   // ẢNH CỦA MỘT TIN — gộp 2 cách, giữ đúng thứ tự anh ghi trong file:
   //   1) Cột "anh" ghi TÊN TỆP ảnh trên máy → lấy link của ảnh đã tải cùng tên
@@ -200,11 +240,13 @@ export default function NhapHangLoatPage() {
         ? docTinTuBang(await docXlsx(await file.arrayBuffer()))
         : docTinTuCsv(await file.text());
       if (err) setLoiChung(err);
-      if (laExcel) setDuAn(docDuAnTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^d[ựu]\s*[áa]n$/i)) ?? []));
+      const sheetDuAn = laExcel ? docDuAnTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^d[ựu]\s*[áa]n$/i)) ?? []) : [];
+      setDuAn(sheetDuAn);
       if (laExcel) setDoanhNghiep(docDoanhNghiepTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^doanh\s*nghi[ệe]p$/i)) ?? [], chuanHoaSdt));
       setCanhBaoFile(canhBaoChung ?? "");
-      setRows(r);
-      doMaTrungDotCu(r);
+      const rGan = await ganHoSoDuAn(r, sheetDuAn);
+      setRows(rGan);
+      doMaTrungDotCu(rGan);
     } catch (e) {
       setLoiChung(
         /\.xls$/i.test(file.name)
@@ -342,7 +384,7 @@ export default function NhapHangLoatPage() {
           }));
         const { error } = await supabase.from("listings").insert(lo);
         if (error) {
-          setKetQua(`Đã đăng ${xong} tin thì gặp lỗi: ${error.message}`);
+          setKetQua(NAP.dangLoiGiuaChung(xong, error.message));
           setDangGui(false);
           return;
         }
@@ -385,26 +427,19 @@ export default function NhapHangLoatPage() {
           .update({ ...noiDung, images: gop, bumped_at: now })
           .eq("id", cu.id);
         if (error) {
-          setKetQua(`Đã đăng ${xong} tin, cập nhật ${capNhat} tin thì gặp lỗi: ${error.message}`);
+          setKetQua(NAP.dangLoiGiuaChungCapNhat(xong, capNhat, error.message));
           setDangGui(false);
           return;
         }
         capNhat++;
       }
 
-      // Dự án kèm tin (sheet "Dự án"): dự án mới vào "Chờ duyệt" như Nạp CSV dự án; trùng tên đã có thì bỏ qua
-      let soDuAn = 0, duAnTrung = 0, loiDuAn = "";
-      const duAnHopLe = duAn.filter((d) => d.payload);
-      if (duAnHopLe.length) {
-        const { data: daCo } = await supabase.from("projects").select("slug").in("slug", duAnHopLe.map((d) => d.slug));
-        const trung = new Set((daCo ?? []).map((x: { slug: string }) => x.slug));
-        const moi = duAnHopLe.filter((d) => !trung.has(d.slug));
-        duAnTrung = trung.size;
-        if (moi.length) {
-          const { error } = await supabase.from("projects").insert(moi.map((d) => d.payload!));
-          if (error) loiDuAn = error.message; else soDuAn = moi.length;
-        }
-      }
+      // Dự án kèm tin (sheet "Dự án"): cùng luật Nạp dự án hàng loạt — dự án mới vào "Chờ duyệt", hồ sơ đã có chỉ điền ô trống
+      const kqDuAn = await thucHienNap(supabase, keHoachDuAn, async (k) => {
+        const tep = anhDuAn(k.d).tep;
+        return { urls: tep.length ? tep.map((a) => a.url) : k.d.anhLink };
+      });
+      if (kqDuAn.capNhat.length) await lamMoiWeb();
 
       // Tin đăng hộ: gắn về tài khoản theo SĐT + chọn ảnh đại diện hợp khung (chủ dự án 09/10/2026)
       await fetch("/api/admin/gom-tin-dang-ho", { method: "POST" }).catch(() => {});
@@ -422,7 +457,9 @@ export default function NhapHangLoatPage() {
         `Đã đăng ${xong} tin mới` +
           (capNhat ? ` · bổ sung ảnh/video và cập nhật nội dung cho ${capNhat} tin đã đăng` : "") +
           ". Tin đang chờ duyệt (Admin → Tin đăng)." +
-          (loiDuAn ? ` Dự án: lỗi ${loiDuAn}.` : soDuAn || duAnTrung ? ` Dự án: ${soDuAn} hồ sơ chờ duyệt (Admin → Dự án)${duAnTrung ? `, bỏ qua ${duAnTrung} đã có` : ""}.` : "") +
+          (kqDuAn.moi.length ? ` Dự án: ${kqDuAn.moi.length} hồ sơ chờ duyệt (Admin → Dự án).` : "") +
+          (kqDuAn.capNhat.length ? ` Điền thêm ô trống cho hồ sơ dự án đã có: ${kqDuAn.capNhat.join(", ")}.` : "") +
+          (kqDuAn.loi.length ? ` Dự án lỗi: ${kqDuAn.loi.join(" · ")}.` : "") +
           (soDn ? ` Doanh nghiệp: ${soDn} hồ sơ vào Admin → Khách hàng → Doanh nghiệp.` : "") +
           (dnKhongKhop.length ? ` Không khớp số điện thoại tài khoản nào: ${dnKhongKhop.join(", ")}.` : ""),
       );
@@ -432,7 +469,7 @@ export default function NhapHangLoatPage() {
       setTenFile("");
       setAnhDaTai([]);
     } catch {
-      setKetQua("Không kết nối được cơ sở dữ liệu.");
+      setKetQua(NAP.khongKetNoi);
     }
     setDangGui(false);
   }
@@ -561,9 +598,14 @@ export default function NhapHangLoatPage() {
 
       {duAn.length > 0 && (
         <div className="rounded-lg border border-cvr-line bg-white px-4 py-3 text-sm text-cvr-body">
-          <p className="font-semibold text-cvr-ink">Sheet "Dự án": {duAn.filter((d) => d.payload).length}/{duAn.length} dự án hợp lệ — nạp cùng lúc khi bấm Đăng</p>
-          {duAn.filter((d) => !d.payload).map((d) => (
-            <p key={d.dong} className="mt-1 text-red-700">Dòng {d.dong} · {d.ten || "(không tên)"}: {d.loi.join(", ")}</p>
+          <p className="font-semibold text-cvr-ink">
+            Sheet "Dự án": {keHoachDuAn.filter((k) => k.loai === "moi").length} dự án mới · {keHoachDuAn.filter((k) => k.loai === "capNhat").length} hồ sơ đã có sẽ điền thêm · {keHoachDuAn.filter((k) => k.loai === "chan").length} dòng chưa nạp được — nạp cùng lúc khi bấm Đăng
+          </p>
+          {keHoachDuAn.filter((k) => k.loai === "chan").map((k) => (
+            <p key={k.d.dong} className="mt-1 text-red-700">Dòng {k.d.dong} · {k.d.ten || "(không tên)"}: {k.chan.join(", ")}</p>
+          ))}
+          {keHoachDuAn.filter((k) => k.loai === "capNhat").map((k) => (
+            <p key={k.d.dong} className="mt-1">Dòng {k.d.dong} · {k.d.ten} — điền ô trống: {k.doi.map((x) => `${x.o}: ${x.moi}`).join(" · ")}</p>
           ))}
         </div>
       )}
@@ -620,8 +662,7 @@ export default function NhapHangLoatPage() {
           {maDoiLap.length > 0 && (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
               <p className="text-sm font-semibold text-blue-800">
-                {maDoiLap.length} mã tin trong file trùng mã của đợt ngày khác — vẫn đăng thành
-                <strong> tin mới</strong>, không đụng vào tin cũ:
+                {NAP.maTrungDotKhac(maDoiLap.length)}
               </p>
               <ul className="mt-2 space-y-1 text-sm text-blue-800">
                 {maDoiLap.map((m) => (
@@ -638,7 +679,7 @@ export default function NhapHangLoatPage() {
 
           {sai.length > 0 && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-              <p className="text-sm font-semibold text-red-700">Các dòng cần sửa trong file:</p>
+              <p className="text-sm font-semibold text-red-700">{NAP.dongCanSua}</p>
               <ul className="mt-2 space-y-1 text-sm text-red-700">
                 {sai.map((r) => (
                   <li key={r.dong}>
@@ -651,7 +692,7 @@ export default function NhapHangLoatPage() {
 
           {cbao.length > 0 && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm font-semibold text-amber-800">Chưa đạt chuẩn SEO — vẫn đăng được:</p>
+              <p className="text-sm font-semibold text-amber-800">{NAP.chuaChuanSeo}</p>
               <ul className="mt-2 space-y-1 text-sm text-amber-800">
                 {cbao.map((r) => (
                   <li key={r.dong}>

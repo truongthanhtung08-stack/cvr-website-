@@ -4,23 +4,51 @@
     {
       "name": "cvr-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000,
       "autoPort": true
     },
     {
       "name": "cvr-ban-that",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["next", "start", "-p", "3002"],
+      "runtimeArgs": [
+        "next",
+        "start",
+        "-p",
+        "3002"
+      ],
       "port": 3002,
       "autoPort": false
     },
     {
       "name": "zalo-mini-app",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "zalo-mini-app", "run", "dev", "--", "--port", "3100", "--host"],
+      "runtimeArgs": [
+        "--prefix",
+        "zalo-mini-app",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3100",
+        "--host"
+      ],
       "port": 3100
+    },
+    {
+      "name": "xem-thu-3001",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "next",
+        "dev",
+        "-p",
+        "3001"
+      ],
+      "port": 3001,
+      "autoPort": false
     }
   ]
 }
-

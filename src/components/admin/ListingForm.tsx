@@ -389,6 +389,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         ...((): { han_basic?: string } => {
           const d0 = initial?.details as { han_basic?: string; sau_vip_con_lai_ms?: number } | undefined;
           if (tier === "basic") return {};
+          // Khách chọn GÓI THƯỜNG (không chương trình): nâng = đăng gói mới, không giữ hạn Basic song song (chủ dự án 01/11/2026)
+          if ((initial?.details as { plan?: { khuyenMai?: boolean } } | undefined)?.plan?.khuyenMai === false) return {};
           if (d0?.han_basic) return { han_basic: d0.han_basic };
           // Khoá cũ (09/10): số ms Basic còn lại tính từ lúc nâng = published_at của kỳ VIP.
           if (d0?.sau_vip_con_lai_ms && initial?.published_at)
@@ -396,6 +398,14 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           const han = initial?.status === "approved" && initial.tier === "basic" && initial.tier_expires_at
             && new Date(initial.tier_expires_at).getTime() > Date.now() ? initial.tier_expires_at : "";
           return han ? { han_basic: han } : {};
+        })(),
+        // NGÀY LÊN WEB GỐC khi nâng VIP (31/10/2026: tin 9A5DA44A hiện "Hiệu lực 11/10" thay vì 31/10 vì ngày này phải suy ra):
+        // nâng VIP đặt lại published_at = ngày nâng → giữ mốc lên web cũ ở details.len_web_luc, trang tin đọc thẳng khoá này.
+        ...((): { len_web_luc?: string } => {
+          const d0 = initial?.details as { len_web_luc?: string } | undefined;
+          if (d0?.len_web_luc) return { len_web_luc: d0.len_web_luc };
+          if (tier === "basic" || initial?.status !== "approved" || initial.tier !== "basic" || !initial.published_at) return {};
+          return { len_web_luc: initial.published_at };
         })(),
         contact: (cName.trim() || cPhone.trim() || cEmail.trim() || cAvatar.trim())
           ? { name: cName.trim(), phone: chuanHoaSdt(cPhone), email: cEmail.trim(), avatar: cAvatar.trim() || undefined }

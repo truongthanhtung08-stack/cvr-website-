@@ -99,6 +99,13 @@ export default async function QuyDinhPage() {
             <div className="mt-1"><DanhSach items={qd.quyDinhDayTin} /></div>
           </div>
         )}
+        {/* Up tin – Nâng gói (chủ dự án 01/11/2026): Admin → Quyền lợi gói → Quy định gói Up tin, chỉ hiện khi đã duyệt */}
+        {(qd.quyDinhUpTin ?? []).length > 0 && (
+          <div id="quy-dinh-up-tin" className="scroll-mt-4">
+            <h3 className="font-semibold text-cvr-ink">Gói Up tin</h3>
+            <div className="mt-1"><DanhSach items={qd.quyDinhUpTin ?? []} /></div>
+          </div>
+        )}
         <p>Bất động sản đã giao dịch xong, đề nghị gỡ tin ngay.</p>
       </Muc>
 

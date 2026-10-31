@@ -107,6 +107,16 @@ export default function AnhChay({
   const ke = (i + 1) % ds.length;
   const canDung = (k: number) => (chay ? k === i || k === ke || k === truoc : k === 0);
 
+  // CHƯA CÓ ẢNH → khung xám + biểu tượng Coastal Land, MỘT chỗ cho mọi thẻ (chủ dự án 31/10/2026: "chưa có ảnh để trống,
+  // cấm dùng ảnh dùng chung") — không còn ảnh mẫu theo loại hình
+  if (!ds.length)
+    return (
+      <span className="absolute inset-0 block bg-cvr-surface">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
+      </span>
+    );
+
   return (
     <span
       ref={boxRef}

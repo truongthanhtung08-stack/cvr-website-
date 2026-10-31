@@ -98,6 +98,8 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
   if (daDuyet.includes("pr")) { if (luu.pr) them.pr = luu.pr; if (luu.prNotes) them.prNotes = luu.prNotes; }
   if (daDuyet.includes("banner") && luu.banners) them.banners = luu.banners;
   them.mucDaDuyet = daDuyet;
+  // UP TIN – NÂNG GÓI (01/11/2026): giá nâng đã nằm trong congBo.ban/thue.nangGoi (tinhCongBo); cài đặt đi CÙNG nút Duyệt này
+  if (nhap.nangGoi) them.nangGoi = nhap.nangGoi;
   void dc; void tinhDuAn; void tinhPr; void tinhBanner;
   // Chương trình miễn phí thành viên mới (trong danh sách khuyến mãi) → khối "free" web đang dùng.
   const mp = chonMienPhi(nhap.chuongTrinh, homNayVn());

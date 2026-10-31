@@ -20,6 +20,7 @@ export type QuyDinhGia = {
   quyenLoiDuAn: Record<TierId, string[]>;
   quyDinhGoiTin: string[];
   quyDinhDayTin: string[];
+  quyDinhUpTin?: string[]; // Up tin – Nâng gói (01/11/2026)
   quyDinhBanner: string[];
 };
 
@@ -38,6 +39,7 @@ export function ghepQuyDinh(luu: Partial<QuyDinhGia> | null | undefined): QuyDin
     quyenLoiDuAn: theoHang((t) => luu?.quyenLoiDuAn?.[t] ?? []),
     quyDinhGoiTin: luu?.quyDinhGoiTin ?? [],
     quyDinhDayTin: luu?.quyDinhDayTin ?? [],
+    quyDinhUpTin: luu?.quyDinhUpTin ?? [],
     quyDinhBanner: luu?.quyDinhBanner ?? [],
   };
 }

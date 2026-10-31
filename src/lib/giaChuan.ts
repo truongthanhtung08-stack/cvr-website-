@@ -15,7 +15,8 @@
 // Mọi giá trong file này là giá CHƯA GTGT (giống toàn bộ billing.ts).
 // ============================================================================
 
-import type { Plan, PlanTerm, UpRow, GiaCongBo, CongBo, MucDichGia, GoiHoiVien, LoaiVoucher, PrPkg, BannerTable } from "@/lib/billing";
+import type { Plan, PlanTerm, UpRow, GiaCongBo, CongBo, MucDichGia, GoiHoiVien, LoaiVoucher, PrPkg, BannerTable, NangGoi } from "@/lib/billing";
+import { COT_NANG_GOI } from "@/lib/billing";
 import type { TierId } from "@/lib/packages";
 import type { QuyDinhGia } from "@/lib/quyDinhGia";
 
@@ -39,7 +40,7 @@ export type ChuongTrinh = {
   tu: string;               // "YYYY-MM-DD", rỗng = không giới hạn
   den: string;              // "YYYY-MM-DD", áp đến HẾT ngày này; rỗng = không giới hạn
   mucDich: "all" | MucDichGia;
-  sanPham: "all" | "tin" | "day" | "hoi-vien";
+  sanPham: "all" | "tin" | "day" | "hoi-vien" | "nang-goi"; // nang-goi = Up tin – Nâng gói (01/11/2026)
   tiers: TierId[];          // rỗng = mọi cấp tin
   bat: boolean;
   // MIỄN PHÍ THÀNH VIÊN MỚI cũng là một chương trình (chủ dự án 08/10/2026 "cho thống nhất").
@@ -102,8 +103,8 @@ export type GoiHoiVienChuan = Omit<GoiHoiVien, "thoiHan"> & { thoiHan: { thang: 
 // khuyến mãi (chương trình có thời hạn, nằm ở bảng riêng).
 export type PhanTramCot = Partial<Record<TierId, number>>;
 export type DieuChinh = {
-  ban: { tin: PhanTramCot; day: PhanTramCot };
-  thue: { tin: PhanTramCot; day: PhanTramCot };
+  ban: { tin: PhanTramCot; day: PhanTramCot; nangGoi?: PhanTramCot };  // nangGoi: % cột Up tin – Nâng gói (01/11/2026)
+  thue: { tin: PhanTramCot; day: PhanTramCot; nangGoi?: PhanTramCot };
   hoiVien: Partial<Record<string, number>>; // theo số tháng: "1" · "3" · "6"
   duAn: PhanTramCot;
   pr: PhanTramCot;
@@ -122,6 +123,7 @@ export type GiaChuanNhap = {
   pr?: PrPkg[];             // gói bài PR — giá chuẩn
   prNotes?: string[];
   banners?: BannerTable[];  // bảng banner — giá chuẩn
+  nangGoi?: NangGoi;        // Up tin – Nâng gói (01/11/2026): bật/tắt, khấu trừ, quy định — % giá ở dieuChinh.ban/thue.nangGoi
   // MỘT ĐƯỜNG (08/10/2026): quyền lợi gói + quy định tin cũng nằm trong bản nháp,
   // chỉ lên web khi bấm Công bố.
   quyDinh?: QuyDinhGia;
@@ -159,7 +161,7 @@ export function chuongTrinhApDung(
   ds: ChuongTrinh[],
   homNay: string,
   mucDich: MucDichGia | "all",
-  sanPham: "tin" | "day" | "hoi-vien",
+  sanPham: "tin" | "day" | "hoi-vien" | "nang-goi",
   tier: TierId | null,
 ): ChuongTrinh | null {
   return (
@@ -203,7 +205,7 @@ export function tinhMotMucDich(
   homNay: string,
   plansHienTai: Plan[],
   upHienTai: UpRow[],
-  dc: { tin: PhanTramCot; day: PhanTramCot } = { tin: {}, day: {} },
+  dc: { tin: PhanTramCot; day: PhanTramCot; nangGoi?: PhanTramCot } = { tin: {}, day: {} },
 ): GiaCongBo {
   const plans: Plan[] = THU_TU_CAP.flatMap((tierId) => {
     const chuan = bang.plans.find((p) => p.tierId === tierId);
@@ -241,7 +243,23 @@ export function tinhMotMucDich(
     return { label, values };
   });
 
-  return { plans, up };
+  // UP TIN – NÂNG GÓI (01/11/2026): giá công bố của CHÍNH gói tin (giá chuẩn + % cân giá) → chương trình sản phẩm "Up tin"
+  // (tab Khuyến mãi) → − Chiết khấu ưu đãi (%) của gói (tab Up tin; trống = 0) → làm tròn nghìn. Mọi gói VIP có bảng gói đều có giá nâng.
+  const nangGoi: Plan[] = COT_NANG_GOI.flatMap((tierId) => {
+    const chuan = bang.plans.find((p) => p.tierId === tierId);
+    if (!chuan?.terms.length) return [];
+    const ct = chuongTrinhApDung(ds, homNay, mucDich, "nang-goi", tierId);
+    const ck = Math.min(100, Math.max(0, dc.nangGoi?.[tierId] ?? 0));
+    const cu = plansHienTai.find((p) => p.tierId === tierId);
+    return [{
+      ...(cu ?? { name: tierId }),
+      tierId,
+      terms: [...chuan.terms].sort((a, b) => a.days - b.days)
+        .map((t) => ({ days: t.days, price: tronNghin(giam(apDung(t.price, dc.tin[tierId]), ct) * (1 - ck / 100)) })),
+    }];
+  });
+
+  return { plans, up, ...(nangGoi.length ? { nangGoi } : {}) };
 }
 
 export function tinhCongBo(
@@ -368,7 +386,7 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
   const ctHopLe = o.chuongTrinh.every((c) =>
     typeof c.id === "string" && typeof c.ten === "string" && soDuong(c.phanTram) && c.phanTram <= 100 &&
     typeof c.tu === "string" && typeof c.den === "string" &&
-    ["all", "ban", "thue"].includes(c.mucDich) && ["all", "tin", "day", "hoi-vien"].includes(c.sanPham) &&
+    ["all", "ban", "thue"].includes(c.mucDich) && ["all", "tin", "day", "hoi-vien", "nang-goi"].includes(c.sanPham) &&
     Array.isArray(c.tiers) && c.tiers.every(capHopLe) && typeof c.bat === "boolean" &&
     (c.loai === undefined || c.loai === "giam" || c.loai === "mien-phi-tv-moi") &&
     (c.soNgayTuDangKy === undefined || soDuong(c.soNgayTuDangKy)) && (c.soTin === undefined || soDuong(c.soTin)) &&
@@ -381,7 +399,8 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
     typeof g.id === "string" && /^[a-z0-9-]{1,30}$/.test(g.id) && typeof g.ten === "string" && g.ten.trim().length > 0 &&
     Array.isArray(g.thoiHan) && g.thoiHan.every((t) => soDuong(t.thang) && t.thang >= 1 && t.thang <= 36 && soDuong(t.price)) &&
     Array.isArray(g.voucher) && g.voucher.every((v) => ["tin-thuong", "tin-vip", "day-thuong"].includes(v.loai) && soDuong(v.giam) && soDuong(v.soLuong)) &&
-    Array.isArray(g.quyenLoi) && g.quyenLoi.every((q) => typeof q === "string"));
+    Array.isArray(g.quyenLoi) && g.quyenLoi.every((q) => typeof q === "string") &&
+    (g.chietKhauUuDai === undefined || (soDuong(g.chietKhauUuDai) && g.chietKhauUuDai <= 100)));
   if (!hvHopLe) return null;
   // % điều chỉnh: mỗi giá trị là số trong khoảng −100 … 1000
   const ptHopLe = (m: unknown) => m === undefined || (typeof m === "object" && m !== null &&
@@ -390,7 +409,7 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
   if (dc !== undefined) {
     const d = dc as Partial<DieuChinh>;
     const ok = typeof d === "object" && d !== null &&
-      [d.ban?.tin, d.ban?.day, d.thue?.tin, d.thue?.day, d.hoiVien, d.duAn, d.pr, d.banner].every(ptHopLe);
+      [d.ban?.tin, d.ban?.day, d.ban?.nangGoi, d.thue?.tin, d.thue?.day, d.thue?.nangGoi, d.hoiVien, d.duAn, d.pr, d.banner].every(ptHopLe);
     if (!ok) return null;
   }
   const planHopLe = (ds: unknown) => ds === undefined || (Array.isArray(ds) && ds.every((p) =>
@@ -405,7 +424,7 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
     const q = o.quyDinh as QuyDinhGia;
     const ok = !!q && typeof q === "object" && dsChu(q.quyDinhChung) && dsChu(q.dieuKienHoiVien) &&
       THU_TU_CAP.every((t) => dsChu(q.quyenLoi?.[t]?.loiIch) && dsChu(q.quyenLoi?.[t]?.hienThi)) &&
-      [q.quyDinhGoiTin, q.quyDinhDayTin, q.quyDinhBanner].every((x) => x === undefined || dsChu(x)) &&
+      [q.quyDinhGoiTin, q.quyDinhDayTin, q.quyDinhUpTin, q.quyDinhBanner].every((x) => x === undefined || dsChu(x)) &&
       (q.quyenLoiDuAn === undefined || THU_TU_CAP.every((t) => q.quyenLoiDuAn[t] === undefined || dsChu(q.quyenLoiDuAn[t]))) &&
       (q.bangQuyenLoi === undefined || (Array.isArray(q.bangQuyenLoi) && q.bangQuyenLoi.every((d) =>
         typeof d?.ten === "string" && THU_TU_CAP.every((t) => typeof d.giaTri?.[t] === "string"))));
@@ -418,8 +437,16 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
       [q.anhTheoCap, q.videoTheoCap].every((m) => m && typeof m === "object" && Object.values(m).every(soDuong));
     if (!ok) return null;
   }
+  // Up tin – Nâng gói: bật/tắt + cách khấu trừ (Chiết khấu ưu đãi % nằm ở dieuChinh.ban/thue.nangGoi, đã kiểm ở trên)
+  if (o.nangGoi !== undefined) {
+    const n = o.nangGoi as NangGoi;
+    const ok = !!n && typeof n.bat === "boolean" && (n.khauTru === "toan-bo" || n.khauTru === "theo-ngay") &&
+      (n.chu === undefined || (typeof n.chu === "object" && n.chu !== null && Object.values(n.chu).every((s) => typeof s === "string")));
+    if (!ok) return null;
+  }
   return {
     ban: o.ban, thue: o.thue, hoiVien: hv, chuongTrinh: o.chuongTrinh, capNhat: o.capNhat, congBoLuc: o.congBoLuc,
+    ...(o.nangGoi ? { nangGoi: o.nangGoi } : {}),
     ...(dc ? { dieuChinh: { ...DIEU_CHINH_TRONG, ...(dc as DieuChinh) } } : {}),
     ...(o.duAn ? { duAn: o.duAn } : {}), ...(o.pr ? { pr: o.pr } : {}),
     ...(o.prNotes ? { prNotes: o.prNotes } : {}), ...(o.banners ? { banners: o.banners } : {}),

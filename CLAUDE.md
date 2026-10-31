@@ -35,6 +35,10 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
     - Được giao kiểm đợt mà chỉ đọc, không làm phần sửa của mình → **kiểm là làm trọn phần của Claude (bước A 11.0B), chỉ để lại việc của anh.**
     - Tự vào Admin định nạp dự án — bước của anh, không đọc quy trình → **luật 9.**
     - Dựng lịch máy tự chạy từ 7h, trái luật "anh là người bắt đầu" (0D1) → **mọi lịch máy chỉ chạy khi dòng đầu `RA\VIEC.md` đã có ngày hôm nay (anh đã nhắn "Bắt đầu"); việc cấm của từng bên: `quy-trinh-3-ben.md` 11.00.**
+    - 01/11: trả bộ lọc về bản gốc nhưng chỉ trả MÃ, quên 32 dự án phiên kia thêm vào bảng Dự án (ô tìm đọc tên dự án từ bảng) → bộ lọc vẫn lệch,
+      anh phải chỉ ra → **trả về / gỡ việc một phiên = gỡ cả mã LẪN dữ liệu nó ghi (bảng, nội dung admin), rồi gõ thử trên web thật mới báo xong.**
+      Kể cả khi anh bảo làm bộ lọc cho Dự án: chỉ làm trong phần Dự án; mã hay dữ liệu thêm vào (tên dự án…) không được làm lệch ô tìm
+      trang chủ, Mua bán, Cho thuê — trước khi báo xong gõ thử ô tìm cả ba nơi, so với trước khi sửa.
     - Ghi tệp ổ D: chèn nhầm chỗ (tệp xuống dòng kiểu Windows) · viết câu chưa kiểm vào trả lời Cowork rồi phải sửa → **ghi xong đọc lại đúng chỗ; câu nào cũng phải có căn cứ đã xem.**
 
 ---

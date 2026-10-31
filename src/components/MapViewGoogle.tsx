@@ -155,7 +155,7 @@ export default function MapViewGoogle({ items, diem }: { items?: Listing[]; diem
         m.addListener("click", () => {
           popupRef.current?.setContent(
             `<a class="map-pop" href="${d.href}">` +
-              `<img src="${d.image}" alt="" loading="lazy" />` +
+              (d.image ? `<img src="${d.image}" alt="" loading="lazy" />` : "") +
               `<span class="map-pop-body">` +
               `<span class="map-pop-title">${d.title}</span>` +
               `<span class="map-pop-price">${d.phu}</span>` +

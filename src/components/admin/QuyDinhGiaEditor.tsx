@@ -92,6 +92,10 @@ export default function QuyDinhGiaEditor({ value: qd, onChange: sua }: { value: 
         <ODong nhan="" value={qd.quyDinhDayTin} onChange={(v) => sua({ ...qd, quyDinhDayTin: v })} />
       </Panel>
 
+      <Panel title="Quy định gói Up tin">
+        <ODong nhan="" rows={6} value={qd.quyDinhUpTin ?? []} onChange={(v) => sua({ ...qd, quyDinhUpTin: v })} />
+      </Panel>
+
       <Panel title="Quyền lợi gói dự án">
         <div className="grid gap-3 md:grid-cols-3">
           {(["diamond", "gold", "silver"] as const).map((t) => (

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { vnd } from "@/lib/billing";
 import { guiThongBao, MAU_NAP_TIEN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import { xuLyUpCho } from "@/lib/upTin";
 import { khoaCheckout, macCallback, type DuLieuCallback } from "@/lib/zaloCheckout";
 
@@ -40,10 +41,11 @@ export async function POST(req: Request) {
     if (Number(d.resultCode) === 1) {
       await baoLoi({
         noi: "zalo-checkout",
+        khach: true,
         mucDo: "chet",
-        tomTat: "Zalo báo đã thu tiền nhưng KHÔNG tìm thấy đơn nạp — ví chưa được cộng",
+        tomTat: SU_CO.zaloKhongRoDon.tomTat,
         chiTiet: `orderId Zalo ${d.orderId}, transId ${d.transId}, số tiền ${d.amount}`,
-        hauQua: "Khách mất tiền mà ví vẫn bằng 0.",
+        hauQua: SU_CO.zaloKhongRoDon.hauQua,
         canLam: `Tra đơn ${d.orderId} ở Mini App → Checkout SDK → Lịch sử giao dịch rồi cộng ví tay.`,
         khoa: `zalo-checkout:mat-don:${d.orderId}`,
       });
@@ -73,10 +75,11 @@ export async function POST(req: Request) {
     if (loiVi) {
       await baoLoi({
         noi: "zalo-checkout",
+        khach: true,
         mucDo: "chet",
-        tomTat: "Đơn Zalo đã ghi ĐÃ THANH TOÁN nhưng cộng ví thất bại",
+        tomTat: SU_CO.zaloCongVi.tomTat,
         chiTiet: `Đơn ${don.id} — ${loiVi.message}`,
-        hauQua: "Khách đã trả tiền mà số dư không tăng.",
+        hauQua: SU_CO.zaloCongVi.hauQua,
         canLam: `Cộng tay ${vnd(soTien)} vào ví khách.`,
         khoa: `zalo-checkout:cong-vi:${don.id}`,
       });

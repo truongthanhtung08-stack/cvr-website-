@@ -14,7 +14,7 @@ import { getProjects } from "@/lib/contentDb";
 import type { Project } from "@/lib/data";
 import { getTier, type TierId } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
-import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn } from "@/lib/billing";
+import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, COT_NANG_GOI, bangNangGoi, type BillingData, type Plan } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import BangGiaDayTin from "@/components/BangGiaDayTin";
 import NutMucDichGia from "@/components/NutMucDichGia";
@@ -64,7 +64,7 @@ const pjPkgs = [
 // CÂY MỤC GIỐNG HỆT menu Báo giá trên đầu web (Header.tsx) — chủ dự án 22/10/2026 tối: "menu tổng Báo giá, trong có các mục
 // con — bấm vào đâu ra phần ấy, bấm vào tổng ra tổng". Mỗi gói: tên gói (bấm ra cả gói) → Bảng giá · Đặc điểm · Quy định.
 // Bảng nào admin duyệt thêm (hội viên, dự án, PR, banner) thì tự có mục.
-const nhomDichVu = (coHoiVien: boolean, da: Set<string> = new Set()): SidebarGroup[] => [
+const nhomDichVu = (coHoiVien: boolean, da: Set<string> = new Set(), coNangGoi = false): SidebarGroup[] => [
   {
     title: "Gói đăng tin",
     href: "#bang-gia-tin",
@@ -83,6 +83,8 @@ const nhomDichVu = (coHoiVien: boolean, da: Set<string> = new Set()): SidebarGro
       { label: "Quy định", href: "/quy-dinh#quy-dinh-day-tin" },
     ],
   },
+  // Up tin – Nâng gói (01/11/2026): chỉ khi Admin đã bật + công bố giá nâng — cạnh Gói đẩy tin
+  ...(coNangGoi ? [{ title: "Up tin – Nâng gói", href: "#nang-goi", items: [] }] : []),
   ...(coHoiVien ? [{ title: "Gói hội viên", href: "#goi-hoi-vien", items: [] }] : []),
   ...(da.has("du-an") ? [{ title: "Gói dự án", href: "#goi-du-an", items: [] }] : []),
   ...(da.has("pr") ? [{ title: "Bài PR", href: "#goi-pr", items: [] }] : []),
@@ -148,7 +150,7 @@ export default async function BaoGiaPage() {
           {/* Điện thoại: thanh tiêu đề trên cùng đã ghi "Báo giá dịch vụ" → tiêu đề này chỉ để Google đọc (không hiện lặp); máy tính hiện */}
           <h1 className="sr-only lg:not-sr-only lg:text-[34px] lg:font-semibold lg:leading-tight lg:tracking-tight lg:text-cvr-ink">Báo giá dịch vụ</h1>
           <div className="grid grid-cols-1 gap-6 lg:mt-8 lg:grid-cols-[220px_1fr] lg:gap-12">
-            <PricingSidebar groups={nhomDichVu(coHv, daDuyet)} />
+            <PricingSidebar groups={nhomDichVu(coHv, daDuyet, !!billing.nangGoi?.bat && (bangNangGoi(billing, "ban").length > 0 || bangNangGoi(billing, "thue").length > 0))} />
 
             <div className="min-w-0 space-y-14 sm:space-y-16">
               {/* Nút gạt Tin bán | Tin cho thuê (ngay cạnh chữ "Bảng giá" của từng gói) đổi `data-md` của khung này → mọi con số
@@ -213,12 +215,25 @@ export default async function BaoGiaPage() {
                   <LinkQuyDinh href="/quy-dinh#quy-dinh-day-tin" />
 
                   {/* Khách muốn đẩy tin vào đâu (chủ dự án 09/10/2026): Tin đăng của tôi → nút Đẩy tin ở từng tin */}
-                  <a href="/tai-khoan/tin-dang" className={`mt-8 ${NUT_CHINH}`}>
-                    Đẩy tin của tôi
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                  </a>
+                  {/* Up tin của tôi (chủ dự án 01/11/2026) cạnh Đẩy tin của tôi — cùng về Tin của tôi; hiện khi chữ Up tin đã Duyệt trong Admin */}
+                  <div className="mt-8 flex flex-wrap justify-center gap-3">
+                    {(billing.nangGoi?.chu || process.env.NODE_ENV !== "production") && (
+                      <a href="/tai-khoan/tin-dang" className={NUT_CHINH}>
+                        Up tin của tôi
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      </a>
+                    )}
+                    <a href="/tai-khoan/tin-dang" className={NUT_CHINH}>
+                      Đẩy tin của tôi
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    </a>
+                  </div>
                 </section>
               </div>
+
+              {/* UP TIN – NÂNG GÓI (chủ dự án 01/11/2026): chỉ hiện khi Admin đã Duyệt (giá nâng công bố) và đang Bật — giá nâng gồm VAT,
+                  cách khấu trừ gói đang chạy, quy định Admin ghi */}
+              {billing.nangGoi?.bat && <BangNangGoiBaoGia billing={billing} quyDinhUpTin={quyDinh.quyDinhUpTin ?? []} />}
 
               {/* 4. GÓI HỘI VIÊN — mua theo tháng, voucher mỗi 30 ngày (cơ chế Batdongsan) */}
               {coHv && (
@@ -398,6 +413,43 @@ function LinkQuyDinh({ href }: { href: string }) {
 // Mục chính trong gói (Bảng giá · Tin hiển thị · Đặc điểm chi tiết · Quy định): chữ to đậm + vạch vàng thương hiệu bên trái — nổi
 // khác hẳn chữ thường (chủ dự án 22/10/2026 tối: "các mục chính … cho khác").
 const KIEU_MUC_CHINH = "flex items-center gap-2.5 text-[18px] font-bold tracking-tight text-cvr-ink before:h-[18px] before:w-[3px] before:rounded-full before:bg-cvr-gold before:content-['']";
+function BangNangGoiBaoGia({ billing, quyDinhUpTin }: { billing: BillingData; quyDinhUpTin: string[] }) {
+  // Khách chỉ thấy GIÁ NÂNG ĐÃ CÔNG BỐ (gồm VAT) — không hiện % hay chiết khấu (chủ dự án 01/11/2026)
+  const ng = billing.nangGoi;
+  const ban = bangNangGoi(billing, "ban"), thue = bangNangGoi(billing, "thue");
+  if (!ng || (!ban.length && !thue.length)) return null;
+  const gia = (ds: Plan[], t: TierId, n: number) => ds.find((p) => p.tierId === t)?.terms.find((x) => x.days === n)?.price;
+  const ngay = (t: TierId) => [...new Set([...ban, ...thue].filter((p) => p.tierId === t).flatMap((p) => p.terms.map((x) => x.days)))].sort((a, b) => a - b);
+  const quyDinh = quyDinhUpTin.map((s) => s.trim()).filter(Boolean); // Admin → Quyền lợi gói → Quy định gói Up tin (đã duyệt)
+  const th = "border-b border-cvr-line py-2.5 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-cvr-muted";
+  const td = "border-b border-cvr-line/60 py-2.5 pr-3";
+  const o = (g?: number) => (g === undefined ? "—" : giaTra(g));
+  return (
+    <section id="nang-goi" className="scroll-mt-4">
+      <SectionTitle title="Up tin – Nâng gói" desc="" />
+      <div className="mt-6 overflow-x-auto">
+        <table className="w-full min-w-[420px] text-sm text-cvr-body">
+          <thead><tr><th className={th}>Gói mới</th><th className={th}>Thời hạn</th><th className={th}>Tin bán</th><th className={th}>Tin cho thuê</th></tr></thead>
+          <tbody>
+            {COT_NANG_GOI.flatMap((t) => ngay(t).map((n, i) => (
+              <tr key={`${t}-${n}`}>
+                <td className={`${td} font-semibold text-cvr-ink`}>{i === 0 ? getTier(t).name : ""}</td>
+                <td className={td}>{n} ngày</td>
+                <td className={`${td} font-semibold text-cvr-ink`}>{o(gia(ban, t, n))}</td>
+                <td className={`${td} font-semibold text-cvr-ink`}>{o(gia(thue, t, n))}</td>
+              </tr>
+            )))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-4 text-sm text-cvr-body">
+        Khấu trừ gói đang chạy: {ng.khauTru === "toan-bo" ? "Trừ toàn bộ tiền gói đang chạy" : "Trừ theo số ngày còn lại"}
+      </p>
+      {quyDinh.length > 0 && <DanhSach ds={quyDinh} className="mt-4" />}
+    </section>
+  );
+}
+
 function TieuDeKhoi({ children }: { children: React.ReactNode }) {
   return <h3 className={KIEU_MUC_CHINH}>{children}</h3>;
 }

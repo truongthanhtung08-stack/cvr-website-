@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import PhotoViewer from "@/components/PhotoViewer";
 import PhotoList from "@/components/PhotoList";
+import { anhNho } from "@/lib/asset";
 
 // Lưới ảnh chi tiết dự án kiểu Batdongsan: 1 ảnh lớn trái + 4 ảnh nhỏ phải (2×2),
 // bộ đếm ảnh góc dưới phải. Bấm ảnh bất kỳ → xem toàn màn hình kiểu Facebook
@@ -40,7 +41,7 @@ export default function ProjectGallery({ images, alt }: Props) {
     return (
       <>
         <button type="button" onClick={() => open(0)} className="relative block aspect-[16/10] w-full overflow-hidden rounded-xl bg-cvr-surface sm:mt-4 sm:w-80">
-          <Image src={images[0]} alt={alt} fill priority quality={90} sizes="(max-width:640px) 100vw, 320px" className="object-cover" />
+          <Image src={anhNho(images[0])} alt={alt} fill priority quality={90} sizes="(max-width:640px) 100vw, 320px" className="object-cover" />
         </button>
         {lightbox && <PhotoViewer images={images} start={active} title={alt} onClose={() => setLightbox(false)} />}
       </>
@@ -56,7 +57,10 @@ export default function ProjectGallery({ images, alt }: Props) {
             onClick={() => open(0)}
             className={`group relative col-span-4 row-span-2 overflow-hidden ${lopLon}`}
           >
-            <Image src={images[0]} alt={alt} fill priority quality={90} sizes={n === 1 ? "(max-width:640px) 100vw, 88vw" : "(max-width:640px) 100vw, 44vw"} className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            {/* Ảnh đầu dùng bản NHỎ (1280 px, đủ nét cho khung ≤ 630 px) — CÙNG tệp với bộ ảnh điện thoại (Gallery) nên trang chỉ tải trước
+                MỘT ảnh. Trước 31/10/2026 khung này lấy ảnh gốc: điện thoại (khung ẩn) vẫn tải trước thêm ảnh gốc ~380 KB, tranh đường truyền
+                với ảnh đầu → LCP trang dự án ~5,2 s. Cùng cách trang tin (KhungAnhPC). Bấm ảnh xem lớn vẫn là ảnh gốc. */}
+            <Image src={anhNho(images[0])} alt={alt} fill priority quality={90} sizes={n === 1 ? "(max-width:640px) 100vw, 88vw" : "(max-width:640px) 100vw, 44vw"} className="object-cover transition-transform duration-500 group-hover:scale-105" />
           </button>
 
           {/* 4 ảnh nhỏ — phải, lưới 2×2 (ẩn trên mobile) */}

@@ -47,14 +47,13 @@ export function soAnhDuAnToiDa(data: BillingData, tierId: TierId): number {
   return goiDuAn(data).find((p) => p.tierId === tierId)?.maxImages ?? 0;
 }
 
-// Báo giá cho DỰ ÁN — dùng chung công thức với tin đăng (khuyến mãi + cấp hội viên)
+// Báo giá cho DỰ ÁN — dùng chung công thức với tin đăng (khuyến mãi)
 export function quotePriceDuAn(args: {
   data: BillingData;
   tierId: TierId;
   days: number;
   today: string;
   isNewMember?: boolean;
-  levelId?: string;
 }): PriceQuote {
   return quotePrice({ ...args, data: { ...args.data, plans: goiDuAn(args.data) } });
 }
@@ -194,7 +193,96 @@ export type BillingData = {
   /** Bảng giá ĐÃ DUYỆT ngoài Đăng tin/Đẩy tin: "du-an" · "pr" · "banner" (mỗi bảng một nút Duyệt riêng).
    *  Bảng chưa có trong đây thì web KHÔNG hiện (chủ dự án 10/10/2026). */
   mucDaDuyet?: string[];
+  /** UP TIN – NÂNG GÓI (chủ dự án 01/11/2026) — cài đặt (bật/tắt, khấu trừ, quy định) ghi ở nút Duyệt chính. Giá: congBo.*.nangGoi. */
+  nangGoi?: NangGoi;
 };
+
+// ── UP TIN – NÂNG GÓI (chủ dự án 01/11/2026, CLAUDE.md 0.1) ────────────────────
+// Nâng gói = đăng gói mới: MỘT hạn = ngày duyệt + số ngày gói mới. MẶC ĐỊNH khách luôn nâng được (chủ dự án 01/11/2026): chưa
+// công bố bảng Up tin → giá = giá gói tin đã công bố, không khấu trừ. Đã công bố (nút Duyệt chính) → giá nâng = giá công bố gói tin
+// → chương trình sản phẩm "Up tin" (tab Khuyến mãi) → − Chiết khấu ưu đãi (%) của gói (tab Up tin), làm tròn nghìn, ghi sẵn vào
+// congBo.ban/thue.nangGoi. Khách chỉ thấy giá cuối — không thấy % (ba thứ khác nhau, không trộn: nhãn −% theo độ dài gói ở bảng giá
+// khách chọn · ô % cân giá chuẩn → công bố · Chiết khấu ưu đãi (%) này).
+export type CachKhauTru = "toan-bo" | "theo-ngay"; // trừ toàn bộ tiền gói đang chạy · trừ theo số ngày còn lại
+export type NangGoi = {
+  bat: boolean;          // bật = áp bảng Up tin đã công bố; tắt = giá gói tin
+  khauTru: CachKhauTru;  // cách tính phần gói đang chạy được trừ — KHÁCH tự chọn có trừ hay không (ô ở khối Tổng tiền)
+  chu?: ChuNangGoi;      // chữ hiện cho khách — chủ dự án sửa trong Admin, Duyệt mới lên web
+};
+// Chữ của Up tin – Nâng gói · Đẩy tin ở tài khoản khách (chủ dự án 01/11/2026: không viết cứng trong mã — đặt trong Admin, có mẫu).
+// {goi} {ngay} {tien} được thay bằng số thật lúc hiện.
+export type ChuNangGoi = {
+  nutNang: string;       // nút ở Tin của tôi
+  nutDay: string;
+  goiDangChay: string;   // dòng trên bảng chọn gói khi nâng
+  oKhauTru: string;      // ô khách tự chọn ở khối Tổng tiền
+  lienKetQuyDinh: string; // dòng liên kết tới quy định trên trang Báo giá
+};
+export const CHU_NANG_GOI_MAU: ChuNangGoi = {
+  nutNang: "Up tin",
+  nutDay: "Đẩy tin",
+  goiDangChay: "Gói đang chạy: {goi} · còn {ngay} ngày",
+  oKhauTru: "Trừ phần gói đang chạy còn lại ({tien})",
+  lienKetQuyDinh: "Quy định gói tin · Up tin · Đẩy tin",
+};
+export const NANG_GOI_TRONG: NangGoi = { bat: false, khauTru: "theo-ngay" };
+// Chữ đã duyệt (billing.nangGoi.chu); thiếu ô nào thì lấy chữ mẫu
+export const chuNangGoi = (d: Pick<BillingData, "nangGoi">): ChuNangGoi => ({ ...CHU_NANG_GOI_MAU, ...(d.nangGoi?.chu ?? {}) });
+// Gói nâng lên được: các gói VIP (Basic là gói thấp nhất — không nâng lên Basic)
+export const COT_NANG_GOI: TierId[] = ["diamond", "gold", "silver"];
+
+export type GiaNangGoi = {
+  giaGoi: number;        // giá gói mới (bảng Up tin đã công bố, hoặc giá gói tin khi chưa công bố) — chưa VAT
+  khauTruCo: number;     // số tiền gói đang chạy còn lại máy tính sẵn (khách chọn mới trừ) — chưa VAT
+  khauTru: number;       // trừ tiền gói đang chạy (chưa VAT) — 0 khi khách không chọn
+  uuDaiHoiVien: number;  // Chiết khấu ưu đãi (%) của gói hội viên khách đang có (gói hội viên chưa ban hành → 0)
+  voucher: number;       // voucher gói hội viên (tiền)
+  truocThue: number;     // phải trả chưa VAT
+  tongTra: number;       // phải trả gồm VAT (như mọi gói — tachThue)
+};
+
+// Bảng giá nâng ĐÃ CÔNG BỐ theo mục đích của tin (Bán / Thuê). Chưa công bố → rỗng.
+export const bangNangGoi = (d: BillingData, purpose?: string | null): Plan[] => d.congBo?.[mucDichGia(purpose)]?.nangGoi ?? [];
+
+// MỘT HÀM TÍNH TIỀN NÂNG GÓI — thứ tự cố định, CỘNG DỒN, không âm (đổi sang "lấy mức cao hơn" chỉ sửa ở đây):
+//   giá gói mới (đã gồm chương trình + chiết khấu ưu đãi gói) − khấu trừ gói đang chạy − chiết khấu ưu đãi hội viên − voucher + VAT.
+// Khấu trừ: máy luôn tính sẵn (`khauTruCo`); chỉ trừ khi KHÁCH chọn (apKhauTru) — chủ dự án 01/11/2026. Gói cũ 0 ₫ → không có gì trừ.
+// Không có gói · mốc ngày đó → null. goiHienTai.daTra = tiền gói đang chạy CHƯA VAT; tu / den = lúc bắt đầu / hết hạn gói đó (ISO).
+export function giaNangGoi(args: {
+  data: BillingData;
+  purpose?: string | null;
+  tierMoi: TierId;
+  soNgay: number;
+  goiHienTai?: { daTra: number; tu: string; den: string } | null;
+  hoiVienId?: string | null;   // gói hội viên khách đang có (billing.hoiVien)
+  voucher?: number;            // tiền voucher hội viên áp cho lần này (chưa VAT)
+  apKhauTru?: boolean;         // khách chọn trừ phần gói đang chạy còn lại
+  luc?: number;                // thời điểm nâng (ms) — mặc định bây giờ
+}): GiaNangGoi | null {
+  if (!COT_NANG_GOI.includes(args.tierMoi)) return null;
+  const ng = args.data.nangGoi;
+  const daCongBo = !!ng?.bat && bangNangGoi(args.data, args.purpose).length > 0;
+  const bang = daCongBo ? bangNangGoi(args.data, args.purpose) : bangTheoMucDich(args.data, args.purpose).plans;
+  const term = bang.find((p) => p.tierId === args.tierMoi)?.terms.find((t) => t.days === args.soNgay);
+  if (!term) return null;
+  const giaGoi = term.price;
+  const g = args.goiHienTai;
+  let khauTruCo = 0;
+  if (g && g.daTra > 0) {
+    if ((ng?.khauTru ?? "theo-ngay") === "toan-bo") khauTruCo = g.daTra;
+    else {
+      const tu = Date.parse(g.tu), den = Date.parse(g.den), luc = args.luc ?? Date.now();
+      khauTruCo = den > tu ? Math.round((g.daTra * Math.max(0, Math.min(den - luc, den - tu))) / (den - tu)) : 0;
+    }
+  }
+  const khauTru = args.apKhauTru ? Math.min(giaGoi, khauTruCo) : 0;
+  const pt = Math.max(0, Math.min(100, args.data.hoiVien?.find((h) => h.id === args.hoiVienId)?.chietKhauUuDai ?? 0));
+  const conLai = Math.max(0, giaGoi - khauTru);
+  const uuDaiHoiVien = Math.min(conLai, Math.round((giaGoi * pt) / 100));
+  const voucher = Math.min(conLai - uuDaiHoiVien, Math.max(0, args.voucher ?? 0));
+  const truocThue = conLai - uuDaiHoiVien - voucher;
+  return { giaGoi, khauTruCo, khauTru, uuDaiHoiVien, voucher, truocThue, tongTra: tachThue(truocThue).tongTra };
+}
 
 // GHÉP BẢNG GIÁ ĐÃ LƯU VỚI MẶC ĐỊNH — MỌI chỗ máy chủ tính tiền PHẢI dùng hàm này.
 // Lỗi tìm ra 25/09/2026: máy chủ ghép kiểu { ...MẶC_ĐỊNH, ...đã_lưu } nên khối
@@ -206,7 +294,7 @@ export function ghepBillingLuu(luu?: Partial<BillingData> | null): BillingData {
 }
 
 export type MucDichGia = "ban" | "thue";
-export type GiaCongBo = { plans: Plan[]; up: UpRow[] };
+export type GiaCongBo = { plans: Plan[]; up: UpRow[]; nangGoi?: Plan[] }; // nangGoi: giá Up tin – Nâng gói đã công bố (01/11/2026)
 export type CongBo = {
   ban: GiaCongBo;
   thue: GiaCongBo;
@@ -229,6 +317,7 @@ export type GoiHoiVien = {
   ten: string;                                  // "Hội viên Cơ bản"
   thoiHan: { thang: number; price: number; giaGoc?: number }[]; // giaGoc: trước chương trình giảm
   voucher: VoucherGoi[];                        // mỗi 30 ngày
+  chietKhauUuDai?: number;                      // Chiết khấu ưu đãi (%) khi nâng gói (Up tin) — theo cấp gói hội viên (01/11/2026)
   quyenLoi: string[];                           // quyền lợi khác — CHỈ ghi thứ web đã làm thật
 };
 
@@ -407,13 +496,14 @@ export const BILLING_DEFAULT: BillingData = {
 };
 
 // ── TÍNH GIÁ ────────────────────────────────────────────────────────────────
-// Giá chuẩn → trừ khuyến mãi đang chạy → trừ ưu đãi theo cấp thành viên.
-// Trả về cả phần giảm để hiển thị minh bạch cho khách.
+// Giá công bố → trừ khuyến mãi đang chạy. Trả về cả phần giảm để hiển thị minh bạch cho khách.
+// ⛔ 01/11/2026: BỎ hệ "cấp thành viên theo tổng tiền nạp" (data.levels) khỏi phép tính — trùng với GÓI HỘI VIÊN (chủ dự án chốt
+// 25/09 một hệ duy nhất). Chưa nơi nào truyền levelId nên giá khách không đổi; levelOff giữ = 0 cho form đang đọc trường này.
 export type PriceQuote = {
   base: number;        // giá chuẩn
   promo: Promo | null; // khuyến mãi được áp
   promoOff: number;    // tiền giảm do khuyến mãi
-  levelOff: number;    // tiền giảm do cấp thành viên
+  levelOff: number;    // luôn 0 (bỏ cấp theo tổng nạp — 01/11/2026)
   total: number;       // phải trả
 };
 
@@ -430,14 +520,12 @@ export function quotePrice({
   days,
   today,
   isNewMember = false,
-  levelId,
 }: {
   data: BillingData;
   tierId: TierId;
   days: number;
   today: string;          // "YYYY-MM-DD"
   isNewMember?: boolean;
-  levelId?: string;       // không truyền = khách chưa có cấp hội viên
 }): PriceQuote {
   const plan = data.plans.find((p) => p.tierId === tierId);
   const term = plan?.terms.find((t) => t.days === days) ?? plan?.terms[0];
@@ -447,15 +535,12 @@ export function quotePrice({
   const fit = data.promos
     .filter((p) => isPromoRunning(p, today))
     .filter((p) => p.tiers.length === 0 || p.tiers.includes(tierId))
-    .filter((p) => p.audience === "all" || (p.audience === "new" && isNewMember) || p.audience === levelId)
+    .filter((p) => p.audience === "all" || (p.audience === "new" && isNewMember))
     .sort((a, b) => b.percent - a.percent);
   const promo = fit[0] ?? null;
   const promoOff = promo ? Math.round((base * promo.percent) / 100) : 0;
 
-  const level = levelId ? data.levels.find((l) => l.id === levelId) : undefined;
-  const levelOff = level?.discount ? Math.round(((base - promoOff) * level.discount) / 100) : 0;
-
-  return { base, promo, promoOff, levelOff, total: Math.max(0, base - promoOff - levelOff) };
+  return { base, promo, promoOff, levelOff: 0, total: Math.max(0, base - promoOff) };
 }
 
 // Cấp hội viên theo TỔNG TIỀN ĐÃ NẠP. Chưa đủ mốc thấp nhất → null (chưa có cấp).

@@ -1,6 +1,7 @@
 import { chupGiaKhuVuc } from "@/lib/chupGiaKhuVuc";
 import { quetTinHetHan } from "@/lib/hetHanTin";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import { hanThueSuat, HAN_THUE_SUAT, THUE_SUAT_GTGT } from "@/lib/thue";
 import { viecCanhDns } from "./canhDns";
 import type { Viec } from "./soViec";
@@ -62,9 +63,7 @@ const viecHanThueSuat: Viec = {
     await baoLoi({
       noi: "hoa-don",
       mucDo: han.conHieuLuc ? "nang" : "chet",
-      tomTat: han.conHieuLuc
-        ? `Thuế suất GTGT ${(THUE_SUAT_GTGT * 100).toFixed(0)}% còn hiệu lực ${han.conLai} ngày`
-        : `Thuế suất GTGT ${(THUE_SUAT_GTGT * 100).toFixed(0)}% ĐÃ HẾT HIỆU LỰC ${-han.conLai} ngày`,
+      tomTat: SU_CO.thueSuat((THUE_SUAT_GTGT * 100).toFixed(0), han.conHieuLuc, Math.abs(han.conLai)),
       chiTiet: `Hạn cuối: ${HAN_THUE_SUAT} (Nghị quyết 204/2025/QH15).`,
       hauQua: han.conHieuLuc
         ? "Qua hạn mà chưa sửa thì mọi hóa đơn xuất ra sẽ sai thuế suất, kéo theo sai tờ khai GTGT."

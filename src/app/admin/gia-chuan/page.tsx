@@ -8,6 +8,12 @@ import { getTier, type TierId } from "@/lib/packages";
 import { tachThue } from "@/lib/thue";
 import {
   TEN_VOUCHER,
+  NANG_GOI_TRONG,
+  COT_NANG_GOI,
+  BILLING_DEFAULT,
+  giaNangGoi,
+  chuNangGoi,
+  type NangGoi,
   type BannerTable,
   type CongBo,
   type LoaiVoucher,
@@ -108,8 +114,18 @@ function GiaCongBo({ gia, pt }: { gia: number; pt?: number }) {
   );
 }
 
+// Mẫu quy định gói Up tin (chủ dự án giao 01/11/2026) — chỉ là chữ gợi ý trong bản nháp Admin, chủ dự án sửa rồi mới Duyệt
+const MAU_QUY_DINH_UP_TIN = [
+  "Up tin là nâng tin đang hiển thị lên gói cao hơn (Silver, Gold, Diamond).",
+  "Thời hạn gói mới tính từ lúc nâng, theo số ngày khách chọn.",
+  "Số tiền phải trả = giá gói mới trừ phần gói đang chạy được khấu trừ, đã gồm ưu đãi nếu có, cộng VAT 8%.",
+  "Hết thời hạn gói mới, tin ngừng hiển thị.",
+  "Tin đăng theo chương trình áp dụng đúng quy định của chương trình.",
+];
+
 type Tab = "gia" | "khuyen-mai" | "quyen-loi" | "quy-dinh";
-type Muc = "ban" | "thue" | "hoi-vien" | "du-an" | "pr" | "banner";
+type Muc = "ban" | "thue" | "hoi-vien" | "du-an" | "pr" | "banner" | "nang-goi";
+type BangDuyetRieng = "hoi-vien" | "du-an" | "pr" | "banner";
 
 export default function BangGiaPage() {
   const [nhap, setNhap] = useState<GiaChuanNhap>(NHAP_TRONG);
@@ -147,7 +163,9 @@ export default function BangGiaPage() {
         pr: n.pr?.length ? n.pr : kq.prHienTai ?? [],
         prNotes: n.prNotes ?? kq.prNotesHienTai ?? [],
         banners: n.banners?.length ? n.banners : kq.bannersHienTai ?? [],
-        quyDinh: ghepQuyDinh(n.quyDinh ?? kq.quyDinhHienTai),
+        // Quy định gói Up tin chưa có → điền sẵn MẪU vào bản nháp để chủ dự án sửa chữ (01/11/2026); chỉ lên web khi Lưu nháp + Duyệt
+        quyDinh: ((q) => (q.quyDinhUpTin?.length || (n.quyDinh ?? kq.quyDinhHienTai)?.quyDinhUpTin ? q : { ...q, quyDinhUpTin: MAU_QUY_DINH_UP_TIN }))(
+          ghepQuyDinh(n.quyDinh ?? kq.quyDinhHienTai)),
         quyDinhTin: n.quyDinhTin ?? kq.quyDinhTinHienTai,
       });
       setCongBo(kq.congBo);
@@ -235,7 +253,7 @@ export default function BangGiaPage() {
   }
 
   // DUYỆT RIÊNG một bảng (Hội viên · Dự án · PR · Banner) — chủ dự án 10/10/2026
-  async function duyetBang(bang: "hoi-vien" | "du-an" | "pr" | "banner", ten: string) {
+  async function duyetBang(bang: BangDuyetRieng, ten: string) {
     if (daSua) return setMsg({ ok: false, text: "Lưu nháp trước rồi mới Duyệt." });
     if (!window.confirm(`Duyệt bảng giá ${ten}? Duyệt xong hiện ngay trên web.`)) return;
     setDangLam("cong-bo");
@@ -250,7 +268,7 @@ export default function BangGiaPage() {
     await tai();
     setMsg({ ok: true, text: `Đã duyệt bảng giá ${ten} — hiện ngay trên web.` });
   }
-  const nutDuyetBang = (bang: "hoi-vien" | "du-an" | "pr" | "banner", ten: string) => (
+  const nutDuyetBang = (bang: BangDuyetRieng, ten: string) => (
     <div className="flex justify-end">
       <button type="button" onClick={() => duyetBang(bang, ten)} disabled={!!dangLam}
         className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
@@ -343,7 +361,7 @@ export default function BangGiaPage() {
       {tab === "gia" && (
         <>
           <div className="flex flex-wrap gap-2">
-            {([["ban", "Tin Bán"], ["thue", "Tin Cho thuê"], ["hoi-vien", "Hội viên"], ["du-an", "Dự án"], ["pr", "Bài PR"], ["banner", "Banner"]] as const).map(([id, ten]) => (
+            {([["ban", "Tin Bán"], ["thue", "Tin Cho thuê"], ["nang-goi", "Up tin – Nâng gói"], ["hoi-vien", "Hội viên"], ["du-an", "Dự án"], ["pr", "Bài PR"], ["banner", "Banner"]] as const).map(([id, ten]) => (
               <button key={id} type="button" onClick={() => setMuc(id)}
                 className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${muc === id ? "bg-cvr-blue text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink"}`}>
                 {ten}
@@ -368,6 +386,28 @@ export default function BangGiaPage() {
                 onPt={(p) => suaDc({ [muc]: { ...dc[muc], day: p } } as Partial<DieuChinh>)}
               />
               <CanhBao ds={canhBaoGia} />
+            </>
+          )}
+
+          {muc === "nang-goi" && (
+            <>
+              {/* Cùng luồng Giá chuẩn (chủ dự án 01/11/2026): giá chuẩn gói tin + % cột Up tin → nút Duyệt ở đầu trang → giá nâng công bố */}
+              {(["ban", "thue"] as const).map((md) => (
+                <BangNangGoiGia
+                  key={md}
+                  ten={md === "ban" ? "Up tin – Nâng gói Bán" : "Up tin – Nâng gói Cho thuê"}
+                  bang={nhap[md]}
+                  ptTin={dc[md].tin}
+                  nang={xemTruoc[md].nangGoi ?? []}
+                  pt={dc[md].nangGoi ?? {}}
+                  onPt={(p) => suaDc({ [md]: { ...dc[md], nangGoi: p } } as Partial<DieuChinh>)}
+                />
+              ))}
+              <CaiDatNangGoi
+                v={nhap.nangGoi ?? NANG_GOI_TRONG}
+                onChange={(v) => sua({ ...nhap, nangGoi: v })}
+                xemTruoc={xemTruoc}
+              />
             </>
           )}
 
@@ -407,6 +447,182 @@ export default function BangGiaPage() {
       {tab === "quyen-loi" && nhap.quyDinh && <QuyDinhGiaEditor value={nhap.quyDinh} onChange={(q) => sua({ ...nhap, quyDinh: q })} />}
       {tab === "quy-dinh" && nhap.quyDinhTin && <QuyDinhTin q={nhap.quyDinhTin} onChange={(q) => sua({ ...nhap, quyDinhTin: q })} />}
     </div>
+  );
+}
+
+// Ô % 0 … 100 (chiết khấu, ưu đãi) — trống = 0
+function OPtGiam({ value, onChange }: { value?: number; onChange: (n: number | undefined) => void }) {
+  const [chu, setChu] = useState(value === undefined ? "" : String(value));
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- cùng cách ô % điều chỉnh (OPhanTram) ở trên
+  useEffect(() => setChu(value === undefined ? "" : String(value)), [value]);
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        inputMode="decimal"
+        value={chu}
+        placeholder="0"
+        onChange={(e) => {
+          const v = e.target.value.replace(/[^\d.,]/g, "").replace(",", ".");
+          setChu(v);
+          const n = Number(v);
+          if (v === "") onChange(undefined);
+          else if (Number.isFinite(n)) onChange(Math.max(0, Math.min(100, n)));
+        }}
+        className={`${inputCls} w-20 text-right`}
+      />
+      <span className="text-sm text-cvr-muted">%</span>
+    </div>
+  );
+}
+
+// ── Up tin – Nâng gói (chủ dự án 01/11/2026): CÙNG khuôn thẻ gói tin — mỗi gói một thẻ (tên + ô Chiết khấu ưu đãi (%) + dòng
+// Ngày · giá công bố của CHÍNH gói tin, không nhập lại giá → giá nâng). Giá nâng = giá công bố gói tin → chương trình "Up tin" →
+// − Chiết khấu ưu đãi (%), làm tròn nghìn (bản xem trước = đúng hàm công bố tinhCongBo); nút Duyệt ở đầu trang mới lên web.
+function BangNangGoiGia({ ten, bang, ptTin, nang, pt, onPt }: {
+  ten: string; bang: BangChuan; ptTin: PhanTramCot; nang: Plan[]; pt: PhanTramCot; onPt: (p: PhanTramCot) => void;
+}) {
+  return (
+    <Panel title={ten}>
+      <div className="grid gap-3 lg:grid-cols-2">
+        {COT_NANG_GOI.map((t) => {
+          const terms = [...(bang.plans.find((p) => p.tierId === t)?.terms ?? [])].sort((a, b) => a.days - b.days);
+          const giaNang = (n: number) => nang.find((p) => p.tierId === t)?.terms.find((x) => x.days === n)?.price;
+          return (
+            <div key={t} className="rounded-xl border border-cvr-line p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                <p className="font-semibold text-cvr-ink">{tenCap(t)} <span className="text-xs font-normal text-cvr-muted">X{getTier(t).heSo}</span></p>
+                <label className="flex items-center gap-2 text-xs text-cvr-muted">Chiết khấu ưu đãi (%)
+                  <OPtGiam value={pt[t]} onChange={(n) => onPt({ ...pt, [t]: n })} />
+                </label>
+              </div>
+              {terms.length === 0 ? <p className="text-xs text-amber-700">Bảng gói chưa có thời hạn</p> : (
+                <div className="space-y-2">
+                  {terms.map((term) => {
+                    const g = giaNang(term.days);
+                    return (
+                      <div key={term.days} className="flex items-start gap-2 text-sm">
+                        <p className="w-16 text-xs text-cvr-muted">Ngày<span className="mt-1 block text-sm text-cvr-ink">{term.days}</span></p>
+                        <div className="flex-1 text-xs text-cvr-muted">Giá công bố gói tin
+                          <p className="mt-1 text-sm text-cvr-ink">{ptTin[t] === undefined ? "—" : dong(tronNghin(apDung(term.price, ptTin[t])))}</p>
+                          {g !== undefined && <p className="mt-0.5 text-[11px] text-cvr-faint">Giá nâng {dong(g)} · gồm VAT <b className="text-cvr-ink">{tra(g)}</b></p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+// Cài đặt Up tin (bật / khấu trừ) + XEM THỬ một ví dụ để cân giá — giá nâng lấy từ bản xem trước công bố
+function CaiDatNangGoi({ v, onChange, xemTruoc }: {
+  v: NangGoi; onChange: (v: NangGoi) => void; xemTruoc: CongBo;
+}) {
+  const [md, setMd] = useState<"ban" | "thue">("ban");
+  const [goi, setGoi] = useState<TierId>("gold");
+  const [soNgay, setSoNgay] = useState(0);
+  const [daTra, setDaTra] = useState(0);
+  const [ngayGoi, setNgayGoi] = useState(10);
+  const [daChay, setDaChay] = useState(3);
+  const [apKhauTru, setApKhauTru] = useState(true);
+  const chu = chuNangGoi({ nangGoi: v });
+  const suaChu = (k: keyof typeof chu, s: string) => onChange({ ...v, chu: { ...chu, [k]: s } });
+  const moc = (xemTruoc[md].nangGoi ?? []).find((p) => p.tierId === goi)?.terms ?? [];
+  const ngayChon = moc.some((t) => t.days === soNgay) ? soNgay : moc[0]?.days ?? 0;
+  const luc = Date.parse("2026-01-01T00:00:00Z");
+  const kq = giaNangGoi({
+    data: { ...BILLING_DEFAULT, congBo: xemTruoc, nangGoi: { ...v, bat: true } },
+    purpose: md, tierMoi: goi, soNgay: ngayChon,
+    goiHienTai: daTra > 0 ? { daTra, tu: new Date(luc - daChay * 86_400_000).toISOString(), den: new Date(luc + Math.max(0, ngayGoi - daChay) * 86_400_000).toISOString() } : null,
+    apKhauTru,
+    luc,
+  });
+  return (
+    <Panel title="Cài đặt Up tin – Nâng gói">
+      <div className="space-y-5">
+        <label className="flex items-center gap-2 text-sm font-semibold text-cvr-ink">
+          <input type="checkbox" checked={v.bat} onChange={(e) => onChange({ ...v, bat: e.target.checked })} className="h-4 w-4 accent-cvr-blue" />
+          Bật trên web
+        </label>
+
+        <div>
+          <p className="mb-2 text-sm font-semibold text-cvr-ink">Khấu trừ gói đang chạy</p>
+          <div className="flex flex-wrap gap-4 text-sm text-cvr-body">
+            {([["toan-bo", "Trừ toàn bộ tiền gói đang chạy"], ["theo-ngay", "Trừ theo số ngày còn lại"]] as const).map(([id, ten]) => (
+              <label key={id} className="flex items-center gap-2">
+                <input type="radio" name="khau-tru" checked={v.khauTru === id} onChange={() => onChange({ ...v, khauTru: id })} className="h-4 w-4 accent-cvr-blue" />
+                {ten}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* CHỮ HIỆN CHO KHÁCH (chủ dự án 01/11/2026: đặt trong Admin, có mẫu; Lưu nháp → Duyệt mới lên web). {goi} {ngay} {tien} = số thật */}
+        <div className="grid gap-2 sm:grid-cols-2">
+          {([
+            ["nutNang", "Nút nâng gói"],
+            ["nutDay", "Nút đẩy tin"],
+            ["goiDangChay", "Dòng gói đang chạy"],
+            ["oKhauTru", "Ô khách chọn khấu trừ"],
+            ["lienKetQuyDinh", "Dòng liên kết quy định"],
+          ] as const).map(([k, nhan]) => (
+            <label key={k} className="text-xs text-cvr-muted">{nhan}
+              <input value={chu[k]} onChange={(e) => suaChu(k, e.target.value)} className={inputCls} />
+            </label>
+          ))}
+        </div>
+
+        {/* XEM THỬ — một ví dụ khách đang chạy gói X, nâng lên gói Y (chủ dự án cân giá); không lưu, không lên web */}
+        <div className="rounded-xl border border-cvr-line p-3">
+          <p className="mb-2 text-sm font-semibold text-cvr-ink">Xem thử</p>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <label className="text-xs text-cvr-muted">Tin
+              <select value={md} onChange={(e) => setMd(e.target.value as "ban" | "thue")} className={inputCls}>
+                <option value="ban">Bán</option><option value="thue">Cho thuê</option>
+              </select>
+            </label>
+            <label className="text-xs text-cvr-muted">Gói mới
+              <select value={goi} onChange={(e) => setGoi(e.target.value as TierId)} className={inputCls}>
+                {COT_NANG_GOI.map((t) => <option key={t} value={t}>{tenCap(t)}</option>)}
+              </select>
+            </label>
+            <label className="text-xs text-cvr-muted">Thời hạn gói mới
+              <select value={ngayChon} onChange={(e) => setSoNgay(Number(e.target.value))} className={inputCls}>
+                {moc.map((t) => <option key={t.days} value={t.days}>{t.days} ngày</option>)}
+              </select>
+            </label>
+            <label className="text-xs text-cvr-muted">Tiền gói đang chạy (chưa VAT)
+              <OSo value={daTra} onChange={setDaTra} />
+            </label>
+            <label className="text-xs text-cvr-muted">Số ngày gói đang chạy
+              <OSo value={ngayGoi} onChange={setNgayGoi} />
+            </label>
+            <label className="text-xs text-cvr-muted">Đã chạy (ngày)
+              <OSo value={daChay} onChange={setDaChay} />
+            </label>
+          </div>
+          <label className="mt-2 flex items-center gap-2 text-sm text-cvr-body">
+            <input type="checkbox" checked={apKhauTru} onChange={(e) => setApKhauTru(e.target.checked)} className="h-4 w-4 accent-cvr-blue" />
+            {chu.oKhauTru.replace("{tien}", kq ? dong(kq.khauTruCo) : "0đ")}
+          </label>
+          {!kq ? (
+            <p className="mt-3 text-xs text-amber-700">Bảng gói chưa có thời hạn</p>
+          ) : (
+            <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 text-sm">
+              <dt className="text-cvr-muted">Giá gói mới</dt><dd className="text-right text-cvr-ink">{dong(kq.giaGoi)}</dd>
+              <dt className="text-cvr-muted">Khấu trừ gói đang chạy</dt><dd className="text-right text-cvr-ink">−{dong(kq.khauTru)}</dd>
+              <dt className="text-cvr-muted">Chưa VAT</dt><dd className="text-right text-cvr-ink">{dong(kq.truocThue)}</dd>
+              <dt className="font-semibold text-cvr-ink">Tổng (gồm VAT)</dt><dd className="text-right font-semibold text-cvr-ink">{dong(kq.tongTra)}</dd>
+            </dl>
+          )}
+        </div>
+      </div>
+    </Panel>
   );
 }
 
@@ -574,7 +790,7 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, homNay }: { ds: ChuongTrin
                 </label>
                 <label className="text-xs text-cvr-muted sm:col-span-2">Sản phẩm
                   <select value={c.sanPham} onChange={(e) => sua(c.id, { sanPham: e.target.value as ChuongTrinh["sanPham"] })} className={inputCls}>
-                    <option value="all">Tất cả</option><option value="tin">Đăng tin</option><option value="day">Đẩy tin</option><option value="hoi-vien">Hội viên</option>
+                    <option value="all">Tất cả</option><option value="tin">Đăng tin</option><option value="day">Đẩy tin</option><option value="hoi-vien">Hội viên</option><option value="nang-goi">Up tin</option>
                   </select>
                 </label>
               </>
@@ -657,6 +873,10 @@ function BangHoiVien({ ds, pt, onPt, onChange }: {
                 <input value={g.ten} onChange={(e) => suaGoi(i, { ten: e.target.value })} className={inputCls} />
               </label>
               <p className="pb-2 text-xs text-cvr-muted">Voucher/tháng: <b className="text-cvr-ink">{dong(giaTriVoucherThang(g))}</b></p>
+              {/* Chiết khấu ưu đãi theo cấp hội viên khi Up tin – nâng gói (01/11/2026) — duyệt cùng nút Duyệt bảng Hội viên */}
+              <label className="text-xs text-cvr-muted">Chiết khấu ưu đãi Up tin (%)
+                <OPtGiam value={g.chietKhauUuDai} onChange={(n) => suaGoi(i, { chietKhauUuDai: n })} />
+              </label>
               <button type="button" onClick={() => onChange(ds.filter((_, j) => j !== i))} className="pb-2 text-xs text-cvr-muted hover:text-red-600">Xoá gói</button>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">

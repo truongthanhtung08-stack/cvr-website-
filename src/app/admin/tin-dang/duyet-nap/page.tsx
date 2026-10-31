@@ -6,8 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import type { ListingRow } from "@/lib/listingAdmin";
 import BangKiemTinSeo from "@/components/admin/BangKiemTinSeo";
+import YeuCauNangGoi from "@/components/admin/YeuCauNangGoi";
 import { directions } from "@/lib/listingSpec";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
+import { HOP_BAO } from "@/lib/chuThongBao";
 
 // ============================================================================
 // ADMIN — DUYỆT TIN NẠP (luồng chủ dự án chốt 16/10/2026)
@@ -37,6 +39,8 @@ type Tin = ListingRow & { details: (ListingRow["details"] & { choChuDuyet?: bool
 export default function DuyetNapPage() {
   const [ds, setDs] = useState<Tin[] | null>(null);
   const [loi, setLoi] = useState("");
+  // Yêu cầu nâng gói của khách (details.nang_cho) — mục riêng trong Tin chờ duyệt (chủ dự án 01/11/2026)
+  const [nang, setNang] = useState<ListingRow[]>([]);
   // Duyệt xong phải có dấu hiệu, ở lại đúng trang đang làm (chủ dự án 25/10/2026): duyệt ngay tại đây,
   // hoặc bấm lỗi → Sửa tin → lưu xong quay về đây kèm ?daLuu=<id>&kieu=len|nhap
   const [daLuu, setDaLuu] = useState<{ id: string; kieu: string; title: string } | null>(null);
@@ -63,6 +67,8 @@ export default function DuyetNapPage() {
         if (error) setLoi(error.message);
         setDs((data as Tin[]) ?? []);
       });
+    createClient().from("listings").select("*").not("details->nang_cho", "is", null).limit(200)
+      .then(({ data }) => { if (!huy) setNang((data as ListingRow[]) ?? []); });
     return () => { huy = true; };
   }, []);
 
@@ -84,6 +90,7 @@ export default function DuyetNapPage() {
           <strong>Đã lưu nháp, chưa lên web:</strong> {daLuu.title}
         </div>
       ))}
+      <YeuCauNangGoi rows={nang} onDoi={(m) => setNang((cu) => cu.map((x) => (x.id === m.id ? m : x)))} />
       <div className="mt-5 space-y-6">
         {ds?.map((t) => (
           <TheDuyet key={t.id} tin={t} xong={(title) => { setDs((cu) => cu?.filter((x) => x.id !== t.id) ?? null); baoDaLuu({ id: t.id, kieu: "len", title }); }} />
@@ -148,9 +155,9 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: (title: string) => void }) {
       .eq("id", tin.id)
       .select("id");
     setDang(false);
-    if (error) return setBao(`Lỗi: ${error.message}`);
+    if (error) return setBao(HOP_BAO.chuaLuu(error.message));
     // Hết phiên đăng nhập / không phải admin → CSDL bỏ qua lệnh mà không báo lỗi (0 dòng). Phải báo, không được coi là đã duyệt (24/10/2026).
-    if (!data?.length) return setBao("Chưa lưu được — phiên đăng nhập admin đã hết. Tải lại trang, đăng nhập lại rồi bấm lại.");
+    if (!data?.length) return setBao(HOP_BAO.hetPhien);
     if (duyet) {
       await lamMoiWeb("listings");
       xong(tieuDe.trim());

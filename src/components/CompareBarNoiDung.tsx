@@ -21,8 +21,8 @@ export default function CompareBarNoiDung() {
         {/* Thumbnails đã chọn */}
         <div className="flex flex-1 items-center gap-2 overflow-x-auto">
           {items.map((it) => (
-            <div key={it.id} className="relative h-11 w-14 shrink-0 overflow-hidden rounded-lg">
-              <Image src={asset(it.image)} alt={it.title} fill sizes="56px" className="object-cover" />
+            <div key={it.id} className="relative h-11 w-14 shrink-0 overflow-hidden rounded-lg bg-cvr-surface">
+              {it.image && <Image src={asset(it.image)} alt={it.title} fill sizes="56px" className="object-cover" />}
               <button
                 type="button"
                 aria-label="Bỏ khỏi so sánh"

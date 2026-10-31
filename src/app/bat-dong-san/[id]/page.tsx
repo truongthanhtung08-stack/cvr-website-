@@ -463,7 +463,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
           {/* Điện thoại: Gallery đã chốt. Máy tính: khung slide kiểu Batdongsan nằm trong cột trái (KhungAnhPC, 18/10/2026) */}
           <div className="-mx-4 mb-5 sm:hidden">
-            <Gallery images={d.images} videos={d.videos} alt={tieuDe1Dong} listingId={l.id} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
+            {d.images.length || d.videos.length ? (
+              <Gallery images={d.images} videos={d.videos} alt={tieuDe1Dong} listingId={l.id} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
+            ) : (
+              // Tin chưa có ảnh: khung xám + biểu tượng, không ảnh mẫu (31/10/2026)
+              <div className="relative aspect-[4/3] bg-cvr-surface">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-8">
@@ -471,7 +479,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5">
               {/* !animate-none: hiệu ứng trượt của cột giữ transform → video "Xem full" / bộ xem lớn (fixed) bị nhốt trong cột */}
               <div className="hidden !animate-none sm:block">
-                <KhungAnhPC images={d.images} videos={d.videos} alt={tieuDe1Dong} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
+                {d.images.length || d.videos.length ? (
+                  <KhungAnhPC images={d.images} videos={d.videos} alt={tieuDe1Dong} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
+                ) : (
+                  <div className="relative aspect-[16/9] bg-cvr-surface">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-14 w-14 opacity-25" />
+                  </div>
+                )}
               </div>
               {/* ═══ TỔNG QUAN TIN ═══ mở tin ra là thấy ngay, theo đúng thứ tự mắt
                   người đọc: tin có đáng tin không → là cái gì → ở đâu → bao nhiêu

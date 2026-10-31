@@ -3,6 +3,8 @@
 // Người nhận: ADMIN_EMAIL (nếu có cắm trên Vercel), không thì hotro@coastalland.vn.
 // Không bao giờ ném lỗi — báo hỏng thì ghi log, việc đang chạy vẫn đi tiếp.
 // ════════════════════════════════════════════════════════════════════════════
+import { chuDeEmail, EMAIL } from "@/lib/chuThongBao";
+
 const SITE = "https://coastalland.vn";
 
 export type KhoiBao = { tieuDe: string; dong: string[]; link?: string; nhanLink?: string };
@@ -11,7 +13,7 @@ const thoat = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").repl
 
 function html(chuDe: string, khoi: KhoiBao[]) {
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;color:#1d1d1f">
-  <p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6e6e73">COASTAL LAND · Quản trị</p>
+  <p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6e6e73">${EMAIL.dauTrang}</p>
   <h2 style="margin:0 0 18px;font-size:20px;font-weight:600;letter-spacing:-.02em">${thoat(chuDe)}</h2>
   ${khoi
     .map(
@@ -20,7 +22,7 @@ function html(chuDe: string, khoi: KhoiBao[]) {
     .map((d) => `<tr><td style="padding:5px 0;border-bottom:1px solid #e5e5e7">${thoat(d)}</td></tr>`)
     .join("")}</table>${
         k.link
-          ? `<p style="margin:10px 0 0"><a href="${SITE}${k.link}" style="color:#0071e3;font-size:14px;font-weight:600;text-decoration:none">${thoat(k.nhanLink ?? "Mở trang quản trị")} →</a></p>`
+          ? `<p style="margin:10px 0 0"><a href="${SITE}${k.link}" style="color:#0071e3;font-size:14px;font-weight:600;text-decoration:none">${thoat(k.nhanLink ?? EMAIL.moTrang)} →</a></p>`
           : ""
       }`,
     )
@@ -39,7 +41,7 @@ export async function baoAdmin(chuDe: string, khoi: KhoiBao[]): Promise<boolean>
       body: JSON.stringify({
         from: process.env.RESEND_FROM || "COASTAL LAND <no-reply@coastalland.vn>",
         to: nhan,
-        subject: `[COASTAL LAND] ${chuDe}`,
+        subject: chuDeEmail(chuDe),
         html: html(chuDe, khoi),
       }),
     });

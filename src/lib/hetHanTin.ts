@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getTier, type TierId } from "@/lib/packages";
 import { guiThongBao, maTin, MAU_DA_HET_HAN, MAU_SAP_HET_HAN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import { thucHienUpTin } from "@/lib/upTin";
 import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, chonKhuyenMai, laChuThat, lucGuiTin, soNgayHienThi, type BillingData } from "@/lib/billing";
 
@@ -132,6 +133,8 @@ export async function quetTinHetHan(
         }
         hanBasic = await hanChuongTrinh(admin, tin, bill);
       }
+      // Khách chọn GÓI THƯỜNG (không chương trình): hết gói là hết hạn, không về Basic cũ (chủ dự án 01/11/2026: nâng = đăng gói mới)
+      if (!chonKhuyenMai(tin.details)) hanBasic = NaN;
       if (tin.tier !== "basic" && Number.isFinite(hanBasic) && hanBasic > bayGio.getTime()) {
         const { sau_vip_con_lai_ms: _bo1, han_basic: _bo2, ...giu } = tin.details ?? {};
         void _bo1; void _bo2;
@@ -154,9 +157,9 @@ export async function quetTinHetHan(
         await baoLoi({
           noi: "het-han-tin",
           mucDo: "nang",
-          tomTat: "Không chuyển được tin hết hạn sang trạng thái hết hạn",
+          tomTat: SU_CO.tinHetHanVanHien.tomTat,
           chiTiet: `Tin ${tin.id} — ${error.message}`,
-          hauQua: "Tin hết hạn vẫn hiển thị miễn phí — không công bằng với người đang trả tiền.",
+          hauQua: SU_CO.tinHetHanVanHien.hauQua,
           canLam: `Vào /admin/tin-dang chuyển tin "${tin.title}" sang Hết hạn.`,
           khoa: `het-han:ha-tier:${tin.id}`,
         });
@@ -248,9 +251,9 @@ export async function quetTinHetHan(
     await baoLoi({
       noi: "het-han-tin",
       mucDo: "nang",
-      tomTat: "Quét tin hết hạn bị lỗi",
+      tomTat: SU_CO.quetHetHan.tomTat,
       chiTiet: String(e),
-      hauQua: "Tin hết hạn có thể còn hiện, và khách không được nhắc.",
+      hauQua: SU_CO.quetHetHan.hauQua,
       canLam: "Xem log route /api/tin-dang/het-han.",
     });
   }

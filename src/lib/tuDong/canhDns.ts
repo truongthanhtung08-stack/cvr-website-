@@ -1,4 +1,5 @@
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import type { Viec } from "./soViec";
 import { homNayVn } from "@/lib/gioVn";
 
@@ -76,8 +77,9 @@ export const viecCanhDns: Viec = {
       const nang = sai.some((c) => c.mucDo === "chet");
       await baoLoi({
         noi: "canh-dns",
+        khach: nang, // tên miền mất hẳn = khách không vào được web
         mucDo: nang ? "chet" : "nang",
-        tomTat: `${sai.length} bản ghi tên miền SAI hoặc BIẾN MẤT`,
+        tomTat: SU_CO.tenMien(sai.length),
         chiTiet: sai.map((c) => `${c.ten} (${c.loai}) — cần có "${c.mong}"`).join(" · "),
         hauQua: sai.map((c) => c.hauQua).join(" "),
         canLam:

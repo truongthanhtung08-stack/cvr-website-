@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { anhNho } from "@/lib/asset";
 // Bộ xem ảnh lớn (zoom, vuốt đổi ảnh) — CÙNG bộ với thư viện ảnh dự án nổi bật; chỉ tải khi bấm vào ảnh
 const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"));
 // Điện thoại: bấm ảnh → danh sách ảnh xếp dọc kiểu Facebook — CÙNG cơ chế khung ảnh dự án nổi bật (ProjectGallery / PhotoList, 31/10/2026)
@@ -58,9 +59,10 @@ export default function AnhTraCuu({ images, alt, khung = "aspect-[16/9]" }: { im
       {ds.map((src, k) => (k === i || k === (i + 1) % ds.length || k === (i - 1 + ds.length) % ds.length) && (
         <div key={src} className={`absolute inset-0 transition-opacity duration-700 ${k === i ? "opacity-100" : "opacity-0"}`} aria-hidden={k !== i}>
           {/* Nền: chính ảnh đó phóng to, làm mờ — lấp phần khung thừa */}
-          <Image src={src} alt="" fill sizes="(max-width:1024px) 100vw, 800px" className="z-0 scale-110 object-cover blur-2xl brightness-90" />
-          {/* Ảnh thật hiện trọn, không cắt */}
-          <Image src={src} alt={k === i ? alt : ""} fill priority={k === 0} fetchPriority={k === 0 ? "high" : "auto"} sizes="(max-width:1024px) 100vw, 800px" className="z-[1] object-contain" />
+          <Image src={anhNho(src)} alt="" fill sizes="(max-width:1024px) 100vw, 800px" className="z-0 scale-110 object-cover blur-2xl brightness-90" />
+          {/* Ảnh thật hiện trọn, không cắt — bản NHỎ 1280 px, cùng tệp bộ ảnh điện thoại (Gallery) nên trang chỉ tải trước một ảnh (31/10/2026,
+              như ProjectGallery); bấm xem lớn vẫn là ảnh gốc */}
+          <Image src={anhNho(src)} alt={k === i ? alt : ""} fill priority={k === 0} fetchPriority={k === 0 ? "high" : "auto"} sizes="(max-width:1024px) 100vw, 800px" className="z-[1] object-contain" />
         </div>
       ))}
       {ds.length > 1 && (

@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { loiTinSeo, type TinKiem } from "@/lib/kiemTinSeo";
-import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
+import { saleTypeGroups, rentTypeGroups, loaiHinhTheoLoaiCon } from "@/lib/filters";
 // Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
 // dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
 import { chuanHoaDiaChiCu } from "@/lib/diaChiHaiHe";
@@ -16,7 +16,7 @@ import { chuanHoaDiaChiCu } from "@/lib/diaChiHaiHe";
 import { slugify } from "@/lib/contentAdmin";
 // Bộ đặc điểm theo loại hình — để ghi số tầng / mặt tiền / đường vào đúng ô của
 // từng loại bất động sản, y như khi đăng tay bằng form.
-import { fieldsFor, coDonGiaM2, mauSoCuaLoaiHinh, chuanLoaiCon, loaiConTheoLoiKhach } from "@/lib/listingSpec";
+import { fieldsFor, coDonGiaM2, mauSoCuaLoaiHinh, chuanLoaiCon, loaiConTheoLoiKhach, oLoaiCon } from "@/lib/listingSpec";
 // SỐ ĐIỆN THOẠI — cùng một hàm với ô nhập trong admin và số hiện trên trang tin,
 // nên file của Cowork, cơ sở dữ liệu và web luôn ghi giống hệt nhau (0 + 10 số).
 import { chuanHoaSdt, laSdtVN, tachNhieuSdt } from "@/lib/phone";
@@ -405,7 +405,11 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   if (!loaiHinh) loi.push("Thiếu loại hình");
   else if (!dsLoai.some((x) => chuanHoa(x) === chuanHoa(loaiHinh)))
     loi.push(`loai_hinh "${loaiHinh}" không có trong danh mục ${mucDich === "thue" ? "cho thuê" : "mua bán"}`);
-  const loaiHinhChuan = dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
+  const loaiHinhGhi = dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
+  // Loại con thuộc loại hình anh em cùng mục cha → theo loại con (loaiHinhTheoLoaiCon — một luật với lúc đọc tin, 31/10/2026)
+  const theoCon = loaiHinhTheoLoaiCon(loaiHinhGhi, mucDich, chuanLoaiCon(lay(COT.loaiCanHo) || lay(COT.loaiDat)));
+  if (theoCon) canhBao.push(`loai_hinh "${loaiHinhGhi}" nhưng loại con "${theoCon.loaiCon || loaiHinhGhi}" thuộc loại hình "${theoCon.type}" — đã đổi sang "${theoCon.type}"`);
+  const loaiHinhChuan = theoCon?.type ?? loaiHinhGhi;
   // LOẠI CON BẮT BUỘC cho căn hộ, đất (chủ dự án 29/10/2026) — chỉ áp đăng tin hàng loạt, form đăng tin giữ nguyên
   const oLoai = fieldsFor(loaiHinhChuan, mucDich).map((f) => f.key);
   if (oLoai.includes("loaiCanho") && !lay(COT.loaiCanHo).trim()) loi.push("Thiếu loai_can_ho — căn hộ phải ghi loại con đúng tin gốc (vd Chung cư thương mại, Căn hộ cao cấp)");
@@ -615,8 +619,14 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   datSpec(lay(COT.chieuDai), COT.chieuDai, "depth");
   datSpec(lay(COT.namXayDung), COT.namXayDung, "builtYear");
   datSpec(lay(COT.tangSo), COT.tangSo, "floor");
-  datSpec(loaiConDung(COT.loaiCanHo, "loaiCanho"), COT.loaiCanHo, "loaiCanho");
-  datSpec(loaiConDung(COT.loaiDat, "landType"), COT.loaiDat, "landType");
+  // Loại con ghi vào ĐÚNG ô loại con của loại hình (oLoaiCon); Cowork ghi ở cột loai_can_ho hay loai_dat đều nhận (31/10/2026)
+  {
+    const o = oLoaiCon(loaiHinhChuan, mucDich);
+    const [dau, sau] = o?.key === "landType" ? [COT.loaiDat, COT.loaiCanHo] : [COT.loaiCanHo, COT.loaiDat];
+    const cot = lay(dau).trim() ? dau : sau;
+    if (o) datSpec(loaiConDung(cot, o.key), cot, o.key);
+    else datSpec(lay(cot), cot, "loaiCanho");
+  }
   datSpec(lay(COT.loiVao), COT.loiVao, "access");
   // Kho · nhà xưởng · bãi — bộ đặc điểm riêng, phần lớn là tin CHO THUÊ.
   datSpec(lay(COT.dienTichSuDung), COT.dienTichSuDung, "usableArea");

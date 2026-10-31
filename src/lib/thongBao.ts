@@ -240,7 +240,12 @@ function chuanHoaThamSo(data: Record<string, string>): Record<string, string> {
   const ra: Record<string, string> = {};
   for (const [khoa, giaTri] of Object.entries(data)) {
     let s = (giaTri ?? "").toString().trim();
-    if (THAM_SO_TIEN.has(khoa)) s = s.replace(/₫/g, "đ");
+    // Tiền gửi ĐÚNG dạng mẫu khai trên ZBS: "64.800đ" — số có dấu chấm nghìn, "đ" liền sau, không khoảng trắng
+    // (docs/MAU-ZBS-MOI.md). 26/10/2026 Zalo trả -1124 "so_tien has invalid format" với "0 đ" (tin miễn phí).
+    if (THAM_SO_TIEN.has(khoa)) {
+      const so = s.replace(/[^\d]/g, "");
+      s = so ? `${Number(so).toLocaleString("vi-VN")}đ` : s.replace(/₫/g, "đ");
+    }
     const max = GIOI_HAN_THAM_SO[khoa];
     // Cắt ở ranh giới ký tự, thêm "…" để người đọc biết là còn nữa.
     const catGon = max && s.length > max ? s.slice(0, max - 1).trimEnd() + "…" : s;

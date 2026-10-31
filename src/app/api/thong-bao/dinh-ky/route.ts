@@ -4,6 +4,7 @@ import { guiThongBao, MAU_BAO_CAO_TUAN, MAU_HOI_VIEN_SAP_HET, MAU_UU_DAI_THANH_V
 import { docBillingLuu, homNayVn } from "@/lib/congBoGia";
 import { freeDangChay, ngayVn } from "@/lib/billing";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import { chuanHoaSdt } from "@/lib/phone";
 import { getListings } from "@/lib/listingsDb";
 import { filtersFromParams } from "@/lib/filters";
@@ -96,7 +97,7 @@ export async function GET(request: Request) {
       hoiVien++;
     }
   } catch (e) {
-    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Nhắc gói hội viên sắp hết hạn bị lỗi", chiTiet: String(e) });
+    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: SU_CO.dinhKy.hoiVienSapHet, chiTiet: String(e) });
   }
 
   // ── 3) Ưu đãi thành viên mới ───────────────────────────────────────────
@@ -136,7 +137,7 @@ export async function GET(request: Request) {
       }
     }
   } catch (e) {
-    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Gửi ưu đãi thành viên mới bị lỗi", chiTiet: String(e) });
+    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: SU_CO.dinhKy.uuDaiMoi, chiTiet: String(e) });
   }
 
   // ── 4) Tìm kiếm đã lưu — tin MỚI ĐĂNG khớp ĐỦ bộ lọc khách lưu (0055) ─────
@@ -177,7 +178,7 @@ export async function GET(request: Request) {
       }
     }
   } catch (e) {
-    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Báo tin mới theo tìm kiếm đã lưu bị lỗi", chiTiet: String(e) });
+    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: SU_CO.dinhKy.timKiemDaLuu, chiTiet: String(e) });
   }
 
   // ── 5) Nhắc tin nháp chưa gửi — nháp để yên từ 24 đến 48 giờ trước (mỗi nháp 1 lần) ─
@@ -211,7 +212,7 @@ export async function GET(request: Request) {
       nhap++;
     }
   } catch (e) {
-    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Nhắc tin nháp bị lỗi", chiTiet: String(e) });
+    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: SU_CO.dinhKy.tinNhap, chiTiet: String(e) });
   }
 
   // ── 2) Báo cáo tuần — chỉ sáng Thứ Hai giờ VN ──────────────────────────
@@ -270,7 +271,7 @@ export async function GET(request: Request) {
         baoCao++;
       }
     } catch (e) {
-      await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Gửi báo cáo tuần bị lỗi", chiTiet: String(e) });
+      await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: SU_CO.dinhKy.baoCaoTuan, chiTiet: String(e) });
     }
   }
 
