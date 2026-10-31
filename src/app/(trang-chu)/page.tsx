@@ -20,6 +20,7 @@ import { getArticles, getProjectsNoiBat } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
 import { THANH_PHO } from "@/lib/pseo";
 import { slugKhuVuc } from "@/lib/khuVuc";
+import { normalizeVi } from "@/lib/filters";
 
 // Tiêu đề trang chủ phải CÓ TỪ KHOÁ — trước đây để trống nên Google chỉ thấy
 // "COASTAL LAND", không hiểu trang này bán gì, ở đâu.
@@ -89,7 +90,12 @@ export default async function Home() {
           <LocationGrid areas={homeAreas.map((a) => {
             const ten = decodeURIComponent(a.href.match(/[?&]tinh=([^&]+)/)?.[1] ?? "");
             const tp = ten ? THANH_PHO.find((t) => t.name === ten) : undefined;
-            return tp ? { ...a, href: `/mua-ban/${slugKhuVuc(tp.tinh)}/${tp.slug}` } : a;
+            // SỐ TIN THẬT (chủ dự án 31/10/2026: cấm số liệu mẫu — web thật từng hiện "Đà Nẵng 1.240 tin" viết sẵn): đếm tin bán
+            // đang hiện có địa chỉ (mới hoặc cũ) chứa tên khu vực, cùng cách bộ lọc ?tinh= dò chuỗi con
+            const so = ten ? tinDu.filter((l) => (l.purpose ?? "ban") === "ban"
+              && normalizeVi(`${l.location} ${l.locationCu ?? ""}`).includes(normalizeVi(ten))).length : null;
+            const b = so === null ? a : { ...a, count: `${so.toLocaleString("vi-VN")} tin` };
+            return tp ? { ...b, href: `/mua-ban/${slugKhuVuc(tp.tinh)}/${tp.slug}` } : b;
           })} />
           {/* cuoiTrang: khi đang mở danh sách Tin tức thì Tin tức là khối cuối (khối Tìm kiếm phổ biến ẩn) → cách footer đúng chuẩn */}
           <NewsSection articles={baiThe} featuredSlug={featuredSlug} cuoiTrang />

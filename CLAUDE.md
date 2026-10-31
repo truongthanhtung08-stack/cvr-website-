@@ -8,7 +8,7 @@
 ## ⭐ QUY TRÌNH HẰNG NGÀY — MỘT NGUỒN DUY NHẤT (anh chốt 31/10/2026: "gom về một mối, một nguồn, xuyên suốt")
 
 **Nguồn duy nhất: `D:\Coastal Land\SEO\Plan SEO - pSEO\chi-tiet\quy-trinh-3-ben.md` mục 11.00.** Mọi phiên ĐỌC mục đó trước khi làm bất cứ việc gì trong ngày. Không chép quy trình sang chỗ khác (CLAUDE.md, memory, KE-HOACH-SEO.md, VIEC.md chỉ trỏ về đây); đổi quy trình → sửa thẳng mục 11.00.
-Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phiên nào cũng được → Điều phối làm tiếp chỗ đang dở; "Bắt đầu từ đầu" mới làm lại) · **"Kiểm"** (Điều phối giao phiên con KIỂM kiểm theo chuẩn SEO, nhận kết quả, báo "Xong — up được") · **"Push"** (Điều phối push một lần). Chỉ anh đưa lên web. Việc cần anh: `CAN-ANH-DUYET.md`.
+Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phiên nào cũng được → Điều phối làm tiếp chỗ đang dở; "Bắt đầu từ đầu" mới làm lại) · **"Kiểm"** (Điều phối giao phiên con KIỂM kiểm theo chuẩn SEO, nhận kết quả, báo "Xong — up được") · **"Push"** (Điều phối gom việc các phiên, push khi cần và anh đồng ý). Chỉ anh đưa lên web. Việc cần anh: `CAN-ANH-DUYET.md`.
 
 ---
 
@@ -26,7 +26,7 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
 8. **Trong khi làm ghi nhật ký** (`chi-tiet\nhat-ky.md`): việc đã làm · lỗi phát hiện · nguyên nhân · lý do · giải pháp · cần bổ sung gì. Làm xong mới báo anh, một lần. Không giải thích vòng vo, không nói "đã ghi nhận" rồi làm sai.
 9. **ĐỌC QUY TRÌNH TRƯỚC KHI LÀM — bước nào của ai** (31/10): mở đúng mục quy trình của việc đó (đăng tin, dự án → `chi-tiet\quy-trinh-3-ben.md` 11.0B; push → mục 0B) → bước của anh thì báo "đến bước anh", KHÔNG tự làm; lệnh mơ hồ so với quy trình → hỏi một câu. Ai làm bước nào: CHỈ theo `quy-trinh-3-ben.md` 11.00 (nguồn duy nhất). (Bài học 31/10: tự vào Admin nạp dự án khi anh chưa giao.)
 10. **Báo ngắn, đúng 3 mục: Xong · Chưa xong · Cần gì** (31/10). Mục "Cần gì" chỉ trỏ tới dòng trong `CAN-ANH-DUYET.md` (cách ghi: 11.00). Việc anh giao thì làm HẾT rồi mới báo. Nói ít, chỉ cái cần, không giải thích lại.
-11. **Điều phối chính = phiên "ĐIỀU PHỐI CÔNG VIỆC HẰNG NGÀY"** (`local_29599553-f08e-4fa5-a473-919f702b941e`, anh giao 31/10). **Điều phối KHÔNG trực tiếp làm việc — chỉ giao việc cho các phiên, nhận bàn giao, xử lý, và làm việc với anh** (anh 31/10); việc làm (đo SEO, xin index, kiểm đợt, sửa mã) do phiên con làm. Mọi phiên khác bàn giao về đây (đã xong · còn dở, dừng ở bước nào · tệp, nhánh, commit · việc chờ anh duyệt); **chỉ phiên điều phối push**, khi anh nhắn "Push". **Gom cả ngày, push MỘT lần cuối ngày — không hỏi "Push không?" sau từng việc** (anh 31/10: "không lắc nhắc").
+11. **Điều phối chính = phiên "ĐIỀU PHỐI CÔNG VIỆC HẰNG NGÀY"** (`local_29599553-f08e-4fa5-a473-919f702b941e`, anh giao 31/10). **Điều phối KHÔNG trực tiếp làm việc — chỉ giao việc cho các phiên, nhận bàn giao, xử lý, và làm việc với anh** (anh 31/10); việc làm (đo SEO, xin index, kiểm đợt, sửa mã) do phiên con làm. **Anh có quyền làm việc trực tiếp với phiên con khi cần; phiên con làm xong vẫn báo kết quả về Điều phối — một mối** (anh 31/10). Mọi phiên khác bàn giao về đây (đã xong · còn dở, dừng ở bước nào · tệp, nhánh, commit · việc chờ anh duyệt); **chỉ phiên điều phối push**, khi anh nhắn "Push". **Push linh động theo nhu cầu công việc, khi anh đồng ý (anh nhắn "Push") — không dồn cuối ngày để tiết kiệm; việc các phiên gom về đây, cần lên web thì báo anh một dòng** (anh 31/10).
 12. **LỖI CỦA PHIÊN ĐIỀU PHỐI 31/10 — ĐỪNG LẶP** (anh: "lỗi gì ghi hết vào CLAUDE.md"):
     - Anh hỏi mà không trả lời ngay, tự làm trước (ghi bộ nhớ, bật máy xem thử 3001) → **anh hỏi thì trả lời đúng câu đó trước; anh bảo kiểm thì chỉ kiểm.**
     - Hiểu sai ý anh nhiều lần, trả lời vòng vo, phải hỏi lại 4–5 lần mới ra một câu "đảm trách được" → **trả lời một câu thẳng; chưa hiểu thì hỏi lại một câu ngắn.**
@@ -36,6 +36,14 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
     - Tự vào Admin định nạp dự án — bước của anh, không đọc quy trình → **luật 9.**
     - Dựng lịch máy tự chạy từ 7h, trái luật "anh là người bắt đầu" (0D1) → **mọi lịch máy chỉ chạy khi dòng đầu `RA\VIEC.md` đã có ngày hôm nay (anh đã nhắn "Bắt đầu"); việc cấm của từng bên: `quy-trinh-3-ben.md` 11.00.**
     - Ghi tệp ổ D: chèn nhầm chỗ (tệp xuống dòng kiểu Windows) · viết câu chưa kiểm vào trả lời Cowork rồi phải sửa → **ghi xong đọc lại đúng chỗ; câu nào cũng phải có căn cứ đã xem.**
+
+---
+
+13. **⛔ TRƯỚC MỖI LẦN PUSH — XOÁ HẾT BẢN THỬ** (anh 31/10: "tao đã nói xoá hết mọi bản thử trước khi push rồi, vẫn không làm"): Điều phối rà và
+    gỡ trước khi push — ① ảnh mẫu / ảnh dự phòng dùng chung (thiếu ảnh → để trống, khung xám + biểu tượng; 31/10 đã gỡ canho2.jpg dự án,
+    ảnh mẫu theo loại hình của tin) · ② dữ liệu mẫu, số liệu giả trên trang công khai (`src/lib/data.ts`, "1.240 tin"…) · ③ trang demo, mẫu thử
+    (`/du-an/demo-*`, `DU_AN_DEMO`…) · ④ công thức ĐOÁN thay dữ liệu thật (vd "Hiệu lực" tin nâng VIP = hạn − 30 ngày, sửa 31/10: lưu mốc thật).
+    Rà bằng `grep` cả `src/` → liệt kê → gỡ → kiểm web thật sau push. Còn sót cái nào → ghi vào báo cáo push, không im lặng.
 
 ---
 
@@ -391,7 +399,7 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > - [x] ✅ 31/10 đã push cfda3d7 (90 commit), web thật khớp bản đã kiểm **Push MỘT lần** khi anh nhắn "Push" (bước 5 trên) → kiểm web thật.
 > - [ ] **Sau push:** Search Console → Kiểm tra URL → Yêu cầu lập chỉ mục cho trang chủ, /cho-thue, 2–3 trang /mua-ban/<loại>;
 >       đánh dấu ✅ 20 dòng nhóm A (trang tính On-page) trong `HE-THONG-TU-KHOA.xlsx` ở ổ D:.
-> - [ ] **Link hồ sơ Google Doanh nghiệp**: anh gửi → thêm vào `sameAs` trong `src/components/SiteJsonLd.tsx` (gộp đợt push sau).
+> - [x] ✅ 31/10 đã có trên web (sameAs maps.google.com/?cid=4963426532946079372, phiên SEO kiểm) **Link hồ sơ Google Doanh nghiệp**: anh gửi → thêm vào `sameAs` trong `src/components/SiteJsonLd.tsx` (gộp đợt push sau).
 > - [ ] **Thương hiệu ngoài web** (việc ⑧): soạn sẵn cho anh/Cowork — chữ giới thiệu thống nhất cho Facebook, Zalo OA, YouTube (tên
 >       "COASTAL LAND" + coastalland.vn + "Cổng thông tin mua bán, cho thuê nhà đất"); bộ thông tin tạo mục Wikidata (tên, web, mã số
 >       0402353502, địa chỉ, ngày thành lập 17/08/2026, mạng xã hội); danh sách danh bạ doanh nghiệp nên đăng. Chữ mới → đưa anh duyệt.
