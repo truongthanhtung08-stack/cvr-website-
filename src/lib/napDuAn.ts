@@ -10,6 +10,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DongDuAn } from "@/lib/csvDuAn";
+import { TEN_TRUONG, type TruongBatBuoc } from "@/lib/truongDuAn";
 
 type Dong = Record<string, unknown>;
 type MucQuyMo = { label: string; value: string };
@@ -38,11 +39,10 @@ const CHI_TIET: [string, string][] = [
   ["addressDetail", "địa chỉ"], ["mapPin", "toạ độ"], ["developmentUnit", "đơn vị phát triển"],
   ["nguon", "nguồn"], ["ngayCapNhat", "ngày cập nhật"],
 ];
-// Trường bắt buộc (TRUONG_BAT_BUOC ở csvDuAn.ts — đủ từng tên) → giá trị đang có trên web
-const TREN_WEB: Record<string, (h: Dong) => unknown> = {
-  "tên dự án": (h) => h.name, "chủ đầu tư": (h) => h.developer, "tỉnh/thành": (h) => h.province,
-  "phường/xã": (h) => h.ward, "địa chỉ": (h) => (h.details as Dong | null)?.addressDetail,
-  "loại hình": (h) => h.type, "trạng thái": (h) => h.status_text, "nguồn": (h) => (h.details as Dong | null)?.nguon,
+// Trường bắt buộc (một nguồn truongDuAn.ts) → hồ sơ trên web đã có chưa
+const TREN_WEB: Record<keyof TruongBatBuoc, (h: Dong) => boolean> = {
+  ten: (h) => coGiaTri(h.name), diaChi: (h) => coGiaTri(h.province) && coGiaTri(h.ward),
+  loaiHinh: (h) => coGiaTri(h.type), tinhTrang: (h) => coGiaTri(h.status_text), chuDauTu: (h) => coGiaTri(h.developer),
 };
 
 const ngan = (x: unknown) => { const s = Array.isArray(x) ? x.join("; ") : String(x); return s.length > 80 ? s.slice(0, 80) + "…" : s; };
@@ -67,13 +67,13 @@ export async function lapKeHoach(
     const cu = d.payload ? daCo.get(d.slug) : undefined;
 
     if (!cu) {
-      chan.push(...d.thieu.map((t) => `thiếu ${t}`));
+      chan.push(...d.thieu.map((t) => `thiếu ${TEN_TRUONG[t]}`));
       if (!anh.co) chan.push("thiếu ảnh");
       return { d, loai: chan.length || !d.payload ? "chan" : "moi", chan, doi: [], giuWeb: [], canAnh: anh.co };
     }
 
     // Hồ sơ đã có: trường bắt buộc chỉ chặn khi cả tệp lẫn web đều trống
-    chan.push(...d.thieu.filter((t) => !coGiaTri(TREN_WEB[t]?.(cu))).map((t) => `thiếu ${t}`));
+    chan.push(...d.thieu.filter((t) => !TREN_WEB[t](cu)).map((t) => `thiếu ${TEN_TRUONG[t]}`));
     const webCoAnh = coGiaTri(cu.images);
     if (!anh.co && !webCoAnh) chan.push("thiếu ảnh");
     if (chan.length) return { d, loai: "chan", chan, doi: [], giuWeb: [], canAnh: false };

@@ -9,6 +9,7 @@
 import { chuDauTuChuan, loiDiaDanh } from "@/lib/tenChuan";
 import { parseLatLng } from "@/lib/googleMaps";
 import { tenChuan } from "@/lib/thongSoDuAn";
+import { TEN_TRUONG, type TruongBatBuoc } from "@/lib/truongDuAn";
 
 // Thứ tự cột = THỨ TỰ BẢNG TỔNG QUAN trang dự án (chủ dự án chốt 31/10/2026, thay thứ tự 22/10): tên · chủ đầu tư · loại hình ·
 // diện tích dự án · quy mô · loại hình căn hộ · số lượng căn hộ · rồi các mục khác. MỘT mẫu cho mọi nơi (Admin, Cowork, scripts).
@@ -57,19 +58,23 @@ const slug = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 // loi = lỗi chặn dòng (trạng thái sai, địa danh sai, toạ độ không đọc được, trùng dự án trong tệp) → không có payload.
-// thieu = TRƯỜNG BẮT BUỘC còn trống (luật anh 31/10/2026, D42): tên · chủ đầu tư · tỉnh · phường · địa chỉ · loại hình · trạng thái · nguồn.
-//   Dự án mới thiếu ô nào là chặn; hồ sơ đã có trên web thì chỉ chặn ô mà cả tệp lẫn web đều trống (napDuAn.ts).
+// thieu = TRƯỜNG BẮT BUỘC còn trống (anh 31/10/2026, D42) = đúng 5 trường thẻ dự án luôn hiện, MỘT NGUỒN src/lib/truongDuAn.ts:
+//   tên · địa chỉ · loại hình · tình trạng · chủ đầu tư. Địa chỉ là MỘT trường (tỉnh + phường; số nhà, đường ghi thêm nếu có).
+//   Nguồn và các cột khác thiếu vẫn nạp, bổ sung sau. Dự án mới thiếu là chặn; hồ sơ đã có chỉ chặn khi cả tệp lẫn web đều trống (napDuAn.ts).
 // anhLink / anhTen = cột `anh`: link https dùng thẳng · tên tệp khớp với ảnh chọn kèm (cùng thư mục) → tải lên kho ảnh của web.
 export type DongDuAn = {
-  dong: number; loi: string[]; thieu: string[]; payload: Record<string, unknown> | null; ten: string; slug: string;
+  dong: number; loi: string[]; thieu: (keyof TruongBatBuoc)[]; payload: Record<string, unknown> | null; ten: string; slug: string;
   anhLink: string[]; anhTen: string[];
 };
 
-// Trường bắt buộc: [cột tệp, tên hiện trên màn xem trước]
-export const TRUONG_BAT_BUOC: [Cot, string][] = [
-  ["ten_du_an", "tên dự án"], ["chu_dau_tu", "chủ đầu tư"], ["tinh", "tỉnh/thành"], ["phuong_xa", "phường/xã"],
-  ["dia_chi_chi_tiet", "địa chỉ"], ["loai_hinh", "loại hình"], ["trang_thai", "trạng thái"], ["nguon", "nguồn"],
-];
+// Trường bắt buộc (khoá + tên lấy từ truongDuAn.ts) → tệp có ghi chưa
+const CO_TRONG_TEP: Record<keyof TruongBatBuoc, (v: (c: Cot) => string) => boolean> = {
+  ten: (v) => !!v("ten_du_an"),
+  diaChi: (v) => !!v("tinh") && !!v("phuong_xa"),
+  loaiHinh: (v) => !!v("loai_hinh"),
+  tinhTrang: (v) => !!v("trang_thai"),
+  chuDauTu: (v) => !!v("chu_dau_tu"),
+};
 
 // Tên tệp ảnh khớp nhau: bỏ hoa/thường, dấu, đuôi (kể cả đuôi kép "a.jpg.jpg"), ghi thiếu đuôi vẫn khớp
 const DUOI_ANH = /\.(jpe?g|png|webp|gif|avif|heic|heif|bmp)$/i;
@@ -114,7 +119,7 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
     const ten = v("ten_du_an");
     // D42 (anh 31/10/2026): thiếu trường bắt buộc là CHẶN — thay luật 30/10 "thiếu vẫn nạp, web ghi Đang cập nhật".
     // Không để máy tự gán trạng thái hay bất cứ trường nào.
-    const thieu = TRUONG_BAT_BUOC.filter(([c]) => !v(c)).map(([, nhan]) => nhan);
+    const thieu = (Object.keys(TEN_TRUONG) as (keyof TruongBatBuoc)[]).filter((k) => !CO_TRONG_TEP[k](v));
     if (v("tinh")) { const l = loiDiaDanh(v("tinh"), v("phuong_xa") || undefined); if (l) loi.push(l); }
     const trangThai = v("trang_thai");
     if (trangThai && !TRANG_THAI_HOP_LE.includes(trangThai)) loi.push(`trạng thái "${trangThai}" không hợp lệ`);
