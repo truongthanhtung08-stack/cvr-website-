@@ -10,10 +10,11 @@ import Image from "next/image";
 import { chuThuan } from "@/lib/chuThuan";
 import AnhChay from "@/components/AnhChay";
 import Link from "next/link";
-import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
+import FilterDropdown, { FilterDropdownGroup, PanelActions } from "@/components/FilterDropdown";
+import { LocationPanel, Chip } from "@/components/FilterBar";
+import { applyFilters, emptyFilters, locationLabel, normalizeVi, type LocationSel } from "@/lib/filters";
 import Highlight from "@/components/Highlight";
 import { goiYNoiLong, searchAny, TIER_LABEL } from "@/lib/smartSearch";
-import { provinceNamesFor, type GeoMode } from "@/lib/locations";
 import { projectHints } from "@/lib/searchHints";
 import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
 import { cuonToiKetQua } from "@/lib/scroll";
@@ -22,19 +23,17 @@ import { coordOf } from "@/lib/geo";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
-import { locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
+import { locTraCuu } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 import { sortProjectsByTier } from "@/components/ProjectSlider";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
 import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
 import { duAnThuocNhom, projectCategories } from "@/lib/categories";
-import { nhomChuDauTu } from "@/lib/chuDauTu";
+import { nhomChuDauTu, slugChuDauTu } from "@/lib/chuDauTu";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), { ssr: false });
-
-const GEO_MODE_KEY = "cl-geo-mode"; // đồng bộ hệ đơn vị hành chính với FilterBar (Mua bán/Cho thuê)
 
 // Danh sách dự án trang /du-an — bố cục kiểu Batdongsan:
 // thanh lọc dưới Hero (ô tìm + dropdown Khu vực · Loại hình · Trạng thái)
@@ -44,9 +43,14 @@ const GEO_MODE_KEY = "cl-geo-mode"; // đồng bộ hệ đơn vị hành chính
 
 // Tỉnh/thành = phần cuối của location ("Hòa Hải, Ngũ Hành Sơn, Đà Nẵng" → "Đà Nẵng")
 const provinceOf = (location: string) => location.split(",").pop()?.trim() ?? "";
-// Gom type tự do của dự án về 3 nhóm loại hình lớn (đủ cho bộ dữ liệu hiện tại)
-const typeOf = (type: string) =>
-  type.includes("Căn hộ") ? "Căn hộ" : type.includes("đô thị") ? "Khu đô thị" : "Nghỉ dưỡng & biệt thự";
+// BỘ LỌC CHUẨN MUA BÁN / CHO THUÊ (chủ dự án 31/10/2026: "cấu trúc lại bộ lọc theo chuẩn đã làm trên web, áp dụng cho phần dự án"):
+// Khu vực = LocationPanel đa tầng, đa chọn (tỉnh → phường/xã, hệ cũ/mới), so khớp bằng CHÍNH luật khu vực của tin (applyFilters)
+// trên địa chỉ mới + cũ của dự án. Loại hình = nhóm của trang /du-an/<loại> (projectCategories), chọn nhiều như "Loại BĐS".
+const khopKhuVuc = (diaChi: string, locations: LocationSel[]) =>
+  !locations.length ||
+  applyFilters([{ id: "", title: "", price: "", area: "", type: "", location: diaChi, diaChiTim: diaChi }], { ...emptyFilters(), locations }).length > 0;
+const khopLoai = (type: string, slugs: string[]) =>
+  !slugs.length || projectCategories.some((c) => slugs.includes(c.slug) && duAnThuocNhom([{ type }], c).length > 0);
 // Giá/m² tham khảo: lấy hàng "Giá..." trong bảng quy mô của dự án
 // MỘT THẺ CHO MỌI DỰ ÁN TRONG DANH SÁCH (chủ dự án 30/10/2026: "thẻ mục tra cứu phải thống nhất"): dự án tra cứu vẽ bằng chính thẻ
 // ngang đang chạy của dự án nổi bật — cùng ảnh, nhãn trạng thái, tên, ghim địa chỉ, loại hình, chủ đầu tư; trường bắt buộc chưa có
@@ -164,8 +168,9 @@ export default function ProjectsBrowser({
   }, []);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState(ALL);
-  const [province, setProvince] = useState(ALL);
-  const [type, setType] = useState(ALL);
+  const [locations, setLocations] = useState<LocationSel[]>([]);
+  const [types, setTypes] = useState<string[]>([]);      // slug nhóm loại hình (projectCategories)
+  const [chuDauTu, setChuDauTu] = useState("");          // slug chủ đầu tư ("" = mọi chủ đầu tư)
   // NHẬN TỪ KHOÁ TỪ TRANG CHỦ: bấm tab "Dự án" ở Hero rồi tìm → nhảy sang
   // /du-an?q=... , ô tìm ở đây phải tự điền và lọc ngay (trước đây bỏ qua ?q=).
   useEffect(() => {
@@ -176,14 +181,14 @@ export default function ProjectsBrowser({
     const tt = sp.get("trangthai") ?? "";  // tình trạng dự án
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (tuKhoa) setQ(tuKhoa);
-    if (tinh) setProvince(tinh);
+    if (tinh) setLocations([{ province: tinh }]);
     // Loại hình ở trang chủ là danh mục của TIN (Căn hộ, Đất nền, Biệt thự…) —
-    // quy về đúng 3 nhóm loại hình mà dự án đang dùng; không thuộc nhóm nào thì
+    // quy về nhóm loại hình dự án (projectCategories); không thuộc nhóm nào thì
     // để nguyên "Tất cả" và giữ chữ đó trong ô tìm để vẫn lọc được theo từ khoá.
     if (loai) {
-      const nhom = typeOf(loai);
-      setType(nhom);
-      if (!tuKhoa) setQ(loai);
+      const nhom = projectCategories.filter((c) => khopLoai(loai, [c.slug])).map((c) => c.slug);
+      if (nhom.length) setTypes(nhom);
+      else if (!tuKhoa) setQ(loai);
     }
     if (tt) setStatus(tt);
   }, []);
@@ -204,13 +209,6 @@ export default function ProjectsBrowser({
     document.addEventListener("keydown", esc);
     return () => { document.removeEventListener("pointerdown", ngoai); document.removeEventListener("keydown", esc); };
   }, []);
-  // Hệ đơn vị hành chính Cũ/Mới — bật/tắt như bên Mua bán (nhớ chung qua localStorage).
-  const [geoMode, setGeoMode] = useState<GeoMode>("moi");
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    try { const m = localStorage.getItem(GEO_MODE_KEY); if (m === "moi" || m === "cu") setGeoMode(m); } catch { /* noop */ }
-  }, []);
-
   // Bấm search từ trang chủ → URL kèm #ket-qua → tự cuộn tới khối kết quả (bỏ qua
   // banner Hero rất to), cho cả PC & Mobile. Dùng JS cho chắc (hash native không
   // ổn định trên trang client-render). scroll-mt trên #ket-qua lo phần bù header.
@@ -219,11 +217,6 @@ export default function ProjectsBrowser({
     const el = document.getElementById("ket-qua");
     if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" }));
   }, []);
-  const switchGeo = (m: GeoMode) => {
-    setGeoMode(m); setProvince(ALL);
-    try { localStorage.setItem(GEO_MODE_KEY, m); } catch { /* noop */ }
-  };
-
   // Có danh bạ Tra cứu → lựa chọn lọc lấy từ MỌI dự án (danh bạ chứa cả dự án nổi bật)
   const nguonDem = (k1: (p: Project) => string, k2: (d: DongTraCuu) => string): [string, number][] => {
     if (!traCuu) return countBy(projects, k1);
@@ -232,13 +225,17 @@ export default function ProjectsBrowser({
     return [...m];
   };
   const provinceCounts = nguonDem((p) => provinceOf(p.location), (d) => d.tinh);
-  const typeCounts = nguonDem((p) => typeOf(p.type), (d) => nhomLoai(d.loaiHinh));
   const statusCounts = nguonDem((p) => p.status, (d) => d.tinhTrang);
-  // Danh sách tỉnh theo hệ đã chọn, chỉ giữ tỉnh có dự án (kèm số đếm). Rỗng → dùng nguyên data.
   const provCountMap = new Map(provinceCounts);
-  const provinceOpts: [string, number][] =
-    provinceNamesFor(geoMode).filter((n) => provCountMap.has(n)).map((n) => [n, provCountMap.get(n)!]);
-  const provinceOptions = provinceOpts.length ? provinceOpts : provinceCounts;
+  // Lựa chọn Loại hình + Chủ đầu tư: chỉ những nhóm / chủ đầu tư CÓ dự án (nổi bật + tra cứu)
+  const tatCaDuAn = useMemo(() => {
+    const coSan = new Set(projects.map((p) => p.slug));
+    return [...projects, ...(traCuu ?? []).filter((d) => !coSan.has(d.slug)).map(duAnTuTraCuu)];
+  }, [projects, traCuu]);
+  const loaiOpts = useMemo(() => projectCategories.filter((c) => duAnThuocNhom(tatCaDuAn, c).length > 0), [tatCaDuAn]);
+  const cdtOpts = useMemo(() => [...nhomChuDauTu(tatCaDuAn)].map(([s, g]) => ({ slug: s, ten: g.ten }))
+    .sort((a, b) => a.ten.localeCompare(b.ten, "vi")), [tatCaDuAn]);
+  const khopCdt = (ten: string) => !chuDauTu || slugChuDauTu(ten) === chuDauTu;
 
   // TÌM KIẾM THEO TRƯỜNG — DÙNG CHUNG một luật với Mua bán / Cho thuê:
   // bóc tách câu dài → xếp 3 tầng (khớp đủ → gần đúng → liên quan) → không bao
@@ -260,8 +257,9 @@ export default function ProjectsBrowser({
         ...(p.places ?? []).map((x) => `${x.category} ${x.name}`),
       ].join(" "),
     truong: [
-      { ten: "khu vực", chon: province !== ALL, giu: true, ok: (p) => provinceOf(p.location) === province },
-      { ten: "loại hình", chon: type !== ALL, giu: true, ok: (p) => typeOf(p.type) === type },
+      { ten: "khu vực", chon: locations.length > 0, giu: true, ok: (p) => khopKhuVuc(p.location, locations) },
+      { ten: "loại hình", chon: types.length > 0, giu: true, ok: (p) => khopLoai(p.type, types) },
+      { ten: "chủ đầu tư", chon: !!chuDauTu, giu: true, ok: (p) => khopCdt(p.developer) },
       { ten: "tình trạng", chon: status !== ALL, ok: (p) => p.status === status },
     ],
   });
@@ -276,13 +274,13 @@ export default function ProjectsBrowser({
   const duAnKhop = q.trim() ? hits.slice(0, 5).map((h) => h.item) : [];
   const coGoiY = sugOpen && (goiY.length > 0 || duAnKhop.length > 0);
   const chonGoiY = (tinh?: string) => {
-    if (tinh) setProvince(tinh);
+    if (tinh) setLocations([{ province: tinh }]);
     setSugOpen(false);
     chayTim(); // bấm gợi ý = ra kết quả NGAY, không phải bấm thêm nút Tìm
   };
 
-  const hasActive = q.trim() !== "" || status !== ALL || province !== ALL || type !== ALL;
-  const reset = () => { setQ(""); setStatus(ALL); setProvince(ALL); setType(ALL); };
+  const hasActive = q.trim() !== "" || status !== ALL || locations.length > 0 || types.length > 0 || !!chuDauTu;
+  const reset = () => { setQ(""); setStatus(ALL); setLocations([]); setTypes([]); setChuDauTu(""); };
 
   // Gợi ý CHẠY CHỮ trong ô tìm — dựng từ CHÍNH kho dự án đang có (tên dự án, chủ
   // đầu tư, khu vực, tình trạng CÓ THẬT) nên gõ vào là chắc chắn ra kết quả;
@@ -312,15 +310,30 @@ export default function ProjectsBrowser({
   // CHẾ ĐỘ BẢN ĐỒ cho tab Dự án — giống Mua bán / Cho thuê, marker là TÊN DỰ ÁN.
   const [mapMode, setMapMode] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setPage(1); }, [q, status, province, type]); // đổi lọc → về trang 1
+  useEffect(() => { setPage(1); }, [q, status, locations, types, chuDauTu]); // đổi lọc → về trang 1
   // TRANG DỰ ÁN = BỐ CỤC WEB CŨ + THÊM TRA CỨU (chủ dự án 30/10/2026: "PC để như cũ, chỉ thêm vào"): một danh sách — dự án nổi bật
   // theo cấp VIP trước (thẻ ngang đang chạy), rồi dự án tra cứu theo tên A, B, C (thẻ tra cứu); thanh tìm + lọc áp chung cả hai
-  const traCuuLoc = traCuu ? locTraCuu(traCuu, q, province, type, status, ALL) : [];
+  const traCuuLoc = traCuu
+    ? locTraCuu(traCuu, q, ALL, ALL, status, ALL).filter((d) =>
+        khopKhuVuc(`${d.diaChi} · ${d.diaChiCu} · ${d.tinh}`, locations) && khopLoai(d.loaiHinh, types) && (!chuDauTu || (!!d.chuDauTu && khopCdt(d.chuDauTu))))
+    : [];
   const slugNoiBat = new Set(visible.map((p) => p.slug));
+  // Đang lọc: dự án KHỚP đứng trước (nổi bật khớp → tra cứu khớp), dự án nổi bật "gợi ý tương tự" (tầng 2–3) xuống cuối, có nhãn tầng
+  // đứng trước — chọn một phường mà dự án phường khác chen lên trước là sai (31/10/2026)
+  const laGoiY = (p: Project) => hasActive && (tierBySlug.get(p.slug) ?? 1) > 1;
   const dsTrang: ({ noiBat: Project } | { traCuu: DongTraCuu })[] = [
-    ...visible.map((p) => ({ noiBat: p })),
+    ...visible.filter((p) => !laGoiY(p)).map((p) => ({ noiBat: p })),
     ...traCuuLoc.filter((d) => !slugNoiBat.has(d.slug)).map((d) => ({ traCuu: d })),
+    ...visible.filter(laGoiY).map((p) => ({ noiBat: p })),
   ];
+  // Nhãn tầng ngay trước dự án gợi ý đầu tiên của trang (giống nhãn tầng trang Mua bán / Cho thuê)
+  const nhanTang = (ds: ({ noiBat: Project } | { traCuu: DongTraCuu })[], i: number) => {
+    const x = ds[i];
+    if (!("noiBat" in x) || !laGoiY(x.noiBat)) return null;
+    const truoc = ds[i - 1];
+    if (truoc && "noiBat" in truoc && laGoiY(truoc.noiBat)) return null;
+    return <p className="text-sm font-medium text-cvr-body">{TIER_LABEL[tierBySlug.get(x.noiBat.slug) ?? 2]}</p>;
+  };
   const cacTrang = chiaTrangDuAn(dsTrang, dienThoai);
   const totalPages = cacTrang.length;
   const current = Math.min(page, totalPages);
@@ -340,7 +353,7 @@ export default function ProjectsBrowser({
   const noiBat = useHomeSection("du-an-noi-bat");
   const [trangNoiBat, setTrangNoiBat] = useState(1);
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setTrangNoiBat(1); }, [q, status, province, type]); // đổi tìm / lọc → danh sách về trang 1
+  useEffect(() => { setTrangNoiBat(1); }, [q, status, locations, types, chuDauTu]); // đổi tìm / lọc → danh sách về trang 1
   // MỞ MỘT DỰ ÁN RỒI BACK → về đúng trang danh sách + đúng chỗ đang xem (30/10/2026): ghi số trang + vị trí cuộn vào bước lịch sử
   // của danh sách (giữ nguyên dữ liệu Next.js trong đó), quay lại thì đọc ra
   // Danh sách "Xem thêm" của khối Dự án nổi bật TRANG CHỦ (trang Dự án đã là danh sách)
@@ -357,58 +370,72 @@ export default function ProjectsBrowser({
     if (st.clYDs) { const y = st.clYDs; requestAnimationFrame(() => window.scrollTo({ top: y })); window.setTimeout(() => window.scrollTo({ top: y }), 350); }
   }, [dangMoDs]);
 
-  // Panel chọn 1 giá trị trong dropdown (không in số dự án — chủ dự án 09/10/2026)
-  const optionList = (
-    options: [string, number][],
-    value: string,
-    onPick: (v: string) => void,
-    close: () => void
-  ) => (
-    <div className="space-y-0.5">
-      {[[ALL, projects.length] as [string, number], ...options].map(([name]) => (
-        <button
-          key={name}
-          type="button"
-          onClick={() => { onPick(name); close(); batDauTim(); xongTim(); }}
-          className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
-            value === name ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"
-          }`}
-        >
-          <span className="truncate">{name}</span>
-        </button>
-      ))}
-    </div>
-  );
-
   // Nhóm nút lọc dùng chung cho HAI vị trí: thanh lọc (desktop) và trang tìm
   // toàn màn hình (mobile). Chức năng y hệt — chỉ khác chỗ đặt.
+  // CÙNG KHUÔN thanh lọc Mua bán / Cho thuê (FilterBar, 31/10/2026): Toàn quốc (đa tầng, đa chọn) · Chủ đầu tư (chỗ "Dự án" bên tin:
+  // tìm + chọn là ra kết quả) · Loại hình (chọn nhiều như "Loại BĐS") · Trạng thái — mọi bảng kết thúc bằng Đặt lại · Áp dụng (cách A).
+  const locLabel =
+    locations.length === 0 ? "" : locations.length === 1 ? locationLabel(locations[0]) : `${locationLabel(locations[0])} +${locations.length - 1}`;
+  const typeLabel =
+    types.length === 0 ? "" : types.length === 1 ? (projectCategories.find((c) => c.slug === types[0])?.label ?? "") : `${types.length} loại hình`;
+  const cdtTen = cdtOpts.find((c) => c.slug === chuDauTu)?.ten ?? "";
   const chipLoc = (
     <FilterDropdownGroup>
-      <FilterDropdown label="Khu vực" summary={province === ALL ? "" : province} active={province !== ALL} panelClassName="w-64" className="shrink-0">
+      <FilterDropdown label="Toàn quốc" summary={locLabel} active={locations.length > 0} panelClassName="w-80" className="shrink-0">
+        {({ close }) => <LocationPanel locations={locations} onChange={setLocations} onClose={() => { close(); chayTim(); }} />}
+      </FilterDropdown>
+      {/* Trang một chủ đầu tư (/chu-dau-tu/<tên>) chỉ có một lựa chọn → không vẽ ô này */}
+      {cdtOpts.length > 1 && (
+        <FilterDropdown label="Chủ đầu tư" summary={cdtTen} active={!!chuDauTu} panelClassName="w-72" className="shrink-0">
+          {({ close }) => (
+            <ChuDauTuPanel
+              ds={cdtOpts}
+              chon={chuDauTu}
+              onPick={(s) => { setChuDauTu(chuDauTu === s ? "" : s); close(); chayTim(); }}
+            />
+          )}
+        </FilterDropdown>
+      )}
+      <FilterDropdown label="Loại hình" summary={typeLabel} active={types.length > 0} panelClassName="w-72" className="shrink-0">
+        {({ close }) => {
+          // Cùng logic "Loại BĐS": chưa chọn = tất cả; chọn đủ mọi nhóm = quay về tất cả
+          const doiLoai = (s: string, checked: boolean) => {
+            const next = checked ? types.filter((x) => x !== s) : [...types, s];
+            setTypes(loaiOpts.every((c) => next.includes(c.slug)) ? [] : next);
+          };
+          return (
+            <div>
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">
+                <input type="checkbox" checked={types.length === 0} onChange={() => setTypes([])} className="h-4 w-4 shrink-0 accent-cvr-blue" />
+                <span>Tất cả loại hình</span>
+              </label>
+              <div className="mt-1 max-h-64 space-y-0.5 overflow-y-auto pr-1">
+                {loaiOpts.map((c) => {
+                  const checked = types.includes(c.slug);
+                  return (
+                    <label key={c.slug} className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-cvr-ink/80 transition hover:bg-black/5">
+                      <input type="checkbox" checked={checked} onChange={() => doiLoai(c.slug, checked)} className="h-4 w-4 shrink-0 accent-cvr-blue" />
+                      <span className="truncate">{c.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <PanelActions onReset={() => setTypes([])} onApply={() => { close(); chayTim(); }} />
+            </div>
+          );
+        }}
+      </FilterDropdown>
+      <FilterDropdown label="Trạng thái" summary={status === ALL ? "" : status} active={status !== ALL} panelClassName="w-72" className="shrink-0">
         {({ close }) => (
           <div>
-            {/* Công tắc hệ hành chính Cũ/Mới — đồng bộ với Mua bán/Cho thuê */}
-            <button
-              type="button"
-              role="switch"
-              aria-checked={geoMode === "moi"}
-              onClick={() => switchGeo(geoMode === "moi" ? "cu" : "moi")}
-              className="mb-2 flex w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-2.5 py-2 text-left transition hover:bg-cvr-blue/[0.1]"
-            >
-              <span className="text-[12px] font-semibold text-cvr-ink">Tìm theo địa chỉ mới sau sáp nhập</span>
-              <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${geoMode === "moi" ? "bg-cvr-blue" : "bg-black/20"}`}>
-                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${geoMode === "moi" ? "left-[18px]" : "left-0.5"}`} />
-              </span>
-            </button>
-            {optionList(provinceOptions, province, setProvince, close)}
+            <div className="flex flex-wrap gap-1.5">
+              {statusCounts.map(([ten]) => (
+                <Chip key={ten} active={status === ten} onClick={() => setStatus(status === ten ? ALL : ten)}>{ten}</Chip>
+              ))}
+            </div>
+            <PanelActions onReset={() => setStatus(ALL)} onApply={() => { close(); chayTim(); }} />
           </div>
         )}
-      </FilterDropdown>
-      <FilterDropdown label="Loại hình" summary={type === ALL ? "" : type} active={type !== ALL} panelClassName="w-64" className="shrink-0">
-        {({ close }) => optionList(typeCounts, type, setType, close)}
-      </FilterDropdown>
-      <FilterDropdown label="Trạng thái" summary={status === ALL ? "" : status} active={status !== ALL} panelClassName="w-64" className="shrink-0">
-        {({ close }) => optionList(statusCounts, status, setStatus, close)}
       </FilterDropdown>
     </FilterDropdownGroup>
   );
@@ -519,8 +546,9 @@ export default function ProjectsBrowser({
     // trước (thẻ ngang đang chạy trên web), rồi dự án tra cứu (thẻ tra cứu). Cùng bộ lọc đang chọn.
     const noiBatSlug = new Set(visible.map((p) => p.slug));
     const dsChung: ({ noiBat: Project } | { traCuu: DongTraCuu })[] = [
-      ...visible.map((p) => ({ noiBat: p })),
+      ...visible.filter((p) => !laGoiY(p)).map((p) => ({ noiBat: p })),
       ...(traCuu ? traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).map((d) => ({ traCuu: d })) : []),
+      ...visible.filter(laGoiY).map((p) => ({ noiBat: p })),
     ];
     const trangChung = chiaTrangDuAn(dsChung, dienThoai);
     const tongNB = trangChung.length;
@@ -535,9 +563,9 @@ export default function ProjectsBrowser({
         <div className={`${danhSachNoiBat ? "mt-4" : ""} grid grid-cols-1 gap-8 lg:grid-cols-3`}>
           <div className="lg:col-span-2">
             <div className="flex flex-col gap-4 sm:gap-5" onClickCapture={() => ghiDs(trangNB, window.scrollY)}>
-              {trangChung[trangNB - 1].map((x) =>
+              {trangChung[trangNB - 1].map((x, i, ds) =>
                 "noiBat" in x
-                  ? <div key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</div>
+                  ? <Fragment key={x.noiBat.slug}>{nhanTang(ds, i)}<div>{theDuAnWeb(x.noiBat)}</div></Fragment>
                   : <div key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu), true)}</div>,
               )}
             </div>
@@ -731,25 +759,13 @@ export default function ProjectsBrowser({
           </div>
           {/* BỘ LỌC dự án — MOBILE nằm TRONG trang tìm này (giống trang chủ đưa
               tab Mua bán/Cho thuê/Dự án vào trang tìm). Chức năng giữ nguyên. */}
+          {/* Hàng lọc màn tìm ĐÚNG KIỂU Mua bán / Cho thuê (31/10/2026): Làm mới (biểu tượng) đầu hàng · các trường lọc — mỗi bảng
+              chọn xong bấm Áp dụng là ra kết quả, không cần nút Xong riêng */}
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-cvr-line px-3 py-2">
-            {chipLoc}
             {hasActive && (
-              <button
-                type="button"
-                onClick={reset}
-                className="h-10 shrink-0 rounded-full px-3 text-sm font-medium text-cvr-muted active:text-cvr-blue-ink"
-              >
-                Đặt lại
-              </button>
+              <button type="button" aria-label="Làm mới" title="Làm mới" onClick={reset} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-blue-ink transition active:scale-90 active:bg-cvr-surface"><svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg></button>
             )}
-            {/* Chọn xong (1 trường hay nhiều trường tuỳ khách) → bấm XONG là ra kết quả */}
-            <button
-              type="button"
-              onClick={chayTim}
-              className="ml-auto h-10 shrink-0 rounded-full bg-cvr-blue px-4 text-sm font-semibold text-white active:scale-95"
-            >
-              Xong
-            </button>
+            {chipLoc}
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {visible.length === 0 ? (
@@ -863,15 +879,11 @@ export default function ProjectsBrowser({
       <div className={`mt-6 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
         {/* ── Cột chính: thẻ dự án ngang ── */}
         <div className="lg:col-span-2">
-          {/* Nhãn TẦNG kết quả — giống trang Mua bán / Cho thuê */}
-          {hasActive && pageItems.length > 0 && "noiBat" in pageItems[0] && (() => {
-            const t = tierBySlug.get(pageItems[0].noiBat.slug) ?? 1;
-            return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
-          })()}
+          {/* Nhãn TẦNG kết quả — giống trang Mua bán / Cho thuê: đứng ngay trước nhóm dự án gợi ý tương tự (nhanTang) */}
           <div id="noi-bat" className="reveal is-visible cards-stagger flex scroll-mt-24 flex-col gap-5" onClickCapture={() => ghiTrang(current, window.scrollY)}>
-            {pageItems.map((x) =>
+            {pageItems.map((x, i) =>
               "noiBat" in x
-                ? <Fragment key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</Fragment>
+                ? <Fragment key={x.noiBat.slug}>{nhanTang(pageItems, i)}{theDuAnWeb(x.noiBat)}</Fragment>
                 : <Fragment key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu), true)}</Fragment>,
             )}
 
@@ -906,9 +918,9 @@ export default function ProjectsBrowser({
                   <button
                     key={name}
                     type="button"
-                    onClick={() => setProvince(name)}
+                    onClick={() => setLocations(name === ALL ? [] : [{ province: name }])}
                     className={`flex items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                      province === name
+                      (name === ALL ? locations.length === 0 : locations.length === 1 && locations[0].province === name && !locations[0].district && !locations[0].ward)
                         ? "bg-cvr-surface font-semibold text-cvr-ink"
                         : "text-cvr-body hover:bg-cvr-surface hover:text-cvr-ink"
                     }`}
@@ -966,6 +978,43 @@ export default function ProjectsBrowser({
         </aside>
       </div>
       )}
+      </div>
+    </div>
+  );
+}
+
+// Bảng chọn Chủ đầu tư — cùng kiểu bảng "Dự án" của Mua bán / Cho thuê (ProjectPanel): ô tìm trên, danh sách dưới, bấm một tên là
+// chốt luôn (bấm lại tên đang chọn = bỏ chọn)
+function ChuDauTuPanel({ ds, chon, onPick }: { ds: { slug: string; ten: string }[]; chon: string; onPick: (slug: string) => void }) {
+  const [q, setQ] = useState("");
+  const nq = normalizeVi(q);
+  const list = nq ? ds.filter((c) => normalizeVi(c.ten).includes(nq)) : ds;
+  return (
+    <div>
+      <div className="relative">
+        <svg className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+        </svg>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Tìm chủ đầu tư…"
+          aria-label="Tìm chủ đầu tư"
+          className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
+        />
+      </div>
+      <div className="mt-2 max-h-64 space-y-0.5 overflow-y-auto">
+        {list.length === 0 && <p className="px-2 py-3 text-center text-sm text-cvr-faint">Không có chủ đầu tư khớp</p>}
+        {list.map((c) => (
+          <button
+            key={c.slug}
+            type="button"
+            onClick={() => onPick(c.slug)}
+            className={`flex w-full rounded-lg px-2.5 py-1.5 text-left text-sm transition ${chon === c.slug ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"}`}
+          >
+            <span className="truncate">{c.ten}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
