@@ -166,11 +166,13 @@ function projectRowToProject(r: ProjectRow): Project {
     // Chưa có ảnh → "" (chủ dự án 31/10/2026: "chưa có ảnh thì để trống") — thẻ hiện khung xám + biểu tượng, KHÔNG ảnh mẫu
     image: photos[0] ? asset(photos[0]) : "",
     developer: r.developer || "Đang cập nhật",
-    scale: (r.scale ?? []).filter((s) => s && s.label && s.value),
-    amenities: (r.amenities ?? []).filter(Boolean),
-    overview: overview.length ? overview : traCuu ? [] : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
+    // DỰ ÁN TRA CỨU CHỈ HIỆN 5 TRƯỜNG + ẢNH (chủ dự án 31/10/2026: "gỡ hết nội dung phần tra cứu dự án", "lọc dự án chỉ 5 trường cơ bản
+    // và 1 ảnh") — không quy mô, pháp lý, tiện ích, tổng quan. Dự án nổi bật (VIP) giữ đủ nội dung.
+    scale: traCuu ? [] : (r.scale ?? []).filter((s) => s && s.label && s.value),
+    amenities: traCuu ? [] : (r.amenities ?? []).filter(Boolean),
+    overview: traCuu ? [] : overview.length ? overview : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
     ...(photos.length ? { photos: photos.map(asset) } : {}),
-    ...(videos.length ? { videos } : {}),
+    ...(videos.length && !traCuu ? { videos } : {}),
     tier: d.tier ?? "basic",
     // NỔI BẬT = dự án VIP anh nâng (Diamond / Gold / Silver) VÀ đã có ảnh; còn lại là TRA CỨU (chủ dự án 31/10/2026: "nổi bật theo VIP,
     // tra cứu A–Z") — MỘT chỗ phân loại, mọi trang đọc theo. Trước đây hồ sơ tạo bằng form Admin tự thành nổi bật (thiếu dấu dangThe).
@@ -181,14 +183,14 @@ function projectRowToProject(r: ProjectRow): Project {
       ? { contact: d.contact }
       : {}),
     ...(d.purposes?.length ? { purposes: d.purposes } : {}),
-    priceMode: d.priceMode ?? "hidden",
-    ...(d.priceTable?.length ? { priceTable: d.priceTable.filter((p) => p && (p.unit || p.area || p.price)) } : {}),
-    ...(floorPlans.length ? { floorPlans } : {}),
-    ...(d.places?.length ? { places: d.places.filter((p) => p && p.name) } : {}),
-    ...(dev && (dev.desc || dev.website || dev.established || dev.logo)
+    priceMode: traCuu ? "hidden" : d.priceMode ?? "hidden",
+    ...(d.priceTable?.length && !traCuu ? { priceTable: d.priceTable.filter((p) => p && (p.unit || p.area || p.price)) } : {}),
+    ...(floorPlans.length && !traCuu ? { floorPlans } : {}),
+    ...(d.places?.length && !traCuu ? { places: d.places.filter((p) => p && p.name) } : {}),
+    ...(!traCuu && dev && (dev.desc || dev.website || dev.established || dev.logo)
       ? { developerInfo: { ...dev, ...(dev.logo ? { logo: asset(dev.logo) } : {}) } }
       : {}),
-    ...(d.developmentUnit?.trim() ? { developmentUnit: d.developmentUnit.trim() } : {}),
+    ...(d.developmentUnit?.trim() && !traCuu ? { developmentUnit: d.developmentUnit.trim() } : {}),
     // Ngày cập nhật: ngày Cowork ghi khi nạp, không có thì lần sửa cuối trong admin
     // NGÀY CẬP NHẬT = ngày MỚI NHẤT giữa ngày Cowork ghi khi nạp và lần sửa cuối trong Admin — anh sửa hôm nào hiện đúng hôm đó (30/10/2026)
     capNhat: ngayMoiHon(d.ngayCapNhat, r.updated_at),
