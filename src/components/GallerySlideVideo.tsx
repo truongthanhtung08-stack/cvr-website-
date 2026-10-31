@@ -41,7 +41,9 @@ export default function GallerySlideVideo({
   const poster = videoPosterUrl(url);
   const ref = useRef<HTMLVideoElement>(null);
   const khungRef = useRef<HTMLIFrameElement>(null);
-  const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
+  // Ảnh bìa = bản .webp CÙNG CỠ của ảnh HD YouTube (1280×720, nhẹ ~một nửa .jpg: video S-Light 260 → 135 KB) — đây là ảnh đầu (LCP)
+  // của trang có video; hình y nguyên (31/10/2026). Thiếu .webp / thiếu HD → lùi ảnh thường như cũ.
+  const [posterSrc, setPosterSrc] = useState(poster ? poster.hd.replace("/vi/", "/vi_webp/").replace(/\.jpg$/, ".webp") : "");
   const [loiPhat, setLoiPhat] = useState(false);
   // YOUTUBE: CHƯA BẤM THÌ CHƯA NẠP TRÌNH PHÁT.
   // Nạp iframe sẵn thì YouTube tự đắp lên khung một lớp nút của họ — nút chia sẻ,
@@ -409,6 +411,7 @@ export default function GallerySlideVideo({
           <img
             src={posterSrc}
             alt="Video"
+            fetchPriority={active ? "high" : undefined}
             onError={() => setPosterSrc(poster.thuong)}
             // YouTube không có ảnh HD vẫn trả về ảnh XÁM 120×90 (không báo lỗi) → lùi ảnh thường
             onLoad={(e) => { if (e.currentTarget.naturalWidth <= 120 && posterSrc !== poster.thuong) setPosterSrc(poster.thuong); }}
