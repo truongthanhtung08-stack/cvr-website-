@@ -56,7 +56,47 @@ const slug = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[đĐ]/g, "d").toLowerCase()
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-export type DongDuAn = { dong: number; loi: string[]; payload: Record<string, unknown> | null; ten: string; slug: string };
+// loi = lỗi chặn dòng (trạng thái sai, địa danh sai, toạ độ không đọc được, trùng dự án trong tệp) → không có payload.
+// thieu = TRƯỜNG BẮT BUỘC còn trống (luật anh 31/10/2026, D42): tên · chủ đầu tư · tỉnh · phường · địa chỉ · loại hình · trạng thái · nguồn.
+//   Dự án mới thiếu ô nào là chặn; hồ sơ đã có trên web thì chỉ chặn ô mà cả tệp lẫn web đều trống (napDuAn.ts).
+// anhLink / anhTen = cột `anh`: link https dùng thẳng · tên tệp khớp với ảnh chọn kèm (cùng thư mục) → tải lên kho ảnh của web.
+export type DongDuAn = {
+  dong: number; loi: string[]; thieu: string[]; payload: Record<string, unknown> | null; ten: string; slug: string;
+  anhLink: string[]; anhTen: string[];
+};
+
+// Trường bắt buộc: [cột tệp, tên hiện trên màn xem trước]
+export const TRUONG_BAT_BUOC: [Cot, string][] = [
+  ["ten_du_an", "tên dự án"], ["chu_dau_tu", "chủ đầu tư"], ["tinh", "tỉnh/thành"], ["phuong_xa", "phường/xã"],
+  ["dia_chi_chi_tiet", "địa chỉ"], ["loai_hinh", "loại hình"], ["trang_thai", "trạng thái"], ["nguon", "nguồn"],
+];
+
+// Tên tệp ảnh khớp nhau: bỏ hoa/thường, dấu, đuôi (kể cả đuôi kép "a.jpg.jpg"), ghi thiếu đuôi vẫn khớp
+const DUOI_ANH = /\.(jpe?g|png|webp|gif|avif|heic|heif|bmp)$/i;
+export function gocTenAnh(s: string): string {
+  let t = s.trim().split(/[\\/]/).pop() ?? "";
+  while (DUOI_ANH.test(t)) t = t.replace(DUOI_ANH, "");
+  return slug(t);
+}
+
+// Ảnh chọn kèm của một dòng: tên ghi ở cột `anh` (đúng thứ tự ghi), không ghi thì tự lấy <mã dự án>.jpg, <mã>-1.jpg, <mã>-2.jpg…
+// (số nhỏ trước → ảnh đầu là ảnh tiêu biểu). Trả tên tệp đã chọn + tên ghi trong cột mà không có tệp.
+export function anhTepCuaDong<T extends { name: string }>(d: DongDuAn, tep: T[]): { tep: T[]; thieu: string[] } {
+  if (d.anhTen.length) {
+    const ra: T[] = [];
+    const thieu: string[] = [];
+    for (const ten of d.anhTen) {
+      const f = tep.find((x) => gocTenAnh(x.name) === gocTenAnh(ten));
+      if (f) ra.push(f); else thieu.push(ten);
+    }
+    return { tep: ra, thieu };
+  }
+  const so = (f: T) => { const m = gocTenAnh(f.name).slice(d.slug.length).match(/^-(\d+)$/); return m ? Number(m[1]) : 0; };
+  const ra = tep
+    .filter((f) => { const g = gocTenAnh(f.name); return g === d.slug || new RegExp(`^${d.slug}-\\d+$`).test(g); })
+    .sort((a, b) => so(a) - so(b));
+  return { tep: ra, thieu: [] };
+}
 
 export function docDuAnTuCsv(text: string): DongDuAn[] {
   return docDuAnTuBang(docCsv(text));
@@ -67,18 +107,22 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
   if (rows.length < 2) return [];
   const head = rows[0].map((h) => h.trim().toLowerCase());
   const idx = (c: Cot) => head.indexOf(c);
+  const dongCuaSlug = new Map<string, number>();
   return rows.slice(1).map((r, i) => {
     const v = (c: Cot) => (idx(c) >= 0 ? (r[idx(c)] ?? "").trim() : "");
     const loi: string[] = [];
     const ten = v("ten_du_an");
-    if (!ten) loi.push("thiếu tên dự án");
-    if (!v("tinh")) loi.push("thiếu tỉnh/thành");
-    else { const l = loiDiaDanh(v("tinh"), v("phuong_xa") || undefined); if (l) loi.push(l); }
-    if (!v("nguon")) loi.push("thiếu nguồn thông tin");
-    // Trường bắt buộc của thẻ dự án (trạng thái · tên · địa chỉ · loại hình · chủ đầu tư · ảnh) LUÔN HIỆN; hồ sơ chưa có dữ liệu
-    // trường nào thì vẫn nạp, thẻ và trang dự án ghi "Đang cập nhật" (chủ dự án 30/10/2026). Không để máy tự gán trạng thái.
+    // D42 (anh 31/10/2026): thiếu trường bắt buộc là CHẶN — thay luật 30/10 "thiếu vẫn nạp, web ghi Đang cập nhật".
+    // Không để máy tự gán trạng thái hay bất cứ trường nào.
+    const thieu = TRUONG_BAT_BUOC.filter(([c]) => !v(c)).map(([, nhan]) => nhan);
+    if (v("tinh")) { const l = loiDiaDanh(v("tinh"), v("phuong_xa") || undefined); if (l) loi.push(l); }
     const trangThai = v("trang_thai");
     if (trangThai && !TRANG_THAI_HOP_LE.includes(trangThai)) loi.push(`trạng thái "${trangThai}" không hợp lệ`);
+    if (v("toa_do") && !parseLatLng(v("toa_do"))) loi.push(`toạ độ "${v("toa_do")}" không đọc được`);
+    if (ten) {
+      const truoc = dongCuaSlug.get(slug(ten));
+      if (truoc) loi.push(`trùng dự án ở dòng ${truoc}`); else dongCuaSlug.set(slug(ten), i + 2);
+    }
     // quy_mo: một giá trị → dòng "Quy mô"; tệp cũ ghi "Nhãn: giá trị; …" → mỗi cặp một dòng như trước
     const quyMoGoc = v("quy_mo");
     const quyMo = quyMoGoc.includes(":")
@@ -97,9 +141,12 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
       ...them("Bàn giao", v("ban_giao")),
       ...them("Pháp lý", v("phap_ly")),
     ];
-    const anh = v("anh").split("|").map((x) => x.trim()).filter((x) => /^https?:\/\//.test(x));
+    // Cột `anh`: link https dùng thẳng như cũ; còn lại là TÊN TỆP ảnh chọn kèm — không bỏ im lặng (khớp ở napDuAn.ts)
+    const anhGhi = v("anh").split(/[|;\n]/).map((x) => x.trim()).filter(Boolean);
+    const anh = anhGhi.filter((x) => /^https?:\/\//i.test(x));
+    const anhTen = anhGhi.filter((x) => !/^https?:\/\//i.test(x));
     const giaTu = v("gia_tu");
-    const payload = loi.length
+    const payload = loi.length || !ten
       ? null
       : {
           slug: slug(ten),
@@ -131,6 +178,6 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
           },
           status: "pending",
         };
-    return { dong: i + 2, loi, payload, ten, slug: slug(ten) };
+    return { dong: i + 2, loi, thieu, payload, ten, slug: slug(ten), anhLink: anh, anhTen };
   });
 }
