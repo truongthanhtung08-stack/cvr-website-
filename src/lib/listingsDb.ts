@@ -375,9 +375,15 @@ async function napSoNgayCt(): Promise<void> {
   } catch { /* giữ số cũ */ }
 }
 function ngayLenWebTinNang(r: Row): string {
+  // Mốc lên web cũ ghi lúc nâng VIP (ListingForm, 31/10/2026) — có thì dùng thẳng, không suy ra
+  const ghi = (r.details as { len_web_luc?: string } | null)?.len_web_luc;
+  if (typeof ghi === "string") return ghi;
   const het = [r.tier_expires_at, typeof r.details?.han_basic === "string" ? r.details.han_basic : null]
     .filter((x): x is string => !!x).sort((a, b) => Date.parse(a) - Date.parse(b)).pop();
-  return het && SO_NGAY_CT ? new Date(Date.parse(het) - SO_NGAY_CT * 86_400_000).toISOString() : r.created_at;
+  const suyRa = het && SO_NGAY_CT ? new Date(Date.parse(het) - SO_NGAY_CT * 86_400_000).toISOString() : r.created_at;
+  // Suy theo số ngày chương trình miễn phí chỉ đúng với tin miễn phí; tin khách trả gói khác ngày → ra ngày TRƯỚC cả lúc khách
+  // tạo tin (9A5DA44A: tạo 31/10, hiện 11/10). Không bao giờ sớm hơn created_at.
+  return Date.parse(suyRa) < Date.parse(r.created_at) ? r.created_at : suyRa;
 }
 
 async function rest(query: string): Promise<Row[] | null> {
