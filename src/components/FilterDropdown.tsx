@@ -12,10 +12,19 @@ export function FilterDropdownGroup({ children }: { children: React.ReactNode })
   return <DropdownGroupContext.Provider value={{ openId, setOpenId }}>{children}</DropdownGroupContext.Provider>;
 }
 
+/** Đáy cố định của bảng trượt điện thoại — có giá trị = đang ở trong bảng trượt (el null: đáy chưa gắn xong); null = bảng nổi máy tính */
+export const ChanBangContext = createContext<{ el: HTMLDivElement | null } | null>(null);
+
+/** Ô GÕ CHỮ (không tính ô tick, nút) — bảng chọn biết khách đang gõ hay không */
+const laOGo = (o: EventTarget | null) =>
+  o instanceof HTMLTextAreaElement || (o instanceof HTMLInputElement && /^(text|search|number|tel|email|url)?$/.test(o.type));
+
 // Nút lọc kiểu Homedy: bấm mở panel (render ra body bằng portal nên KHÔNG bao giờ
 // bị section khác đè/cắt), tự đóng khi bấm ra ngoài / Esc / cuộn nhiều.
 export default function FilterDropdown({
   label,
+  tieuDe,
+  giuCo = false,
   id,
   summary,
   active,
@@ -30,6 +39,10 @@ export default function FilterDropdown({
   children,
 }: {
   label: string;
+  /** Tiêu đề bảng chọn trên điện thoại khi khác chữ nút (nút "Toàn quốc" → bảng "Khu vực", 02/11/2026) */
+  tieuDe?: string;
+  /** Điện thoại: giữ nguyên cỡ, chỗ bảng kể cả khi gõ ô tìm trong bảng (không bung toàn màn hình) */
+  giuCo?: boolean;
   id?: string; // định danh trong nhóm (mặc định = label)
   summary?: string;
   active?: boolean;
@@ -71,6 +84,7 @@ export default function FilterDropdown({
   // ĐANG GÕ trong bảng (ô tìm tỉnh, dự án, giá…) trên điện thoại → bảng thành TOÀN MÀN HÌNH, ô gõ
   // lên trên cùng: bàn phím không đè lên bảng (chủ dự án 15/10/2026 — chuẩn chung mọi ô tìm).
   const [dangGo, setDangGo] = useState(false);
+  const [chanBang, setChanBang] = useState<HTMLDivElement | null>(null);
   // Đóng bảng khi ô gõ còn đang giữ con trỏ thì onBlur không kịp chạy → trả về dạng bảng trượt.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -78,7 +92,8 @@ export default function FilterDropdown({
   }, [open]);
   // TRẢ VỀ BẢN GỐC (chủ dự án 02/11/2026: "phủ đầy màn hình chọn một cách rất xấu"): bảng trượt từ đáy như thường, CHỈ khi khách gõ vào
   // ô tìm trong bảng mới bung toàn màn hình (dangGo). Bỏ kiểu mở toàn màn hình ngay từ đầu cho bảng có ô gõ (coO, 01/11/2026).
-  const toanMan = dangGo;
+  // giuCo (bảng Khu vực, 02/11/2026: "chọn nhảy xuống nhảy lên rất khó chịu"): gõ tìm cũng KHÔNG bung toàn màn hình — bảng đứng yên một chỗ
+  const toanMan = dangGo && !giuCo;
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
     const sync = () => setSheet(mq.matches);
@@ -114,12 +129,19 @@ export default function FilterDropdown({
   // phía sau không bị kéo theo mà màn hình không đổi cỡ.
   useEffect(() => {
     if (!open || !sheet) return;
+    // Kéo QUÁ ĐẦU / QUÁ CUỐI danh sách cũng chặn (02/11/2026: "màn hình không được dịch khi kéo lên xuống") — trình duyệt không
+    // hiểu overscroll-contain thì cú kéo dư chuyền ra trang phía sau
+    let y0 = 0;
+    const batDau = (e: TouchEvent) => { y0 = e.touches[0]?.clientY ?? 0; };
     const chan = (e: TouchEvent) => {
       const k = (e.target as Element | null)?.closest?.("[data-cuon-bang]") as HTMLElement | null;
-      if (!k || k.scrollHeight <= k.clientHeight) e.preventDefault();
+      if (!k || k.scrollHeight <= k.clientHeight) { e.preventDefault(); return; }
+      const dy = (e.touches[0]?.clientY ?? 0) - y0;
+      if ((dy > 0 && k.scrollTop <= 0) || (dy < 0 && k.scrollTop + k.clientHeight >= k.scrollHeight - 1)) e.preventDefault();
     };
+    document.addEventListener("touchstart", batDau, { passive: true });
     document.addEventListener("touchmove", chan, { passive: false });
-    return () => document.removeEventListener("touchmove", chan);
+    return () => { document.removeEventListener("touchstart", batDau); document.removeEventListener("touchmove", chan); };
   }, [open, sheet]);
 
   // Mở XUỐNG nếu đủ chỗ phía dưới, ngược lại mở LÊN — linh hoạt theo không gian trang.
@@ -283,10 +305,11 @@ export default function FilterDropdown({
                 aria-label={label}
                 onFocus={(e) => {
                   // CHỈ ô GÕ CHỮ mới đẩy bảng lên toàn màn hình — bấm ô tick (loại hình…) mà bung bảng là màn NHẢY (chủ dự án 20/10/2026)
-                  const o = e.target;
-                  if (o instanceof HTMLInputElement && /^(text|search|number|tel|email|url)?$/.test(o.type)) setDangGo(true);
+                  if (laOGo(e.target)) setDangGo(true);
                 }}
-                onBlur={(e) => { if (!(e.relatedTarget instanceof HTMLInputElement)) setDangGo(false); }}
+                // Con trỏ sang Ô TICK cũng là hết gõ (02/11/2026: tick trong bảng Khu vực lúc đang gõ thì bảng tưởng còn gõ — kẹt toàn
+                // màn hình, mất nút Áp dụng · Đặt lại)
+                onBlur={(e) => { if (!laOGo(e.relatedTarget)) setDangGo(false); }}
                 // ĐANG GÕ Ô TÌM TRONG BẢNG → dấu cho CSS ẩn hàng nút dính đáy (globals.css) — không phụ thuộc đo bàn phím (01/11/2026)
                 data-dang-go={dangGo ? "1" : undefined}
                 className={`cvr-sheet absolute inset-x-0 flex flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_40px_rgba(0,0,0,0.22)] ${toanMan ? "top-0 h-[100dvh] pt-[env(safe-area-inset-top)]" : "bottom-0 max-h-[86dvh] rounded-t-2xl"}`}
@@ -295,7 +318,7 @@ export default function FilterDropdown({
                 <div className="shrink-0 px-4 pb-2 pt-2.5">
                   <span className="mx-auto block h-[5px] w-9 rounded-full bg-black/20" aria-hidden />
                   <div className="mt-2.5 flex items-center justify-between gap-3">
-                    <span className="text-[17px] font-semibold tracking-tight text-cvr-ink">{label}</span>
+                    <span className="text-[17px] font-semibold tracking-tight text-cvr-ink">{tieuDe ?? label}</span>
                     <button
                       type="button"
                       onClick={() => setOpen(false)}
@@ -309,9 +332,14 @@ export default function FilterDropdown({
                   </div>
                 </div>
                 {/* Nội dung bộ lọc — cuộn riêng trong sheet */}
-                <div data-cuon-bang className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4">
-                  {children({ close: () => setOpen(false) })}
-                </div>
+                <ChanBangContext.Provider value={{ el: chanBang }}>
+                  <div data-cuon-bang className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4">
+                    {children({ close: () => setOpen(false) })}
+                  </div>
+                </ChanBangContext.Provider>
+                {/* ĐÁY BẢNG CỐ ĐỊNH — hàng Đặt lại · Áp dụng (NutXem) vẽ vào đây, NGOÀI phần cuộn (chủ dự án 02/11/2026, ảnh Samsung
+                    Internet: hàng nút "dính đáy" trong phần cuộn bị trôi lên giữa danh sách) */}
+                <div ref={setChanBang} className="shrink-0 bg-white px-4" />
               </div>
             </div>,
             document.body,

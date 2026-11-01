@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Chip } from "@/components/FilterBar";
+import { Chip, DaChonLenDau } from "@/components/FilterBar";
 import { projectCategories } from "@/lib/categories";
 import { TINH_TRANG_DU_AN } from "@/lib/truongDuAn";
 import { khopTen, normalizeVi, tenLoaiHinh } from "@/lib/filters";
@@ -115,7 +115,9 @@ export function PanelLoaiBdsDuAn({ value = [], onChange, dem }: { value?: string
   const dat = (next: string[]) => onChange(next);
   return (
     <div className="mt-1 space-y-1.5 pr-1">
-      {cay.map((g) => {
+      {/* NHÓM CÓ MỤC ĐÃ CHỌN LÊN ĐẦU, trong nhóm mục đã chọn lên trước — chốt lúc mở bảng, như bảng Khu vực (02/11/2026) */}
+      <DaChonLenDau ds={cay} khoa={(g) => g.label} daChon={(g) => g.items.some((o) => value.includes(o))}>
+      {(dsNhom) => dsNhom.map((g) => {
         const ca = g.items.every((o) => value.includes(o));
         return (
           <div key={g.label}>
@@ -123,7 +125,8 @@ export function PanelLoaiBdsDuAn({ value = [], onChange, dem }: { value?: string
               <input type="checkbox" checked={ca} onChange={() => dat(ca ? value.filter((x) => !g.items.includes(x)) : [...new Set([...value, ...g.items])])} className="h-4 w-4 shrink-0 accent-cvr-blue" />
               <span className="truncate">{g.label}</span>
             </label>
-            {g.items.map((o) => {
+            <DaChonLenDau ds={g.items} khoa={(o) => o} daChon={(o) => value.includes(o)}>
+            {(dsLoai) => dsLoai.map((o) => {
               const on = value.includes(o);
               return (
                 <label key={o} className="flex cursor-pointer items-center gap-2.5 rounded-lg py-1.5 pl-8 pr-2 text-sm text-cvr-ink/80 transition hover:bg-black/5">
@@ -133,9 +136,11 @@ export function PanelLoaiBdsDuAn({ value = [], onChange, dem }: { value?: string
                 </label>
               );
             })}
+            </DaChonLenDau>
           </div>
         );
       })}
+      </DaChonLenDau>
     </div>
   );
 }

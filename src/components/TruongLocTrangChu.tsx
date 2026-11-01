@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
-import { LocationPanel, ProjectPanel, RangePanel, Chip, SwitchRow, NutXem, DaChon, gomLoai, nhanNoi } from "@/components/FilterBar";
+import { LocationPanel, ProjectPanel, RangePanel, Chip, SwitchRow, NutXem, DaChon, loaiTheoCha, nhanLoai, nhanNoi } from "@/components/FilterBar";
 import { PanelLoaiBdsDuAn, PanelLocThemDuAn, PanelChuDauTu } from "@/components/TruongDuAn";
 import { CAY_LOAI_DU_AN, dsTinhTrang, thuHepDuAn, type DuAnLoc } from "@/lib/thuHepDuAn";
 import { coTruongKhacLoai, demLoaiTu } from "@/lib/thuHepTin";
@@ -67,7 +67,7 @@ export default function TruongLocTrangChu({
   );
 
   const khuVuc = hien("kv") && (
-    <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="kv" label="Khu vực" summary={nhanNoi(f.locations)} active={f.locations.length > 0} panelClassName="w-96" className={cls}>
+    <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="kv" label="Khu vực" giuCo summary={nhanNoi(f.locations)} active={f.locations.length > 0} panelClassName="w-96" className={cls}>
       {({ close }) => <><LocationPanel locations={f.locations} onChange={(locations) => set({ locations, project: "" })} />{loiRa(close, () => set({ locations: [], project: "" }))}</>}
     </FilterDropdown>
   );
@@ -78,9 +78,9 @@ export default function TruongLocTrangChu({
         {hang(<>
           {khuVuc}
           {/* Trường riêng mục Dự án theo chuẩn tra cứu dự án (chủ dự án 01/11/2026) — bảng chọn dùng chung với trang /du-an */}
-          {hien("lda") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="lda" label="Loại hình" summary={(() => { const g = gomLoai(f.types, CAY_LOAI_DU_AN); return g.length === 1 ? g[0].nhan : g.length > 1 ? `${g.length} loại hình` : ""; })()} active={f.types.length > 0} panelClassName="w-72" className={cls}>
+          {hien("lda") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="lda" label="Loại hình" summary={nhanLoai(f.types, CAY_LOAI_DU_AN)} active={f.types.length > 0} panelClassName="w-72" className={cls}>
             {/* LOẠI HÌNH DỰ ÁN = CÂY LOẠI HÌNH BẤT ĐỘNG SẢN cha – con — cùng trang Dự án (01/11/2026) */}
-            {({ close }) => <><DaChon muc={gomLoai(f.types, CAY_LOAI_DU_AN).map((g) => ({ nhan: g.nhan, bo: () => set({ types: f.types.filter((x) => !g.cac.includes(x)) }) }))} macDinh="Tất cả loại hình" />{locDa && <PanelLoaiBdsDuAn value={f.types} onChange={(types) => set({ types, loaiDuAn: [] })} dem={locDa.demLoaiBds} />}{loiRa(close, () => set({ types: [], loaiDuAn: [] }))}</>}
+            {({ close }) => <><DaChon muc={loaiTheoCha(f.types, CAY_LOAI_DU_AN).map((g) => ({ nhan: g.nhan, bo: () => set({ types: f.types.filter((x) => !g.cac.includes(x)) }) }))} macDinh="Tất cả loại hình" />{locDa && <PanelLoaiBdsDuAn value={f.types} onChange={(types) => set({ types, loaiDuAn: [] })} dem={locDa.demLoaiBds} />}{loiRa(close, () => set({ types: [], loaiDuAn: [] }))}</>}
           </FilterDropdown>}
           {hien("cdt") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="cdt" label="Chủ đầu tư" summary={f.chuDauTu ?? ""} active={!!f.chuDauTu} panelClassName="w-80" className={cls}>
             {({ close }) => <><DaChon muc={f.chuDauTu ? [{ nhan: f.chuDauTu, bo: () => set({ chuDauTu: "" }) }] : []} onBoHet={() => set({ chuDauTu: "" })} /><PanelChuDauTu ds={locDa?.dsChuDauTu} hienSan={!!locDa?.coTruongKhac("cdt")} value={f.chuDauTu} onChange={(chuDauTu) => set({ chuDauTu })} onApply={() => xong(close)} /></>}
@@ -99,15 +99,14 @@ export default function TruongLocTrangChu({
   // số mục đang bật trong "Lọc thêm" (cùng cách đếm của FilterBar)
   // màn tìm điện thoại (the): Diện tích nằm TRONG "Lọc thêm" (chỉ 3 thẻ dưới thẻ tìm) → đếm luôn
   const soThem = (f.project ? 1 : 0) + (the && !hien("dt") && (f.areaMin != null || f.areaMax != null) ? 1 : 0) + (f.beds ? 1 : 0) + (mb === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0)) + (f.verified ? 1 : 0) + (f.broker ? 1 : 0);
-  const tenLoai = nhom.find((g) => g.items.length === f.types.length && g.items.every((t) => f.types.includes(t)))?.label;
   return (
     <FilterDropdownGroup>
       {hang(<>
         {khuVuc}
-        {hien("lh") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="lh" label="Loại hình" summary={tenLoai ?? (f.types.length === 1 ? tenLoaiHinh(f.types[0]) : `${f.types.length} loại hình`)} active={f.types.length > 0} panelClassName="w-72" className={cls}>
+        {hien("lh") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="lh" label="Loại hình" summary={nhanLoai(f.types, nhom)} active={f.types.length > 0} panelClassName="w-72" className={cls}>
           {({ close }) => (
             <div>
-              <DaChon muc={gomLoai(f.types, nhom).map((g) => ({ nhan: g.nhan, bo: () => set({ types: f.types.filter((y) => !g.cac.includes(y)) }) }))} macDinh="Tất cả loại nhà đất" />
+              <DaChon muc={loaiTheoCha(f.types, nhom).map((g) => ({ nhan: g.nhan, bo: () => set({ types: f.types.filter((y) => !g.cac.includes(y)) }) }))} macDinh="Tất cả loại nhà đất" />
               <div className="space-y-1.5 pr-1">
                 {nhom.map((g0) => ({ ...g0, items: g0.items.filter((x) => !demLoai || demLoai(x) > 0 || f.types.includes(x)) })).filter((g) => g.items.length > 0).map((g) => {
                   const ca = g.items.every((t) => f.types.includes(t));

@@ -14,7 +14,7 @@ const MapView = dynamic(() => import("@/components/MapViewMo"), {
 import PropertyCard from "@/components/PropertyCard";
 import TheTinMobile from "@/components/TheTinMobile";
 import FilterBar from "@/components/FilterBar";
-import { cauThanhBoLoc, boLocKhoiDau } from "@/lib/locDanhSach";
+import { cauThanhBoLoc, boLocKhoiDau, truongVuaBo, boTruongCau, type TruongCau } from "@/lib/locDanhSach";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
   filtersFromParams,
@@ -147,7 +147,17 @@ export default function ListingBrowser({
   tuKhoaSong.current = filtersSong.keyword;
   const [tuKhoaDaTim, setTuKhoaDaTim] = useState(() => filtersSong.keyword);
   useEffect(() => { if (!filtersSong.keyword.trim()) setTuKhoaDaTim(""); }, [filtersSong.keyword]);
-  const filters = useMemo(() => ({ ...filtersHoan, keyword: tuKhoaDaTim }), [filtersHoan, tuKhoaDaTim]);
+  const filtersGoc = useMemo(() => ({ ...filtersHoan, keyword: tuKhoaDaTim }), [filtersHoan, tuKhoaDaTim]);
+  // TRƯỜNG KHÁCH ĐÃ TỰ BỎ cho câu đang tìm (Đặt lại / × — 02/11/2026, xem truongVuaBo): câu không điền lại các trường đó. Kết quả lọc
+  // theo các trường máy đọc được TRỪ trường đã bỏ, từ khoá chỉ còn phần câu máy chưa đọc thành trường
+  const [boTruong, setBoTruong] = useState<{ kw: string; ds: TruongCau[] }>({ kw: "", ds: [] });
+  const boDangAp = boTruong.kw === tuKhoaDaTim && tuKhoaDaTim.trim() ? boTruong.ds : [];
+  const khoaBo = boDangAp.join();
+  const filters = useMemo(() => {
+    if (!khoaBo) return filtersGoc;
+    const h = cauThanhBoLoc(filtersGoc, purpose);
+    return h ? { ...boTruongCau(h, khoaBo.split(",") as TruongCau[], filtersGoc), keyword: h.keyword } : filtersGoc;
+  }, [filtersGoc, khoaBo, purpose]);
   // ?sapxep=gia-tang (ô tìm thông minh: câu có "giá rẻ" → giá thấp trước)
   const [sort, setSort] = useState<SortKey>(() => sapXepTu(params));
   // Chế độ BẢN ĐỒ (kiểu Batdongsan): bật là cả trang chuyển sang xem bản đồ,
@@ -314,7 +324,19 @@ export default function ListingBrowser({
   // TỪ KHOÁ CHUẨN (chủ dự án 17/10/2026: gõ câu thì phải hiện Huế · Căn hộ · Dưới 2 tỷ, không phải câu thô):
   // ô tìm giữ nguyên câu khách gõ; trường lọc + thẻ bên dưới hiện đúng tiêu chí máy đã hiểu.
   // Thẻ lọc hiểu từ câu: chỉ theo từ khoá ĐÃ TÌM — đang gõ dở thì thanh lọc giữ nguyên
-  const hieu = useMemo(() => (filtersSong.keyword === tuKhoaDaTim ? cauThanhBoLoc(filtersSong, purpose) : null), [filtersSong, tuKhoaDaTim, purpose, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: tính lại khi địa danh về
+  const hieu = useMemo(() => {
+    if (filtersSong.keyword !== tuKhoaDaTim) return null;
+    const h = cauThanhBoLoc(filtersSong, purpose);
+    return h && khoaBo ? boTruongCau(h, khoaBo.split(",") as TruongCau[], filtersSong) : h;
+  }, [filtersSong, tuKhoaDaTim, purpose, coDiaDanh, khoaBo]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: tính lại khi địa danh về
+  // Khách đổi TRƯỜNG (không phải gõ chữ) mà bỏ trống trường câu đã điền → nhớ lại để câu không điền lại (Đặt lại, ×)
+  const doiBoLoc = (nf: Filters) => {
+    if (hieu && nf.keyword === filtersSong.keyword) {
+      const moi = truongVuaBo(hieu, nf);
+      if (moi.length) setBoTruong({ kw: tuKhoaDaTim, ds: [...new Set([...boDangAp, ...moi])] });
+    }
+    setFilters(nf);
+  };
 
   // Đang nạp dữ liệu (danh sách không có trang 1 dựng sẵn, vd "Xem thêm" trang chủ) → chưa vẽ gì
   if (nguon && !mayChu) return null;
@@ -326,10 +348,11 @@ export default function ListingBrowser({
       {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
       {/* Máy tính: thanh tìm gọn trong CỘT TIN bên trái (= lg:col-span-3 của lưới 4 cột, khe 24px), như Batdongsan — chủ dự án 18/10/2026 */}
-      <div className="lg:w-[calc(75%-6px)]">
+      {/* ĐIỆN THOẠI: khối tìm + lọc DÍNH ngay dưới thanh "‹ Mua bán" khi cuộn (chủ dự án 02/11/2026: "bộ lọc là trái tim — cố định khi cuộn") */}
+      <div className="khoi-loc-dinh lg:w-[calc(75%-6px)] max-sm:sticky max-sm:top-[calc(60px+var(--backbar-h)+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90]">
         <FilterBar
           value={hieu ? { ...hieu, keyword: filtersSong.keyword } : filtersSong}
-          onChange={setFilters}
+          onChange={doiBoLoc}
           purpose={purpose}
           onMap={() => setMapMode((v) => !v)}
           mapActive={mapMode}
@@ -447,7 +470,7 @@ export default function ListingBrowser({
       )}
 
       {/* Máy tính: cột tin 3/4 · cột lọc 1/4 (chủ dự án 18/10/2026: cho phần nội dung bên trái to ra) */}
-      <div className={`mt-3 grid grid-cols-1 gap-6 lg:grid-cols-4 ${mapMode ? "hidden" : ""}`}>
+      <div className={`mt-4 grid grid-cols-1 gap-6 sm:mt-3 lg:grid-cols-4 ${mapMode ? "hidden" : ""}`}>
 
         {/* CỘT TRÁI: danh sách tin */}
         {/* Hiệu ứng hiện kết quả chỉ chạy khi khách tìm / đổi lọc — KHÔNG chạy lúc mở trang: đo 21/10/2026 trên điện thoại chậm,

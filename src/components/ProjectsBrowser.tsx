@@ -27,7 +27,7 @@ import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
 import { duAnThuocNhom, projectCategories } from "@/lib/categories";
 import { nhomChuDauTu, slugChuDauTu } from "@/lib/chuDauTu";
-import FilterBar, { LocationPanel, ProjectPanel, NutXem, DaChon, nhanNoi, gomLoai } from "@/components/FilterBar";
+import FilterBar, { LocationPanel, ProjectPanel, NutXem, DaChon, nhanNoi, loaiTheoCha, nhanLoai } from "@/components/FilterBar";
 import type { Suggestion } from "@/lib/suggest";
 import { PanelLoaiBdsDuAn, PanelLocThemDuAn, PanelChuDauTu, tomTatLoaiDuAn } from "@/components/TruongDuAn";
 import { emptyFilters, filtersFromParams, type Filters } from "@/lib/filters";
@@ -208,8 +208,7 @@ export default function ProjectsBrowser({
   const loc = thuHepDuAn(dsLoc, boLoc);
   const tapDuAn = loc.tapDuAn.map((x) => x.p);
   const { dsChuDauTu, tinhTrangCo, coTruongKhac, demLoaiBds } = loc;
-  const loaiGomDa = gomLoai(boLoc.types, CAY_LOAI_DU_AN);
-  const nhanLoaiDa = loaiGomDa.length === 1 ? loaiGomDa[0].nhan : loaiGomDa.length > 1 ? `${loaiGomDa.length} loại hình` : tomTatLoaiDuAn(boLoc.loaiDuAn);
+  const nhanLoaiDa = nhanLoai(boLoc.types, CAY_LOAI_DU_AN) || tomTatLoaiDuAn(boLoc.loaiDuAn);
   const goiYDuAnRieng = (kw: string): Suggestion[] =>
     loc.goiY(kw).map(({ p }) => ({ label: p.name, kind: "Dự án" as const, sub: giaTriThat(p.location), href: `/du-an/${p.slug}` }));
 
@@ -336,12 +335,12 @@ export default function ProjectsBrowser({
   const apDung = (close: () => void) => { close(); batDauTim(); xongTim(); };
   const chipLoc = (
     <FilterDropdownGroup>
-      <FilterDropdown label="Toàn quốc" summary={nhanNoi(boLoc.locations)} active={boLoc.locations.length > 0} panelClassName="w-96" className="shrink-0 sm:min-w-0 sm:flex-1">
+      <FilterDropdown label="Toàn quốc" tieuDe="Khu vực" giuCo summary={nhanNoi(boLoc.locations)} active={boLoc.locations.length > 0} panelClassName="w-96" className="shrink-0 sm:min-w-0 sm:flex-1">
         {({ close }) => <><LocationPanel locations={boLoc.locations} onChange={(locations) => setBoLoc((b) => ({ ...b, locations, project: "" }))}  /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, locations: [], project: "" }))} /></>}
       </FilterDropdown>
       {/* LOẠI HÌNH = CÂY LOẠI HÌNH BẤT ĐỘNG SẢN cha – con (chủ dự án 01/11/2026), chỉ loại có dự án thật, kèm số */}
       <FilterDropdown label="Loại hình" summary={nhanLoaiDa} active={boLoc.types.length > 0 || !!boLoc.loaiDuAn?.length} panelClassName="w-72" className="shrink-0 sm:min-w-0 sm:flex-1">
-        {({ close }) => <><DaChon muc={gomLoai(boLoc.types, CAY_LOAI_DU_AN).map((g) => ({ nhan: g.nhan, bo: () => setBoLoc((b) => ({ ...b, types: b.types.filter((x) => !g.cac.includes(x)) })) }))} macDinh="Tất cả loại hình" /><PanelLoaiBdsDuAn value={boLoc.types} onChange={(types) => setBoLoc((b) => ({ ...b, types, loaiDuAn: [] }))} dem={demLoaiBds} /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, types: [], loaiDuAn: [] }))} /></>}
+        {({ close }) => <><DaChon muc={loaiTheoCha(boLoc.types, CAY_LOAI_DU_AN).map((g) => ({ nhan: g.nhan, bo: () => setBoLoc((b) => ({ ...b, types: b.types.filter((x) => !g.cac.includes(x)) })) }))} macDinh="Tất cả loại hình" /><PanelLoaiBdsDuAn value={boLoc.types} onChange={(types) => setBoLoc((b) => ({ ...b, types, loaiDuAn: [] }))} dem={demLoaiBds} /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, types: [], loaiDuAn: [] }))} /></>}
       </FilterDropdown>
       <FilterDropdown label="Chủ đầu tư" summary={boLoc.chuDauTu ?? ""} active={!!boLoc.chuDauTu} panelClassName="w-80" className="shrink-0 sm:min-w-0 sm:flex-1">
         {({ close }) => <><DaChon muc={boLoc.chuDauTu ? [{ nhan: boLoc.chuDauTu, bo: () => setBoLoc((b) => ({ ...b, chuDauTu: "" })) }] : []} onBoHet={() => setBoLoc((b) => ({ ...b, chuDauTu: "" }))} /><PanelChuDauTu ds={dsChuDauTu} hienSan={boLoc.locations.length > 0 || !!boLoc.loaiDuAn?.length || !!boLoc.project || !!boLoc.tinhTrang} value={boLoc.chuDauTu} onChange={(chuDauTu) => setBoLoc((b) => ({ ...b, chuDauTu }))} onApply={() => { apDung(close); }} /></>}
@@ -507,7 +506,9 @@ export default function ProjectsBrowser({
       {/* Máy tính: thanh tìm gọn trong CỘT DỰ ÁN bên trái (= lg:col-span-2 của lưới 3 cột, khe 32px) — chủ dự án 18/10/2026 */}
       {/* 25/10/2026: máy tính CÙNG KIỂU thanh tìm Mua bán / Cho thuê — không khung viền, không bóng, gạch mảnh phía dưới, cách Hero 16px */}
       {/* Trang Dự án có Tra cứu (29/10/2026): không còn cột phải → thanh tìm rộng hết khung, thẳng mép với Nổi bật + Tra cứu */}
-      <div id="tra-cuu" className={`order-1 mt-2 scroll-mt-24 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 lg:w-[calc(66.667%-10.667px)]`}>
+      {/* ĐIỆN THOẠI: sát thanh "‹ Dự án" như Mua bán / Cho thuê — bỏ dải trắng 8px (chủ dự án 02/11/2026: căn lề chuẩn, một kiểu) */}
+      {/* ĐIỆN THOẠI: khối tìm + lọc DÍNH ngay dưới thanh "‹ Dự án" khi cuộn — như Mua bán / Cho thuê (02/11/2026) */}
+      <div id="tra-cuu" className={`khoi-loc-dinh max-sm:sticky max-sm:top-[calc(60px+var(--backbar-h)+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90] order-1 mt-0 scroll-mt-24 rounded-none bg-white pb-2.5 pt-0 max-sm:mb-4 max-sm:pb-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 lg:w-[calc(66.667%-10.667px)]`}>
         {/* MỘT KHUÔN với Mua bán / Cho thuê (chủ dự án 01/11/2026): CHÍNH khung tìm FilterBar — bấm vào ô, lúc gõ, màn tìm điện thoại,
             nút Làm mới, Xem bản đồ y hệt; chỉ khác HÀNG TRƯỜNG LỌC của dự án và gợi ý khi gõ (dự án khớp tên / chủ đầu tư). Lọc tại chỗ. */}
         <FilterBar
@@ -612,7 +613,7 @@ export default function ProjectsBrowser({
       )}
 
       {dangMoDs ? danhSachXemThem : (
-      <div className={`mt-6 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
+      <div className={`mt-4 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
         {/* ── Cột chính: thẻ dự án ngang ── */}
         <div className="lg:col-span-2">
           {/* Nhãn TẦNG kết quả — giống trang Mua bán / Cho thuê */}
