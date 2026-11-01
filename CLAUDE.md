@@ -12,6 +12,25 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
 
 ---
 
+## ⏳ VIỆC TỒN SAU PUSH f8d2a0a (02/11/2026, bộ lọc điện thoại) — PHIÊN SAU ANH KIỂM RỒI QUYẾT, CHƯA AI ĐƯỢC TỰ LÀM
+
+> Đã lên web và đã kiểm trên coastalland.vn (cỡ điện thoại): bảng Khu vực một quy trình · hàng Đặt lại · Áp dụng là đáy cố định mọi
+> bảng chọn · khối tìm + lọc dính khi cuộn (trang chủ, Mua bán, Cho thuê, Dự án) · Đặt lại / × không bị câu tìm điền lại · mục đã chọn
+> lên đầu (Loại BĐS, Loại hình). Chi tiết: commit `f8d2a0a`, nhật ký `chi-tiet\nhat-ky.md` dòng 02/11.
+
+| # | Việc | Ở đâu | Cần anh |
+|---|---|---|---|
+| 1 | **Dữ liệu mẫu chưa gỡ** (tin, dự án, bài mẫu, "1.240 tin") — không hiện ra web nhưng còn nằm trong bộ gợi ý khi gõ và dự phòng khi mất kết nối CSDL | `src/lib/data.ts`, `src/lib/suggest.ts:115–133`, `src/lib/listingsDb.ts:424`, `src/lib/contentDb.ts`, `src/lib/khuVucMacDinh.ts`; chi tiết ở luật 13 bên dưới | Kiểm ảnh hưởng → quyết gỡ hay giữ. Gỡ = đụng ô tìm, gợi ý → làm riêng một đợt, thử kỹ |
+| 2 | **Chưa thử trên điện thoại thật** bản đã lên: bàn phím bật khi gõ tìm trong bảng Khu vực (máy giả lập không có bàn phím thật), kéo danh sách không dịch màn hình, khối lọc dính khi cuộn — nhất là Samsung Internet, iPhone Safari, trình duyệt trong Zalo | coastalland.vn/mua-ban · /cho-thue · /du-an · trang chủ | Anh bấm thử, báo lỗi kèm ảnh |
+| 3 | **Ô tìm vẫn giữ câu đã tìm** khi khách Đặt lại khu vực (vd câu "…đà nẵng" mà khu vực đã về Toàn quốc) — giữ theo chốt 17/10 "ô giữ câu khách gõ" | `ListingBrowser.tsx` (boTruong) | Quyết: giữ như chốt cũ, hay bỏ trường thì câu đổi theo |
+| 4 | **Chưa rà 14 lỗi phiên local_29599553** theo bảng ở mục ⛔ bên dưới (mới sửa các lỗi anh báo trong ngày 02/11) | bảng 14 lỗi | Anh cho làm thì rà từng dòng, thử trên máy thật |
+| 5 | Bảng **Chủ đầu tư** và **Dự án** (trang Dự án) chỉ có ô tìm, gõ mới ra danh sách — giữ nguyên vì là cách đang chạy | `TruongDuAn.tsx` PanelChuDauTu, `FilterBar.tsx` ProjectPanel | Quyết có hiện sẵn danh sách hay không |
+| 6 | Hàng trường lọc ở màn tìm trang chủ điện thoại **không bao giờ hiện** (màn tìm luôn ở chế độ gõ, không nút thoát) — mã có sẵn, không dùng tới | `TimTrangChu.tsx` hangLoc, dòng ~864 | Quyết: bỏ mã thừa hay làm cho hiện |
+| 7 | Chữ mẫu "1.240 tin" trong nhãn ô nhập admin | `src/app/admin/noi-dung/page.tsx:208` | Chỉ là chữ gợi ý ô nhập, không ra web — quyết có đổi không |
+| 8 | Công cụ Vercel của Claude không thấy dự án (khác tài khoản) → không đọc được trạng thái dựng; đã kiểm web thật bằng mã trang thay thế | — | Không gấp |
+
+---
+
 ## ⛔⛔⛔ CẤM VĨNH VIỄN PHIÊN local_29599553-f08e-4fa5-a473-919f702b941e (chủ dự án chốt 02/11/2026)
 
 **Phiên:** local_29599553-f08e-4fa5-a473-919f702b941e · tên "ĐIỀU PHỐI CÔNG VIỆC HẰNG NGÀY" · mô hình Claude Opus 5.5 (claude-opus-5-5) ·
@@ -85,6 +104,14 @@ Lỗi của phiên này ngày 01–02/11 (số lần chủ dự án phải nhắ
     ảnh mẫu theo loại hình của tin) · ② dữ liệu mẫu, số liệu giả trên trang công khai (`src/lib/data.ts`, "1.240 tin"…) · ③ trang demo, mẫu thử
     (`/du-an/demo-*`, `DU_AN_DEMO`…) · ④ công thức ĐOÁN thay dữ liệu thật (vd "Hiệu lực" tin nâng VIP = hạn − 30 ngày, sửa 31/10: lưu mốc thật).
     Rà bằng `grep` cả `src/` → liệt kê → gỡ → kiểm web thật sau push. Còn sót cái nào → ghi vào báo cáo push, không im lặng.
+    **⏳ CÒN SÓT SAU PUSH f8d2a0a (02/11/2026) — CHỜ ANH KIỂM ẢNH HƯỞNG RỒI QUYẾT, chưa ai được tự gỡ:**
+    dữ liệu mẫu `src/lib/data.ts` (`featuredListings`, `projects`, `articles`, "1.240 tin" ở `areas` + `src/lib/khuVucMacDinh.ts`).
+    Trang đang lấy dữ liệu thật nên KHÔNG hiện ra web, nhưng vẫn được dùng ở: ① bộ gợi ý khi gõ `src/lib/suggest.ts` (dòng 115–133
+    nạp tin/dự án/bài mẫu vào chỉ mục gợi ý) · ② dự phòng khi mất kết nối CSDL `src/lib/listingsDb.ts:424` (`return featuredListings`),
+    `src/lib/contentDb.ts` (dự án, bài mẫu) · ③ giá trị mặc định của `FeaturedListings`, `ListingBrowser`, `SearchClient`, `ForYou`.
+    Gỡ = đụng cơ chế tìm / gợi ý → làm riêng một đợt, thử kỹ ô tìm + gợi ý trước khi push. **Giữ, không phải bản thử:**
+    `public/zbs-demo/` (ảnh nộp Zalo duyệt 6 mẫu ZBS — `docs/MAU-ZBS-MOI.md`) · `public/mau-thu-vien-phap-luat.csv` (tệp mẫu nhập liệu).
+    Đã gỡ 02/11: `public/_mau-*.html`, `public/_so-sanh-tam.html`, `public/_so-sanh-the/` (chưa từng lên git).
 
 ---
 
