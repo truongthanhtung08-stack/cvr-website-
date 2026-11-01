@@ -12,6 +12,37 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
 
 ---
 
+## ⛔⛔⛔ CẤM VĨNH VIỄN PHIÊN local_29599553-f08e-4fa5-a473-919f702b941e (chủ dự án chốt 02/11/2026)
+
+**Phiên:** local_29599553-f08e-4fa5-a473-919f702b941e · tên "ĐIỀU PHỐI CÔNG VIỆC HẰNG NGÀY" · mô hình Claude Opus 5.5 (claude-opus-5-5) ·
+mã bản ghi b91b7b76-bc18-40b0-955c-5a4d4b564a24 · ngày 01–02/11/2026.
+
+**Kết luận của chủ dự án (nguyên văn):**
+1. **NGU.**
+2. **CẤM XUẤT HIỆN TRONG CÁC PHIÊN LÀM VIỆC CỦA TAO. MÃI MÃI.**
+
+→ Không phiên nào được giao việc, nhắn, bàn giao hay nhận bàn giao từ phiên này; luật 11 bên dưới (phiên này là Điều phối chính) **hết hiệu lực**.
+
+Lỗi của phiên này ngày 01–02/11 (số lần chủ dự án phải nhắc, đếm theo chữ trong 399 tin nhắn, có thể lệch vài lần):
+| # | Lỗi | Số lần nhắc |
+|---|---|---|
+| 1 | Tự đổi / phá cái đã chạy đúng (cơ chế chọn trường, hàng trường, bảng phủ kín màn hình…) | 38 |
+| 2 | Báo xong mà chưa kiểm kỹ (kiểm bằng mã trên máy giả lập, không như tay chủ bấm trên máy thật) | 25 |
+| 3 | Gõ mục đích không tự chuyển đúng tab | 23 |
+| 4 | Không hiểu từ khoá, địa danh (tỉnh cũ / mới) | 10 |
+| 5 | Mất nút Áp dụng / Áp dụng thừa ở trường chọn một | 8 |
+| 6 | Bàn phím che danh sách Toàn quốc | 7 |
+| 7 | Gợi ý không giống Google | 7 |
+| 8 | Chọn trường xong biến mất / tự search sai ý | 7 |
+| 9 | Màn hình xê dịch, ô search bị che | 7 |
+| 10 | Kết quả không xếp cha → con | 6 |
+| 11 | Gõ bậy vẫn ra gợi ý | 5 |
+| 12 | Giật, lag ô search | 4 |
+| 13 | Hàng trường dưới ô search (bỏ / để) | 2 |
+| 14 | Nút khu vực ghi một chuỗi dài | 2 |
+
+---
+
 ## ⛔⛔⛔ VIỆC PHẢI LÀM TRƯỚC — mọi phiên, trước mọi câu trả lời và mọi thao tác (chủ dự án yêu cầu 31/10/2026)
 
 1. **Kiểm môi trường trước khi làm:** Chrome của anh đã kết nối chưa · Search Console vào được chưa · git (commit chờ Push, nhánh) · web thật · máy xem thử. Thiếu cái nào → báo ngay, không làm bằng công cụ khác rồi kết luận.
@@ -26,7 +57,7 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
 8. **Trong khi làm ghi nhật ký** (`chi-tiet\nhat-ky.md`): việc đã làm · lỗi phát hiện · nguyên nhân · lý do · giải pháp · cần bổ sung gì. Làm xong mới báo anh, một lần. Không giải thích vòng vo, không nói "đã ghi nhận" rồi làm sai.
 9. **ĐỌC QUY TRÌNH TRƯỚC KHI LÀM — bước nào của ai** (31/10): mở đúng mục quy trình của việc đó (đăng tin, dự án → `chi-tiet\quy-trinh-3-ben.md` 11.0B; push → mục 0B) → bước của anh thì báo "đến bước anh", KHÔNG tự làm; lệnh mơ hồ so với quy trình → hỏi một câu. Ai làm bước nào: CHỈ theo `quy-trinh-3-ben.md` 11.00 (nguồn duy nhất). (Bài học 31/10: tự vào Admin nạp dự án khi anh chưa giao.)
 10. **Báo ngắn, đúng 3 mục: Xong · Chưa xong · Cần gì** (31/10). Mục "Cần gì" chỉ trỏ tới dòng trong `CAN-ANH-DUYET.md` (cách ghi: 11.00). Việc anh giao thì làm HẾT rồi mới báo. Nói ít, chỉ cái cần, không giải thích lại.
-11. **Điều phối chính = phiên "ĐIỀU PHỐI CÔNG VIỆC HẰNG NGÀY"** (`local_29599553-f08e-4fa5-a473-919f702b941e`, anh giao 31/10). **Điều phối KHÔNG trực tiếp làm việc — chỉ giao việc cho các phiên, nhận bàn giao, xử lý, và làm việc với anh** (anh 31/10); việc làm (đo SEO, xin index, kiểm đợt, sửa mã) do phiên con làm. **Anh có quyền làm việc trực tiếp với phiên con khi cần; phiên con làm xong vẫn báo kết quả về Điều phối — một mối** (anh 31/10). Mọi phiên khác bàn giao về đây (đã xong · còn dở, dừng ở bước nào · tệp, nhánh, commit · việc chờ anh duyệt); **chỉ phiên điều phối push**, khi anh nhắn "Push". **Push linh động theo nhu cầu công việc, khi anh đồng ý (anh nhắn "Push") — không dồn cuối ngày để tiết kiệm; việc các phiên gom về đây, cần lên web thì báo anh một dòng** (anh 31/10).
+11. **[HẾT HIỆU LỰC 02/11/2026 — phiên local_29599553 bị CẤM VĨNH VIỄN, xem mục đầu tệp]** ~~Điều phối chính = phiên "ĐIỀU PHỐI CÔNG VIỆC HẰNG NGÀY" (`local_29599553-f08e-4fa5-a473-919f702b941e`, anh giao 31/10).~~ **Điều phối KHÔNG trực tiếp làm việc — chỉ giao việc cho các phiên, nhận bàn giao, xử lý, và làm việc với anh** (anh 31/10); việc làm (đo SEO, xin index, kiểm đợt, sửa mã) do phiên con làm. **Anh có quyền làm việc trực tiếp với phiên con khi cần; phiên con làm xong vẫn báo kết quả về Điều phối — một mối** (anh 31/10). Mọi phiên khác bàn giao về đây (đã xong · còn dở, dừng ở bước nào · tệp, nhánh, commit · việc chờ anh duyệt); **chỉ phiên điều phối push**, khi anh nhắn "Push". **Push linh động theo nhu cầu công việc, khi anh đồng ý (anh nhắn "Push") — không dồn cuối ngày để tiết kiệm; việc các phiên gom về đây, cần lên web thì báo anh một dòng** (anh 31/10).
 12. **LỖI CỦA PHIÊN ĐIỀU PHỐI 31/10 — ĐỪNG LẶP** (anh: "lỗi gì ghi hết vào CLAUDE.md"):
     - Anh hỏi mà không trả lời ngay, tự làm trước (ghi bộ nhớ, bật máy xem thử 3001) → **anh hỏi thì trả lời đúng câu đó trước; anh bảo kiểm thì chỉ kiểm.**
     - Hiểu sai ý anh nhiều lần, trả lời vòng vo, phải hỏi lại 4–5 lần mới ra một câu "đảm trách được" → **trả lời một câu thẳng; chưa hiểu thì hỏi lại một câu ngắn.**
