@@ -4,6 +4,7 @@ import Link, { useLinkStatus } from "next/link";
 import BieuTuong, { type TenBieuTuong } from "@/components/BieuTuong";
 import { BIEU_TUONG } from "@/lib/bieuTuong";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth } from "@/lib/useAuth";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
@@ -218,6 +219,24 @@ export default function MobileTabBar() {
 
 // Khung thanh tab — dùng chung cho chế độ người mua và chế độ người bán.
 function ThanhTab({ tabs, count, nutDangTinNoi = false }: { tabs: { href: string; label: string; icon: keyof typeof ICONS; on: boolean }[]; count: number; nutDangTinNoi?: boolean }) {
+  // ĐANG CUỘN thì trượt thanh xuống khuất, DỪNG CUỘN 0,35 s thì hiện lại (chủ dự án 02/11/2026: "cần không gian hiển thị trên mobile, ẩn
+  // luôn menu ở footer khi cuộn"). Thanh nằm cố định đè lên trang nên ẩn / hiện không làm nội dung xê dịch.
+  const [anKhiCuon, setAnKhiCuon] = useState(false);
+  useEffect(() => {
+    // Chỉ khách cuộn thật (vuốt / lăn chuột); trang tự dịch khi ảnh tải không tính — như hàng trường lọc (FilterBar)
+    let dung = 0;
+    let dangVuot = false;
+    const hen = () => { clearTimeout(dung); dung = window.setTimeout(() => { dangVuot = false; setAnKhiCuon(false); }, 350); };
+    const vuot = () => { dangVuot = true; setAnKhiCuon(true); hen(); };
+    const cuon = () => { if (dangVuot) hen(); };
+    window.addEventListener("scroll", cuon, { passive: true });
+    window.addEventListener("touchmove", vuot, { passive: true });
+    window.addEventListener("wheel", vuot, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", cuon); window.removeEventListener("touchmove", vuot); window.removeEventListener("wheel", vuot);
+      clearTimeout(dung);
+    };
+  }, []);
   return (
     <>
       {/* Chỗ trống cuối trang để tab bar không che nội dung/footer */}
@@ -226,7 +245,7 @@ function ThanhTab({ tabs, count, nutDangTinNoi = false }: { tabs: { href: string
       <nav
         aria-label="Điều hướng nhanh"
         data-do-cao="tabbar-h"
-        className="an-khi-go-phim tabbar-glass fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] lg:hidden"
+        className={`an-khi-go-phim tabbar-glass fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] transition-transform duration-200 lg:hidden ${anKhiCuon ? "pointer-events-none translate-y-full" : ""}`}
       >
         <ul className="flex items-stretch">
           {tabs.map((t) => (

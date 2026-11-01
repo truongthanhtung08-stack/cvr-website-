@@ -154,6 +154,10 @@ export default function BackBar() {
   const goc = doan[0] ?? "";
   const muc = MUC[goc];
   if (!muc) return null;
+  // TRANG DANH SÁCH Mua bán · Cho thuê · Dự án: KHÔNG thanh "‹ …" (chủ dự án 02/11/2026: "xoá menu trang con đầu trang vì thừa" — thanh
+  // dưới cùng đã có ba mục này). Bộ lọc của trang lên sát dưới thanh logo. Trang chi tiết (tin ở /bat-dong-san, dự án, bài viết) GIỮ nút
+  // quay lại ("chú ý nút điều hướng").
+  if (goc === "mua-ban" || goc === "cho-thue" || (goc === "du-an" && doan.length === 1)) return null;
 
   // Tên hiển thị: ưu tiên tên trang con của khu tài khoản
   let ten = muc.ten;

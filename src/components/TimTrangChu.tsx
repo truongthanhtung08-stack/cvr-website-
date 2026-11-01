@@ -753,7 +753,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
       {/* ═══ ĐIỆN THOẠI: menu mục đích · ô tìm viên thuốc một dòng (chạm mở màn tìm) · nhóm loại hình ═══ */}
       {/* ĐIỆN THOẠI ĐÚNG KIỂU AIRBNB (chủ dự án 17/10/2026): ô tìm viên thuốc ở trên, menu mục đích (biểu tượng
           trên chữ, căn giữa) ở dưới */}
-      <div className={`${trenAnh ? "pb-1.5" : "pb-2"} sm:hidden`}>
+      <div className={`${trenAnh ? "pb-1" : "pb-2"} sm:hidden`}>
         {/* GHI NHẬN CÚ CHẠM SỚM (đo bằng chạm thật 17/10/2026: chạm khi trang chưa chạy xong mã thì mất cú chạm đầu tiên):
             đoạn mã nhỏ này chạy NGAY khi trang hiện ra, nhớ lại khách đã chạm thanh tìm; mã chính chạy xong là mở màn tìm. */}
         <script dangerouslySetInnerHTML={{ __html: "document.addEventListener('click',function(e){var t=e.target;if(t&&t.closest&&t.closest('[data-mo-tim]'))window.__cvrMoTim=1},true);document.addEventListener('pointerdown',function(e){var t=e.target;var o=!!(t&&t.closest&&t.closest('[data-o-tim-pc],[data-bang-goi-y],[data-menu-pc] [role=tab]'));window.__cvrBamTrongPc=o;if(!window.__cvrDaChay){var p=document.querySelector('[data-pc-tim]');if(p){if(o&&t.closest('[data-o-tim-pc]'))p.setAttribute('data-cho-mo','');else p.removeAttribute('data-cho-mo')}}},true);document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!window.__cvrDaChay){var p=document.querySelector('[data-pc-tim]');if(p)p.removeAttribute('data-cho-mo')}},true)" }} />

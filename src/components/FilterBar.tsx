@@ -330,6 +330,48 @@ export default function FilterBar({
   // Câu khách vừa gõ ở trang chủ rồi được đưa tới trang sạch (pSEO) — hiện lại trong ô để SỬA TIẾP như Google
   // (chủ dự án 17/10/2026). Chỉ để hiện; khách sửa là thành từ khoá thật. Đọc sau khi dựng trang (máy chủ không có sessionStorage).
   const [cauCu, setCauCu] = useState("");
+  // ĐIỆN THOẠI, ĐANG CUỘN (lên hay xuống) khi khối lọc đã dính trên đầu → thu gọn hàng trường lọc, chỉ chừa thanh tìm; DỪNG CUỘN thì hiện
+  // lại (chủ dự án 02/11/2026: "cuộn xuống, cuộn lên thì ẩn, dừng lại thì hiện ra"). Chỉ khi dải lọc nằm trong khối dính (.khoi-loc-dinh:
+  // trang chủ → Xem thêm, Mua bán, Cho thuê, Dự án). Thanh menu dưới cùng KHÔNG đụng tới.
+  // KHÔNG XÊ DỊCH MÀN HÌNH: khi khối đã dính, hàng trường lọc NỔI ngay dưới thanh tìm (đè lên nội dung, không chiếm chỗ) → ẩn / hiện chỉ đổi
+  // độ mờ, danh sách bên dưới không nhảy. dinh: bật khi cuộn quá mốc 80px, tắt khi về gần đầu (hai mốc khác nhau — không chập chờn ở ranh).
+  // gắn theo dõi đúng lúc khung dải lọc có trên trang (lần dựng đầu có trang chưa có khung — useRef + [] thì không bao giờ gắn lại)
+  const [daiLoc, setDaiLoc] = useState<HTMLDivElement | null>(null);
+  const [dinh, setDinh] = useState(false);
+  const [dangCuon, setDangCuon] = useState(false);
+  useEffect(() => {
+    const khoi = daiLoc?.closest<HTMLElement>(".khoi-loc-dinh");
+    if (!khoi) return;
+    const dt = window.matchMedia("(max-width: 639px)");
+    let dung = 0;
+    // ĐO MỖI LẦN CUỘN (không đo một lần lúc mở — trang chủ → Xem thêm mở danh sách đúng lúc trang đang nhảy, mốc đo lúc đó sai, phải cuộn
+    // rất xa hàng trường mới ẩn: lỗi chủ dự án báo 02/11/2026): khối đã chạm chỗ dính sát logo và đã cuộn quá 80px thì bật; về gần đầu
+    // trang hoặc khối rời chỗ dính thì tắt (hai mốc khác nhau — không chập chờn ở ranh)
+    // tính NGAY trong lúc cuộn (một lần đo vị trí, rất nhẹ) — không chờ khung vẽ: trình duyệt hoãn khung vẽ khi trang chạy nền thì kẹt trạng thái
+    const tinh = () => {
+      const y = window.scrollY;
+      const sat = khoi.getBoundingClientRect().top <= parseFloat(getComputedStyle(khoi).top) + 1;
+      setDinh((cu) => dt.matches && sat && (cu ? y > 4 : y > 80));
+    };
+    // CHỈ KHÁCH CUỘN THẬT (vuốt tay / lăn chuột) mới ẩn — trang tự dịch (ảnh tải xong, trình duyệt tự chỉnh vị trí cuộn) cũng phát "scroll",
+    // nếu tính cả thì hàng trường tự ẩn lung tung khi khách đang đứng yên (đo 02/11/2026). Đã vuốt thì đà trôi vẫn tính là đang cuộn.
+    let dangVuot = false;
+    const hen = () => { clearTimeout(dung); dung = window.setTimeout(() => { dangVuot = false; setDangCuon(false); }, 350); }; // ngừng 0,35 s → hiện lại
+    const vuot = () => { dangVuot = true; setDangCuon(true); hen(); };
+    const cuon = () => {
+      tinh();
+      if (dangVuot) hen();
+    };
+    tinh();
+    window.addEventListener("scroll", cuon, { passive: true });
+    window.addEventListener("touchmove", vuot, { passive: true });
+    window.addEventListener("wheel", vuot, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", cuon); window.removeEventListener("touchmove", vuot); window.removeEventListener("wheel", vuot);
+      clearTimeout(dung);
+    };
+  }, [daiLoc]);
+  const gonKhiCuon = dinh && dangCuon;
   useEffect(() => {
     try {
       const s = sessionStorage.getItem("cvr-cau:" + window.location.pathname);
@@ -1086,14 +1128,16 @@ export default function FilterBar({
       {/* MÁY TÍNH bố trí như Batdongsan (chủ dự án 18/10/2026): KHÔNG khung bao — hàng 1 ô tìm cao 48px + "Xem bản đồ",
           hàng 2 các trường lọc, dưới cùng một đường kẻ. Hai hàng ở mọi bề rộng → không bao giờ tràn mép phải. */}
       {/* NỀN BỘ LỌC trên điện thoại (chủ dự án 01/11/2026: "cần cái nền, kiểu đơn giản để nhìn là biết ngay bộ lọc, cả 4 phần"): dải nền xám nhạt tràn hết bề ngang bao ô tìm + hàng trường lọc; ô tìm, nút trường lọc trắng nổi trên nền — kiểu Google. Máy tính giữ nguyên. */}
-      <div className="-mx-4 rounded-none bg-cvr-surface px-4 pb-1.5 pt-2 sm:mx-0 sm:mt-0 sm:border-b sm:border-cvr-line sm:bg-white sm:px-0 sm:pb-4 sm:pt-3">
+      <div ref={setDaiLoc} className="relative -mx-4 rounded-none bg-cvr-surface px-4 pb-0.5 pt-1 sm:mx-0 sm:mt-0 sm:border-b sm:border-cvr-line sm:bg-white sm:px-0 sm:pb-4 sm:pt-3">
         <div className="flex flex-col gap-2 sm:gap-3">
           <div className="min-w-0">{searchBox}</div>
           {/* Hàng chip lọc — CUỘN NGANG trên mobile (kiểu Batdongsan), tự xuống hàng trên desktop.
               -mx-2.5/px-2.5 để dải chip tràn sát mép thẻ, cuộn mượt hết bề rộng. */}
           {/* ĐIỆN THOẠI: ngoài trang KHÔNG có hàng trường lọc — nằm trong màn gõ (chủ dự án 01/11/2026). Máy tính giữ nguyên hàng này.
               Điện thoại không dựng hàng này — các trường đã nằm trong màn gõ (cacTruong) */}
-          {(!laDt || !overlay) && <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible sm:pb-0">
+          {/* ĐANG CUỘN (khối lọc đã dính trên đầu, điện thoại): hàng trường lọc THU GỌN, chỉ chừa thanh tìm (chủ dự án 02/11/2026: "khi cuộn
+              xuống hoặc lên thì ẩn cái menu dưới thanh lọc, chỉ chừa lại mỗi thanh search"); cuộn về đầu trang thì hiện lại */}
+          {(!laDt || !overlay) && <div className={`no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 transition-opacity duration-200 sm:static sm:flex-wrap sm:overflow-visible sm:bg-transparent sm:px-0 sm:pb-0 sm:opacity-100 sm:shadow-none ${dinh ? "absolute inset-x-0 top-full bg-cvr-surface px-4 pb-2 shadow-[0_1px_0_rgba(0,0,0,0.08)]" : ""} ${gonKhiCuon ? "pointer-events-none opacity-0" : "opacity-100"}`}>
             {/* ĐÃ BỎ chip "Bản đồ" ở hàng ngay dưới thanh tìm kiếm — bị trùng với
                 nút "Xem bản đồ" nằm cạnh ô tìm phía trên. */}
             {/* Thứ tự chuẩn (mockup Mục I phần 2): Khu vực · Dự án · Loại BĐS · Mức giá · Diện tích · Lọc thêm.
