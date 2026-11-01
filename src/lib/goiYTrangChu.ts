@@ -1,5 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { tatCaTrang, tieuDe, cha, NGUONG_INDEX } from "@/lib/pseo";
+import { oLocThemTuNoiDung } from "@/lib/filters";
 
 // ============================================================================
 // GỢI Ý CỤM TỪ KHOÁ DÀI (chủ dự án 17/10/2026: "gợi ý theo ý muốn của người dùng! 1 từ khóa dài!")
@@ -37,13 +38,25 @@ export function tinDem(tin: Listing[]): TinDem[] {
   const gon = (s?: string) => (s ? [...new Set(s.split(" · ").map((x) => x.trim()))].join(" · ") : undefined);
   return tin.map((l) => {
     const diaChiTim = gon(l.diaChiTim);
+    // GOM VỀ BỘ LỌC TỔNG (01/11/2026): bản rút gọn không kèm nội dung tin → điền sẵn ô Lọc thêm còn trống từ nội dung (vòng 2,
+    // filters.oLocThemTuNoiDung) để "Xem N tin" trang chủ đếm đúng như trang Mua bán / Cho thuê
+    const them = oLocThemTuNoiDung(l);
     return {
       // 27/10/2026 (trang chủ 497 KB): id chỉ còn dùng cho công tắc "Tin xác thực" / "Môi giới chuyên nghiệp"
       // (listingVerified/listingProBroker đọc parseInt(id) || 1) → gửi đúng con số đó thay cho mã 36 ký tự, đếm y như cũ.
-      id: String(parseInt(l.id, 10) || 1), title: "", price: l.price, area: l.area, beds: l.beds,
+      id: String(parseInt(l.id, 10) || 1), title: "", price: l.price, area: l.area, beds: them.beds,
       // Có diaChiTim thì bộ lọc dò trên nó (đã chứa location); location chỉ còn cho listingHints lấy tên tỉnh (phần sau dấu phẩy cuối).
       location: diaChiTim ? (l.location.split(",").pop()?.trim() ?? "") : l.location, diaChiTim,
-      type: l.type, purpose: l.purpose === "thue" ? "thue" : "ban", huong: l.huong, phapLy: l.phapLy, noiThat: l.noiThat,
+      type: l.type, purpose: l.purpose === "thue" ? "thue" : "ban", huong: them.huong, phapLy: them.phapLy, noiThat: them.noiThat,
     };
   });
+}
+
+/** CÂU SEO, pSEO CỦA MỘT MỤC (chủ dự án 01/11/2026: "câu chạy trong ô tìm phải là câu SEO, pSEO của mỗi phần, mỗi trang") — tên
+ *  các trang pSEO đang có tin (cùng luật trang được index), nhiều tin trước. Trang con lấy đúng câu của chính nó + trang con của nó. */
+export function cauSeoTheoMuc(tin: Listing[], muc: "ban" | "thue"): { nhan: string; href: string }[] {
+  return [...tatCaTrang(tin).values()]
+    .filter((p) => p.dk.muc === muc && !p.dk.huong && p.n >= NGUONG_INDEX && (p.index || !cha(p.dk)))
+    .sort((a, b) => b.n - a.n)
+    .map((p) => ({ nhan: tieuDe(p.dk), href: p.path }));
 }

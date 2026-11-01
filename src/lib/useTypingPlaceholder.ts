@@ -37,8 +37,13 @@ export function useTypingPlaceholder(phrases: string[], paused = false): string 
     len.current = dau.length;
     xoa.current = false;
     if (paused || phrases.length === 0) return;
-    // Người dùng tắt hiệu ứng chuyển động → giữ nguyên câu đầu, không chạy gì.
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    // Máy tắt hiệu ứng chuyển động → vẫn hiện câu gợi ý, đổi NGUYÊN CÂU mỗi 3,5 giây, không gõ từng chữ (01/11/2026: trước đây đứng
+    // yên một câu nên khách bật chế độ này "không thấy câu gợi ý chạy")
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      if (phrases.length < 2) return;
+      const id = window.setInterval(() => { idx.current = (idx.current + 1) % phrases.length; setText(phrases[idx.current]); }, 3500);
+      return () => window.clearInterval(id);
+    }
 
     let timer: number;
     const buoc = () => {

@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { applyFilters, emptyFilters, filtersToParams, normalizeVi } from "@/lib/filters";
-import { parseQuery } from "@/lib/smartSearch";
+import { chuChuaHieu, parseQuery } from "@/lib/smartSearch";
 import { cauThanhBoLoc } from "@/lib/locDanhSach";
 import { duAnThuocNhom, projectCategories } from "@/lib/categories";
 import { thuHepDuAn, type DuAnLoc } from "@/lib/thuHepDuAn";
@@ -16,23 +16,32 @@ import type { DongGoiY, MucGoiY } from "@/lib/goiYTheoY";
 // ============================================================================
 
 /** Dòng mục Dự án cho một câu gõ — chỉ khi có dự án thật */
-export function dongDuAn(raw: string, ds: DuAnLoc[], coTenDuAn = true): { dong: DongGoiY[]; so: number } {
+/** laTabDuAn: đang ở mục Dự án (tab trang chủ / trang Dự án) — gõ NƠI CHỐN trơn cũng ra dự án tại nơi đó */
+export function dongDuAn(raw: string, ds: DuAnLoc[], coTenDuAn = true, laTabDuAn = false): { dong: DongGoiY[]; so: number } {
   const p = parseQuery(raw);
   const nhom = p.types[0] ? projectCategories.find((c) => duAnThuocNhom([{ type: p.types[0] }], c).length > 0) : undefined;
   const tinh = p.place?.province ?? p.places[0];
+  // đọc tới PHƯỜNG XÃ: "an cựu" → Phường An Cựu, Huế (chủ dự án 01/11/2026: mục đích = loại hình + tỉnh thành, phường xã + nội dung)
+  // phường xã, hoặc quận / thành phố cấp cũ ("sơn trà", "nha trang") — bộ lọc khớp cả địa chỉ mới lẫn cũ của dự án
+  const phuong = p.place?.ward ?? p.place?.district;
+  const noiNhan = phuong ? `${phuong.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "")}, ${tinh}` : tinh;
   const dong: DongGoiY[] = [];
   let so = 0;
   // Có dòng "Dự án …" khi loại khách gõ CÓ loại dự án tương ứng, hoặc khách gõ chữ "dự án" — "nhà phố hải châu", "nhà huế" không kèm
   // dòng dự án (nhà riêng, nhà phố không có loại dự án)
   const noiDuAn = / du an /.test(` ${normalizeVi(raw).replace(/[^a-z0-9]+/g, " ")} `);
-  if (nhom || (tinh && noiDuAn)) {
-    const f = { ...emptyFilters(), locations: tinh ? [{ province: tinh }] : [], loaiDuAn: nhom ? [nhom.slug] : [] };
-    const tap = thuHepDuAn(ds, f).tapDuAn;
+  if (nhom || (tinh && (noiDuAn || laTabDuAn))) {
+    const f = { ...emptyFilters(), locations: tinh ? [phuong ? { province: tinh, ward: phuong } : { province: tinh }] : [], loaiDuAn: nhom ? [nhom.slug] : [] };
+    let tap = thuHepDuAn(ds, f).tapDuAn;
+    // phường chưa có dự án → nới ra cả tỉnh (gần chính xác)
+    if (!tap.length && phuong) { f.locations = [{ province: tinh! }]; tap = thuHepDuAn(ds, f).tapDuAn; }
     so = tap.length;
     if (tap.length) {
       const ts = filtersToParams(f).toString();
-      dong.push({ nhan: ["Dự án", nhom?.label.toLowerCase(), tinh ? `tại ${tinh}` : ""].filter(Boolean).join(" "), muc: "duan", href: `/du-an?${ts}` });
-      if (coTenDuAn) for (const d of tap.slice(0, 2)) dong.push({ nhan: d.ten, muc: "duan", href: `/du-an/${d.slug}` });
+      const daNoi = f.locations[0]?.ward ? noiNhan : tinh;
+      dong.push({ nhan: ["Dự án", nhom?.label.toLowerCase(), daNoi ? `tại ${daNoi}` : ""].filter(Boolean).join(" "), muc: "duan", href: `/du-an?${ts}` });
+      // tên dự án kèm theo CHỈ KHI đã có nơi chốn — gõ "căn hộ" trơn không bày dự án khắp nơi (01/11/2026: "gõ một từ lôi ra cả đống")
+      if (coTenDuAn && tinh) for (const d of tap.slice(0, 2)) dong.push({ nhan: d.ten, muc: "duan", href: `/du-an/${d.slug}` });
     }
   }
   // Gõ "dự án" trơn (chưa loại, chưa nơi, chưa tên) → các LOẠI dự án đang có dự án thật, nhiều dự án trước
@@ -50,7 +59,10 @@ export function dongDuAn(raw: string, ds: DuAnLoc[], coTenDuAn = true): { dong: 
   if (coTenDuAn) {
     // GIỮ DẤU khi so tên (gõ "ăn gì" không ra An Cựu) — chỉ bỏ chữ "dự án"; gõ dưới 3 chữ cái chưa dò tên dự án
     const goc = raw.normalize("NFC").split(/\s+/).filter((w, i, a) => !/^(dự|du)$/i.test(w) && !(/^(án|an)$/i.test(w) && /^(dự|du)$/i.test(a[i - 1] ?? ""))).join(" ").trim();
-    for (const d of goc.replace(/\s/g, "").length >= 3 ? thuHepDuAn(ds, emptyFilters()).goiY(goc, 3) : []) {
+    // câu gõ TOÀN CHỮ ĐÃ HIỂU (loại hình, nơi, giá, đặc điểm — chuChuaHieu rỗng) thì không dò tên dự án: gõ "căn hộ" không ra dự án tình
+    // cờ có chữ "Căn hộ" trong tên (01/11/2026)
+    const coChuLa = !!chuChuaHieu(goc);
+    for (const d of coChuLa && goc.replace(/\s/g, "").length >= 3 ? thuHepDuAn(ds, emptyFilters()).goiY(goc, 3) : []) {
       if (!dong.some((x) => x.href === `/du-an/${d.slug}`)) { dong.push({ nhan: d.ten, muc: "duan", href: `/du-an/${d.slug}` }); so = Math.max(so, 1); }
     }
   }
@@ -67,7 +79,7 @@ export function gopGoiYTong(raw: string, tab: MucGoiY, dongBT: DongGoiY[], tin: 
   const nhom: Record<MucGoiY, DongGoiY[]> = { ban: [], thue: [], duan: [] };
   for (const d of dongBT) nhom[laDuAn(d) ? "duan" : d.muc].push(laDuAn(d) ? { ...d, muc: "duan" } : d);
   // Mục Dự án: câu nói "dự án", hoặc câu chưa rõ mua / thuê (đủ 3 mục) — câu đã rõ bán / thuê thì không thêm
-  const da = noiDuAn || !p.purpose ? dongDuAn(raw, dsDuAn) : { dong: [], so: 0 };
+  const da = noiDuAn || !p.purpose ? dongDuAn(raw, dsDuAn, true, tab === "duan") : { dong: [], so: 0 };
   for (const d of da.dong) if (!nhom.duan.some((x) => x.href === d.href)) nhom.duan.push(d);
 
   // Số kết quả THẬT của mỗi mục — để xếp 2 mục không phải tab đang đứng

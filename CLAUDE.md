@@ -41,6 +41,10 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
       trang chủ, Mua bán, Cho thuê — trước khi báo xong gõ thử ô tìm cả ba nơi, so với trước khi sửa.
     - 02/11: anh mới nói việc trong ngày, chưa nói "làm", Điều phối đã giao phiên MÃ WEB sửa ô tìm + bộ lọc Dự án → **anh chưa nói "làm"
       thì không giao ai, không sửa gì; nắm đúng ý anh, nói ngắn, chờ lệnh.**
+    - 01/11 tối: anh báo lỗi HIỂN THỊ ở bộ lọc điện thoại (bàn phím che, mất nút Áp dụng) mà phiên bộ lọc đổi luôn CƠ CHẾ đã chốt
+      (bỏ hàng trường ngoài trang, chọn/Áp dụng không tự tìm, thêm nút Tìm kiếm, đổi chữ nút khu vực) → anh phải đòi trả lại nhiều lần.
+      **Cơ chế đã chốt, cấm đổi: dưới ô search có hàng trường; trường chọn một bấm là TỰ TÌM; trường chọn nhiều bấm Áp dụng là TỰ TÌM; ra
+      trang kết quả.** Anh báo lỗi gì chỉ sửa đúng lỗi đó; thử bằng cú chạm thật (không bấm bằng mã) rồi mới báo.
     - Ghi tệp ổ D: chèn nhầm chỗ (tệp xuống dòng kiểu Windows) · viết câu chưa kiểm vào trả lời Cowork rồi phải sửa → **ghi xong đọc lại đúng chỗ; câu nào cũng phải có căn cứ đã xem.**
 
 ---

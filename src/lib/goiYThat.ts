@@ -54,8 +54,15 @@ export function goiYThat(raw: string, mucDangDung: MucTim, tin: Listing[], dsDuA
   // ĐỊA DANH CHUẨN (chủ dự án 01/11/2026): phường / xã luôn kèm tỉnh — "tại Sơn Trà, Đà Nẵng", "tại Bắc Nha Trang, Khánh Hòa"
   const tinhCau = p.place?.province ?? p.places[0] ?? "";
   const noiDu = (noi: string) => (noi && tinhCau && normalizeVi(noi) !== normalizeVi(tinhCau) ? `${noi}, ${tinhCau}` : noi);
-  const cau = (m: MucTim, pn: number | null, noi: string, gia: string, coTT = true) =>
-    [DONG_TU[m], loai || "nhà đất", pn ? `${pn} phòng ngủ` : "", [dacDiem, giuLa ? chuaHieu : ""].filter(Boolean).join(", "), noi ? `tại ${coTT ? taiTT : ""}${noiDu(noi)}` : "", gia].filter(Boolean).join(" ");
+  // LỌC THÊM trong câu (hướng · pháp lý · nội thất — cauThanhBoLoc đã đọc thành trường, 01/11/2026): dòng gợi ý ghi đúng các trường
+  // còn giữ sau khi nới; trường đã bỏ (không có tin) thì không ghi
+  const dacDiemCua = (f: Filters) => dacDiem.split(", ").filter((x) => x
+    && (f.legal || !/^sổ (hồng|đỏ)$/.test(x)) && (f.furnishing || x !== "full nội thất"))
+    // pháp lý, nội thất khác sổ / full nội thất: ghi đúng mục bộ lọc ("nội thất cơ bản", "hợp đồng mua bán")
+    .concat(f.furnishing && f.furnishing !== "Đầy đủ nội thất" ? [f.furnishing.toLowerCase()] : [], f.legal && f.legal !== "Sổ đỏ / Sổ hồng" ? [f.legal.toLowerCase()] : [])
+    .join(", ");
+  const cau = (m: MucTim, f: Filters, noi: string, gia: string, coTT = true, loaiKhac = "") =>
+    [DONG_TU[m], loaiKhac || loai || "nhà đất", f.beds ? `${f.beds} phòng ngủ` : "", [dacDiemCua(f), f.direction ? `hướng ${f.direction.toLowerCase()}` : "", giuLa ? chuaHieu : ""].filter(Boolean).join(", "), noi ? `tại ${coTT ? taiTT : ""}${noiDu(noi)}` : "", gia].filter(Boolean).join(" ");
 
   for (const m of cacMuc) {
     const tatCa = tin.filter((l) => !l.banSao && (l.purpose ?? "ban") === (m === "thue" ? "thue" : "ban"));
@@ -72,14 +79,33 @@ export function goiYThat(raw: string, mucDangDung: MucTim, tin: Listing[], dsDuA
 
     // 1–2. Đúng câu; không có tin thì nới giá, rồi bỏ phòng ngủ
     const khongGia = { ...bl, priceMin: null, priceMax: null };
-    if (dem(bl).length) them(m, cau(m, bl.beds || null, noiGoc, giaChu));
+    // nới lần lượt: giá → phòng ngủ → các trường Lọc thêm
+    const boLocThem = { ...khongGia, beds: 0, direction: "", legal: "", furnishing: "" };
+    if (dem(bl).length) them(m, cau(m, bl, noiGoc, giaChu));
     else {
-      const coTin = dem(khongGia).length ? khongGia : bl.beds ? { ...khongGia, beds: 0 } : null;
+      // Lọc thêm bỏ TỪNG trường trước (trường nào không có tin thì bỏ trường đó), hết cách mới bỏ cả
+      // Thứ tự nới theo độ quan trọng với người mua: giá → hướng → pháp lý → nội thất (bỏ dần, GIỮ phòng ngủ) → phòng ngủ → bỏ hết
+      // (01/11/2026: gõ thêm "hướng đông nam" từng làm rơi mất "2 phòng ngủ" vì phòng ngủ bị bỏ trước)
+      const thang: Filters[] = [khongGia];
+      for (const k of ["direction", "legal", "furnishing"] as const) if (bl[k]) thang.push({ ...thang[thang.length - 1], [k]: "" });
+      thang.push({ ...thang[thang.length - 1], beds: 0 }, boLocThem);
+      const coTin = thang.find((x) => dem(x).length) ?? null;
       if (coTin) {
         const re = Math.min(...dem(coTin).map((l) => priceToTy(l.price) ?? Infinity));
-        const gia = (bl.priceMax != null || bl.priceMin != null) && Number.isFinite(re) ? mucGiaThat(re).chu : "";
-        them(m, cau(m, coTin.beds || null, noiGoc, gia));
+        // NỚI GIÁ CHỈ LÊN (01/11/2026: "dưới 3 tỷ" từng ra "dưới 2 tỷ"): mức nới thấp hơn mức khách gõ → giữ đúng mức khách gõ
+        const noi = Number.isFinite(re) ? mucGiaThat(re) : null;
+        const gia = bl.priceMax != null || bl.priceMin != null ? (noi && (bl.priceMax == null || noi.ty > bl.priceMax) ? noi.chu : giaChu) : "";
+        them(m, cau(m, coTin, noiGoc, gia));
       }
+    }
+
+    // 2b. CHƯA NÓI LOẠI HÌNH (gõ nơi chốn trơn: "Đà", "đà nẵng") → gợi ý theo LOẠI HÌNH đang có nhiều tin nhất ở đó, kiểu Google
+    // ("Bán căn hộ tại Đà Nẵng", "Bán nhà riêng tại Đà Nẵng"…) — không bày phường với "nhà đất" na ná nhau (chủ dự án 01/11/2026, ảnh)
+    if (!loai) {
+      const theoLoai = new Map<string, number>();
+      for (const l of dem(bl)) if (l.type) theoLoai.set(l.type, (theoLoai.get(l.type) ?? 0) + 1);
+      for (const [lh] of [...theoLoai].sort((a, b) => b[1] - a[1]).slice(0, 3)) them(m, cau(m, bl, noiGoc, giaChu, true, lh.toLowerCase()));
+      continue;
     }
 
     // 3. Phường đang có tin trong thành phố khách nói (hoặc thành phố chứa phường khách nói), rồi cả tỉnh
@@ -93,7 +119,7 @@ export function goiYThat(raw: string, mucDangDung: MucTim, tin: Listing[], dsDuA
         .filter((x) => x.n > 0 && normalizeVi(boCap(x.ph)) !== normalizeVi(noiGoc))
         .sort((a, b) => b.n - a.n)
         .slice(0, 3);
-      for (const x of theoPhuong) them(m, cau(m, bl.beds || null, boCap(x.ph), ""));
+      for (const x of theoPhuong) them(m, cau(m, boNoi, boCap(x.ph), ""));
     } else if (tinh && normalizeVi(tinh) === normalizeVi(noiGoc)) {
       // Gõ CẢ TỈNH ("căn hộ đà nẵng") → thêm các phường ĐANG CÓ NHIỀU TIN NHẤT của đúng loại đó (dữ liệu thật), kiểu Google
       // giữ ĐÚNG giá, phòng ngủ khách gõ (đếm theo bl); "trung tâm" là cả tỉnh — dòng phường không chêm chữ đó
@@ -102,10 +128,10 @@ export function goiYThat(raw: string, mucDangDung: MucTim, tin: Listing[], dsDuA
         const ph = boCap(l.location.split(",")[0]?.trim() ?? "");
         if (ph && normalizeVi(ph) !== normalizeVi(tinh) && !/\d/.test(ph)) theoPhuong.set(ph, (theoPhuong.get(ph) ?? 0) + 1);
       }
-      for (const [ph] of [...theoPhuong].sort((a, b) => b[1] - a[1]).slice(0, 3)) them(m, cau(m, bl.beds || null, ph, giaChu, false));
+      for (const [ph] of [...theoPhuong].sort((a, b) => b[1] - a[1]).slice(0, 3)) them(m, cau(m, bl, ph, giaChu, false));
     }
     if (tinh && normalizeVi(tinh) !== normalizeVi(noiGoc) && dem({ ...boNoi, locations: [{ province: tinh }] }).length) {
-      them(m, cau(m, bl.beds || null, tinh, ""));
+      them(m, cau(m, boNoi, tinh, ""));
     }
   }
   return ds.slice(0, 6);

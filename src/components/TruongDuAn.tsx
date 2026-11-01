@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Chip } from "@/components/FilterBar";
 import { projectCategories } from "@/lib/categories";
 import { TINH_TRANG_DU_AN } from "@/lib/truongDuAn";
-import { khopTen, normalizeVi } from "@/lib/filters";
+import { khopTen, normalizeVi, tenLoaiHinh } from "@/lib/filters";
+import { CAY_LOAI_DU_AN } from "@/lib/thuHepDuAn";
 import { napDsDuAn } from "@/lib/duAnTen";
 
 // ============================================================================
@@ -52,11 +53,13 @@ export function PanelLoaiDuAn({ value = [], onChange, dem }: { value?: string[];
 }
 
 /** co: tình trạng đang có trong dữ liệu theo các lựa chọn khác → chỉ hiện những tình trạng đó */
-export function PanelTinhTrang({ value = "", onChange, onApply, co }: { value?: string; onChange: (v: string) => void; onApply: () => void; co?: string[] }) {
+export function PanelTinhTrang({ value = "", onChange, co }: { value?: string; onChange: (v: string) => void; onApply: () => void; co?: string[] }) {
+  const ds = value.split("|").filter(Boolean);
   return (
     <div>
       <div className="flex flex-wrap gap-1.5">
-        {TINH_TRANG_DU_AN.filter((x) => !co || co.includes(x) || value === x).map((t) => <Chip key={t} active={value === t} onClick={() => { onChange(value === t ? "" : t); onApply(); }}>{t}</Chip>)}
+        {/* CHỌN NHIỀU tình trạng (chủ dự án 02/11/2026): bấm bật / tắt từng tình trạng, bấm Áp dụng mới tìm — lưu "A|B" */}
+        {TINH_TRANG_DU_AN.filter((x) => !co || co.includes(x) || ds.includes(x)).map((t) => <Chip key={t} active={ds.includes(t)} onClick={() => onChange((ds.includes(t) ? ds.filter((x) => x !== t) : [...ds, t]).join("|"))}>{t}</Chip>)}
       </div>
     </div>
   );
@@ -87,7 +90,7 @@ export function PanelChuDauTu({ value = "", ds, onChange, onApply, hienSan = fal
   const list = nq ? tatCa.filter((x) => khopTen(x, q)) : hienSan ? tatCa : [];
   return (
     <div>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm chủ đầu tư…" aria-label="Tìm chủ đầu tư"
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm chủ đầu tư…" aria-label="Tìm chủ đầu tư" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
         className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60" />
       <div className="mt-2 space-y-0.5">
         {nq && list.length === 0 && <p className="px-2 py-3 text-center text-sm text-cvr-faint">Không có chủ đầu tư khớp</p>}
@@ -98,6 +101,41 @@ export function PanelChuDauTu({ value = "", ds, onChange, onApply, hienSan = fal
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** LOẠI HÌNH DỰ ÁN THEO CÂY LOẠI HÌNH MUA BÁN, CHA – CON (chủ dự án 01/11/2026: dùng chính cây loại hình bất động sản đã cấu trúc —
+ *  lib/thuHepDuAn CAY_LOAI_DU_AN). Cùng cách chọn bảng Loại BĐS Mua bán: bấm nhóm = cả nhóm, bấm loại con = loại đó. Chỉ hiện loại CÓ
+ *  dự án thật (dem — theo các trường khác đã chọn), kèm số. value = f.types (cùng trường loại hình của bộ lọc chung). */
+export function PanelLoaiBdsDuAn({ value = [], onChange, dem }: { value?: string[]; onChange: (v: string[]) => void; dem: (o: string) => number }) {
+  const cay = CAY_LOAI_DU_AN.map((g) => ({ ...g, items: g.items.filter((o) => dem(o) > 0 || value.includes(o)) })).filter((g) => g.items.length > 0);
+  // tick loại nào GIỮ loại đó — bỏ quy tắc "tick đủ mọi loại = Tất cả": nơi chỉ có MỘT loại (Cẩm Lệ: chỉ Căn hộ) thì tick là bị tự bỏ
+  // tick, khách không chọn được (ảnh chủ dự án 01/11/2026)
+  const dat = (next: string[]) => onChange(next);
+  return (
+    <div className="mt-1 space-y-1.5 pr-1">
+      {cay.map((g) => {
+        const ca = g.items.every((o) => value.includes(o));
+        return (
+          <div key={g.label}>
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 pb-0.5 pt-1.5 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">
+              <input type="checkbox" checked={ca} onChange={() => dat(ca ? value.filter((x) => !g.items.includes(x)) : [...new Set([...value, ...g.items])])} className="h-4 w-4 shrink-0 accent-cvr-blue" />
+              <span className="truncate">{g.label}</span>
+            </label>
+            {g.items.map((o) => {
+              const on = value.includes(o);
+              return (
+                <label key={o} className="flex cursor-pointer items-center gap-2.5 rounded-lg py-1.5 pl-8 pr-2 text-sm text-cvr-ink/80 transition hover:bg-black/5">
+                  <input type="checkbox" checked={on} onChange={() => dat(on ? value.filter((x) => x !== o) : [...value, o])} className="h-4 w-4 shrink-0 accent-cvr-blue" />
+                  <span className="flex-1 truncate">{tenLoaiHinh(o)}</span>
+                  <span className="shrink-0 text-xs text-cvr-faint">{dem(o)}</span>
+                </label>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { goiKetQua } from "@/lib/ketQuaDau";
 import { emptyFilters, type Filters, type SortKey } from "@/lib/filters";
 import { soTheoLoai } from "@/lib/thuHepTin";
+import { cauSeoTheoMuc } from "@/lib/goiYTrangChu";
 import { locDanhSach, diemTuTin, MOI_TRANG_PC, PER_PAGE } from "@/lib/locDanhSach";
 
 // ============================================================================
@@ -57,7 +58,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
   // Chỉ đúng các tin được chỉ định (tin thuộc dự án, tin tương tự) → tin hết hạn cũng chỉ trong danh sách đó; trước 31/10/2026 chèn tin
   // hết hạn của CẢ WEB vào cuối nên 15 tin của dự án ra 4 trang
   const hetHanLoc = yc.chiId ? hetHan.filter((l) => yc.chiId!.includes(l.id)) : hetHan;
-  const kq = locDanhSach(tin, hetHanLoc, muc, boLoc, yc.sapXep ?? "moi", yc.trang ?? 1, yc.moiTrang === MOI_TRANG_PC ? MOI_TRANG_PC : PER_PAGE);
+  const kq = locDanhSach(tin, hetHanLoc, muc, boLoc, yc.sapXep ?? "moi", yc.trang ?? 1, yc.moiTrang === MOI_TRANG_PC ? MOI_TRANG_PC : PER_PAGE, tatCa);
 
   return NextResponse.json({
     // Cùng một cách gói với trang 1 máy chủ dựng sẵn (lib/ketQuaDau): tinhHieu — tỉnh máy hiểu từ câu gõ, để ghi đúng dòng
@@ -72,7 +73,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
       : {}),
     ...(yc.banDo ? { diem: kq.ketQua.filter((l) => !l.banSao).map(diemTuTin) } : {}),
     ...(yc.goiY
-      ? { goiY: tin.slice(0, TOI_DA_GOI_Y).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price })) }
+      ? { cauSeo: cauSeoTheoMuc(tatCa, muc), goiY: tin.slice(0, TOI_DA_GOI_Y).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price })) }
       : {}),
   });
 }

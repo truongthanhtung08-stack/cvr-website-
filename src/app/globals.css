@@ -630,6 +630,11 @@ body {
 /* BÀN PHÍM ẢO ĐANG MỞ (BanPhimAo.tsx) — ẩn thanh dính đáy để không nằm đè ô đang gõ; lớp phủ toàn
    màn hình đã co lại vừa phần trên bàn phím thì khung bên trong không được cao hơn nó. */
 html.ban-phim-mo .an-khi-go-phim { display: none !important; }
+/* BẢNG CHỌN (sheet) ĐANG GÕ Ô TÌM → ẩn hàng nút dính đáy, KHÔNG phụ thuộc đo bàn phím (01/11/2026, ảnh chủ dự án: Samsung không báo
+   bàn phím nên hàng "Đặt lại · Áp dụng" đè kín danh sách quận/huyện, chủ đầu tư…) — mọi bảng của bộ lọc con */
+/* Hàng Đặt lại · Áp dụng trong BẢNG CHỌN chỉ ẩn khi khách đang gõ Ô CHỮ TRONG BẢNG (tick ô chọn / kéo thanh giá không tính — 01/11/2026 tick Nhà riêng làm mất nút Áp dụng) — ô gõ bên ngoài (màn gõ) còn con trỏ không được làm mất nút (01/11/2026) */
+html.ban-phim-mo .cvr-sheet .an-khi-go-phim { display: block !important; }
+html .cvr-sheet[data-dang-go] .an-khi-go-phim, html .cvr-sheet[data-tim-noi] .an-khi-go-phim, html .cvr-sheet:has(:is(input:not([type]), input[type=text], input[type=search], input[type=number], input[type=tel], textarea):focus) .an-khi-go-phim { display: none !important; }
 .vua-ban-phim > * { max-height: 100% !important; }
 
 /* Cuộn ngang mượt kiểu iOS cho các slider/track ảnh */

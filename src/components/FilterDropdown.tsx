@@ -71,22 +71,14 @@ export default function FilterDropdown({
   // ĐANG GÕ trong bảng (ô tìm tỉnh, dự án, giá…) trên điện thoại → bảng thành TOÀN MÀN HÌNH, ô gõ
   // lên trên cùng: bàn phím không đè lên bảng (chủ dự án 15/10/2026 — chuẩn chung mọi ô tìm).
   const [dangGo, setDangGo] = useState(false);
-  // BẢNG CÓ Ô GÕ (Toàn quốc, Dự án, Chủ đầu tư…) → mở TOÀN MÀN HÌNH NGAY TỪ ĐẦU (chủ dự án 01/11/2026: "bấm vào chọn, kể cả ô
-  // search… rất khó chịu khi nó bị nhảy"): trước đây mở nửa màn rồi chạm ô gõ mới bung toàn màn → bảng nhảy. Nay mở sẵn đúng cỡ
-  // lúc gõ (ô gõ trên cùng, bàn phím không đè — giữ chuẩn 15/10), chạm ô gõ không đổi gì.
-  const [coO, setCoO] = useState(false);
   // Đóng bảng khi ô gõ còn đang giữ con trỏ thì onBlur không kịp chạy → trả về dạng bảng trượt.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!open) { setDangGo(false); setCoO(false); }
+    if (!open) setDangGo(false);
   }, [open]);
-  // đo TRƯỚC khi vẽ (useLayoutEffect) — bảng hiện ra đúng cỡ ngay, không lóe nửa màn rồi mới bung
-  useLayoutEffect(() => {
-    if (!open || !sheet) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCoO(!!panelRef.current?.querySelector("input:not([type]), input[type=text], input[type=search]"));
-  }, [open, sheet]);
-  const toanMan = dangGo || coO;
+  // TRẢ VỀ BẢN GỐC (chủ dự án 02/11/2026: "phủ đầy màn hình chọn một cách rất xấu"): bảng trượt từ đáy như thường, CHỈ khi khách gõ vào
+  // ô tìm trong bảng mới bung toàn màn hình (dangGo). Bỏ kiểu mở toàn màn hình ngay từ đầu cho bảng có ô gõ (coO, 01/11/2026).
+  const toanMan = dangGo;
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
     const sync = () => setSheet(mq.matches);
@@ -116,12 +108,18 @@ export default function FilterDropdown({
     return () => { cancelAnimationFrame(id); cancelAnimationFrame(id2); };
   }, [open, sheet, toanMan]);
 
-  // Khoá cuộn nền khi sheet đang mở (nếu không, cuộn trong sheet sẽ kéo cả trang)
+  // GIỮ TRANG ĐỨNG YÊN khi bảng đang mở — KHÔNG tắt cuộn của trang (chủ dự án 02/11/2026: "tất cả các trường chọn đều bị xê dịch màn
+  // hình"): tắt cuộn trang (body overflow hidden) làm thanh địa chỉ trình duyệt điện thoại hiện / ẩn → chiều cao màn hình đổi → cả trang
+  // xê dịch lúc mở và lúc đóng bảng. Thay bằng: chặn kéo ở ngoài vùng cuộn của bảng (và trong vùng đó khi không có gì để cuộn), trang
+  // phía sau không bị kéo theo mà màn hình không đổi cỡ.
   useEffect(() => {
     if (!open || !sheet) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    const chan = (e: TouchEvent) => {
+      const k = (e.target as Element | null)?.closest?.("[data-cuon-bang]") as HTMLElement | null;
+      if (!k || k.scrollHeight <= k.clientHeight) e.preventDefault();
+    };
+    document.addEventListener("touchmove", chan, { passive: false });
+    return () => document.removeEventListener("touchmove", chan);
   }, [open, sheet]);
 
   // Mở XUỐNG nếu đủ chỗ phía dưới, ngược lại mở LÊN — linh hoạt theo không gian trang.
@@ -250,7 +248,7 @@ export default function FilterDropdown({
                 `h-8 w-auto shrink-0 gap-1 whitespace-nowrap rounded-full px-3 text-[13px] sm:h-10 sm:w-full sm:gap-2 sm:rounded-none sm:px-3.5 sm:text-sm ${
                   active
                     ? "border-cvr-blue bg-cvr-blue/10 font-medium text-cvr-blue-ink sm:border-cvr-blue/60 sm:bg-white"
-                    : "border-black/10 bg-cvr-surface text-cvr-ink/80 hover:border-cvr-ink/35 hover:text-cvr-ink sm:border-cvr-line sm:bg-white sm:text-cvr-body"
+                    : "border-black/10 bg-white text-cvr-ink/80 hover:border-cvr-ink/35 hover:text-cvr-ink sm:border-cvr-line sm:text-cvr-body"
                 }`
         }`}
       >
@@ -289,6 +287,8 @@ export default function FilterDropdown({
                   if (o instanceof HTMLInputElement && /^(text|search|number|tel|email|url)?$/.test(o.type)) setDangGo(true);
                 }}
                 onBlur={(e) => { if (!(e.relatedTarget instanceof HTMLInputElement)) setDangGo(false); }}
+                // ĐANG GÕ Ô TÌM TRONG BẢNG → dấu cho CSS ẩn hàng nút dính đáy (globals.css) — không phụ thuộc đo bàn phím (01/11/2026)
+                data-dang-go={dangGo ? "1" : undefined}
                 className={`cvr-sheet absolute inset-x-0 flex flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_40px_rgba(0,0,0,0.22)] ${toanMan ? "top-0 h-[100dvh] pt-[env(safe-area-inset-top)]" : "bottom-0 max-h-[86dvh] rounded-t-2xl"}`}
               >
                 {/* Thanh kéo + tiêu đề — đúng cấu trúc sheet của iOS */}
@@ -309,7 +309,7 @@ export default function FilterDropdown({
                   </div>
                 </div>
                 {/* Nội dung bộ lọc — cuộn riêng trong sheet */}
-                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4">
+                <div data-cuon-bang className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4">
                   {children({ close: () => setOpen(false) })}
                 </div>
               </div>

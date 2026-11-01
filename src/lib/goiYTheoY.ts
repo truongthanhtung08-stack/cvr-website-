@@ -22,8 +22,17 @@ export type DongGoiY = { nhan: string; muc: MucGoiY; href: string };
 const DONG_TU: Record<MucTim, string> = { ban: "Bán", thue: "Cho thuê" };
 
 /** Đường dẫn của một dòng gợi ý: trang danh mục gần nhất của đúng mục + giữ nguyên câu để lọc chi tiết */
+/** Trang danh mục (pSEO) cho một câu — CHỈ khi trang đó chứa trọn ý câu; câu chi tiết hơn (phường/quận, phòng ngủ, giá, lọc thêm,
+ *  chữ lạ) → null, nơi gọi về trang Mua bán / Cho thuê tổng đọc trọn câu. Một luật cho gợi ý lẫn nút Tìm (01/11/2026). */
+export function duongDanCau(muc: MucTim, nhan: string): string | null {
+  const p = parseQuery(nhan);
+  const chiTiet = !!p.place?.ward || !!p.place?.district || !!p.beds || p.priceMaxTy != null || p.priceMinTy != null
+    || /\bhuong\b|\bso (do|hong)\b|\bnoi that\b|\bm2\b/.test(normalizeVi(nhan)) || !!chuChuaHieu(nhan);
+  return chiTiet ? null : duongDanGanNhat(muc, nhan) ?? null;
+}
+
 export function hrefGoiY(muc: MucTim, nhan: string): string {
-  const goc = duongDanGanNhat(muc, nhan)?.split("?")[0] ?? (muc === "thue" ? "/cho-thue" : "/mua-ban");
+  const goc = duongDanCau(muc, nhan)?.split("?")[0] ?? (muc === "thue" ? "/cho-thue" : "/mua-ban");
   return `${goc}?q=${encodeURIComponent(nhan)}`;
 }
 

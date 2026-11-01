@@ -127,7 +127,7 @@ export default function ListingBrowser({
   const itemsHetHan = hetHanTuMayChu ?? hetHanNap;
 
   const boLocTu = (params: URLSearchParams): Filters =>
-    boLocKhoiDau(filtersFromParams(params), { initialTypes, initialProvince, initialFilters });
+    boLocKhoiDau(filtersFromParams(params), { initialTypes, initialProvince, initialFilters, muc: purpose });
   const sapXepTu = (params: URLSearchParams): SortKey => {
     const sx = params.get("sapxep");
     return sx === "gia-tang" || sx === "gia-giam" || sx === "dt-giam" || sx === "gia-m2" ? sx : relevance ? "lien-quan" : "moi";
@@ -232,6 +232,8 @@ export default function ListingBrowser({
   const [mayChu, setMayChu] = useState<(KetQuaLoc & { diem?: DiemBanDo[]; matSo?: { loai: [string, number][] } }) | null>(ketQuaDau ?? null);
   const daCoGoiY = useRef(false);
   const [goiY, setGoiY] = useState<TinGoiY[]>([]);
+  // câu SEO, pSEO của mục (tên các trang pSEO đang có tin) — chữ chạy trong ô tìm theo đúng trang đang xem (01/11/2026)
+  const [cauSeo, setCauSeo] = useState<{ nhan: string; href: string }[]>([]);
   // SỬA CHÍNH TẢ KIỂU GOOGLE: gõ sai một chữ cái ("phog") → tìm theo câu đã sửa và báo "Đang hiển thị kết quả cho …";
   // khách bấm "Tìm kiếm thay thế cho …" (?nguyenvan=1) thì tìm đúng nguyên chữ đã gõ.
   const nguyenVan = params.get("nguyenvan") === "1";
@@ -262,6 +264,7 @@ export default function ListingBrowser({
         if (!d) return;
         setMayChu(d);
         if (d.goiY) { setGoiY(d.goiY); daCoGoiY.current = true; }
+        if (d.cauSeo) setCauSeo(d.cauSeo);
       })
       .catch(() => { if (!huy) { dangNap.current = false; xongTim(); } });
     return () => { huy = true; };
@@ -332,6 +335,7 @@ export default function ListingBrowser({
           mapActive={mapMode}
           // Câu gợi ý chạy trong ô tìm bám theo TIN MỚI + TIN HOT của chính trang này
           hintItems={nguon ? goiY : items}
+          cauSeo={cauSeo}
           soKetQua={mayChu?.khop}
           // Đủ toàn quốc khi khách chưa chọn gì khác; chỉ thu gọn theo các trường KHÁC khách đã chọn (chủ dự án 01/11/2026)
           // Toàn quốc LUÔN đủ tỉnh thành: chọn nơi chưa có tin thì kết quả ra gợi ý tương tự (chủ dự án 01/11/2026)

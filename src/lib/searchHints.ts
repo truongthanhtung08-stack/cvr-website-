@@ -190,3 +190,25 @@ export function projectHints(projects: Project[]): string[] {
 
   return hints.length > 0 ? hints : HINT_DU_AN;
 }
+
+// CHỮ CHẠY THEO TỪ KHOÁ SEO CỦA TỪNG TRANG (chủ dự án 01/11/2026: "kiểu chạy gợi ý trên ô search chuẩn SEO theo mỗi trang"). Trang đã có
+// lọc sẵn (trang theo loại hình, khu vực — pSEO) → câu chạy là từ khoá của CHÍNH trang đó rồi đi sâu theo tin thật trong phạm vi trang:
+// "Bán căn hộ Đà Nẵng" → "Bán căn hộ Sơn Trà, Đà Nẵng" (phường nhiều tin nhất) → "Bán căn hộ Đà Nẵng 2 - 5 tỷ" (tầm giá nhiều tin nhất).
+// Không lạc sang nơi khác, loại khác (luật 17/10/2026).
+export function pageHints(items: TinGoiY[], purpose: "ban" | "thue", loai: string, tinh: string, khop: (l: TinGoiY) => boolean): string[] {
+  const dongTu = purpose === "thue" ? "Cho thuê" : "Bán";
+  const goc = [dongTu, loai || "nhà đất", tinh].filter(Boolean).join(" ");
+  const ds = items.filter((l) => (l.purpose ?? "ban") === purpose && khop(l));
+  const ra = [goc];
+  if (tinh) {
+    const theoPhuong = new Map<string, number>();
+    for (const l of ds) {
+      const ph = l.location.split(",")[0]?.trim().replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, "") ?? "";
+      if (ph && ph !== tinh && !/\d/.test(ph)) theoPhuong.set(ph, (theoPhuong.get(ph) ?? 0) + 1);
+    }
+    for (const [ph] of [...theoPhuong].sort((a, b) => b[1] - a[1]).slice(0, 3)) ra.push(`${dongTu} ${loai || "nhà đất"} ${ph}, ${tinh}`);
+  }
+  const tam = tamGiaPhoBien(ds, purpose);
+  if (tam) ra.push(`${goc} ${tam}`);
+  return gomTrung(ra);
+}

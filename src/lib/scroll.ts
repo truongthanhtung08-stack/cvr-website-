@@ -9,8 +9,16 @@ export function cuonToiKetQua() {
   // cuộn sao cho ô tìm vừa bấm nằm dưới thanh đầu trang, chừa khoảng thở (khung bộ lọc không dính sát menu).
   const o = Array.from(document.querySelectorAll<HTMLInputElement>('input[role="combobox"]')).find((x) => x.offsetParent);
   if (o) {
-    const dau = document.querySelector("header")?.getBoundingClientRect().height ?? 64;
-    const top = o.getBoundingClientRect().top + window.scrollY - dau - 32;
+    // TRỪ ĐỦ MỌI THANH DÍNH ĐẦU TRANG (thanh logo + thanh "‹ Mua bán" trên điện thoại) — trước chỉ trừ thanh logo nên ô tìm bị cuộn
+    // chui nửa dưới thanh "‹ Mua bán" (ảnh chủ dự án 01/11/2026: "màn hình xê dịch")
+    const dau = Math.max(
+      document.querySelector("header")?.getBoundingClientRect().bottom ?? 64,
+      document.querySelector(".thanh-quay-lai")?.getBoundingClientRect().bottom ?? 0,
+    );
+    // Ô tìm đang THẤY TRỌN dưới các thanh dính → ĐỨNG YÊN, không cuộn (chủ dự án 02/11/2026: "lỗi xê dịch màn hình vẫn còn")
+    const r = o.getBoundingClientRect();
+    if (r.top >= dau && r.bottom <= window.innerHeight) return;
+    const top = r.top + window.scrollY - dau - 12;
     window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
     return;
   }

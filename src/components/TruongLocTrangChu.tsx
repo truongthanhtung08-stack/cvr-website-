@@ -1,10 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
 import { LocationPanel, ProjectPanel, RangePanel, Chip, SwitchRow, NutXem, DaChon, gomLoai, nhanNoi } from "@/components/FilterBar";
-import { PanelLoaiDuAn, PanelLocThemDuAn, PanelChuDauTu, tomTatLoaiDuAn } from "@/components/TruongDuAn";
-import { thuHepDuAn, type DuAnLoc } from "@/lib/thuHepDuAn";
+import { PanelLoaiBdsDuAn, PanelLocThemDuAn, PanelChuDauTu } from "@/components/TruongDuAn";
+import { CAY_LOAI_DU_AN, dsTinhTrang, thuHepDuAn, type DuAnLoc } from "@/lib/thuHepDuAn";
 import { coTruongKhacLoai, demLoaiTu } from "@/lib/thuHepTin";
 import {
   typeGroupsFor, priceRangesFor, areaRangesFor, bedroomOptions, priceRangeText, areaRangeText,
@@ -49,8 +50,9 @@ export default function TruongLocTrangChu({
   const mb: "ban" | "thue" = muc === "thue" ? "thue" : "ban";
   // THU HẸP HAI CHIỀU = gốc chung với các trang con (01/11/2026): chưa chọn trường khác thì danh sách để đủ
   const demLoai = soLoai && coTruongKhacLoai(f) ? (loai: string) => demLoaiTu(soLoai, loai) : undefined;
-  const locDa = duAn ? thuHepDuAn(duAn, f) : null;
-  const dsDuAnChon = locDa?.tapDuAn.map((p) => ({ slug: p.slug, name: p.ten, location: p.diaChiTim.split(" · ")[0], developer: p.chuDauTu }));
+  // lọc dự án chỉ khi lựa chọn đổi (useMemo — mở màn tìm, gõ chữ không lọc lại, 01/11/2026)
+  const locDa = useMemo(() => (duAn ? thuHepDuAn(duAn, f) : null), [duAn, f]);
+  const dsDuAnChon = useMemo(() => locDa?.tapDuAn.map((p) => ({ slug: p.slug, name: p.ten, location: p.diaChiTim.split(" · ")[0], developer: p.chuDauTu })), [locDa]);
   const set = (patch: Partial<Filters>) => onChange({ ...f, ...patch });
   const xong = (close: () => void) => { close(); onXong?.(); };
   const loiRa = (close: () => void, datLai: () => void) => <NutXem nhan={nhanXem} onClick={() => xong(close)} onReset={datLai} />;
@@ -76,17 +78,18 @@ export default function TruongLocTrangChu({
         {hang(<>
           {khuVuc}
           {/* Trường riêng mục Dự án theo chuẩn tra cứu dự án (chủ dự án 01/11/2026) — bảng chọn dùng chung với trang /du-an */}
-          {hien("lda") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="lda" label="Loại hình" summary={tomTatLoaiDuAn(f.loaiDuAn)} active={!!f.loaiDuAn?.length} panelClassName="w-72" className={cls}>
-            {({ close }) => <><DaChon muc={(f.loaiDuAn ?? []).map((s) => ({ nhan: tomTatLoaiDuAn([s]), bo: () => set({ loaiDuAn: (f.loaiDuAn ?? []).filter((x) => x !== s) }) }))} onBoHet={() => set({ loaiDuAn: [] })} macDinh="Tất cả loại hình" /><PanelLoaiDuAn value={f.loaiDuAn} onChange={(loaiDuAn) => set({ loaiDuAn })} onApply={() => xong(close)} dem={locDa?.coTruongKhac("loai") ? locDa.demLoai : undefined} />{loiRa(close, () => set({ loaiDuAn: [] }))}</>}
+          {hien("lda") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="lda" label="Loại hình" summary={(() => { const g = gomLoai(f.types, CAY_LOAI_DU_AN); return g.length === 1 ? g[0].nhan : g.length > 1 ? `${g.length} loại hình` : ""; })()} active={f.types.length > 0} panelClassName="w-72" className={cls}>
+            {/* LOẠI HÌNH DỰ ÁN = CÂY LOẠI HÌNH BẤT ĐỘNG SẢN cha – con — cùng trang Dự án (01/11/2026) */}
+            {({ close }) => <><DaChon muc={gomLoai(f.types, CAY_LOAI_DU_AN).map((g) => ({ nhan: g.nhan, bo: () => set({ types: f.types.filter((x) => !g.cac.includes(x)) }) }))} macDinh="Tất cả loại hình" />{locDa && <PanelLoaiBdsDuAn value={f.types} onChange={(types) => set({ types, loaiDuAn: [] })} dem={locDa.demLoaiBds} />}{loiRa(close, () => set({ types: [], loaiDuAn: [] }))}</>}
           </FilterDropdown>}
           {hien("cdt") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="cdt" label="Chủ đầu tư" summary={f.chuDauTu ?? ""} active={!!f.chuDauTu} panelClassName="w-80" className={cls}>
-            {({ close }) => <><DaChon muc={f.chuDauTu ? [{ nhan: f.chuDauTu, bo: () => set({ chuDauTu: "" }) }] : []} onBoHet={() => set({ chuDauTu: "" })} /><PanelChuDauTu ds={locDa?.dsChuDauTu} hienSan={!!locDa?.coTruongKhac("cdt")} value={f.chuDauTu} onChange={(chuDauTu) => set({ chuDauTu })} onApply={() => xong(close)} />{loiRa(close, () => set({ chuDauTu: "" }))}</>}
+            {({ close }) => <><DaChon muc={f.chuDauTu ? [{ nhan: f.chuDauTu, bo: () => set({ chuDauTu: "" }) }] : []} onBoHet={() => set({ chuDauTu: "" })} /><PanelChuDauTu ds={locDa?.dsChuDauTu} hienSan={!!locDa?.coTruongKhac("cdt")} value={f.chuDauTu} onChange={(chuDauTu) => set({ chuDauTu })} onApply={() => xong(close)} /></>}
           </FilterDropdown>}
           {hien("da") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="da" label="Dự án" summary={f.project} active={!!f.project} panelClassName="w-72" className={cls}>
-            {({ close }) => <><DaChon muc={f.project ? [{ nhan: f.project, bo: () => set({ project: "" }) }] : []} onBoHet={() => set({ project: "" })} /><ProjectPanel ds={dsDuAnChon} locations={f.locations} project={f.project} hienSan={!!locDa?.coTruongKhac("da")} onPick={(name) => { set({ project: f.project === name ? "" : name }); xong(close); }} />{loiRa(close, () => set({ project: "" }))}</>}
+            {({ close }) => <><DaChon muc={f.project ? [{ nhan: f.project, bo: () => set({ project: "" }) }] : []} onBoHet={() => set({ project: "" })} /><ProjectPanel ds={dsDuAnChon} locations={f.locations} project={f.project} hienSan={!!locDa?.coTruongKhac("da")} onPick={(name) => { set({ project: f.project === name ? "" : name }); xong(close); }} /></>}
           </FilterDropdown>}
-          {hien("them") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="them" label="Lọc thêm" summary={f.tinhTrang ? "Lọc thêm (1)" : ""} active={!!f.tinhTrang} panelClassName="w-80" className={cls}>
-            {({ close }) => <><DaChon muc={f.tinhTrang ? [{ nhan: f.tinhTrang, bo: () => set({ tinhTrang: "" }) }] : []} onBoHet={() => set({ tinhTrang: "" })} /><PanelLocThemDuAn tinhTrang={f.tinhTrang} onChange={(tinhTrang) => set({ tinhTrang })} onApply={() => xong(close)} co={locDa?.coTruongKhac("tt") ? locDa.tinhTrangCo : undefined} />{loiRa(close, () => set({ tinhTrang: "" }))}</>}
+          {hien("them") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="them" label="Lọc thêm" summary={f.tinhTrang ? `Lọc thêm (${dsTinhTrang(f.tinhTrang).length})` : ""} active={!!f.tinhTrang} panelClassName="w-80" className={cls}>
+            {({ close }) => <><DaChon muc={dsTinhTrang(f.tinhTrang).map((t) => ({ nhan: t, bo: () => set({ tinhTrang: dsTinhTrang(f.tinhTrang).filter((x) => x !== t).join("|") }) }))} onBoHet={() => set({ tinhTrang: "" })} /><PanelLocThemDuAn tinhTrang={f.tinhTrang} onChange={(tinhTrang) => set({ tinhTrang })} onApply={() => xong(close)} co={locDa?.coTruongKhac("tt") ? locDa.tinhTrangCo : undefined} />{loiRa(close, () => set({ tinhTrang: "" }))}</>}
           </FilterDropdown>}
         </>)}
       </FilterDropdownGroup>
@@ -138,7 +141,7 @@ export default function TruongLocTrangChu({
             <DaChon muc={f.priceMin != null || f.priceMax != null ? [{ nhan: priceRangeText(f.priceMin, f.priceMax), bo: () => set({ priceMin: null, priceMax: null }) }] : []} onBoHet={() => set({ priceMin: null, priceMax: null })} />
             <RangePanel key={`${f.priceMin}-${f.priceMax}`} unit="tỷ" step={0.5} sliderMax={50} min={f.priceMin} max={f.priceMax} presets={priceRangesFor(mb)}
               onPick={(min, max) => set({ priceMin: min, priceMax: max })} onReset={() => set({ priceMin: null, priceMax: null })} onApply={() => xong(close)} />
-            {loiRa(close, () => set({ priceMin: null, priceMax: null }))}
+            {/* trường chọn một: không nút Áp dụng — bấm là tìm */}
           </>)}
         </FilterDropdown>}
         {hien("dt") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="dt" label="Diện tích" summary={areaRangeText(f.areaMin, f.areaMax)} active={f.areaMin != null || f.areaMax != null} panelClassName="w-80" className={cls}>
@@ -146,7 +149,7 @@ export default function TruongLocTrangChu({
             <DaChon muc={f.areaMin != null || f.areaMax != null ? [{ nhan: areaRangeText(f.areaMin, f.areaMax), bo: () => set({ areaMin: null, areaMax: null }) }] : []} onBoHet={() => set({ areaMin: null, areaMax: null })} />
             <RangePanel key={`${f.areaMin}-${f.areaMax}`} unit="m²" step={10} sliderMax={mb === "thue" ? 5000 : 500} min={f.areaMin} max={f.areaMax} presets={areaRangesFor(mb, f.types)}
               onPick={(min, max) => set({ areaMin: min, areaMax: max })} onReset={() => set({ areaMin: null, areaMax: null })} onApply={() => xong(close)} />
-            {loiRa(close, () => set({ areaMin: null, areaMax: null }))}
+            {/* trường chọn một: không nút Áp dụng — bấm là tìm */}
           </>)}
         </FilterDropdown>}
         {/* LỌC THÊM — đúng chuẩn bộ lọc trang /mua-ban (FilterBar): phòng ngủ · hướng + pháp lý (mua bán) /

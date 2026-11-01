@@ -18,7 +18,7 @@ export function locTraCuu(ds: DongTraCuu[], q: string, tinh: string, loai: strin
   return ds.filter((d) => {
     if (tinh !== tatCa && d.tinh !== tinh) return false;
     if (loai !== tatCa && nhomLoai(d.loaiHinh) !== loai) return false;
-    if (tinhTrang !== tatCa && d.tinhTrang !== tinhTrang) return false;
+    if (tinhTrang !== tatCa && !tinhTrang.split("|").includes(d.tinhTrang)) return false; // chọn nhiều tình trạng (02/11/2026)
     if (!tu.length) return true;
     const chu = normalizeVi(`${d.ten} ${d.chuDauTu} ${d.loaiHinh} ${d.diaChi} ${d.diaChiCu}`);
     return tu.every((t) => chu.includes(t));

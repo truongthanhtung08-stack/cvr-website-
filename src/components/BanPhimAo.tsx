@@ -120,12 +120,19 @@ export default function BanPhimAo() {
       if (canCuon && !dangNhin(el, giaDinh)) {
         const r = el.getBoundingClientRect();
         // ô nằm trong khung cuộn riêng (không phải cả trang) → để trình duyệt cuộn khung đó
-        let khung = false;
+        let khung: HTMLElement | null = null;
         for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
           const o = getComputedStyle(p).overflowY;
-          if ((o === "auto" || o === "scroll") && p.scrollHeight > p.clientHeight) { khung = true; break; }
+          if ((o === "auto" || o === "scroll") && p.scrollHeight > p.clientHeight) { khung = p; break; }
         }
-        if (phu || khung) el.scrollIntoView({ block: giaDinh || r.height > vvCao() * 0.6 ? "start" : "center", behavior: "smooth" });
+        // CHỈ CUỘN KHUNG CHỨA Ô, KHÔNG BAO GIỜ KÉO CẢ TRANG (chủ dự án 02/11/2026: "rất nhiều nơi màn hình vẫn xê dịch khi mở trường lên
+        // chọn"): scrollIntoView trên điện thoại kéo luôn màn hình phía sau bảng chọn / màn tìm đi theo. Ô trong bảng (lớp phủ cố định)
+        // mà không có khung cuộn → lớp phủ đã co vừa phần trên bàn phím, không cuộn gì.
+        if (khung) {
+          const k = khung.getBoundingClientRect();
+          const dich = giaDinh || r.height > vvCao() * 0.6 ? r.top - k.top - 8 : r.top - k.top - (k.height - r.height) / 2;
+          khung.scrollBy({ top: dich, behavior: "smooth" });
+        } else if (phu) { /* lớp phủ cố định: không kéo trang phía sau */ }
         else {
           // Cuộn TỰ TÍNH theo phần thật sự nhìn thấy (dưới mọi thanh dính, trên bàn phím) — scrollIntoView của trình
           // duyệt chỉ biết scroll-padding nên đặt ô xuống dưới thanh bước

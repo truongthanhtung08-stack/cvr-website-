@@ -229,6 +229,54 @@ const NHOM_NOI_THAT: Record<string, RegExp> = {
 };
 const khopNhom = (giaTri: string | undefined, re: RegExp | undefined) => !!giaTri && !!re && re.test(giaTri);
 
+// ── VÒNG 2: ĐỌC NỘI DUNG TIN khi ô dữ liệu để trống (01/11/2026) ──
+type CoNoiDung = { title: string; desc?: string; searchText?: string };
+/** Nội dung khách viết: tiêu đề + mô tả (+ các ô ghi tự do đã gộp) */
+const noiDungTin = (l: CoNoiDung) => `${l.title} ${l.desc ?? ""} ${l.searchText ?? ""}`;
+/** "2PN", "2 phòng ngủ", "3 pn" trong nội dung → số phòng ngủ (0 = không ghi) */
+function bedsTuNoiDung(l: CoNoiDung): number {
+  const m = normalizeVi(noiDungTin(l)).match(/(\d{1,2})\s*(pn|phong ngu)\b/);
+  return m ? Number(m[1]) : 0;
+}
+/** "hướng Đông" trong nội dung — đúng hướng, không lẫn "hướng Đông Nam" khi chọn "Đông" */
+function huongTuNoiDung(l: CoNoiDung, huong: string): boolean {
+  const h = normalizeVi(huong);
+  const nd = ` ${normalizeVi(noiDungTin(l)).replace(/[^a-z0-9]+/g, " ")} `;
+  const i = nd.indexOf(` huong ${h} `);
+  if (i < 0) return false;
+  // hướng một chữ (đông/tây/nam/bắc) mà theo sau là nam/bắc → là hướng ghép, không phải hướng đã chọn
+  return h.includes(" ") || !/^(nam|bac) /.test(nd.slice(i + ` huong ${h} `.length));
+}
+/** Nội thất đọc trong BÀI — chặt hơn ô nội thất (bài hay viết "cao cấp" cho cả căn hộ, không phải nói nội thất) */
+const NOI_THAT_TRONG_BAI: Record<string, RegExp> = {
+  "Đầy đủ nội thất": /(full|đầy đủ|đủ)\s*nội thất|nội thất\s*(đầy đủ|cao cấp|full)/i,
+  "Nội thất cơ bản": /nội thất\s*cơ bản/i,
+  "Nội thất trống": /nhà trống|nội thất trống|bàn giao thô/i,
+};
+/** Các ô Lọc thêm còn trống → điền bằng điều đọc được trong nội dung (cùng luật vòng 2). Dùng khi gửi bản tin RÚT GỌN không kèm nội
+ *  dung (bộ lọc tổng trang chủ — goiYTrangChu.tinDem) để trang chủ đếm đúng như trang con. Ô đã ghi giữ nguyên. */
+export function oLocThemTuNoiDung(l: CoNoiDung & { beds?: number; huong?: string; phapLy?: string; noiThat?: string }) {
+  const nd = noiDungTin(l);
+  return {
+    beds: l.beds || bedsTuNoiDung(l) || undefined,
+    huong: l.huong || [...directionOptions].sort((a, b) => b.length - a.length).find((h) => huongTuNoiDung(l, h)),
+    phapLy: l.phapLy || legalOptions.find((o) => NHOM_PHAP_LY[o]?.test(nd)),
+    noiThat: l.noiThat || furnishingOptions.find((o) => NOI_THAT_TRONG_BAI[o]?.test(nd)),
+  };
+}
+// ĐỌC NỘI DUNG MỘT LẦN MỖI TIN (chủ dự án 01/11/2026: "logic này tốn máy, chậm web"): nhớ kết quả theo đúng đối tượng tin (bộ nhớ đệm
+// tin ở máy chủ giữ cùng đối tượng) — lọc, đếm, thu hẹp sau đó chỉ so ô, nhanh như vòng 1. Tin đổi thật → đối tượng mới → đọc lại.
+const ndNho = new WeakMap<object, ReturnType<typeof oLocThemTuNoiDung>>();
+function ndCua(l: CoNoiDung & { beds?: number; huong?: string; phapLy?: string; noiThat?: string }) {
+  let r = ndNho.get(l);
+  if (!r) { r = oLocThemTuNoiDung({ title: l.title, desc: l.desc, searchText: l.searchText }); ndNho.set(l, r); }
+  return r;
+}
+/** Tin khớp bộ lọc NHỜ ĐỌC NỘI DUNG (ô dữ liệu trống) — xếp sau tin khớp đúng ô (smartFilter) */
+export function quaNoiDung(l: CoNoiDung & { beds?: number; huong?: string; phapLy?: string; noiThat?: string }, f: Filters): boolean {
+  return (!!f.beds && !l.beds) || (!!f.direction && !l.huong) || (!!f.legal && !l.phapLy) || (!!f.furnishing && !l.noiThat);
+}
+
 export function listingFurnishing(id: string): string {
   const idx = parseInt(id, 10) || 1;
   return furnishingOptions[(idx + 1) % furnishingOptions.length];
@@ -536,13 +584,15 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
     if (f.areaMin != null && (m2 == null || m2 < f.areaMin)) return false;
     if (f.areaMax != null && (m2 == null || m2 > f.areaMax)) return false;
 
+    // VÒNG 1 Ô DỮ LIỆU → VÒNG 2 NỘI DUNG (chủ dự án 01/11/2026: "nhiều tin khách đăng không ghi vào trường mà ghi hết vào nội dung"):
+    // ô ĐỂ TRỐNG thì đọc nội dung tin; ô CÓ GHI mà khác thì loại (khác thật). Tin khớp qua nội dung xếp sau (quaNoiDung, smartFilter).
     if (f.beds) {
-      const b = item.beds ?? 0;
+      const b = item.beds || ndCua(item).beds || 0;
       if (f.beds >= 5 ? b < 5 : b !== f.beds) return false;
     }
-    if (f.direction && normalizeVi(item.huong ?? "") !== normalizeVi(f.direction)) return false;
-    if (f.legal && !khopNhom(item.phapLy, NHOM_PHAP_LY[f.legal])) return false;
-    if (f.furnishing && !khopNhom(item.noiThat, NHOM_NOI_THAT[f.furnishing])) return false;
+    if (f.direction && (item.huong ? normalizeVi(item.huong) !== normalizeVi(f.direction) : normalizeVi(ndCua(item).huong ?? "") !== normalizeVi(f.direction))) return false;
+    if (f.legal && (item.phapLy ? !khopNhom(item.phapLy, NHOM_PHAP_LY[f.legal]) : ndCua(item).phapLy !== f.legal)) return false;
+    if (f.furnishing && (item.noiThat ? !khopNhom(item.noiThat, NHOM_NOI_THAT[f.furnishing]) : ndCua(item).noiThat !== f.furnishing)) return false;
     // TỪ KHOÁ dò MỌI TRƯỜNG CÓ THÔNG TIN của tin (tiêu đề · địa chỉ · loại hình ·
     // giá · diện tích · người đăng · mô tả · pháp lý/hướng/nội thất/tiện ích…).
     // Địa danh dân gian (Mỹ Khê, cầu Rồng…) không có trong danh mục hành chính

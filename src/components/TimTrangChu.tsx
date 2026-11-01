@@ -1,22 +1,23 @@
 "use client";
 import { useDiaDanh } from "@/lib/useDiaDanh";
-import { goiYTheoY } from "@/lib/goiYTheoY";
+import { duongDanCau, goiYTheoY } from "@/lib/goiYTheoY";
 import { useGoiYThat } from "@/lib/useGoiYThat";
 import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
 import { batDauTim } from "@/components/VachTim";
-import { useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { startTransition, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { applyFilters, emptyFilters, filtersToParams, normalizeVi, type Filters, type LocationSel } from "@/lib/filters";
 import type { Suggestion } from "@/lib/suggest";
-import { parseQuery, suaChinhTa } from "@/lib/smartSearch";
+import { docMucDich, parseQuery, suaChinhTa } from "@/lib/smartSearch";
 import type { CauGoiY, TinDem } from "@/lib/goiYTrangChu";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import { thuHepDuAn, type DuAnLoc } from "@/lib/thuHepDuAn";
 import { soTheoLoai } from "@/lib/thuHepTin";
 import TruongLocTrangChu, { locTuCau } from "@/components/TruongLocTrangChu";
+import { gopCau } from "@/lib/locTuCau";
 import { timKhuVuc, slugKhuVuc } from "@/lib/khuVuc";
-import { duongDanBuoc, duongDanSach, duongDanTuCau, duongDanGanNhat } from "@/lib/duongDanTim";
+import { duongDanBuoc, duongDanSach, duongDanTuCau } from "@/lib/duongDanTim";
 import { hintsFor, listingHints } from "@/lib/searchHints";
 import { MagnifyingGlass, ClockCounterClockwise, X, CircleNotch, ArrowUpLeft } from "@/components/HinhPhosphor"; // bản gọn của Phosphor
 import type { Icon as PhIcon } from "@phosphor-icons/react";
@@ -74,23 +75,8 @@ const tuCua = (s: string) => normalizeVi(s).replace(/[^a-z0-9]+/g, " ").split(" 
 //   Mua bán:  "mua"/"bán" · giá tính bằng TỶ · "sổ đỏ/sổ hồng" · đang ở Dự án mà gõ loại nhà ("căn hộ dự án X")
 //   Dự án:    "dự án …" không kèm loại nhà, không nói mua/thuê
 function mucDichCau(v: string, ds: DuAnTen[] = []): Muc | null {
-  const pq = parseQuery(v);
-  const w = ` ${normalizeVi(v).replace(/[^a-z0-9]+/g, " ")} `;
-  if (pq.purpose) return pq.purpose;
-  // Loại CHỈ có cho thuê (phòng trọ, văn phòng, mặt bằng) → Cho thuê (rà 21/10/2026: "mặt bằng kinh doanh" từng vào Mua bán)
-  if (/ thang | nguyen can | o ghep /.test(w) || (pq.types.length > 0 && pq.types.every((t) => ["Phòng trọ", "Văn phòng", "Mặt bằng"].includes(t)))) return "thue";
-  // Giá TỶ (kể cả "3 tỷ" trần, không có "dưới/trên") → giá bán
-  if ((pq.priceMaxTy ?? 0) >= 1 || (pq.priceMinTy ?? 0) >= 1 || / \d+[.,]?\d* ?(ty|ti) /.test(w) || / so do | so hong /.test(w)) return "ban";
-  // Giá tính bằng TRIỆU (dưới 1 tỷ) cho căn hộ / nhà / phòng → giá thuê tháng (rà 21/10/2026: "căn hộ 10 triệu" từng vào Mua bán)
-  const giaTrieu = (pq.priceMaxTy != null || pq.priceMinTy != null) || (/ \d+[.,]?\d* ?(trieu|tr) /.test(w) && !/ \d+[.,]?\d* ?(ty|ti) /.test(w));
-  if (giaTrieu && !(pq.types.length > 0 && pq.types.every((t) => /^đất/i.test(t)))) return "thue";
-  // ĐẤT, ĐẤT NỀN chỉ có mua bán — không để "đất nền Hoà Xuân" rơi vào Cho thuê thành kho xưởng (rà 18/10/2026)
-  if (pq.types.length > 0 && pq.types.every((t) => /^đất/i.test(t))) return "ban";
-  // KHUÔN ĐÃ DUYỆT 01/11/2026: câu có "dự án" → Dự án; gõ trọn TÊN dự án → Dự án; câu chưa rõ mục đích ("căn hộ đà nẵng") → GIỮ tab
-  // đang đứng (gợi ý vẫn đủ 3 mục). Trước đây "dự án căn hộ…" và "căn hộ…" ở tab Dự án bị đẩy sang Mua bán.
-  if (/ du an /.test(w)) return "duan";
-  if (ds.length && timDuAn(v, ds, false)) return "duan";
-  return null;
+  // MỘT HÀM đọc mục đích dùng chung với máy gợi ý (smartSearch.docMucDich, 01/11/2026); gõ trọn tên dự án → Dự án
+  return docMucDich(v, () => ds.length > 0 && !!timDuAn(v, ds, false));
 }
 
 /** Cụm khớp chữ đang gõ: mọi từ gõ đều là ĐẦU một từ trong cụm ("nhà đà" → "Bán nhà đất Đà Nẵng") */
@@ -220,7 +206,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // MÀN GÕ RIÊNG đúng Airbnb (đo airbnb.com 17/10/2026): chạm thanh tìm → màn có menu + thẻ tìm, CHƯA bật bàn phím;
   // chạm vào ô gõ → chuyển sang màn gõ: ô gõ sát trên cùng có ← quay lại, menu · tiêu đề · nút đáy ẩn, gợi ý chiếm phần còn
   // lại — bàn phím bật vẫn thấy rõ chữ gõ và gợi ý.
-  const [dangGo, setDangGo] = useState(false);
+  // Mặc định ĐANG GÕ: màn tìm dựng sẵn (ẩn) đúng ngay bố cục màn gõ — chạm vào chỉ việc hiện ra, không phải dựng lại (01/11/2026)
+  const [dangGo, setDangGo] = useState(true);
   // VÀO / RA MÀN GÕ MƯỢT (chủ dự án 17/10/2026: "gõ vào ô tìm, bàn phím ảo hiện lên rất thô"): menu + tiêu đề ẩn làm thẻ tìm
   // nhảy lên — đo vị trí thẻ trước khi đổi, sau khi đổi cho thẻ TRƯỢT từ chỗ cũ về chỗ mới (chỉ transform, chạy trên GPU).
   const theTimRef = useRef<HTMLDivElement>(null);
@@ -243,8 +230,19 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const dauMo = useRef(0);
   const moMo = () => {
     (window as Window & { __cvrMoTim?: number }).__cvrMoTim = 0;
-    flushSync(() => { setDangGo(true); setMo(true); });
-    document.querySelector<HTMLTextAreaElement>("[role='dialog'] textarea")?.focus({ preventScroll: true });
+    // MỞ TỨC THÌ KIỂU GOOGLE (chủ dự án 01/11/2026: "bấm vào ô search vẫn giật"): màn tìm đã dựng sẵn (ẩn) → HIỆN NGAY bằng cách bỏ lớp
+    // ẩn + đặt con trỏ vào ô gõ trong chính cú chạm (bàn phím bật ngay), phần cập nhật trạng thái làm SAU (startTransition), không chặn
+    // cú chạm. Trước đây flushSync vẽ lại cả khối tìm (kể cả bản PC đang ẩn) ~40 ms ở máy tính, 0,2 s ở điện thoại → khựng.
+    const dlg = document.querySelector<HTMLElement>("[role='dialog'][aria-label='Tìm nhà đất']");
+    if (dlg) {
+      dlg.classList.remove("hidden");
+      dlg.classList.add("flex");
+      dlg.querySelector<HTMLTextAreaElement>("textarea")?.focus({ preventScroll: true });
+      startTransition(() => { setDangGo(true); setMo(true); });
+    } else {
+      flushSync(() => { setDangGo(true); setMo(true); });
+      document.querySelector<HTMLTextAreaElement>("[role='dialog'] textarea")?.focus({ preventScroll: true });
+    }
     // dấu RIÊNG cho mỗi lần mở: quay lại trang chủ từ trang kết quả thì mục lịch sử cũ còn dấu của lần mở trước — dùng
     // dấu chung thì nút ← lùi về mục đó mà màn tìm không đóng (đo 18/10/2026)
     dauMo.current = Date.now();
@@ -283,6 +281,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // từ tin thật, giữ cho đọc, xoá, sang câu kế. Ghi thẳng vào ô (không đổi state) nên không vẽ lại cả bộ tìm mỗi chữ.
   const chuChayDt = useRef<HTMLSpanElement>(null);
   const tinDemRef = useRef(tinDem);
+  const goiYTinRef = useRef(goiYTin);
   // Trạng thái đọc qua ref: vòng chạy chữ chỉ dựng MỘT lần, mỗi bước tự xem khách đã bấm/gõ chưa (không bị dựng lại liên tục)
   const chayRef = useRef({ dung: false, muc: "ban" as Muc });
   useEffect(() => { chayRef.current = { dung: moPc || mo || tuKhoa.length > 0, muc }; });
@@ -290,8 +289,15 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     const ta = pcRef.current?.querySelector("textarea");
     const goc = { pc: ta?.getAttribute("placeholder") ?? "", dt: chuChayDt.current?.textContent ?? "" };
     const dat = (s: string) => { ta?.setAttribute("placeholder", s); if (chuChayDt.current) chuChayDt.current.textContent = s; };
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const cauCua = (m: Muc) => (m === "duan" ? hintsFor("duan") : listingHints(tinDemRef.current ?? [], m === "thue" ? "thue" : "ban"));
+    // Máy tắt hiệu ứng chuyển động → vẫn hiện câu gợi ý, đổi NGUYÊN CÂU (không gõ từng chữ) — 01/11/2026: trước đây tắt hẳn, khách
+    // bật chế độ này không thấy câu gợi ý nào
+    const giamDong = !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    // CÂU SEO, pSEO CỦA TỪNG MỤC (chủ dự án 01/11/2026): tên các trang pSEO đang có tin của đúng mục — cùng nguồn "Tìm kiếm phổ biến"
+    const cauCua = (m: Muc) => {
+      if (m === "duan") return hintsFor("duan");
+      const seo = (goiYTinRef.current ?? []).filter((c) => c.muc === m).map((c) => c.nhan);
+      return seo.length ? seo : listingHints(tinDemRef.current ?? [], m === "thue" ? "thue" : "ban");
+    };
     let mucDang = chayRef.current.muc, cau = cauCua(mucDang);
     let i = 0, n = 0, xoa = false, hen = 0, dangDung = false;
     const buoc = () => {
@@ -301,6 +307,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
         hen = window.setTimeout(buoc, 400); return;
       }
       if (dangDung || m !== mucDang) { dangDung = false; mucDang = m; cau = cauCua(m); i = 0; n = 0; xoa = false; }
+      if (giamDong) { dat(cau[i] ?? ""); i = (i + 1) % Math.max(1, cau.length); hen = window.setTimeout(buoc, 3500); return; }
       const c = cau[i] ?? "";
       if (!xoa && n < c.length) { n++; dat(c.slice(0, n)); hen = window.setTimeout(buoc, 55); }
       else if (!xoa) { xoa = true; hen = window.setTimeout(buoc, 1800); }
@@ -420,9 +427,11 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   function tim(cau: string, n: Noi | null = null, mucGhiDe?: Muc) {
     const cauLuu = (n ? n.nhan : cau).trim();
     const den = (u: string) => di(u, cauLuu);
-    const muc = mucGhiDe ?? mucDangChon;
-    const mb: "ban" | "thue" = muc === "thue" ? "thue" : "ban";
     const kw = cau.trim();
+    // MỤC ĐÍCH ĐỌC NGAY TỪ CÂU lúc bấm Tìm / Enter (01/11/2026: gõ "dự án căn hộ đà nẵng" Enter nhanh → tab chưa kịp đổi theo câu
+    // (đổi sau một nhịp) nên đi sang Cho thuê) — câu nói rõ mục đích thì theo câu, không thì theo tab đang đứng
+    const muc = mucGhiDe ?? (kw && !n ? mucDichCau(kw, dsDuAn) : null) ?? mucDangChon;
+    const mb: "ban" | "thue" = muc === "thue" ? "thue" : "ban";
     if (kw && !n) luu({ label: kw, kind: "Gợi ý", sub: "Từ khoá đã tìm", keyword: kw });
     // GÕ ĐÚNG TÊN DỰ ÁN (21/10/2026): nói rõ mua/thuê → tin thuộc dự án đó; không nói → trang thông tin dự án (nếu có), không có
     // trang thì tin thuộc dự án ở phía có tin
@@ -439,7 +448,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     const tuDong = !!kw && JSON.stringify(boLoc) === JSON.stringify(muc === "duan" ? emptyFilters() : locTuCau(kw, mb));
     if (!n && coLoc && !tuDong) {
       if (muc === "duan") {
-        const p = filtersToParams({ ...emptyFilters(), keyword: kw, locations: boLoc.locations, project: boLoc.project, loaiDuAn: boLoc.loaiDuAn, tinhTrang: boLoc.tinhTrang, chuDauTu: boLoc.chuDauTu });
+        const p = filtersToParams({ ...emptyFilters(), keyword: kw, locations: boLoc.locations, project: boLoc.project, types: boLoc.types, loaiDuAn: boLoc.loaiDuAn, tinhTrang: boLoc.tinhTrang, chuDauTu: boLoc.chuDauTu });
         p.set("mode", "Dự án");
         return den(`/du-an?${p.toString()}`);
       }
@@ -460,7 +469,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     // gõ sai chính tả → tìm theo câu đã sửa; ?q giữ nguyên câu khách gõ để trang kết quả báo "Đang hiển thị kết quả cho …"
     if (kw && !n) {
       const sua = suaChinhTa(kw);
-      const u = duongDanGanNhat(mb, sua ?? kw);
+      const u = duongDanCau(mb, sua ?? kw);
       if (u) {
         if (!sua) return den(u);
         const [duong, cu] = u.split("?");
@@ -491,6 +500,24 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // CHỮ GÕ HIỆN NGAY, GỢI Ý TÍNH SAU MỘT NHỊP (useDeferredValue): máy chậm vẫn thấy chữ mình gõ tức thì,
   // danh sách gợi ý theo kịp ngay sau — như Google. Trước đây mỗi phím phải chờ tính xong gợi ý mới hiện chữ.
   const kw = useDeferredValue(tuKhoa).trim();
+  // ĐỌC CÂU SAU MỘT NHỊP (theo kw đã trì hoãn, không theo từng phím): menu mục đích tự chuyển theo câu, các trường tự điền theo phần
+  // máy tách được — như trước, chỉ không chạy trong lúc ngón tay đang gõ
+  const kwDoc = useRef("");
+  useEffect(() => {
+    if (kw === kwDoc.current) return;
+    // xoá hết chữ → các trường do câu tự điền cũng về trống (như trước)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc câu sau khi chữ ổn định
+    if (!kw) { kwDoc.current = ""; setLoc((cu) => (JSON.stringify(cu) === JSON.stringify(emptyFilters()) ? cu : emptyFilters())); return; }
+    kwDoc.current = kw;
+    const y = mucDichCau(kw, dsDuAn);
+    const m2: Muc = y && y !== muc ? y : muc;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc câu sau khi chữ ổn định
+    if (m2 !== muc) setMuc(m2);
+    // CHỈ ĐIỀN LẠI KHI CÁC TRƯỜNG ĐỌC ĐƯỢC THỰC SỰ ĐỔI (01/11/2026, đo bản build: gõ 14 phím chờ ~1 giây) — gõ giữa một chữ ("sơ" → "sơn")
+    // các trường không đổi thì không đếm lại toàn bộ tin, tin theo loại
+    const moi = m2 === "duan" ? emptyFilters() : locTuCau(kw, m2);
+    setLoc((cu) => (JSON.stringify(cu) === JSON.stringify(moi) ? cu : moi));
+  }, [kw]); // eslint-disable-line react-hooks/exhaustive-deps -- chỉ chạy khi chữ đổi
   // Gõ sai chính tả / dính chữ ("Căn họi … tạiphan thiết") → gợi ý theo câu đã sửa, như Google
   const kwHieu = kw ? suaChinhTa(kw) ?? kw : "";
   // GỢI Ý THEO DỮ LIỆU THẬT (máy chủ đếm tin — lib/goiYThat): chỉ câu có tin, giá và nơi thực tế (chủ dự án 21/10/2026)
@@ -508,22 +535,29 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   if (kw) {
     const dau = kwHieu.replace(/\s+/g, " ").trim();
     const nguon = goiYThatDs ?? (muc === "duan" ? [] : goiYTheoY(dau, mb, dsDuAn));
-    for (const d of nguon) if (normalizeVi(d.nhan) !== normalizeVi(dau)) cauNhuCau.push({ nhan: d.nhan, sub: "", muc: d.muc, loai: true, href: d.href });
+    // dòng của MỤC KHÁC ghi rõ mục ("căn hộ · Cho thuê") và vẫn giữ dù trùng chữ khách gõ — đó là lối sang mục đó (trang tổng nối 3 mục, 01/11/2026)
+    for (const d of nguon) if (normalizeVi(d.nhan) !== normalizeVi(dau) || d.muc !== muc)
+      cauNhuCau.push({ nhan: d.nhan, sub: d.muc === muc ? "" : (TABS.find((x) => x.muc === d.muc)?.nhan ?? ""), muc: d.muc, loai: true, href: d.href });
   }
   const ganDayHien = kw ? [] : ganDay.filter((x) => mucCua(x) === muc).slice(0, 3);
+  // lọc danh bạ dự án theo trường đã chọn — chỉ khi tab Dự án và lựa chọn đổi (không lọc lại mỗi chữ gõ)
+  const locDuAn = useMemo(() => (muc === "duan" && duAnLoc ? thuHepDuAn(duAnLoc, boLoc) : null), [muc, duAnLoc, boLoc]);
   // Tên dự án gợi ý ở MỌI mục (khách hay gõ tên dự án mà không chuyển sang mục Dự án)
   // Tab Dự án: gợi ý từ DỰ ÁN THẬT theo đúng các trường đã chọn, khớp kiểu Google — gốc chung với trang Dự án (lib/thuHepDuAn, 01/11/2026)
   const goiYDuAn: Suggestion[] = !kw ? [] : muc === "duan"
     // tab Dự án: thêm dự án khớp theo các TRƯỜNG khách đã chọn — bỏ dự án máy chủ đã gợi ý (không lặp)
-    ? (duAnLoc ? thuHepDuAn(duAnLoc, boLoc).goiY(kw) : []).filter((d) => !cauNhuCau.some((c) => c.href === "/du-an/" + d.slug))
+    ? (locDuAn ? locDuAn.goiY(kw) : []).filter((d) => !cauNhuCau.some((c) => c.href === "/du-an/" + d.slug))
         .map((d) => ({ label: d.ten, kind: "Dự án" as const, href: "/du-an/" + d.slug }))
     : []; // Mua bán / Cho thuê: tên dự án THẬT đã nằm trong gợi ý máy chủ (nhóm Dự án) — bỏ dự án mẫu (01/11/2026)
   const coGoiY = !!kw || ganDayHien.length > 0 || cauNhuCau.length > 0;
   const coLoc = muc === "duan"
-    ? boLoc.locations.length > 0 || !!boLoc.project || !!boLoc.loaiDuAn?.length || !!boLoc.tinhTrang || !!boLoc.chuDauTu
+    ? boLoc.locations.length > 0 || !!boLoc.project || boLoc.types.length > 0 || !!boLoc.loaiDuAn?.length || !!boLoc.tinhTrang || !!boLoc.chuDauTu
     : boLoc.locations.length > 0 || boLoc.types.length > 0 || boLoc.priceMin != null || boLoc.priceMax != null || boLoc.areaMin != null || boLoc.areaMax != null || !!boLoc.beds || !!boLoc.direction || !!boLoc.legal || !!boLoc.furnishing || boLoc.verified || boLoc.broker;
-  const soTin = coLoc && muc !== "duan" && tinDem ? applyFilters(tinDem.filter((t) => t.purpose === mb), boLoc).length : null;
-  const soLoai = muc !== "duan" && tinDem ? soTheoLoai(tinDem.filter((x) => x.purpose === mb), boLoc) : undefined;
+  // ĐẾM TIN CHỈ KHI LỰA CHỌN ĐỔI (useMemo — 01/11/2026: mở màn tìm, gõ từng chữ không đếm lại cả kho tin → không khựng)
+  const tinMuc = useMemo(() => (muc !== "duan" && tinDem ? tinDem.filter((t) => t.purpose === (muc === "thue" ? "thue" : "ban")) : null), [muc, tinDem]);
+  const demTin = useMemo(() => (tinMuc ? applyFilters(tinMuc, boLoc).length : null), [tinMuc, boLoc]);
+  const soTin = coLoc ? demTin : null;
+  const soLoai = useMemo(() => (tinMuc ? soTheoLoai(tinMuc, boLoc) : undefined), [tinMuc, boLoc]);
   const nhanTim = soTin != null ? (soTin ? `Xem ${soTin} tin` : "Tìm kiếm") : "Tìm kiếm";
   // KHÔNG tải sẵn trang đích khi mở màn tìm (chủ dự án 17/10/2026: Vercel phải nằm trong gói $20) — trang không có sẵn
   // trong bộ nhớ đệm thì mỗi lần tải sẵn là một lần chạy máy chủ. Bấm tìm đã có thanh chạy báo đang tìm.
@@ -535,7 +569,16 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const PHU = muc === "duan" ? ["kv", "lda", "cdt", "da", "them"] : ["kv", "lh", "gia", "dt", "them"];
 
   // Gợi ý KHÔNG in đậm (chủ dự án 21/10/2026: in đậm phần web tự thêm kiểu Google làm khách thấy chữ vô nghĩa)
-  const boiDam = (nhan: string) => nhan;
+  // HIỂN THỊ KIỂU GOOGLE (chủ dự án 01/11/2026), cùng cách ô Mua bán · Cho thuê · Dự án (FilterBar.HighlightLabel): chữ khách đã gõ
+  // để thường, phần máy điền thêm in đậm
+  const boiDam = (nhan: string) => {
+    const daGo = normalizeVi(kw).split(/[^a-z0-9]+/).filter(Boolean);
+    if (!daGo.length) return nhan;
+    return nhan.split(/(\s+)/).map((w, i) => {
+      const n = normalizeVi(w).replace(/[^a-z0-9]/g, "");
+      return !n || daGo.includes(n) || n.startsWith(daGo[daGo.length - 1]) ? w : <b key={i} className="font-semibold">{w}</b>;
+    });
+  };
   // KIỂU GOOGLE: dòng đang chọn bằng phím ↑ ↓ được tô nền; mỗi gợi ý có mũi tên ↖ chép câu vào ô để gõ tiếp
   const chenVaoO = (label: string) => {
     setTuKhoa(label);
@@ -583,7 +626,22 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   );
 
   // Mọi dòng gợi ý theo đúng thứ tự hiện — phím ↑ ↓ đi lần lượt, Enter chạy dòng đang chọn
-  const chonCau = (c: CauGoiY) => { luu({ label: c.nhan, kind: "Gợi ý", sub: c.sub, href: c.href }); setTuKhoa(c.nhan); di(c.href, c.nhan); };
+  const chonCau = (c: CauGoiY) => {
+    luu({ label: c.nhan, kind: "Gợi ý", sub: c.sub, href: c.href }); setTuKhoa(c.nhan);
+    // CHA → CON MANG THEO TRƯỜNG ĐÃ CHỌN (01/11/2026): khách tự chọn trường ở bộ lọc tổng rồi bấm gợi ý cùng mục → sang trang con kèm
+    // các trường đó, câu gộp vào theo một luật với trang con (gopCau: trường câu nói tới thì câu thắng, còn lại giữ)
+    const tuChon = coLoc && JSON.stringify(boLoc) !== JSON.stringify(muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, mb));
+    if (tuChon && c.muc === muc && c.href && !c.href.startsWith("/du-an/")) {
+      if (muc === "duan") {
+        const g = gopCau(boLoc, c.nhan, "ban");
+        const p = filtersToParams({ ...emptyFilters(), keyword: c.nhan, locations: g.locations, project: boLoc.project, types: g.types, loaiDuAn: boLoc.loaiDuAn, tinhTrang: boLoc.tinhTrang, chuDauTu: boLoc.chuDauTu });
+        return di(`/du-an?${p.toString()}`, c.nhan);
+      }
+      const p = filtersToParams(gopCau(boLoc, c.nhan, mb));
+      return di(`${mb === "thue" ? "/cho-thue" : "/mua-ban"}?${p.toString()}`, c.nhan);
+    }
+    di(c.href, c.nhan);
+  };
   const dsMuc: { label: string; chay: () => void }[] = [
     ...ganDayHien.map((s) => ({ label: s.label, chay: () => chonGoiY(s) })),
     ...cauNhuCau.map((c) => ({ label: c.nhan, chay: () => chonCau(c) })),
@@ -656,13 +714,11 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
         // Khách QUÊN chọn menu: câu nói "thuê"/"bán" → theo câu; gõ loại chỉ có ở cho thuê ("phòng trọ…") → Cho thuê
         // MENU CHUYỂN THEO TỪ KHOÁ KHÁCH GÕ (chủ dự án 17/10/2026): "dự án…" → Dự án; "mua/bán…" → Mua bán;
         // "thuê…" hoặc loại chỉ có ở cho thuê ("phòng trọ") → Cho thuê. Câu không nói rõ → giữ mục đang chọn.
-        const y = mucDichCau(v, dsDuAn);
-        const m2: Muc = y && y !== muc ? y : muc;
-        if (m2 !== muc) setMuc(m2);
+        // MỖI PHÍM CHỈ CẬP NHẬT CHỮ (01/11/2026: "giật lag khi bấm, nhất là khi bấm dấu" — gõ dấu tiếng Việt là nhiều phím): đọc câu
+        // (mục đích, các trường) chạy sau một nhịp theo chữ đã ổn định — xem hiệu ứng theo kw ngay dưới khai báo kw
         setTuKhoa(v);
         setChon(-1);
         setMoPc(true);
-        setLoc(m2 === "duan" ? emptyFilters() : locTuCau(v, m2));
         gianO(e.currentTarget);
       }}
       onFocus={(e) => {
@@ -710,7 +766,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             data-mo-tim
             onClick={moMo}
             // CÙNG CỠ ô tìm trang Mua bán / Cho thuê / Dự án: cao 36, bo tròn, kính lúp trái (chủ dự án 20/10/2026)
-            className="relative flex h-9 w-full items-center rounded-full bg-cvr-surface pl-10 pr-4 text-left ring-1 ring-black/5 transition active:scale-[0.99]"
+            className="relative flex h-11 w-full items-center rounded-full bg-white pl-10 pr-4 text-left shadow-[0_2px_6px_rgba(0,0,0,0.14)] ring-1 ring-black/15 transition active:scale-[0.99]"
           >
             <svg aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
             <span className={`min-w-0 truncate text-[15px] ${kw ? "text-cvr-ink" : "text-cvr-faint"}`}>{kw || <span ref={chuChayDt}>Tìm nhà đất theo khu vực, dự án…</span>}</span>
@@ -758,21 +814,21 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             {/* Bàn phím bật → ẩn tiêu đề (ẩn ngay: co dần thì phải tính lại bố cục mỗi khung hình → giật) */}
             {!phimMo && !dangGo && <h2 className="mb-4 text-[22px] font-bold leading-[26px] tracking-tight text-cvr-ink">Tìm kiếm</h2>}
             {/* Ô GÕ ĐỨNG YÊN Ở MÉP TRÊN khi đang gõ (như Google): gợi ý dài vuốt xuống thì chỉ danh sách trôi, ô gõ luôn thấy */}
-            <div className={dangGo ? "sticky top-0 z-10 -mx-5 -mt-3 shrink-0 border-b border-[#e0e0e0] bg-white px-2 pb-1 pt-3" : "shrink-0"}>
-            {/* MÀN GÕ (chủ dự án 18/10/2026): 3 menu ở trên · hàng dưới ← · ô gõ bo tròn, giống màn tìm Mua bán / Cho thuê / Dự án; bỏ nút × */}
+            {/* MỘT KHUÔN MÀN TÌM CẢ 4 PHẦN (chủ dự án 01/11/2026: "cân đối lại từ nút back, ô search, menu trên, dưới"): 3 mục ở trên
+                · ← · ô gõ (cùng cỡ, cùng lề với màn tìm Mua bán / Cho thuê / Dự án) · gợi ý */}
+            <div className={dangGo ? "sticky top-0 z-10 -mx-5 -mt-3 shrink-0 border-b border-[#e0e0e0] bg-white px-2 pb-2 pt-1" : "shrink-0"}>
+            {/* 3 MỤC Mua bán · Cho thuê · Dự án Ở TRÊN Ô GÕ như cũ, ba ô đều nhau, thẳng lề với ô gõ (chủ dự án 01/11/2026: trang chủ là bộ lọc
+                TỔNG — không có hàng trường lọc, bấm gợi ý là sang thẳng trang con) */}
             {dangGo && (
-              <div className="flex items-center justify-center pb-2.5">
-                {/* 3 MENU CHÍNH GIỮA, ba ô rộng bằng nhau (chủ dự án 20/10/2026) */}
-                <div role="tablist" className="grid w-full max-w-[360px] grid-cols-3 justify-items-center">
-                  {TABS.map((t) => (
-                    <button key={t.muc} type="button" role="tab" aria-selected={muc === t.muc} onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => { setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
-                      className={`relative pb-1.5 text-[15px] font-semibold transition-colors ${muc === t.muc ? "text-cvr-ink" : "text-cvr-muted"}`}>
-                      {t.nhan}
-                      {muc === t.muc && <span className="absolute inset-x-0 -bottom-px h-[2.5px] rounded-full bg-cvr-blue" />}
-                    </button>
-                  ))}
-                </div>
+              <div role="tablist" className="mb-1 grid grid-cols-3 pl-10 pr-1">
+                {TABS.map((t) => (
+                  <button key={t.muc} type="button" role="tab" aria-selected={muc === t.muc} onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
+                    className={`relative py-2.5 text-[15px] font-semibold transition-colors ${muc === t.muc ? "text-cvr-ink" : "text-cvr-muted"}`}>
+                    {t.nhan}
+                    {muc === t.muc && <span className="absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-cvr-blue" />}
+                  </button>
+                ))}
               </div>
             )}
             {/* ĐANG GÕ: nút ← quay lại đứng CẠNH ô gõ, giống màn tìm Mua bán / Cho thuê / Dự án (chủ dự án 18/10/2026: bỏ nút ×) */}
@@ -789,10 +845,6 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
               )}
             </div>
             </div>
-            {/* HÀNG TRƯỜNG LỌC NGAY DƯỚI Ô GÕ, kiểu hàng chip của Google (chủ dự án 01/11/2026: "đơn giản, kiểu Google, dòng menu bên dưới
-                cho chuẩn — nhìn vào là biết ngay là bộ lọc"): luôn hiện cả khi đang gõ, vuốt ngang; trường theo đúng mục đang chọn.
-                (Thay chốt 18/10/2026 "màn gõ không chen trường lọc".) */}
-            {dangGo && <div className="mt-2.5 pb-1.5">{hangLoc(true, PHU)}</div>}
             {/* NÚT TÌM TRÒN XANH "→" dưới ô gõ, đúng màn gõ của Google (chủ dự án 18/10/2026, ảnh khoanh đỏ): bấm là tìm; đang
                 tìm thì xoay vòng + vạch chạy mép trên màn hình — khách biết web đang chạy */}
             </div>
@@ -808,7 +860,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
               nằm sát ngón cái cùng nút Tìm kiếm. ĐANG GÕ thì ẩn cả hàng (như Google: chỉ ô gõ + gợi ý, gợi ý nhiều vẫn đủ chỗ
               bấm — chủ dự án 17/10/2026); bấm ← quay lại là hiện đủ để lọc chi tiết. */}
           <div className={`${dangGo ? "hidden" : "flex"} mb-day-mo shrink-0 flex-col gap-3 self-stretch bg-[#f0f0f0] px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3`}>
-            {hangLoc(true, PHU)}
+            {/* đang gõ: hàng này ẩn và hàng trường lọc đã nằm dưới ô gõ — KHÔNG dựng hai lần (mở màn tìm nhẹ, không khựng — 01/11/2026) */}
+            {!dangGo && hangLoc(true, PHU)}
             {!dangGo && <button type="button" onClick={() => tim(tuKhoa)} className="flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-cvr-blue px-6 py-2 text-[16px] font-medium text-white transition active:scale-95">
               <Icon i={dangTim ? CircleNotch : MagnifyingGlass} dam className={`h-[18px] w-[18px] ${dangTim ? "animate-spin" : ""}`} />
               {dangTim ? "Đang tìm…" : nhanTim}
@@ -878,14 +931,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
               xong thì đoạn mã nhỏ trong trang bật bảng này lên (cùng dáng bảng thật); mã chạy xong là bảng thật thay chỗ */}
           {!moPc && (
             <div data-bang-tam aria-hidden className="pointer-events-none absolute inset-x-0 top-full z-[90] mt-3 hidden rounded-[28px] bg-white px-6 pb-5 pt-5 shadow-2xl shadow-black/15 ring-1 ring-black/5">
-              <div className="flex items-center gap-2 pb-2 pr-11">
-                {["Khu vực", "Loại hình", "Mức giá", "Diện tích", "Lọc thêm"].map((t) => (
-                  <span key={t} className="flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-cvr-line bg-white px-4 text-sm text-cvr-body">
-                    {t}
-                    <svg className="h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  </span>
-                ))}
-              </div>
+              {/* (Bỏ hàng 5 chữ giả Khu vực · Loại hình… 01/11/2026 — chủ dự án: menu dưới ô tìm trang tổng bấm không có tác dụng gì) */}
+              <div className="h-10" />
             </div>
           )}
         </div>

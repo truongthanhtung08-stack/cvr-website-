@@ -76,7 +76,9 @@ export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
         slug: d.slug,
         ten: p?.name ?? d.ten,
         chuDauTu: giaTriThat(p?.developer), // trường bắt buộc — một nguồn (truongDuAn.ts, 31/10/2026)
-        loaiHinh: giaTriThat(p?.type),
+        // Hồ sơ trống loại hình (01/11/2026: 35/50 dự án) → lấy loại hình của các TIN THẬT thuộc dự án — bộ lọc Dự án mới đếm đúng
+        // (Đà Nẵng 29 dự án mà bảng Loại hình chỉ đếm được 12). Hồ sơ đã ghi thì giữ nguyên hồ sơ.
+        loaiHinh: giaTriThat(p?.type) || [...new Set(tin.filter((l) => l.projectSlug && cungDuAn(l.projectSlug, d.slug)).map((l) => l.type).filter(Boolean))].join(", "),
         tinhTrang: giaTriThat(p?.status),
         // Thẻ ghi địa chỉ một kiểu: phường + tỉnh hệ MỚI (như thẻ Dự án nổi bật, 30/10/2026); địa chỉ đầy đủ ở trang chi tiết
         diaChi: giaTriThat(p?.location) || giaTriThat(tin1?.location) || d.tinh,

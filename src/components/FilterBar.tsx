@@ -1,12 +1,13 @@
 "use client";
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
-import { goiYTheoY } from "@/lib/goiYTheoY";
+import { duongDanCau, goiYTheoY } from "@/lib/goiYTheoY";
 import { useGoiYThat } from "@/lib/useGoiYThat";
 import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNutQuayLai } from "@/lib/khoaCuon";
 import { useRouter } from "next/navigation";
+import { flushSync } from "react-dom";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
 import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, choCuCua, phuongMoiCua, phuongMoiCuaQuan, oldNamesOf, newProvinceOf, type GeoMode } from "@/lib/locations";
 import {
@@ -18,6 +19,7 @@ import {
   priceRangeText,
   areaRangeText,
   normalizeVi,
+  applyFilters,
   khopTen,
   diemTen,
   sameLocation,
@@ -32,10 +34,9 @@ import {
   tenLoaiHinh,
 } from "@/lib/filters";
 import { suggest, type Suggestion } from "@/lib/suggest";
-import { goiYNoiLong, parseQuery, suaChinhTa } from "@/lib/smartSearch";
-import { duongDanGanNhat } from "@/lib/duongDanTim";
-import { locTuCau } from "@/lib/locTuCau";
-import { hintsFor, listingHints, type HintMode, type TinGoiY } from "@/lib/searchHints";
+import { chuChuaHieu, goiYNoiLong, parseQuery, suaChinhTa } from "@/lib/smartSearch";
+import { gopCau } from "@/lib/locTuCau";
+import { hintsFor, listingHints, pageHints, type HintMode, type TinGoiY } from "@/lib/searchHints";
 import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
 import { cuonToiKetQua } from "@/lib/scroll";
 
@@ -78,6 +79,7 @@ export default function FilterBar({
   nhanXem,
   demTheoNoi,
   demLoai,
+  cauSeo,
 }: {
   value: Filters;
   onChange: (f: Filters) => void;
@@ -113,6 +115,8 @@ export default function FilterBar({
   /** Số tin theo nơi / theo loại, tính theo mọi trường KHÁC đã chọn → bảng chọn chỉ hiện cái còn tin (01/11/2026) */
   demTheoNoi?: (l: LocationSel) => number;
   demLoai?: (loai: string) => number;
+  /** Câu SEO, pSEO của mục (tên trang pSEO có tin, kèm đường dẫn) — chữ chạy trong ô tìm theo đúng trang đang xem */
+  cauSeo?: { nhan: string; href: string }[];
 }) {
   // coDiaDanh trong điều kiện tính lại của các useMemo dùng địa danh: dữ liệu về sau lần tính đầu thì phải tính lại
   const coDiaDanh = useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
@@ -130,14 +134,39 @@ export default function FilterBar({
   // Trang ĐÃ CÓ LỌC (VD căn hộ Khánh Hòa) → không chạy câu mẫu nơi khác ("Nhà riêng Đà Nẵng…" lạc trang —
   // chủ dự án 17/10/2026), đứng yên đúng câu của ô tìm trang chủ.
   const coLocSan = hasActiveFilters(f);
+  // Trang đã lọc sẵn (trang theo từ khoá SEO): chữ chạy = từ khoá của chính trang + đi sâu theo tin thật (searchHints.pageHints, 01/11/2026)
+  const hintTrang = () => {
+    if (!hintItems?.length || mode === "duan" || f.locations.length > 1) return null;
+    const l0 = f.locations[0];
+    const loaiG = gomLoai(f.types, typeGroups);
+    const loai = loaiG.length === 1 ? loaiG[0].nhan.toLowerCase().replace(/,\s*/g, " ") : ""; // "căn hộ chung cư" — đúng chữ từ khoá trang, không dấu phẩy
+    const tinh = l0 ? (l0.ward ? `${l0.ward.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, "")}, ${l0.province}` : l0.province) : "";
+    const bl = { ...f, keyword: "" };
+    const ds = pageHints(hintItems, mode === "thue" ? "thue" : "ban", loai, l0?.ward ? "" : tinh,
+      (l) => applyFilters([{ id: "", title: "", area: "", ...l }], bl).length > 0);
+    // phường đã chọn: câu gốc ghi đủ "phường, tỉnh"
+    return l0?.ward ? [`${mode === "thue" ? "Cho thuê" : "Bán"} ${loai || "nhà đất"} ${tinh}`, ...ds.slice(1)] : ds;
+  };
+  // CÂU SEO CỦA CHÍNH TRANG (chủ dự án 01/11/2026: "câu chạy phải là câu SEO, pSEO của mỗi phần — hiện tất cả chạy chung một câu"):
+  // trang /mua-ban/can-ho-chung-cu/da-nang chạy tên chính trang đó rồi các trang con (phường, giá…); trang mục (/mua-ban) chạy các trang
+  // pSEO nhiều tin nhất của mục. Đọc đường dẫn lúc trang đã mở (máy chủ dựng như cũ).
+  const cauSeoTrang = (): string[] | null => {
+    if (!cauSeo?.length || typeof window === "undefined") return null;
+    const p = window.location.pathname.replace(/\/trang\/\d+$/, "").replace(/\/$/, "");
+    const cua = cauSeo.filter((c) => c.href === p || c.href.startsWith(p + "/"));
+    const ds = (cua.length ? cua : cauSeo).map((c) => c.nhan);
+    return ds.length ? ds.slice(0, 8) : null;
+  };
   const hintPhrases = useMemo(
-    () => (coLocSan ? ["Tìm nhà đất theo khu vực, dự án…"]
+    () => cauSeoTrang() ?? (coLocSan ? hintTrang() ?? ["Tìm nhà đất theo khu vực, dự án…"]
       : hintItems && hintItems.length > 0 && mode !== "duan"
       ? listingHints(hintItems, mode)
       : hintsFor(mode)),
-    [hintItems, mode, coLocSan],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hintTrang đọc f + nhóm loại của trang
+    [hintItems, mode, coLocSan, f, cauSeo],
   );
-  const goiYChay = useTypingPlaceholder(hintPhrases, f.keyword.trim().length > 0 || coLocSan);
+  // chỉ dừng chạy khi khách đã gõ chữ (trang lọc sẵn nay cũng chạy câu theo từ khoá của trang)
+  const goiYChay = useTypingPlaceholder(hintPhrases, f.keyword.trim().length > 0);
 
   // Autocomplete đa tầng: Khu vực · Loại hình · Sản phẩm · Dự án · Tin tức.
   // Khi chạm vào ô (chưa gõ) → hiện Lịch sử + Gợi ý phổ biến (mô hình Homedy).
@@ -152,6 +181,31 @@ export default function FilterBar({
   // Nút Quay lại điện thoại đóng màn tìm, không rời trang (hàm chung, 22/10/2026). Mọi lối đóng để CHUYỂN TRANG gọi
   // boQuaLui() trước (tự lùi lúc trang mới đang vào có thể đá khách về trang cũ).
   const boQuaLui = useNutQuayLai(overlay, () => setOverlay(false));
+  // Điện thoại (đo sau khi trang mở — máy chủ dựng như máy tính, không lệch HTML)
+  const [laDt, setLaDt] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc cỡ màn hình một lần khi trang mở
+  useEffect(() => { setLaDt(window.matchMedia("(max-width: 639px)").matches); }, []);
+  // Mở màn tìm + đưa con trỏ vào ô gõ trong CÙNG cú chạm (flushSync): iPhone chỉ bật bàn phím khi focus nằm trong cú chạm
+  // Dựng sẵn màn tìm 1,2 s sau khi trang mở (điện thoại) — lúc chạm không phải dựng
+  const [sanSangDt, setSanSangDt] = useState(false);
+  useEffect(() => {
+    if (!laDt) return;
+    const id = setTimeout(() => setSanSangDt(true), 1200);
+    return () => clearTimeout(id);
+  }, [laDt]);
+  const moTimDt = () => {
+    const man = document.querySelector<HTMLElement>("[data-man-tim]");
+    if (man && overlayInputRef.current) {
+      // đã dựng sẵn: hiện ngay + con trỏ vào ô gõ trong cú chạm; cập nhật trạng thái làm sau, không chặn cú chạm
+      man.classList.remove("hidden");
+      man.classList.add("flex");
+      overlayInputRef.current.focus({ preventScroll: true });
+      startTransition(() => setOverlay(true));
+    } else {
+      flushSync(() => setOverlay(true));
+      overlayInputRef.current?.focus({ preventScroll: true });
+    }
+  };
 
   useEffect(() => {
     try {
@@ -168,6 +222,10 @@ export default function FilterBar({
     if (!sugOpen) return;
     const close = () => { setSugOpen(false); setActiveIdx(-1); };
     const onDoc = (e: Event) => {
+      // bấm trong BẢNG TRƯỜNG (Toàn quốc, Loại BĐS… — dựng ngoài ô tìm) hoặc trong MÀN GÕ không phải bấm ra ngoài: gợi ý / tìm kiếm gần
+      // đây giữ nguyên (01/11/2026: chọn trường, Áp dụng xong màn gõ trống trơn — "biến mất")
+      const el = e.target instanceof Element ? e.target : null;
+      if (el?.closest(".cvr-sheet, .cvr-sheet-scrim") || overlay) return;
       if (!boxRef.current?.contains(e.target as Node)) close();
     };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
@@ -177,7 +235,7 @@ export default function FilterBar({
       document.removeEventListener("pointerdown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
-  }, [sugOpen]);
+  }, [sugOpen, overlay]);
 
   const pushRecent = (s: Suggestion) => {
     setRecent((prev) => {
@@ -226,6 +284,7 @@ export default function FilterBar({
     // "nhà Đà Nẵng" gõ "Phòng trọ cho thuê tại Huế" mà vẫn ra Đà Nẵng). Câu máy hiểu trọn → sang đúng trang sạch
     // như ô tìm trang chủ; câu còn chi tiết riêng → lọc lại từ đầu theo câu (khu vực · loại hình · giá tách từ câu).
     const kw = f.keyword.trim();
+    if (!next && kw && mode === "duan" && kw !== daTim) { apDungCau(kw); return; }
     if (!next && kw && mode !== "duan" && kw !== daTim) {
       setDaTim(kw);
       // GÕ ĐÚNG TÊN DỰ ÁN (21/10/2026): như ô tìm trang chủ — nói rõ mua/thuê hoặc đang ở trang Mua bán/Cho thuê → tin thuộc dự án
@@ -235,7 +294,7 @@ export default function FilterBar({
         boQuaLui();
         return router.push(`${m === "thue" ? "/cho-thue" : "/mua-ban"}?duan=${encodeURIComponent(da.duAn.ten)}`);
       }
-      const u = duongDanGanNhat(purpose, kw);
+      const u = duongDanCau(purpose, kw);
       if (u && u !== window.location.pathname) { boQuaLui(); return router.push(u); }
       // Địa chỉ trang đi theo câu mới (tải lại / gửi link vẫn đúng câu khách tìm). Đang ở trang con cố định nơi
       // (VD /cho-thue/nha/da-nang) → về trang mục đích gốc, không để lọc cố định của trang con đè câu mới.
@@ -243,9 +302,27 @@ export default function FilterBar({
       const q = filtersToParams({ ...emptyFilters(), keyword: kw });
       q.set("mode", purpose === "thue" ? "Cho thuê" : "Mua bán");
       if (window.location.pathname !== goc) { boQuaLui(); return router.push(`${goc}?${q.toString()}`); }
-      onChange({ ...locTuCau(kw, purpose), keyword: kw });
+      onChange(gopCau(f, kw, purpose));
       window.history.replaceState(window.history.state, "", `${goc}?${q.toString()}`);
     }
+    cuonToiKetQua();
+  };
+  // ĐỌC MỘT CÂU VÀO CÁC TRƯỜNG LỌC TẠI CHỖ — một đường cho Mua bán, Cho thuê, Dự án (cùng bộ đọc locTuCau):
+  // Mua bán / Cho thuê: khu vực · loại hình · giá · phòng ngủ · lọc thêm, cả câu giữ làm từ khoá (vòng 2 dò nội dung)
+  // Dự án: khu vực · loại hình (cùng cây loại hình), phần chưa đọc được (tên dự án, chủ đầu tư…) làm từ khoá
+  const apDungCau = (cau: string) => {
+    setSugOpen(false); setOverlay(false); setActiveIdx(-1);
+    setDaTim(cau);
+    // Ô tìm HIỆN ĐÚNG CÂU VỪA TÌM (01/11/2026): Dự án đọc hết câu vào trường thì từ khoá còn lại rỗng → ô từng hiện lại câu CŨ từ trang
+    // chủ, gõ tiếp bị nối vào câu cũ ("căn hộ sơn tràcăn hộ sơn trà")
+    setCauCu(cau);
+    try { sessionStorage.setItem("cvr-cau:" + window.location.pathname, cau); } catch { /* bỏ qua */ }
+    if (mode === "duan") {
+      // Dự án: chỉ Khu vực · Loại hình đọc từ câu; trường khách tự chọn (chủ đầu tư, tình trạng…) giữ; phần chưa đọc làm từ khoá
+      const g = gopCau(f, cau, "ban");
+      onChange({ ...f, locations: g.locations, types: g.types, tinhTrang: g.tinhTrang, keyword: chuChuaHieu(cau.replace(/(^|\s)dự\s+án(?=\s|$)/gi, " ")).replace(/,/g, "") });
+    } else onChange(gopCau(f, cau, purpose));
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}?${filtersToParams({ ...emptyFilters(), keyword: cau }).toString()}`);
     cuonToiKetQua();
   };
   // câu đã tìm gần nhất — bấm Tìm lại cùng câu thì giữ nguyên các trường khách tự chỉnh sau đó
@@ -302,13 +379,19 @@ export default function FilterBar({
   // [Đất nền · Đà Nẵng] → [Tất cả đất nền] → [BĐS tại Đà Nẵng] → [BĐS dưới 3 tỷ].
   // GỢI Ý THEO DỮ LIỆU THẬT dùng chung mọi ô tìm (máy chủ đếm tin — lib/goiYThat, chủ dự án 21/10/2026): mục đích + loại hình +
   // khu vực + đặc điểm, chỉ câu có tin, giá và nơi thực tế. Máy chủ lỗi → gợi ý theo ý câu ở máy khách (goiYTheoY) làm dự phòng.
-  const goiYThatDs = useGoiYThat(typed ? kwHieu : "", purpose === "thue" ? "thue" : "ban");
+  // trang Dự án (hintMode duan): gợi ý máy chủ của mục Dự án — đọc loại hình, tỉnh thành, mục đích trong câu (gợi ý tổng, lib/goiYTong)
+  const goiYThatDs = useGoiYThat(typed ? kwHieu : "", hintMode === "duan" ? "duan" : purpose === "thue" ? "thue" : "ban", !compact);
   const bacThang: Suggestion[] = useMemo(() => (typed
     ? (goiYThatDs ?? goiYTheoY(kwHieu, purpose === "thue" ? "thue" : "ban", dsDuAn)).map((g) => ({ label: g.nhan, kind: "Gợi ý" as const, href: g.href }))
     : []), [typed, kwHieu, purpose, coDiaDanh, dsDuAn, goiYThatDs]); // eslint-disable-line react-hooks/exhaustive-deps
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "gợi ý phổ biến" toàn tên tỉnh trơn — vô dụng)
   // Bỏ gợi ý khớp ký tự kiểu Google (địa danh trùng tên tỉnh khác, "Tất cả biệt thự"…) — chủ dự án 21/10/2026: chỉ gợi ý theo ý câu
-  const panelItems: Suggestion[] = typed ? (goiYRieng ? goiYRieng(kwHoan) : bacThang) : recentShown; // tên dự án (chữ Anh) không qua sửa chính tả
+  // Ô TÌM PHẢI HƠN CHỌN TRƯỜNG (chủ dự án 01/11/2026, ảnh trang Dự án gõ "Căn ho" chỉ ra một tên dự án): gõ là đọc TỈNH THÀNH · LOẠI
+  // HÌNH · MỤC ĐÍCH (gợi ý máy chủ — "Dự án căn hộ chung cư tại…", dự án đúng loại, Bán / Cho thuê), rồi mới đến dự án khớp tên theo
+  // các trường đang chọn (goiYRieng), không lặp
+  const panelItems: Suggestion[] = typed
+    ? (goiYRieng ? [...bacThang, ...goiYRieng(kwHoan).filter((s) => !bacThang.some((b) => b.href === s.href || b.label === s.label))] : bacThang)
+    : recentShown; // tên dự án (chữ Anh) không qua sửa chính tả
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
   // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
   // phải nói đã hiểu gì và gợi ý theo đúng tiêu chí đó.
@@ -324,6 +407,13 @@ export default function FilterBar({
     setSugOpen(false);
     setOverlay(false);
     setActiveIdx(-1);
+    // GỢI Ý CÂU CHO CHÍNH TRANG ĐANG ĐỨNG (/mua-ban?q=…, /du-an?q=…): đổi địa chỉ thôi thì trang không đọc lại (chỉ đọc địa chỉ lúc
+    // mở) — danh sách đứng yên, bấm "không có tác dụng gì" (01/11/2026). Đọc câu đổ thẳng vào các trường lọc tại chỗ.
+    if (s.href) {
+      const u = new URL(s.href, window.location.origin);
+      const cau = u.searchParams.get("q");
+      if (cau && u.pathname === window.location.pathname.replace(/\/trang\/\d+$/, "").replace(/\/$/, "")) { apDungCau(cau); return; }
+    }
     // Sản phẩm / Dự án / Tin tức → mở thẳng trang chi tiết (đã là "kết quả").
     if (s.href) {
       boQuaLui();
@@ -409,7 +499,10 @@ export default function FilterBar({
 
   // LỐI RA của mỗi bảng chọn (chủ dự án 01/11/2026): một nút "Xem N tin" ghi đúng số kết quả theo lựa chọn — bấm là đóng bảng, tới kết quả
   const chuXem = nhanXem ?? (soKetQua != null ? `Xem ${soKetQua} tin` : "Tìm kiếm");
-  const loiRa = (close: () => void, datLai: () => void) => <NutXem nhan={chuXem} onClick={() => { close(); chayTim(); }} onReset={datLai} />;
+  // CƠ CHẾ CHỌN TRƯỜNG (chủ dự án, đã chốt): trường CHỌN MỘT (giá, diện tích, chủ đầu tư, dự án, tình trạng) bấm chọn là TỰ TÌM;
+  // trường CHỌN NHIỀU (khu vực, loại hình, lọc thêm) tick xong bấm ÁP DỤNG là TỰ TÌM — hiện ra kết quả.
+  const xongTruong = (close: () => void) => { close(); chayTim(); };
+  const loiRa = (close: () => void, datLai: () => void) => <NutXem nhan={chuXem} onClick={() => xongTruong(close)} onReset={datLai} />;
   // Điện thoại: mỗi ô rộng vừa nội dung (hàng cuộn ngang). Máy tính: các ô CHIA ĐỀU hàng, chọn xong không đổi cỡ (01/11/2026).
   const ddClass = "shrink-0 sm:min-w-0 sm:flex-1";
 
@@ -486,7 +579,7 @@ export default function FilterBar({
             demTheoNoi={demTheoNoi}
             // "Xong" = kết thúc chọn VÀ ra kết quả ngay (đóng bảng rồi chạy tìm),
             // không phải chỉ đóng bảng để khách ngồi đoán đã tìm hay chưa.
-            onClose={() => { close(); chayTim(); }}
+            onClose={() => xongTruong(close)}
           />
           {loiRa(close, () => set({ locations: [] }))}
           </>
@@ -510,9 +603,9 @@ export default function FilterBar({
             presets={priceRangesFor(purpose)}
             onPick={(min, max) => set({ priceMin: min, priceMax: max })}
             onReset={() => set({ priceMin: null, priceMax: null })}
-            onApply={() => { close(); chayTim(); }}
+            onApply={() => xongTruong(close)}
           />
-          {loiRa(close, () => set({ priceMin: null, priceMax: null }))}
+          {/* trường CHỌN MỘT: không nút Áp dụng — bấm mốc / phím Tìm / thả thanh trượt là tìm (chủ dự án 01/11/2026) */}
         </>)}
       </FilterDropdown>
   );
@@ -532,9 +625,9 @@ export default function FilterBar({
             presets={areaRangesFor(purpose, f.types)}
             onPick={(min, max) => set({ areaMin: min, areaMax: max })}
             onReset={() => set({ areaMin: null, areaMax: null })}
-            onApply={() => { close(); chayTim(); }}
+            onApply={() => xongTruong(close)}
           />
-          {loiRa(close, () => set({ areaMin: null, areaMax: null }))}
+          {/* trường CHỌN MỘT: không nút Áp dụng (như Khoảng giá) */}
         </>)}
       </FilterDropdown>
   );
@@ -686,13 +779,24 @@ export default function FilterBar({
     );
   });
 
+  // ===== CÁC TRƯỜNG LỌC — KHAI MỘT LẦN, MỖI MÁY ĐẶT ĐÚNG MỘT CHỖ (01/11/2026) =====
+  // Điện thoại: trong màn gõ, ngay dưới ô gõ · Máy tính: ngay dưới ô tìm ngoài trang. Không bao giờ dựng hai nơi cùng lúc — dựng hai nơi
+  // thì bấm một nút mở cả bảng của nơi kia (hai bảng chồng nhau).
+  const cacTruong = hangLoc ?? <>
+    {locationDropdown}
+    {typeDropdown}
+    {priceDropdown}
+    {areaDropdown}
+    {moreDropdown}
+  </>;
+
   // ===== Ô từ khoá + nút tìm kiếm (dùng chung) =====
   const searchBox = (
     <>
     {/* Trang danh sách: ô tìm co giãn hết khung, nút "Xem bản đồ" nằm SÁT MÉP PHẢI
         → không còn mảng trống hụt bên phải như khi giới hạn bề ngang. */}
     <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2.5"}>
-      <div className={compact ? "relative flex-1" : "relative flex h-9 min-w-0 flex-1 items-center rounded-full bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-xl sm:ring-1"}>
+      <div className={compact ? "relative flex-1" : "relative flex h-11 min-w-0 flex-1 items-center rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.14)] ring-1 ring-black/15 transition sm:bg-cvr-surface sm:shadow-none focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-xl sm:ring-1"}>
         {/* Kính lúp trái — trang Mua bán / Cho thuê: HIỆN cả trên điện thoại cho khách nhận ra ngay là ô tìm (chủ dự án
             20/10/2026); ô tìm lớn ở Hero điện thoại vẫn ẩn (đã có nút tìm xanh) */}
         <svg className={`pointer-events-none absolute top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-muted ${compact ? "left-4 hidden sm:block" : "left-3.5 sm:left-4"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -704,10 +808,12 @@ export default function FilterBar({
           value={f.keyword || cauCu}
           onChange={(e) => { setCauCu(""); set({ keyword: e.target.value }); setSugOpen(true); setActiveIdx(-1); }}
           // Kiểu Google: MOBILE → chạm ô mở TRANG TÌM TOÀN MÀN HÌNH · DESKTOP → xổ dropdown gợi ý.
-          onFocus={(e) => {
-            if (window.matchMedia("(max-width: 639px)").matches) { e.currentTarget.blur(); setOverlay(true); }
-            else setSugOpen(true);
-          }}
+          // ĐIỆN THOẠI: ô trên trang CHỈ LÀ NÚT CHẠM (readOnly — chủ dự án 01/11/2026: "giật khi bấm vào ô search, làm mượt chuẩn Google").
+          // Trước đây chạm → bàn phím bật → tắt ô → mở màn tìm → bàn phím bật lại: bàn phím bật–tắt–bật, trang co giãn hai lần. Nay chạm là
+          // mở ngay màn tìm và đưa con trỏ vào ô gõ trong CÙNG cú chạm — bàn phím bật đúng một lần.
+          readOnly={laDt}
+          onClick={() => { if (laDt) moTimDt(); }}
+          onFocus={() => { if (!laDt) setSugOpen(true); }}
           onKeyDown={onKeyNav}
           // Gợi ý CHẠY CHỮ theo đúng mục (mua bán / cho thuê / dự án)
           placeholder={sugOpen ? "Tìm nhà đất theo khu vực, dự án…" : goiYChay} // đang mở gợi ý (đã chạm ô) → chữ chạy dừng, chỉ còn dòng mờ cố định
@@ -840,8 +946,9 @@ export default function FilterBar({
 
     {/* BẤM TÌM → VẠCH CHẠY MÉP TRÊN MÀN HÌNH: dùng vạch chung VachTim (sự kiện "cvr-tim" trong chayTim), chạy tới khi kết quả hiện (21/10/2026) */}
     {/* ===== MOBILE: TRANG TÌM TOÀN MÀN HÌNH kiểu Google — chạm ô tìm là mở ===== */}
-    {overlay && (
-      <div className="fixed inset-0 z-[80] flex flex-col bg-white sm:hidden">{/* hiện NGAY như Google, không trượt (chủ dự án 20/10/2026: giật) */}
+    {/* DỰNG SẴN MÀN TÌM (ẩn) trên điện thoại sau khi trang rảnh — chạm ô tìm chỉ việc hiện ra, con trỏ vào ô gõ ngay (moTimDt, 01/11/2026) */}
+    {(overlay || sanSangDt) && (
+      <div data-man-tim className={`${overlay ? "flex" : "hidden"} fixed inset-0 z-[80] flex-col bg-white sm:hidden`}>{/* hiện NGAY như Google, không trượt (chủ dự án 20/10/2026: giật) */}
         {/* MẪU MÀN TÌM TRANG DỰ ÁN (chủ dự án 18/10/2026: "lấy mẫu thanh search Dự án, làm giống nhau cho cả 3"): một hàng
             ← · ô gõ có × · nút tìm tròn xanh; ngay dưới là hàng trường lọc. z-[80]: dưới bảng chọn của trường lọc (z-100). */}
         <div className="flex items-center gap-1 border-b border-cvr-line px-2 py-1.5">
@@ -862,7 +969,7 @@ export default function FilterBar({
                 // CHỈ ĐO KHI CHỮ ĐỔI — đo ở mọi lần vẽ bắt cả trang tính lại bố cục, gõ bị khựng (đo 20/10/2026)
                 gianO(el); // như ô gõ trang chủ: ô trống cao tự nhiên một dòng, chỉ đo khi có chữ
               }}
-              autoFocus
+              autoFocus={overlay} // dựng sẵn (ẩn) thì không tự giành con trỏ
               rows={1}
               value={f.keyword || cauCu}
               onChange={(e) => {
@@ -892,19 +999,17 @@ export default function FilterBar({
           </div>
           {/* (Bỏ nút kính lúp tròn 18/10/2026 — chủ dự án; tìm bằng phím Tìm của bàn phím) */}
         </div>
-        {!compact && (
+        {/* ĐIỆN THOẠI: HÀNG TRƯỜNG LỌC CHỈ NẰM TRONG MÀN GÕ, ngay dưới ô gõ (chủ dự án 01/11/2026: "menu dưới ô search ngoài trang không có
+            tác dụng gì thì hiển thị ở đó làm gì"): ngoài trang chỉ còn ô tìm; chạm ô tìm → màn gõ có ← · ô gõ · hàng trường lọc · gợi ý. */}
+        {/* như web thật: hàng trường ở cả màn search lẫn ngoài trang — mỗi lúc dựng một hàng (màn search mở / đóng), không hai bảng chồng nhau */}
+        {!compact && laDt && overlay && (
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-cvr-line px-3 py-2">
-            {/* Nút "Làm mới" cả trong MÀN TÌM — giống hàng trường lọc ngoài trang (chủ dự án 20/10/2026) */}
-            {hasActiveFilters(f) && (
+            {/* Nút "Làm mới" cả trong MÀN TÌM — giống hàng trường lọc ngoài trang (chủ dự án 20/10/2026). Chỉ xét các TRƯỜNG LỌC, không xét
+                chữ đang gõ: gõ chữ đầu tiên làm nút bật ra ở đầu hàng, đẩy cả hàng sang phải — giật (đo 01/11/2026); xoá chữ có nút × của ô gõ */}
+            {hasActiveFilters({ ...f, keyword: "" }) && (
               <button type="button" aria-label="Làm mới" title="Làm mới" onClick={() => { setCauCu(""); onChange(emptyFilters()); }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-blue-ink transition active:scale-90 active:bg-cvr-surface">{/* Làm mới = BIỂU TƯỢNG đậm ở đầu hàng lọc (chủ dự án 20/10/2026) */}<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg></button>
             )}
-            {hangLoc ?? <>
-            {locationDropdown}
-            {typeDropdown}
-            {priceDropdown}
-            {areaDropdown}
-            {moreDropdown}
-            </>}
+            {cacTruong}
           </div>
         )}
         {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
@@ -952,12 +1057,15 @@ export default function FilterBar({
       {/* SÁT HEADER: khung lọc không chừa lề trên (mt-0), chỉ có đệm trong 8px */}
       {/* MÁY TÍNH bố trí như Batdongsan (chủ dự án 18/10/2026): KHÔNG khung bao — hàng 1 ô tìm cao 48px + "Xem bản đồ",
           hàng 2 các trường lọc, dưới cùng một đường kẻ. Hai hàng ở mọi bề rộng → không bao giờ tràn mép phải. */}
-      <div className="rounded-none bg-white pb-2 pt-2 sm:mt-0 sm:border-b sm:border-cvr-line sm:pb-4 sm:pt-3">
+      {/* NỀN BỘ LỌC trên điện thoại (chủ dự án 01/11/2026: "cần cái nền, kiểu đơn giản để nhìn là biết ngay bộ lọc, cả 4 phần"): dải nền xám nhạt tràn hết bề ngang bao ô tìm + hàng trường lọc; ô tìm, nút trường lọc trắng nổi trên nền — kiểu Google. Máy tính giữ nguyên. */}
+      <div className="-mx-4 rounded-none bg-cvr-surface px-4 pb-3 pt-3 sm:mx-0 sm:mt-0 sm:border-b sm:border-cvr-line sm:bg-white sm:px-0 sm:pb-4 sm:pt-3">
         <div className="flex flex-col gap-2 sm:gap-3">
           <div className="min-w-0">{searchBox}</div>
           {/* Hàng chip lọc — CUỘN NGANG trên mobile (kiểu Batdongsan), tự xuống hàng trên desktop.
               -mx-2.5/px-2.5 để dải chip tràn sát mép thẻ, cuộn mượt hết bề rộng. */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible sm:pb-0">
+          {/* ĐIỆN THOẠI: ngoài trang KHÔNG có hàng trường lọc — nằm trong màn gõ (chủ dự án 01/11/2026). Máy tính giữ nguyên hàng này.
+              Điện thoại không dựng hàng này — các trường đã nằm trong màn gõ (cacTruong) */}
+          {(!laDt || !overlay) && <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible sm:pb-0">
             {/* ĐÃ BỎ chip "Bản đồ" ở hàng ngay dưới thanh tìm kiếm — bị trùng với
                 nút "Xem bản đồ" nằm cạnh ô tìm phía trên. */}
             {/* Thứ tự chuẩn (mockup Mục I phần 2): Khu vực · Dự án · Loại BĐS · Mức giá · Diện tích · Lọc thêm.
@@ -966,15 +1074,9 @@ export default function FilterBar({
             {hasActiveFilters(f) && (
               <button type="button" aria-label="Làm mới" title="Làm mới" onClick={() => { setCauCu(""); onChange(emptyFilters()); }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-blue-ink transition active:scale-90 active:bg-cvr-surface sm:hidden">{/* Làm mới = BIỂU TƯỢNG đậm ở đầu hàng lọc (chủ dự án 20/10/2026) */}<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg></button>
             )}
-            {hangLoc ?? <>
-            {locationDropdown}
-            {typeDropdown}
-            {priceDropdown}
-            {areaDropdown}
-            {moreDropdown}
-            </>}
+            {cacTruong}
             {/* Bỏ nút "Đặt lại" (chủ dự án 17/10/2026): trùng việc với nút "Xoá lọc" cạnh tiêu đề kết quả */}
-          </div>
+          </div>}
         </div>
       </div>
     </FilterDropdownGroup>
@@ -1091,11 +1193,25 @@ export function LocationPanel({
   // ngay — không nút "Thêm cả", không "Áp dụng". Hệ cũ: Tỉnh → Quận/Huyện → Phường/Xã cùng cách.
   const cungTinh = (l: LocationSel, p: string) => l.province === p;
   const cungQuan = (l: LocationSel, p: string, d: string) => l.province === p && l.district === d;
+  // Chọn xong một tầng → TẮT BÀN PHÍM (khách vừa gõ tìm tỉnh): bàn phím còn bật thì che hết danh sách tầng dưới (ảnh chủ dự án 01/11/2026)
+  const tatPhim = () => (document.activeElement as HTMLElement | null)?.blur?.();
+  // ĐANG GÕ Ô TÌM KHU VỰC (chủ dự án 01/11/2026, báo 4 lần — ảnh Bắc Kạn, "Hồ", Bắc Giang): bàn phím bật thì danh sách phải hiện NGAY
+  // DƯỚI ô tìm. Thu gọn phần trên (nơi đã chọn, công tắc hệ địa chỉ, tiêu đề tầng) + đánh dấu bảng để ẩn hai nút đáy — đặt thẳng trên
+  // bảng khi ô tìm nhận / mất con trỏ, không phụ thuộc trình duyệt có đo bàn phím hay hiểu :has không. Mất con trỏ thì đợi một nhịp
+  // mới hiện lại phần trên, để chạm vào dòng trong danh sách không làm danh sách xê dịch dưới tay.
+  const [dangTim, setDangTim] = useState(false);
+  const henTim = useRef(0);
+  const danhDauBang = (bat: boolean) => { const b = gocRef.current?.closest(".cvr-sheet"); if (b) { if (bat) b.setAttribute("data-tim-noi", "1"); else b.removeAttribute("data-tim-noi"); } };
+  const vaoTim = () => { clearTimeout(henTim.current); setDangTim(true); danhDauBang(true); };
+  const raTim = () => { clearTimeout(henTim.current); henTim.current = window.setTimeout(() => { setDangTim(false); danhDauBang(false); }, 250); };
+  useEffect(() => () => { clearTimeout(henTim.current); danhDauBang(false); }, []);
   const chonTinh = (p: string) => {
+    tatPhim();
     if (!locations.some((l) => cungTinh(l, p)) && !full) onChange([...locations, { province: p }]);
     setProv(p); setDist(""); setQ("");
   };
   const chonQuan = (d: string) => {
+    tatPhim();
     if (!locations.some((l) => cungQuan(l, prov, d))) {
       const conLai = locations.filter((l) => !(cungTinh(l, prov) && !l.district && !l.ward));
       if (conLai.length < MAX_LOCATIONS) onChange([...conLai, { province: prov, district: d }]);
@@ -1120,6 +1236,12 @@ export function LocationPanel({
       : level === "district" ? locations.some((l) => cungQuan(l, prov, name))
       : locations.some((l) => sameLocation(l, phuongCua(name)));
   const pick = (name: string) => (level === "province" ? chonTinh(name) : level === "district" ? chonQuan(name) : doiPhuong(name));
+  // NƠI ĐÃ CHỌN LÊN ĐẦU, TÔ XANH (chủ dự án 01/11/2026) — thứ tự CHỐT lúc mở bảng / chuyển tầng (tỉnh → phường, đổi hệ): đang bấm chọn
+  // thì chỉ đổi màu, không đổi chỗ, nên danh sách không nhảy dưới tay; mở lại / chuyển tầng thì nơi đã chọn nằm trên cùng.
+  const khoaTang = `${mode}|${prov}|${dist}`;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chốt lại khi chuyển tầng, không theo từng lần bấm
+  const dauTang = useMemo(() => new Set(list.filter(daChon)), [khoaTang]);
+  const xepLen = nq ? filtered : [...filtered.filter((x) => dauTang.has(x)), ...filtered.filter((x) => !dauTang.has(x))];
   // TẦNG NÀO TÌM TẦNG ĐÓ (chủ dự án 01/11/2026: "đây là chọn Tỉnh / Thành phố"): ô gõ chỉ lọc đúng danh sách tầng đang mở — tầng tỉnh ra tỉnh
   // thành, vào tỉnh rồi mới tìm phường (đã bỏ tìm phường cả nước ở tầng tỉnh).
 
@@ -1150,12 +1272,12 @@ export function LocationPanel({
     mo: () => {
       const heDong: GeoMode = g.quan ? "cu" : "moi";
       if (heDong !== mode) { setMode(heDong); try { localStorage.setItem(GEO_MODE_KEY, heDong); } catch { /* noop */ } }
-      setProv(g.tinh); setDist(g.quan); setQ("");
+      tatPhim(); setProv(g.tinh); setDist(g.quan); setQ("");
     },
   }));
   return (
     <div ref={gocRef}>
-      <DaChon muc={mucDaChon} macDinh="Toàn quốc" />
+      {!dangTim && <DaChon muc={mucDaChon} macDinh="Toàn quốc" />}
       {/* Công tắc: Tìm theo địa chỉ MỚI sau sáp nhập (2025). Bật = hệ mới 2 cấp
           (Tỉnh/Thành → Phường/Xã); Tắt = hệ cũ 3 cấp (Tỉnh → Quận/Huyện → Phường/Xã). */}
       <button
@@ -1163,7 +1285,7 @@ export function LocationPanel({
         role="switch"
         aria-checked={isNew}
         onClick={() => switchMode(isNew ? "cu" : "moi")}
-        className="mb-2 flex w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-3 py-2.5 text-left transition hover:bg-cvr-blue/[0.1]"
+        className={`${dangTim ? "hidden" : "flex"} mb-2 w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-3 py-2.5 text-left transition hover:bg-cvr-blue/[0.1]`}
       >
         <span className="text-[13px] font-semibold text-cvr-ink">Tìm theo địa chỉ mới sau sáp nhập</span>
         <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${isNew ? "bg-cvr-blue" : "bg-black/20"}`}>
@@ -1182,7 +1304,7 @@ export function LocationPanel({
 
 
       {/* TIÊU ĐỀ TẦNG — khách biết đang chọn cấp nào (chủ dự án 01/11/2026) */}
-      <p className="mb-1.5 px-0.5 text-[13px] font-semibold text-cvr-ink">
+      <p className={`${dangTim ? "hidden" : ""} mb-1.5 px-0.5 text-[13px] font-semibold text-cvr-ink`}>
         {level === "province" ? "Chọn Tỉnh / Thành phố" : level === "district" ? `Chọn Quận / Huyện của ${prov}` : `Chọn Phường / Xã của ${dist || prov}`}
       </p>
       {/* Lọc nhanh trong tầng hiện tại — kính lúp kiểu Google */}
@@ -1193,6 +1315,16 @@ export function LocationPanel({
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          onFocus={vaoTim}
+          onBlur={raTim}
+          // Chrome thấy chữ "quận/huyện", "tỉnh/thành" tưởng ô điền ĐỊA CHỈ → bật thanh tự điền (chìa khoá · thẻ · ghim) chồng lên bàn phím,
+          // che thêm danh sách (ảnh chủ dự án 01/11/2026). Đây là ô LỌC, không phải ô địa chỉ → tắt tự điền, sửa chính tả.
+          name="loc-nhanh-khu-vuc"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          enterKeyHint="search"
           placeholder={level === "province" ? "Tìm tỉnh/thành…" : level === "district" ? "Tìm quận/huyện…" : "Tìm phường/xã…"}
           aria-label="Lọc nhanh khu vực"
           className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
@@ -1210,9 +1342,9 @@ export function LocationPanel({
             {locations.some(laToanBo) && <span className="shrink-0">✓</span>}
           </button>
         )}
-        {/* Danh sách giữ nguyên A–Z ở mọi tầng, mục đã chọn chỉ in đậm — chọn / bỏ chọn không làm dòng nào đổi chỗ (chủ dự án 01/11/2026:
-            vuốt, chọn không được nhảy). Nơi đã chọn hiện ở dòng trên cùng của bảng. */}
-        {filtered.map((name) => {
+        {/* Nơi đã chọn (xanh, đậm) nằm ĐẦU danh sách, còn lại A–Z — thứ tự chốt lúc mở bảng / chuyển tầng (xepLen), đang bấm thì không
+            đổi chỗ (chủ dự án 01/11/2026: vuốt, chọn không được nhảy). */}
+        {xepLen.map((name) => {
           const on = daChon(name);
           // TỈNH / QUẬN đã chọn: bấm tên = mở vào sửa phường · dấu × = bỏ chọn cả nhánh (chủ dự án 01/11/2026: bỏ chọn chỉ cần một dấu ×)
           const boNhanh = () => onChange(locations.filter((l) => (level === "province" ? !cungTinh(l, name) : !cungQuan(l, prov, name))));
@@ -1284,6 +1416,7 @@ export function ProjectPanel({
           onChange={(e) => setQ(e.target.value)}
           placeholder="Tìm dự án…"
           aria-label="Tìm dự án"
+          autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
           className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
         />
       </div>
@@ -1411,12 +1544,14 @@ export function RangePanel({
           type="range" min={0} max={sliderMax} step={step} value={lo}
           aria-label={`Tối thiểu (${unit})`}
           onChange={(e) => onSlide(Math.min(Number(e.target.value), hi), hi)}
+          onPointerUp={onApply} // thả tay khỏi thanh trượt = tìm (trường chọn một, không nút Áp dụng — chủ dự án 01/11/2026)
         />
         <input
           className="cvr-range absolute left-0 top-0 h-5 w-full"
           type="range" min={0} max={sliderMax} step={step} value={hi}
           aria-label={`Tối đa (${unit})`}
           onChange={(e) => onSlide(lo, Math.max(Number(e.target.value), lo))}
+          onPointerUp={onApply}
         />
       </div>
 
@@ -1425,7 +1560,7 @@ export function RangePanel({
         {/* type="text" chứ KHÔNG "number": trình duyệt loại bỏ dấu phẩy nên gõ
             "4,2" là ô trống trơn. Hàm commit() đã hiểu cả dấu phẩy lẫn dấu chấm. */}
         <input
-          type="text" inputMode="decimal" placeholder="Tối thiểu"
+          type="text" inputMode="decimal" enterKeyHint="search" placeholder="Tối thiểu"
           value={draftMin}
           onChange={(e) => setDraftMin(e.target.value)}
           onBlur={() => commit(draftMin, draftMax)}
@@ -1434,7 +1569,7 @@ export function RangePanel({
         />
         <span className="text-cvr-faint">–</span>
         <input
-          type="text" inputMode="decimal" placeholder="Tối đa"
+          type="text" inputMode="decimal" enterKeyHint="search" placeholder="Tối đa"
           value={draftMax}
           onChange={(e) => setDraftMax(e.target.value)}
           onBlur={() => commit(draftMin, draftMax)}
@@ -1455,8 +1590,10 @@ export function RangePanel({
               onClick={() => {
                 setDraftMin(String(p.min));
                 setDraftMax(p.max == null ? "" : String(p.max));
+                // CHỌN MỘT = XONG (chủ dự án 01/11/2026: "có 1 lựa chọn thì áp dụng cái gì"): bấm mốc là đóng bảng; trong màn gõ chỉ
+                // đóng bảng và tìm (xongTruong)
                 onPick(p.min, p.max);
-                onApply(); // bấm mốc = chọn xong, đóng bảng
+                onApply();
               }}
               className={`block w-full rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
                 active ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/75 hover:bg-black/5"
@@ -1510,8 +1647,10 @@ export function DaChon({ muc, macDinh = "Tất cả" }: { muc: { nhan: string; b
 // nút kiểu khác), dính đáy bảng để danh sách dài vẫn luôn thấy (luật 0A1).
 export function NutXem({ onClick, onReset }: { nhan?: string; onClick: () => void; onReset: () => void }) {
   return (
-    // LUÔN ở ĐÁY bảng (mt-auto — bảng nội dung ngắn nút cũng không lơ lửng giữa màn), dính sát đáy khi cuộn, trùm cả phần đệm đáy
-    <div className="sticky -bottom-4 -mx-1 -mb-4 mt-auto bg-white px-1 pb-4 sm:-bottom-3 sm:-mb-3 sm:pb-3">
+    // LUÔN ở ĐÁY bảng (mt-auto — bảng nội dung ngắn nút cũng không lơ lửng giữa màn), dính sát đáy khi cuộn, trùm cả phần đệm đáy.
+    // ĐANG GÕ (bàn phím bật) thì ẩn (an-khi-go-phim — chủ dự án 01/11/2026, ảnh: chạm "Tìm tỉnh/thành" thì hai nút đè mất danh sách,
+    // luật 0A1 không che chỗ khách thao tác); hạ bàn phím là hiện lại, như Google
+    <div className="an-khi-go-phim sticky -bottom-4 -mx-1 -mb-4 mt-auto bg-white px-1 pb-4 sm:-bottom-3 sm:-mb-3 sm:pb-3">
       <PanelActions onReset={onReset} onApply={onClick} />
     </div>
   );
