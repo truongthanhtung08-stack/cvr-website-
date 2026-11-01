@@ -9,7 +9,7 @@
 import { chuDauTuChuan, loiDiaDanh } from "@/lib/tenChuan";
 import { parseLatLng } from "@/lib/googleMaps";
 import { tenChuan } from "@/lib/thongSoDuAn";
-import { TEN_TRUONG, type TruongBatBuoc } from "@/lib/truongDuAn";
+import { TEN_TRUONG, TINH_TRANG_DU_AN, type TruongBatBuoc } from "@/lib/truongDuAn";
 
 // Thứ tự cột = THỨ TỰ BẢNG TỔNG QUAN trang dự án (chủ dự án chốt 31/10/2026, thay thứ tự 22/10): tên · chủ đầu tư · loại hình ·
 // diện tích dự án · quy mô · loại hình căn hộ · số lượng căn hộ · rồi các mục khác. MỘT mẫu cho mọi nơi (Admin, Cowork, scripts).
@@ -24,7 +24,7 @@ export const COT_DU_AN = [
 ] as const;
 type Cot = (typeof COT_DU_AN)[number];
 
-export const TRANG_THAI_HOP_LE = ["Sắp mở bán", "Đang mở bán", "Đã bàn giao", "Đã hoàn thành"];
+export const TRANG_THAI_HOP_LE = TINH_TRANG_DU_AN;
 
 // Đọc CSV (có ngoặc kép, dấu phẩy trong ô, xuống dòng trong ô)
 export function docCsv(text: string): string[][] {

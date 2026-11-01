@@ -2,8 +2,7 @@
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { batDauTim, xongTim } from "@/components/VachTim";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { useNutQuayLai } from "@/lib/khoaCuon";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
 import PhanTrang from "@/components/PhanTrang";
 import Image from "next/image";
@@ -12,29 +11,29 @@ import AnhChay from "@/components/AnhChay";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
 import Highlight from "@/components/Highlight";
-import { goiYNoiLong, searchAny, TIER_LABEL } from "@/lib/smartSearch";
-import { provinceNamesFor, type GeoMode } from "@/lib/locations";
-import { projectHints } from "@/lib/searchHints";
-import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
+import { searchAny, TIER_LABEL } from "@/lib/smartSearch";
 import { cuonToiKetQua } from "@/lib/scroll";
 import dynamic from "next/dynamic";
 import { coordOf } from "@/lib/geo";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
-import { locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
+import { locTraCuu } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 import { sortProjectsByTier } from "@/components/ProjectSlider";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
 import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
 import { duAnThuocNhom, projectCategories } from "@/lib/categories";
-import { nhomChuDauTu } from "@/lib/chuDauTu";
+import { nhomChuDauTu, slugChuDauTu } from "@/lib/chuDauTu";
+import FilterBar, { LocationPanel, ProjectPanel, NutXem, DaChon, nhanNoi } from "@/components/FilterBar";
+import type { Suggestion } from "@/lib/suggest";
+import { PanelLoaiDuAn, PanelLocThemDuAn, PanelChuDauTu, tomTatLoaiDuAn } from "@/components/TruongDuAn";
+import { emptyFilters, filtersFromParams, type Filters } from "@/lib/filters";
+import { khopKhuVuc, thuHepDuAn, tinhCua, type DuAnLoc } from "@/lib/thuHepDuAn";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), { ssr: false });
-
-const GEO_MODE_KEY = "cl-geo-mode"; // đồng bộ hệ đơn vị hành chính với FilterBar (Mua bán/Cho thuê)
 
 // Danh sách dự án trang /du-an — bố cục kiểu Batdongsan:
 // thanh lọc dưới Hero (ô tìm + dropdown Khu vực · Loại hình · Trạng thái)
@@ -44,9 +43,9 @@ const GEO_MODE_KEY = "cl-geo-mode"; // đồng bộ hệ đơn vị hành chính
 
 // Tỉnh/thành = phần cuối của location ("Hòa Hải, Ngũ Hành Sơn, Đà Nẵng" → "Đà Nẵng")
 const provinceOf = (location: string) => location.split(",").pop()?.trim() ?? "";
-// Gom type tự do của dự án về 3 nhóm loại hình lớn (đủ cho bộ dữ liệu hiện tại)
-const typeOf = (type: string) =>
-  type.includes("Căn hộ") ? "Căn hộ" : type.includes("đô thị") ? "Khu đô thị" : "Nghỉ dưỡng & biệt thự";
+// BỘ LỌC CHUNG (chủ dự án 01/11/2026: "bộ lọc dùng chung cho Mua bán · Cho thuê · Dự án, bổ sung cho dự án các trường đặc thù"):
+// Khu vực đa tầng (tỉnh → phường, hệ cũ/mới) + Dự án = đúng hàng trường lọc chung tab Dự án (TruongLocTrangChu); so khớp khu vực bằng
+// CHÍNH luật khu vực của tin (applyFilters) trên địa chỉ dự án. Hàng dưới: Loại hình · Chủ đầu tư · Tình trạng (riêng dự án).
 // Giá/m² tham khảo: lấy hàng "Giá..." trong bảng quy mô của dự án
 // MỘT THẺ CHO MỌI DỰ ÁN TRONG DANH SÁCH (chủ dự án 30/10/2026: "thẻ mục tra cứu phải thống nhất"): dự án tra cứu vẽ bằng chính thẻ
 // ngang đang chạy của dự án nổi bật — cùng ảnh, nhãn trạng thái, tên, ghim địa chỉ, loại hình, chủ đầu tư; trường bắt buộc chưa có
@@ -112,16 +111,6 @@ function countBy(projects: Project[], key: (p: Project) => string): [string, num
 }
 
 
-// Ô gõ màn tìm TỰ GIÃN theo chữ — ĐÚNG cách ô trang chủ (TimTrangChu): ô trống để cao tự nhiên một dòng, KHÔNG đo (đo lúc
-// màn tìm vừa mở thì chữ gợi ý còn xuống dòng, ô ra cao sai tỷ lệ tới khi gõ — chủ dự án 20/10/2026); ô đang ẩn đo ra 0 thì đo lại sau.
-function gianO(el: HTMLTextAreaElement | null) {
-  if (!el || el.dataset.daDo === el.value) return;
-  el.dataset.daDo = el.value;
-  if (!el.value) { el.style.height = ""; return; }
-  el.style.height = "auto";
-  if (!el.scrollHeight) { el.style.height = ""; delete el.dataset.daDo; return; }
-  el.style.height = `${Math.max(36, el.scrollHeight)}px`;
-}
 
 export default function ProjectsBrowser({
   projects,
@@ -163,52 +152,20 @@ export default function ProjectsBrowser({
     return () => mq.removeEventListener("change", doi);
   }, []);
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState(ALL);
-  const [province, setProvince] = useState(ALL);
-  const [type, setType] = useState(ALL);
+  const [boLoc, setBoLoc] = useState<Filters>(emptyFilters);   // Khu vực + Dự án — hàng trường lọc chung
+  const province = boLoc.locations.length === 1 && !boLoc.locations[0].district && !boLoc.locations[0].ward ? boLoc.locations[0].province : ALL;
+  const setProvince = (p: string) => setBoLoc((b) => ({ ...b, project: "", locations: p === ALL ? [] : [{ province: p }] }));
   // NHẬN TỪ KHOÁ TỪ TRANG CHỦ: bấm tab "Dự án" ở Hero rồi tìm → nhảy sang
   // /du-an?q=... , ô tìm ở đây phải tự điền và lọc ngay (trước đây bỏ qua ?q=).
   useEffect(() => {
+    // Trang chủ (tab Dự án) gửi sang đủ trường của bộ lọc chung: kv · duan · loaida · tinhtrang · cdt · q (filtersFromParams);
+    // link cũ ?tinh=… vẫn nhận (filtersFromParams lùi về tinh/quan/phuong)
     const sp = new URLSearchParams(window.location.search);
-    const tuKhoa = sp.get("q") ?? "";
-    const tinh = sp.get("tinh") ?? "";
-    const loai = sp.get("loai") ?? "";     // loại hình chọn ở trang chủ
-    const tt = sp.get("trangthai") ?? "";  // tình trạng dự án
+    const f = filtersFromParams(sp);
+    const tt = f.tinhTrang || sp.get("trangthai") || "";
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (tuKhoa) setQ(tuKhoa);
-    if (tinh) setProvince(tinh);
-    // Loại hình ở trang chủ là danh mục của TIN (Căn hộ, Đất nền, Biệt thự…) —
-    // quy về đúng 3 nhóm loại hình mà dự án đang dùng; không thuộc nhóm nào thì
-    // để nguyên "Tất cả" và giữ chữ đó trong ô tìm để vẫn lọc được theo từ khoá.
-    if (loai) {
-      const nhom = typeOf(loai);
-      setType(nhom);
-      if (!tuKhoa) setQ(loai);
-    }
-    if (tt) setStatus(tt);
-  }, []);
-  // MOBILE: chạm ô tìm → mở trang tìm TOÀN MÀN HÌNH (back + × + nút search) — như Mua bán.
-  const [overlay, setOverlay] = useState(false);
-  // Nút Quay lại điện thoại đóng màn tìm, không rời trang (hàm chung, 22/10/2026); bấm dự án để sang trang → boQuaLui.
-  const boQuaLui = useNutQuayLai(overlay, () => setOverlay(false));
-  const overlayInputRef = useRef<HTMLTextAreaElement | null>(null);
-  // Panel gợi ý (PC): mở khi gõ, TẮT khi bấm ra ngoài hoặc nhấn Esc
-  const [sugOpen, setSugOpen] = useState(false);
-  const sugBoxRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const ngoai = (e: PointerEvent) => {
-      if (sugBoxRef.current && !sugBoxRef.current.contains(e.target as Node)) setSugOpen(false);
-    };
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setSugOpen(false); };
-    document.addEventListener("pointerdown", ngoai);
-    document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("pointerdown", ngoai); document.removeEventListener("keydown", esc); };
-  }, []);
-  // Hệ đơn vị hành chính Cũ/Mới — bật/tắt như bên Mua bán (nhớ chung qua localStorage).
-  const [geoMode, setGeoMode] = useState<GeoMode>("moi");
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    try { const m = localStorage.getItem(GEO_MODE_KEY); if (m === "moi" || m === "cu") setGeoMode(m); } catch { /* noop */ }
+    if (f.keyword) setQ(f.keyword);
+    setBoLoc({ ...emptyFilters(), locations: f.locations, project: f.project, loaiDuAn: f.loaiDuAn, tinhTrang: tt || undefined, chuDauTu: f.chuDauTu });
   }, []);
 
   // Bấm search từ trang chủ → URL kèm #ket-qua → tự cuộn tới khối kết quả (bỏ qua
@@ -219,10 +176,6 @@ export default function ProjectsBrowser({
     const el = document.getElementById("ket-qua");
     if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" }));
   }, []);
-  const switchGeo = (m: GeoMode) => {
-    setGeoMode(m); setProvince(ALL);
-    try { localStorage.setItem(GEO_MODE_KEY, m); } catch { /* noop */ }
-  };
 
   // Có danh bạ Tra cứu → lựa chọn lọc lấy từ MỌI dự án (danh bạ chứa cả dự án nổi bật)
   const nguonDem = (k1: (p: Project) => string, k2: (d: DongTraCuu) => string): [string, number][] => {
@@ -232,13 +185,24 @@ export default function ProjectsBrowser({
     return [...m];
   };
   const provinceCounts = nguonDem((p) => provinceOf(p.location), (d) => d.tinh);
-  const typeCounts = nguonDem((p) => typeOf(p.type), (d) => nhomLoai(d.loaiHinh));
-  const statusCounts = nguonDem((p) => p.status, (d) => d.tinhTrang);
-  // Danh sách tỉnh theo hệ đã chọn, chỉ giữ tỉnh có dự án (kèm số đếm). Rỗng → dùng nguyên data.
   const provCountMap = new Map(provinceCounts);
-  const provinceOpts: [string, number][] =
-    provinceNamesFor(geoMode).filter((n) => provCountMap.has(n)).map((n) => [n, provCountMap.get(n)!]);
-  const provinceOptions = provinceOpts.length ? provinceOpts : provinceCounts;
+  // Danh sách chọn Dự án + Chủ đầu tư: dự án THẬT trên trang (nổi bật + tra cứu)
+  const tatCaDuAn = [...projects, ...(traCuu ?? []).filter((d) => !projects.some((p) => p.slug === d.slug)).map(duAnTuTraCuu)];
+  const khopCdt = (ten: string) => !boLoc.chuDauTu || slugChuDauTu(ten) === slugChuDauTu(boLoc.chuDauTu);
+  const khopLoaiDa = (type: string) => !boLoc.loaiDuAn?.length || projectCategories.some((c) => boLoc.loaiDuAn!.includes(c.slug) && duAnThuocNhom([{ type }], c).length > 0);
+  // LỰA CHỌN TỪNG TRƯỜNG + GỢI Ý KHI GÕ = MỘT GỐC CHUNG với tab Dự án của bộ lọc tổng (lib/thuHepDuAn, 01/11/2026): thu hẹp hai chiều
+  // cha ↔ con theo dữ liệu thật; khách chưa chọn trường khác thì danh sách để đủ.
+  const diaChiTraCuu = new Map((traCuu ?? []).map((d) => [d.slug, `${d.diaChi} · ${d.diaChiCu} · ${d.tinh}`]));
+  const tinhTraCuu = new Map((traCuu ?? []).map((d) => [d.slug, d.tinh]));
+  const dsLoc: (DuAnLoc & { p: Project })[] = tatCaDuAn.map((p) => ({
+    p, slug: p.slug, ten: p.name, chuDauTu: giaTriThat(p.developer), loaiHinh: giaTriThat(p.type), tinhTrang: giaTriThat(p.status),
+    diaChiTim: diaChiTraCuu.get(p.slug) ?? p.location, tinh: tinhTraCuu.get(p.slug) ?? tinhCua(p.location),
+  }));
+  const loc = thuHepDuAn(dsLoc, boLoc);
+  const tapDuAn = loc.tapDuAn.map((x) => x.p);
+  const { demLoai: demLoaiDa, dsChuDauTu, tinhTrangCo, coTruongKhac } = loc;
+  const goiYDuAnRieng = (kw: string): Suggestion[] =>
+    loc.goiY(kw).map(({ p }) => ({ label: p.name, kind: "Dự án" as const, sub: giaTriThat(p.location), href: `/du-an/${p.slug}` }));
 
   // TÌM KIẾM THEO TRƯỜNG — DÙNG CHUNG một luật với Mua bán / Cho thuê:
   // bóc tách câu dài → xếp 3 tầng (khớp đủ → gần đúng → liên quan) → không bao
@@ -248,7 +212,8 @@ export default function ProjectsBrowser({
   const xepVip = useMemo(() => sortProjectsByTier(projects), [projects]);
   const hits = searchAny(xepVip, q, {
     // TÊN dự án = chuỗi chính (khớp ở đây ăn điểm cao nhất)
-    ten: (p) => `${p.name} ${p.type}`,
+    // "TỪ" CỦA DỰ ÁN = TÊN DỰ ÁN + TÊN CHỦ ĐẦU TƯ (chủ dự án 01/11/2026)
+    ten: (p) => `${p.name} ${p.developer}`,
     // Vùng dò ĐẦY ĐỦ: thêm MÔ TẢ, quy mô và TIỆN ÍCH XUNG QUANH — trước đây chỉ
     // dò tên + chủ đầu tư + địa chỉ nên "view biển", "gần biển"… không bao giờ
     // khớp dù mô tả dự án có ghi rõ.
@@ -260,9 +225,11 @@ export default function ProjectsBrowser({
         ...(p.places ?? []).map((x) => `${x.category} ${x.name}`),
       ].join(" "),
     truong: [
-      { ten: "khu vực", chon: province !== ALL, giu: true, ok: (p) => provinceOf(p.location) === province },
-      { ten: "loại hình", chon: type !== ALL, giu: true, ok: (p) => typeOf(p.type) === type },
-      { ten: "tình trạng", chon: status !== ALL, ok: (p) => p.status === status },
+      { ten: "khu vực", chon: boLoc.locations.length > 0, giu: true, ok: (p) => khopKhuVuc(p.location, boLoc.locations, tinhCua(p.location)) },
+      { ten: "dự án", chon: !!boLoc.project, giu: true, ok: (p) => p.name === boLoc.project },
+      { ten: "loại hình", chon: !!boLoc.loaiDuAn?.length, giu: true, ok: (p) => khopLoaiDa(p.type) },
+      { ten: "tình trạng", chon: !!boLoc.tinhTrang, ok: (p) => p.status === boLoc.tinhTrang },
+      { ten: "chủ đầu tư", chon: !!boLoc.chuDauTu, giu: true, ok: (p) => khopCdt(p.developer) },
     ],
   });
   const visible = hits.map((h) => h.item);
@@ -270,38 +237,17 @@ export default function ProjectsBrowser({
   const tierBySlug = new Map(hits.map((h) => [h.item.slug, h.tier]));
   const termsBySlug = new Map(hits.map((h) => [h.item.slug, h.matched]));
 
-  // ── PANEL GỢI Ý TÌM KIẾM cho mục Dự án (mở khi gõ, tắt khi bấm ra ngoài/Esc) ──
-  // Gồm 2 nhóm: (1) gợi ý BẬC THANG dựng từ chính câu đang gõ · (2) tên dự án khớp.
-  const goiY = q.trim() ? goiYNoiLong(q) : [];
-  const duAnKhop = q.trim() ? hits.slice(0, 5).map((h) => h.item) : [];
-  const coGoiY = sugOpen && (goiY.length > 0 || duAnKhop.length > 0);
-  const chonGoiY = (tinh?: string) => {
-    if (tinh) setProvince(tinh);
-    setSugOpen(false);
-    chayTim(); // bấm gợi ý = ra kết quả NGAY, không phải bấm thêm nút Tìm
-  };
 
-  const hasActive = q.trim() !== "" || status !== ALL || province !== ALL || type !== ALL;
-  const reset = () => { setQ(""); setStatus(ALL); setProvince(ALL); setType(ALL); };
+  const hasActive = q.trim() !== "" || boLoc.locations.length > 0 || !!boLoc.project || !!boLoc.loaiDuAn?.length || !!boLoc.tinhTrang || !!boLoc.chuDauTu;
+  const reset = () => { setQ(""); setBoLoc(emptyFilters()); };
 
-  // Gợi ý CHẠY CHỮ trong ô tìm — dựng từ CHÍNH kho dự án đang có (tên dự án, chủ
-  // đầu tư, khu vực, tình trạng CÓ THẬT) nên gõ vào là chắc chắn ra kết quả;
-  // kho rỗng thì lùi về bộ theo cơ cấu. Dừng chạy khi khách đã gõ.
-  // useMemo giữ mảng ổn định giữa các lần render (nếu không sẽ reset chữ liên tục).
-  const hintDuAn = useMemo(() => projectHints(projects), [projects]);
-  const goiYChay = useTypingPlaceholder(hintDuAn, q.trim().length > 0);
 
   // ── CHẠY TÌM (nút Tìm · Enter · bấm gợi ý · bấm "Xong" ở bảng lọc) ──────────
   // Trang Dự án lọc TẠI CHỖ nên "chạy" = đóng panel/trang tìm + CUỘN xuống khối
   // kết quả, kèm ~0,7s trạng thái "đang tìm" để khách biết máy đang chạy —
   // dù có dự án khớp hay không.
-  const [dangTim, setDangTim] = useState(false);
   const chayTim = () => {
-    setSugOpen(false);
-    setOverlay(false);
-    setDangTim(true);
     batDauTim(); xongTim(); // lọc tại chỗ: kết quả có ngay — vạch chung hiện tối thiểu 0,6 giây
-    window.setTimeout(() => setDangTim(false), 700);
     // đợi overlay đóng xong mới cuộn, nếu không phần tử còn bị che
     window.setTimeout(cuonToiKetQua, 60);
   };
@@ -312,14 +258,27 @@ export default function ProjectsBrowser({
   // CHẾ ĐỘ BẢN ĐỒ cho tab Dự án — giống Mua bán / Cho thuê, marker là TÊN DỰ ÁN.
   const [mapMode, setMapMode] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setPage(1); }, [q, status, province, type]); // đổi lọc → về trang 1
+  useEffect(() => { setPage(1); }, [q, boLoc]); // đổi lọc → về trang 1
   // TRANG DỰ ÁN = BỐ CỤC WEB CŨ + THÊM TRA CỨU (chủ dự án 30/10/2026: "PC để như cũ, chỉ thêm vào"): một danh sách — dự án nổi bật
   // theo cấp VIP trước (thẻ ngang đang chạy), rồi dự án tra cứu theo tên A, B, C (thẻ tra cứu); thanh tìm + lọc áp chung cả hai
-  const traCuuLoc = traCuu ? locTraCuu(traCuu, q, province, type, status, ALL) : [];
+  const traCuuLoc = traCuu
+    ? locTraCuu(traCuu, q, ALL, ALL, boLoc.tinhTrang || ALL, ALL).filter((d) =>
+        khopKhuVuc(`${d.diaChi} · ${d.diaChiCu} · ${d.tinh}`, boLoc.locations, d.tinh) && (!boLoc.project || d.ten === boLoc.project) &&
+        khopLoaiDa(d.loaiHinh) && (!boLoc.chuDauTu || (!!d.chuDauTu && khopCdt(d.chuDauTu))))
+    : [];
   const slugNoiBat = new Set(visible.map((p) => p.slug));
+  // Số dự án KHỚP ĐÚNG lựa chọn (không tính gợi ý tương tự) — nút lối ra "Xem N dự án" (chủ dự án 01/11/2026)
+  const soDuAnKhop = visible.filter((p) => (tierBySlug.get(p.slug) ?? 1) === 1).length + traCuuLoc.filter((d) => !slugNoiBat.has(d.slug)).length;
+  const nhanXemDuAn = `Xem ${soDuAnKhop} dự án`;
+  // Đang lọc: dự án KHỚP đứng trước (nổi bật khớp → tra cứu khớp); dự án nổi bật "gợi ý tương tự" (tầng 2–3) xuống cuối, có nhãn tầng
+  // đứng trước — chọn Huế mà dự án Đà Nẵng chen lên trước là sai (01/11/2026)
+  const laGoiY = (p: Project) => hasActive && (tierBySlug.get(p.slug) ?? 1) > 1;
   const dsTrang: ({ noiBat: Project } | { traCuu: DongTraCuu })[] = [
-    ...visible.map((p) => ({ noiBat: p })),
+    ...visible.filter((p) => !laGoiY(p)).map((p) => ({ noiBat: p })),
     ...traCuuLoc.filter((d) => !slugNoiBat.has(d.slug)).map((d) => ({ traCuu: d })),
+    // "Gợi ý tương tự" CHỈ khi không có dự án nào khớp (chủ dự án 01/11/2026: lọc để TÌM dự án — chọn Huế thì chỉ ra dự án Huế;
+    // hết dự án khớp mới gợi ý, để trang không trống)
+    ...(soDuAnKhop > 0 ? [] : visible.filter(laGoiY).map((p) => ({ noiBat: p }))),
   ];
   const cacTrang = chiaTrangDuAn(dsTrang, dienThoai);
   const totalPages = cacTrang.length;
@@ -340,7 +299,7 @@ export default function ProjectsBrowser({
   const noiBat = useHomeSection("du-an-noi-bat");
   const [trangNoiBat, setTrangNoiBat] = useState(1);
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setTrangNoiBat(1); }, [q, status, province, type]); // đổi tìm / lọc → danh sách về trang 1
+  useEffect(() => { setTrangNoiBat(1); }, [q, boLoc]); // đổi tìm / lọc → danh sách về trang 1
   // MỞ MỘT DỰ ÁN RỒI BACK → về đúng trang danh sách + đúng chỗ đang xem (30/10/2026): ghi số trang + vị trí cuộn vào bước lịch sử
   // của danh sách (giữ nguyên dữ liệu Next.js trong đó), quay lại thì đọc ra
   // Danh sách "Xem thêm" của khối Dự án nổi bật TRANG CHỦ (trang Dự án đã là danh sách)
@@ -357,58 +316,30 @@ export default function ProjectsBrowser({
     if (st.clYDs) { const y = st.clYDs; requestAnimationFrame(() => window.scrollTo({ top: y })); window.setTimeout(() => window.scrollTo({ top: y }), 350); }
   }, [dangMoDs]);
 
-  // Panel chọn 1 giá trị trong dropdown (không in số dự án — chủ dự án 09/10/2026)
-  const optionList = (
-    options: [string, number][],
-    value: string,
-    onPick: (v: string) => void,
-    close: () => void
-  ) => (
-    <div className="space-y-0.5">
-      {[[ALL, projects.length] as [string, number], ...options].map(([name]) => (
-        <button
-          key={name}
-          type="button"
-          onClick={() => { onPick(name); close(); batDauTim(); xongTim(); }}
-          className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
-            value === name ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"
-          }`}
-        >
-          <span className="truncate">{name}</span>
-        </button>
-      ))}
-    </div>
-  );
 
   // Nhóm nút lọc dùng chung cho HAI vị trí: thanh lọc (desktop) và trang tìm
   // toàn màn hình (mobile). Chức năng y hệt — chỉ khác chỗ đặt.
+  // MỘT HÀNG, kiểu nút cũ của trang, CHA → CON (chủ dự án 01/11/2026): Toàn quốc · Loại hình · Chủ đầu tư · Dự án · Lọc thêm (Tình
+  // trạng) — trường trước thu hẹp trường sau theo dữ liệu thật — bảng chọn dùng chung với tab Dự án trang chủ (TruongDuAn), bấm Đặt lại · Áp dụng như Mua bán (chủ dự án 01/11/2026)
+  // Chọn xong một trường = lọc NGAY tại chỗ, bảng đóng, KHÔNG cuộn đi, không đóng màn tìm điện thoại — khách chọn tiếp các trường
+  // khác rồi mới bấm Tìm (chủ dự án 01/11/2026: "bấm vào 1 trường nó chạy rồi thì các trường khác có tác dụng gì")
+  const apDung = (close: () => void) => { close(); batDauTim(); xongTim(); };
   const chipLoc = (
     <FilterDropdownGroup>
-      <FilterDropdown label="Khu vực" summary={province === ALL ? "" : province} active={province !== ALL} panelClassName="w-64" className="shrink-0">
-        {({ close }) => (
-          <div>
-            {/* Công tắc hệ hành chính Cũ/Mới — đồng bộ với Mua bán/Cho thuê */}
-            <button
-              type="button"
-              role="switch"
-              aria-checked={geoMode === "moi"}
-              onClick={() => switchGeo(geoMode === "moi" ? "cu" : "moi")}
-              className="mb-2 flex w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-2.5 py-2 text-left transition hover:bg-cvr-blue/[0.1]"
-            >
-              <span className="text-[12px] font-semibold text-cvr-ink">Tìm theo địa chỉ mới sau sáp nhập</span>
-              <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${geoMode === "moi" ? "bg-cvr-blue" : "bg-black/20"}`}>
-                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${geoMode === "moi" ? "left-[18px]" : "left-0.5"}`} />
-              </span>
-            </button>
-            {optionList(provinceOptions, province, setProvince, close)}
-          </div>
-        )}
+      <FilterDropdown label="Toàn quốc" summary={nhanNoi(boLoc.locations)} active={boLoc.locations.length > 0} panelClassName="w-96" className="shrink-0 sm:min-w-0 sm:flex-1">
+        {({ close }) => <><LocationPanel locations={boLoc.locations} onChange={(locations) => setBoLoc((b) => ({ ...b, locations, project: "" }))}  /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, locations: [], project: "" }))} /></>}
       </FilterDropdown>
-      <FilterDropdown label="Loại hình" summary={type === ALL ? "" : type} active={type !== ALL} panelClassName="w-64" className="shrink-0">
-        {({ close }) => optionList(typeCounts, type, setType, close)}
+      <FilterDropdown label="Loại hình" summary={tomTatLoaiDuAn(boLoc.loaiDuAn)} active={!!boLoc.loaiDuAn?.length} panelClassName="w-72" className="shrink-0 sm:min-w-0 sm:flex-1">
+        {({ close }) => <><DaChon muc={(boLoc.loaiDuAn ?? []).map((s) => ({ nhan: tomTatLoaiDuAn([s]), bo: () => setBoLoc((b) => ({ ...b, loaiDuAn: (b.loaiDuAn ?? []).filter((x) => x !== s) })) }))} onBoHet={() => setBoLoc((b) => ({ ...b, loaiDuAn: [] }))} macDinh="Tất cả loại hình" /><PanelLoaiDuAn value={boLoc.loaiDuAn} onChange={(loaiDuAn) => setBoLoc((b) => ({ ...b, loaiDuAn }))} onApply={() => { apDung(close); }} dem={coTruongKhac("loai") ? demLoaiDa : undefined} /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, loaiDuAn: [] }))} /></>}
       </FilterDropdown>
-      <FilterDropdown label="Trạng thái" summary={status === ALL ? "" : status} active={status !== ALL} panelClassName="w-64" className="shrink-0">
-        {({ close }) => optionList(statusCounts, status, setStatus, close)}
+      <FilterDropdown label="Chủ đầu tư" summary={boLoc.chuDauTu ?? ""} active={!!boLoc.chuDauTu} panelClassName="w-80" className="shrink-0 sm:min-w-0 sm:flex-1">
+        {({ close }) => <><DaChon muc={boLoc.chuDauTu ? [{ nhan: boLoc.chuDauTu, bo: () => setBoLoc((b) => ({ ...b, chuDauTu: "" })) }] : []} onBoHet={() => setBoLoc((b) => ({ ...b, chuDauTu: "" }))} /><PanelChuDauTu ds={dsChuDauTu} hienSan={boLoc.locations.length > 0 || !!boLoc.loaiDuAn?.length || !!boLoc.project || !!boLoc.tinhTrang} value={boLoc.chuDauTu} onChange={(chuDauTu) => setBoLoc((b) => ({ ...b, chuDauTu }))} onApply={() => { apDung(close); }} /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, chuDauTu: "" }))} /></>}
+      </FilterDropdown>
+      <FilterDropdown label="Dự án" summary={boLoc.project} active={!!boLoc.project} panelClassName="w-72" className="shrink-0 sm:min-w-0 sm:flex-1">
+        {({ close }) => <><DaChon muc={boLoc.project ? [{ nhan: boLoc.project, bo: () => setBoLoc((b) => ({ ...b, project: "" })) }] : []} onBoHet={() => setBoLoc((b) => ({ ...b, project: "" }))} /><ProjectPanel ds={tapDuAn} hienSan={boLoc.locations.length > 0 || !!boLoc.loaiDuAn?.length || !!boLoc.chuDauTu || !!boLoc.tinhTrang} locations={boLoc.locations} project={boLoc.project} onPick={(name) => { setBoLoc((b) => ({ ...b, project: b.project === name ? "" : name })); apDung(close); }} /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, project: "" }))} /></>}
+      </FilterDropdown>
+      <FilterDropdown label="Lọc thêm" summary={boLoc.tinhTrang ? "Lọc thêm (1)" : ""} active={!!boLoc.tinhTrang} panelClassName="w-80" className="shrink-0 sm:min-w-0 sm:flex-1">
+        {({ close }) => <><DaChon muc={boLoc.tinhTrang ? [{ nhan: boLoc.tinhTrang, bo: () => setBoLoc((b) => ({ ...b, tinhTrang: "" })) }] : []} onBoHet={() => setBoLoc((b) => ({ ...b, tinhTrang: "" }))} /><PanelLocThemDuAn tinhTrang={boLoc.tinhTrang} onChange={(tinhTrang) => setBoLoc((b) => ({ ...b, tinhTrang }))} onApply={() => apDung(close)} co={coTruongKhac("tt") ? tinhTrangCo : undefined} /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, tinhTrang: "" }))} /></>}
       </FilterDropdown>
     </FilterDropdownGroup>
   );
@@ -566,210 +497,20 @@ export default function ProjectsBrowser({
       {/* 25/10/2026: máy tính CÙNG KIỂU thanh tìm Mua bán / Cho thuê — không khung viền, không bóng, gạch mảnh phía dưới, cách Hero 16px */}
       {/* Trang Dự án có Tra cứu (29/10/2026): không còn cột phải → thanh tìm rộng hết khung, thẳng mép với Nổi bật + Tra cứu */}
       <div id="tra-cuu" className={`order-1 mt-2 scroll-mt-24 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 lg:w-[calc(66.667%-10.667px)]`}>
-        <div className="flex flex-col gap-2 sm:gap-3">{/* máy tính 2 hàng như Mua bán: ô tìm rộng · hàng lọc dưới (25/10/2026) */}
-          {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê.
-              MOBILE: chừa lề trái đúng chỗ NÚT BACK TRÒN nổi (8px + 36px) để nút đứng
-              CẠNH ô tìm thành một hàng, không đè lên chữ gợi ý đang chạy. */}
-          <div className="flex flex-1 items-center gap-2">
-          <div ref={sugBoxRef} className="relative flex-1">
-            {/* Kính lúp hiện cả điện thoại — đồng bộ ô tìm Mua bán / Cho thuê (chủ dự án 20/10/2026) */}
-            <svg className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-muted sm:left-3 sm:h-4 sm:w-4 sm:text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-            </svg>
-            <input
-              type="text"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onFocus={(e) => {
-                // MOBILE: mở trang tìm toàn màn hình (có nút back + search) thay vì gõ tại chỗ.
-                if (window.matchMedia("(max-width: 639px)").matches) { e.currentTarget.blur(); setOverlay(true); }
-                else setSugOpen(true); // PC: mở panel gợi ý
-              }}
-              onKeyDown={(e) => { if (e.key === "Enter") chayTim(); }}
-              // Gợi ý CHẠY CHỮ của mục Dự án
-              placeholder={sugOpen ? "Tìm dự án…" : goiYChay} // đã chạm ô → chữ chạy dừng
-              aria-label="Tìm nhanh dự án"
-              enterKeyHint="search"
-              className="h-9 w-full rounded-full bg-cvr-surface pl-10 pr-10 sm:h-12 sm:rounded-xl sm:pr-32 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 focus:placeholder:text-transparent sm:h-10 sm:rounded-xl sm:border sm:border-transparent sm:pl-9 sm:pr-[8.5rem] sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
-            />
-            {/* Nút xoá nhanh (×) — đồng bộ với ô tìm Mua bán/Cho thuê */}
-            {q.trim().length > 0 && (
-              <button
-                type="button"
-                aria-label="Xoá tìm kiếm"
-                onClick={() => setQ("")}
-                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:right-[8.25rem]"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            )}
-            {/* ── PANEL GỢI Ý (chỉ PC) — bấm ra ngoài hoặc Esc là tắt ── */}
-            {coGoiY && (
-              <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 hidden max-h-80 overflow-y-auto rounded-xl border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 sm:block">
-                <div className="sticky top-0 -mx-1.5 -mt-1.5 mb-1 flex items-center justify-between border-b border-cvr-line bg-white px-2.5 py-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Gợi ý tìm kiếm</span>
-                  <button type="button" onClick={() => setSugOpen(false)} aria-label="Đóng gợi ý" className="text-cvr-muted hover:text-cvr-ink">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
-                </div>
-                {goiY.map((g) => (
-                  <button
-                    key={g.label}
-                    type="button"
-                    onClick={() => chonGoiY(g.patch.locations?.[0]?.province)}
-                    className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-black/[0.04]"
-                  >
-                    <span className="min-w-0 truncate text-sm text-cvr-ink">{g.label}</span>
-                    <span className="shrink-0 text-[11px] text-cvr-faint">{g.sub}</span>
-                  </button>
-                ))}
-                {duAnKhop.length > 0 && (
-                  <p className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Dự án</p>
-                )}
-                {duAnKhop.map((p) => (
-                  <Link
-                    key={p.slug}
-                    href={`/du-an/${p.slug}`}
-                    className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-black/[0.04]"
-                  >
-                    <span className="min-w-0 truncate text-sm text-cvr-ink">
-                      <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
-                    </span>
-                    <span className="shrink-0 text-[11px] text-cvr-faint">{provinceOf(p.location)}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* NÚT TÌM KIẾM trên PC — mục Dự án cũng phải có nút như Mua bán/Cho thuê
-                (trước đây desktop chỉ có kính lúp trang trí, không bấm được) */}
-            <button
-              type="button"
-              aria-label="Tìm kiếm dự án"
-              onClick={chayTim}
-              className="absolute bottom-1.5 right-1.5 top-1.5 hidden items-center justify-center gap-2 rounded-lg bg-cvr-blue px-6 text-[14px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
-            >
-              {dangTim && <SpinnerDuAn size={16} />}
-              {dangTim ? "Đang tìm…" : "Tìm kiếm"}
-            </button>
-
-            {/* (Bỏ nút kính lúp xanh trên điện thoại 18/10/2026 — chủ dự án: bàn phím đã có phím Tìm khi chạm ô) */}
-          </div>
-          {/* MÁY TÍNH: "Xem bản đồ" đứng SÁT ô tìm, cùng chiều cao — như Mua bán / Cho thuê (chủ dự án 25/10/2026). Điện thoại giữ nút cạnh tiêu đề. */}
-          <button
-            type="button"
-            onClick={() => setMapMode((v) => !v)}
-            aria-pressed={mapMode}
-            className={`hidden h-12 shrink-0 items-center gap-2 rounded-xl px-5 text-[15px] font-semibold text-white transition sm:inline-flex ${mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"}`}
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 2.4 5-2.4v14.4l-5 2.4-6-2.4-5 2.4V4.9l5-2.4v16.8" />
-            </svg>
-            {mapMode ? "Xem danh sách" : "Xem bản đồ"}
-          </button>
-          </div>
-
-          {/* Chip lọc: Khu vực · Loại hình · Trạng thái.
-              MOBILE: ẨN ở đây — chuyển vào TRANG TÌM toàn màn hình (bấm nút tìm kiếm),
-              đúng kiểu bộ lọc trang chủ mobile. DESKTOP: giữ nguyên tại chỗ. */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 lg:overflow-visible">
-            {/* Nút "Làm mới" (xoá hết lọc) Ở ĐẦU HÀNG TRƯỜNG LỌC trên điện thoại — ngay cạnh các trường vừa chọn (chủ dự án 18/10/2026) */}
-            {hasActive && (
-              <button type="button" aria-label="Làm mới" title="Làm mới" onClick={reset} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-blue-ink transition active:scale-90 active:bg-cvr-surface sm:hidden">{/* Làm mới = BIỂU TƯỢNG đậm ở đầu hàng lọc (chủ dự án 20/10/2026) */}<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg></button>
-            )}
-            {chipLoc}
-          </div>
-
-        </div>
+        {/* MỘT KHUÔN với Mua bán / Cho thuê (chủ dự án 01/11/2026): CHÍNH khung tìm FilterBar — bấm vào ô, lúc gõ, màn tìm điện thoại,
+            nút Làm mới, Xem bản đồ y hệt; chỉ khác HÀNG TRƯỜNG LỌC của dự án và gợi ý khi gõ (dự án khớp tên / chủ đầu tư). Lọc tại chỗ. */}
+        <FilterBar
+          value={{ ...boLoc, keyword: q }}
+          onChange={(nf) => { setQ(nf.keyword); setBoLoc({ ...nf, keyword: "" }); }}
+          onSearch={() => chayTim()}
+          onMap={() => setMapMode((v) => !v)}
+          mapActive={mapMode}
+          hintMode="duan"
+          hangLoc={chipLoc}
+          goiYRieng={goiYDuAnRieng}
+          nhanXem={nhanXemDuAn}
+        />
       </div>
-
-      {/* ── MOBILE: trang tìm dự án TOÀN MÀN HÌNH — back + × + nút Search (đồng bộ Mua bán) ── */}
-      {overlay && (
-        // z-[80]: phủ header (z-50) + thanh tab đáy (z-40) nhưng THẤP hơn sheet
-        // của nút lọc (z-100) để bảng chọn Khu vực/Loại hình/Trạng thái mở đè lên được.
-        <div className="fixed inset-0 z-[80] flex flex-col bg-white sm:hidden">
-          <div className="flex items-center gap-1 border-b border-cvr-line px-2 py-1.5">
-            {/* Nút ← và ô gõ cùng cỡ màn tìm Mua bán / Cho thuê (chủ dự án 20/10/2026) */}
-            <button
-              type="button"
-              aria-label="Đóng tìm kiếm"
-              onClick={() => setOverlay(false)}
-              className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
-            >
-              <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <div className="relative flex-1">
-              {/* ĐÚNG CHUẨN ô gõ màn tìm trang chủ: chữ 16, bo 18, viền xanh; từ khoá DÀI thì ô TỰ GIÃN thêm dòng (chủ dự án 20/10/2026) */}
-              <textarea
-                ref={(el) => {
-                  overlayInputRef.current = el;
-                  gianO(el); // như ô gõ trang chủ: ô trống cao tự nhiên một dòng, chỉ đo khi có chữ
-                }}
-                autoFocus
-                rows={1}
-                value={q}
-                onChange={(e) => setQ(e.target.value.split("\n").join(" "))}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); chayTim(); } }}
-                onFocus={(e) => { const o = e.currentTarget; o.setSelectionRange(o.value.length, o.value.length); }}
-                placeholder="Tìm dự án…" // màn tìm đã mở: chữ gợi ý KHÔNG chạy (chủ dự án 18/10/2026)
-                aria-label="Tìm dự án"
-                enterKeyHint="search"
-                className="no-scrollbar block max-h-[112px] min-h-[36px] w-full resize-none overflow-y-auto rounded-[18px] border border-transparent bg-cvr-surface py-[5px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent"
-              />
-              {q.trim().length > 0 && (
-                <button
-                  type="button"
-                  aria-label="Xoá tìm kiếm"
-                  onClick={() => { setQ(""); overlayInputRef.current?.focus(); }}
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint active:bg-black/5"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              )}
-            </div>
-            {/* (Bỏ nút kính lúp tròn 18/10/2026 — chủ dự án; tìm bằng phím Tìm của bàn phím) */}
-          </div>
-          {/* BỘ LỌC dự án — MOBILE nằm TRONG trang tìm này (giống trang chủ đưa
-              tab Mua bán/Cho thuê/Dự án vào trang tìm). Chức năng giữ nguyên. */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-cvr-line px-3 py-2">
-            {chipLoc}
-            {hasActive && (
-              <button
-                type="button"
-                onClick={reset}
-                className="h-10 shrink-0 rounded-full px-3 text-sm font-medium text-cvr-muted active:text-cvr-blue-ink"
-              >
-                Đặt lại
-              </button>
-            )}
-            {/* Chọn xong (1 trường hay nhiều trường tuỳ khách) → bấm XONG là ra kết quả */}
-            <button
-              type="button"
-              onClick={chayTim}
-              className="ml-auto h-10 shrink-0 rounded-full bg-cvr-blue px-4 text-sm font-semibold text-white active:scale-95"
-            >
-              Xong
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2">
-            {visible.length === 0 ? (
-              <p className="px-2.5 py-3 text-sm text-cvr-muted">Không tìm thấy dự án khớp “{q}”.</p>
-            ) : (
-              visible.map((p) => (
-                <Link
-                  key={p.slug}
-                  href={`/du-an/${p.slug}`}
-                  onClick={() => { boQuaLui(); setOverlay(false); }}
-                  className="flex flex-col rounded-lg px-2.5 py-2.5 active:bg-cvr-surface"
-                >
-                  <span className="text-sm font-medium text-cvr-ink">{p.name}</span>
-                  <span className="text-[12px] text-cvr-faint">{giaTriThat(p.location)}</span>
-                </Link>
-              ))
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Phần còn lại LUÔN nằm cuối (sau Hero và thanh lọc) trên mọi kích thước.
           id="ket-qua" + scroll-mt: bấm search từ trang chủ → tự cuộn tới đây, bỏ qua
@@ -869,9 +610,15 @@ export default function ProjectsBrowser({
             return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
           })()}
           <div id="noi-bat" className="reveal is-visible cards-stagger flex scroll-mt-24 flex-col gap-5" onClickCapture={() => ghiTrang(current, window.scrollY)}>
-            {pageItems.map((x) =>
+            {pageItems.map((x, i) =>
               "noiBat" in x
-                ? <Fragment key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</Fragment>
+                ? <Fragment key={x.noiBat.slug}>
+                    {/* nhãn tầng trước dự án gợi ý đầu tiên (dự án đầu trang đã có nhãn ở trên) */}
+                    {i > 0 && laGoiY(x.noiBat) && !("noiBat" in pageItems[i - 1] && laGoiY((pageItems[i - 1] as { noiBat: Project }).noiBat)) && (
+                      <p className="text-sm font-medium text-cvr-body">{TIER_LABEL[tierBySlug.get(x.noiBat.slug) ?? 2]}</p>
+                    )}
+                    {theDuAnWeb(x.noiBat)}
+                  </Fragment>
                 : <Fragment key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu), true)}</Fragment>,
             )}
 
@@ -968,16 +715,5 @@ export default function ProjectsBrowser({
       )}
       </div>
     </div>
-  );
-}
-
-// Vòng xoay "đang tìm" của mục Dự án — báo cho khách biết máy đang chạy
-// ngay khi bấm Tìm / Enter / Xong, dù có dự án khớp hay không.
-function SpinnerDuAn({ size = 16 }: { size?: number }) {
-  return (
-    <svg className="animate-spin" style={{ width: size, height: size }} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity={0.3} strokeWidth={2.6} />
-      <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" />
-    </svg>
   );
 }

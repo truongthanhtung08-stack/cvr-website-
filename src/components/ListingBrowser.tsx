@@ -27,6 +27,7 @@ import {
   type Filters,
   type SortKey,
 } from "@/lib/filters";
+import { coTruongKhacLoai, demLoaiTu } from "@/lib/thuHepTin";
 import { TIER_LABEL, suaChinhTa } from "@/lib/smartSearch";
 import { khoaThe } from "@/lib/nhanDoiHienThi";
 import { locDanhSach, soTinMoiTrang, PER_PAGE, type KetQuaLoc } from "@/lib/locDanhSach";
@@ -228,7 +229,7 @@ export default function ListingBrowser({
 
   // LỌC Ở MÁY CHỦ (#1b kế hoạch SEO, 17/10/2026): trang có `nguon` gửi bộ lọc + trang đang xem
   // tới /api/danh-sach/<nguon>/loc, chỉ nhận 10 tin của trang đó — không tải cả kho tin.
-  const [mayChu, setMayChu] = useState<(KetQuaLoc & { diem?: DiemBanDo[] }) | null>(ketQuaDau ?? null);
+  const [mayChu, setMayChu] = useState<(KetQuaLoc & { diem?: DiemBanDo[]; matSo?: { loai: [string, number][] } }) | null>(ketQuaDau ?? null);
   const daCoGoiY = useRef(false);
   const [goiY, setGoiY] = useState<TinGoiY[]>([]);
   // SỬA CHÍNH TẢ KIỂU GOOGLE: gõ sai một chữ cái ("phog") → tìm theo câu đã sửa và báo "Đang hiển thị kết quả cho …";
@@ -237,7 +238,7 @@ export default function ListingBrowser({
   const cauSua = useMemo(() => (!nguyenVan && filters.keyword.trim() ? suaChinhTa(filters.keyword) : null), [nguyenVan, filters.keyword, coDiaDanh]);
   const locThat = cauSua ? { ...filters, keyword: cauSua } : filters;
   const linkNguyenVan = (() => { const sp = new URLSearchParams(params.toString()); sp.set("q", filters.keyword); sp.set("nguyenvan", "1"); return `?${sp.toString()}`; })();
-  const yeuCau = JSON.stringify({ boLoc: locThat, sapXep: sort, trang: page, moiTrang, chiId, boQuaId, banDo: mapMode });
+  const yeuCau = JSON.stringify({ boLoc: locThat, sapXep: sort, trang: page, moiTrang, chiId, boQuaId, banDo: mapMode, matSo: true });
   const choDiaDanh = filters.keyword.trim() !== "" && !coDiaDanh;
   const dangNap = useRef(false); // không từ khoá thì luôn false → không gọi thêm lần nào
   useEffect(() => {
@@ -272,6 +273,9 @@ export default function ListingBrowser({
     [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page, coDiaDanh, moiTrang],
   );
   const kq = nguon ? mayChu : taiCho;
+  // Bảng chọn chỉ hiện lựa chọn còn tin, theo mọi trường KHÁC đã chọn (máy chủ đếm sẵn — 01/11/2026)
+  const matSo = mayChu?.matSo;
+  const demLoai = useMemo(() => (matSo ? (loai: string) => demLoaiTu(matSo.loai, loai) : undefined), [matSo]);
   const khoaKetQua = `${lanTim}-${JSON.stringify(filters)}`;
   const khoaKetQuaDau = useRef(khoaKetQua);
   const pageItems = kq?.trang ?? [];
@@ -328,6 +332,10 @@ export default function ListingBrowser({
           mapActive={mapMode}
           // Câu gợi ý chạy trong ô tìm bám theo TIN MỚI + TIN HOT của chính trang này
           hintItems={nguon ? goiY : items}
+          soKetQua={mayChu?.khop}
+          // Đủ toàn quốc khi khách chưa chọn gì khác; chỉ thu gọn theo các trường KHÁC khách đã chọn (chủ dự án 01/11/2026)
+          // Toàn quốc LUÔN đủ tỉnh thành: chọn nơi chưa có tin thì kết quả ra gợi ý tương tự (chủ dự án 01/11/2026)
+          demLoai={coTruongKhacLoai(filters) ? demLoai : undefined}
         />
       </div>
 

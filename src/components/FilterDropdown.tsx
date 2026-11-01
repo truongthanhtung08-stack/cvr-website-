@@ -71,11 +71,22 @@ export default function FilterDropdown({
   // ĐANG GÕ trong bảng (ô tìm tỉnh, dự án, giá…) trên điện thoại → bảng thành TOÀN MÀN HÌNH, ô gõ
   // lên trên cùng: bàn phím không đè lên bảng (chủ dự án 15/10/2026 — chuẩn chung mọi ô tìm).
   const [dangGo, setDangGo] = useState(false);
+  // BẢNG CÓ Ô GÕ (Toàn quốc, Dự án, Chủ đầu tư…) → mở TOÀN MÀN HÌNH NGAY TỪ ĐẦU (chủ dự án 01/11/2026: "bấm vào chọn, kể cả ô
+  // search… rất khó chịu khi nó bị nhảy"): trước đây mở nửa màn rồi chạm ô gõ mới bung toàn màn → bảng nhảy. Nay mở sẵn đúng cỡ
+  // lúc gõ (ô gõ trên cùng, bàn phím không đè — giữ chuẩn 15/10), chạm ô gõ không đổi gì.
+  const [coO, setCoO] = useState(false);
   // Đóng bảng khi ô gõ còn đang giữ con trỏ thì onBlur không kịp chạy → trả về dạng bảng trượt.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!open) setDangGo(false);
+    if (!open) { setDangGo(false); setCoO(false); }
   }, [open]);
+  // đo TRƯỚC khi vẽ (useLayoutEffect) — bảng hiện ra đúng cỡ ngay, không lóe nửa màn rồi mới bung
+  useLayoutEffect(() => {
+    if (!open || !sheet) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCoO(!!panelRef.current?.querySelector("input:not([type]), input[type=text], input[type=search]"));
+  }, [open, sheet]);
+  const toanMan = dangGo || coO;
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
     const sync = () => setSheet(mq.matches);
@@ -91,7 +102,7 @@ export default function FilterDropdown({
     const el = panelRef.current;
     if (!el) return;
     el.style.height = "";
-    if (dangGo) return; // đang gõ: bảng toàn màn hình theo lớp h-[100dvh], không giữ cỡ
+    if (toanMan) return; // bảng có ô gõ / đang gõ: toàn màn hình theo lớp h-[100dvh], không giữ cỡ
     // Đo sau khi nội dung vẽ xong (2 khung hình). Danh sách DÀI (tỉnh, phường…) → giữ CAO HẾT MỨC (86% màn) để bấm vào
     // một tỉnh chuyển sang danh sách phường không làm mép bảng nhảy; danh sách NGẮN (giá, diện tích) → giữ đúng cỡ đo được.
     let id2 = 0;
@@ -103,7 +114,7 @@ export default function FilterDropdown({
       });
     });
     return () => { cancelAnimationFrame(id); cancelAnimationFrame(id2); };
-  }, [open, sheet, dangGo]);
+  }, [open, sheet, toanMan]);
 
   // Khoá cuộn nền khi sheet đang mở (nếu không, cuộn trong sheet sẽ kéo cả trang)
   useEffect(() => {
@@ -119,10 +130,9 @@ export default function FilterDropdown({
     if (!el) return;
     const r = el.getBoundingClientRect();
     const m = 8;
-    const panelH = panelRef.current?.offsetHeight ?? 360;
     const spaceBelow = window.innerHeight - r.bottom;
     const spaceAbove = r.top;
-    const openUp = spaceBelow < panelH + m && spaceAbove > spaceBelow;
+    const openUp = spaceBelow < 240 && spaceAbove > spaceBelow; // chỉ khi trang không cuộn được nữa (cuối trang)
     const avail = (openUp ? spaceAbove : spaceBelow) - m * 2;
     const maxH = Math.max(200, Math.min(avail, Math.round(window.innerHeight * 0.7)));
     const vert = openUp ? { bottom: Math.max(m, window.innerHeight - r.top + m) } : { top: r.bottom + m };
@@ -133,8 +143,13 @@ export default function FilterDropdown({
     setPos({ ...vert, ...horiz, maxH });
   }, [align]);
 
+  // MÁY TÍNH: bảng LUÔN mở XUỐNG (chủ dự án 01/11/2026: bảng bật ngược lên che đầu trang, chật không chọn được). Dưới trường lọc
+  // không đủ chỗ thì cuộn trang đưa hàng lọc lên gần đầu màn hình trước, rồi mới đặt bảng — khuôn chung mọi trang.
   useLayoutEffect(() => {
-    if (open && !sheet) reposition();
+    if (!open || sheet) return;
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r && window.innerHeight - r.bottom < Math.round(window.innerHeight * 0.7) + 16) window.scrollBy({ top: r.top - 96, behavior: "instant" as ScrollBehavior });
+    reposition();
   }, [open, sheet, reposition]);
 
   useEffect(() => {
@@ -232,7 +247,7 @@ export default function FilterDropdown({
               : // MOBILE: pill bo tròn mềm, nền xám nhạt (giống ô tìm) — hết ô vuông viền cứng.
                 // DESKTOP (sm): giữ nguyên kiểu cũ (vuông, viền, nền trắng).
                 // ĐIỆN THOẠI GỌN LẠI (chủ dự án 18/10/2026: "chỉnh menu phía dưới thanh search nhỏ lại cho phù hợp") — h-8, chữ 13px
-                `h-8 w-auto shrink-0 gap-1 whitespace-nowrap rounded-full px-3 text-[13px] sm:h-10 sm:gap-2 sm:rounded-none sm:px-3.5 sm:text-sm ${
+                `h-8 w-auto shrink-0 gap-1 whitespace-nowrap rounded-full px-3 text-[13px] sm:h-10 sm:w-full sm:gap-2 sm:rounded-none sm:px-3.5 sm:text-sm ${
                   active
                     ? "border-cvr-blue bg-cvr-blue/10 font-medium text-cvr-blue-ink sm:border-cvr-blue/60 sm:bg-white"
                     : "border-black/10 bg-cvr-surface text-cvr-ink/80 hover:border-cvr-ink/35 hover:text-cvr-ink sm:border-cvr-line sm:bg-white sm:text-cvr-body"
@@ -274,7 +289,7 @@ export default function FilterDropdown({
                   if (o instanceof HTMLInputElement && /^(text|search|number|tel|email|url)?$/.test(o.type)) setDangGo(true);
                 }}
                 onBlur={(e) => { if (!(e.relatedTarget instanceof HTMLInputElement)) setDangGo(false); }}
-                className={`cvr-sheet absolute inset-x-0 flex flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_40px_rgba(0,0,0,0.22)] ${dangGo ? "top-0 h-[100dvh] pt-[env(safe-area-inset-top)]" : "bottom-0 max-h-[86dvh] rounded-t-2xl"}`}
+                className={`cvr-sheet absolute inset-x-0 flex flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_40px_rgba(0,0,0,0.22)] ${toanMan ? "top-0 h-[100dvh] pt-[env(safe-area-inset-top)]" : "bottom-0 max-h-[86dvh] rounded-t-2xl"}`}
               >
                 {/* Thanh kéo + tiêu đề — đúng cấu trúc sheet của iOS */}
                 <div className="shrink-0 px-4 pb-2 pt-2.5">
@@ -294,7 +309,7 @@ export default function FilterDropdown({
                   </div>
                 </div>
                 {/* Nội dung bộ lọc — cuộn riêng trong sheet */}
-                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
+                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4">
                   {children({ close: () => setOpen(false) })}
                 </div>
               </div>

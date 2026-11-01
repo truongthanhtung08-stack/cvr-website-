@@ -148,7 +148,7 @@ function projectRowToProject(r: ProjectRow): Project {
     .filter((f) => f && f.image)
     .map((f) => ({ label: f.label ?? "", image: asset(f.image), note: f.note ?? "" }));
   const dev = d.developerInfo;
-  const traCuu = !!d.dangThe || (d.tier ?? "basic") === "basic" || !photos.length; // phân loại một chỗ (31/10/2026)
+  const traCuu = !!d.dangThe || !photos.length; // phân loại một chỗ (01/11/2026)
   return {
     slug: r.slug,
     name: r.name,
@@ -172,8 +172,9 @@ function projectRowToProject(r: ProjectRow): Project {
     ...(photos.length ? { photos: photos.map(asset) } : {}),
     ...(videos.length ? { videos } : {}),
     tier: d.tier ?? "basic",
-    // NỔI BẬT = dự án VIP anh nâng (Diamond / Gold / Silver) VÀ đã có ảnh; còn lại là TRA CỨU (chủ dự án 31/10/2026: "nổi bật theo VIP,
-    // tra cứu A–Z") — MỘT chỗ phân loại, mọi trang đọc theo. Trước đây hồ sơ tạo bằng form Admin tự thành nổi bật (thiếu dấu dangThe).
+    // NỔI BẬT = hồ sơ đầy đủ (không phải dạng thẻ) VÀ đã có ảnh, xếp theo cấp VIP; còn lại là TRA CỨU, xếp A–Z (chủ dự án: "nổi bật
+    // theo cấp, tra cứu theo ABCD") — MỘT chỗ phân loại, mọi trang đọc theo. 01/11: bỏ điều kiện "phải nâng VIP" (31/10) — làm hồ sơ
+    // đầy đủ gói thường (Cora, SPANA, TTC, Da Nang Downtown) rơi xuống tra cứu.
     ...(traCuu ? { dangThe: true } : {}),
     // Chỉ trả contact khi admin ĐÃ nhập ít nhất SĐT hoặc email — không có thì
     // trang dự án bỏ hẳn khối liên hệ (không hiện số tổng đài bịa).

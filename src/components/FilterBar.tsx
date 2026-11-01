@@ -8,8 +8,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNutQuayLai } from "@/lib/khoaCuon";
 import { useRouter } from "next/navigation";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
-import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, type GeoMode } from "@/lib/locations";
-import { projects } from "@/lib/data";
+import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, choCuCua, phuongMoiCua, phuongMoiCuaQuan, oldNamesOf, newProvinceOf, type GeoMode } from "@/lib/locations";
 import {
   typeGroupsFor,
   priceRangesFor,
@@ -19,7 +18,8 @@ import {
   priceRangeText,
   areaRangeText,
   normalizeVi,
-  locationLabel,
+  khopTen,
+  diemTen,
   sameLocation,
   MAX_LOCATIONS,
   legalOptions,
@@ -72,6 +72,12 @@ export default function FilterBar({
   purpose = "ban",
   hintMode,
   hintItems,
+  hangLoc,
+  goiYRieng,
+  soKetQua,
+  nhanXem,
+  demTheoNoi,
+  demLoai,
 }: {
   value: Filters;
   onChange: (f: Filters) => void;
@@ -96,6 +102,17 @@ export default function FilterBar({
   // Kho tin để dựng câu gợi ý theo TIN MỚI + TIN HOT (đổi theo từng đợt đăng tin).
   // Không truyền → dùng bộ câu theo cơ cấu.
   hintItems?: TinGoiY[];
+  /** MỘT KHUÔN cho trang Dự án (chủ dự án 01/11/2026): cùng ô tìm, cùng màn tìm, cùng nút Làm mới — chỉ thay HÀNG TRƯỜNG LỌC
+   *  (Toàn quốc · Dự án · Loại hình · Chủ đầu tư · Lọc thêm) và GỢI Ý khi gõ (dự án khớp tên / chủ đầu tư). */
+  hangLoc?: React.ReactNode;
+  goiYRieng?: (kw: string) => Suggestion[];
+  /** Số kết quả khớp đúng lựa chọn → nút lối ra "Xem N tin" ở đáy mỗi bảng chọn */
+  soKetQua?: number;
+  /** Chữ nút lối ra do trang tự ghi (trang Dự án: "Xem N dự án") */
+  nhanXem?: string;
+  /** Số tin theo nơi / theo loại, tính theo mọi trường KHÁC đã chọn → bảng chọn chỉ hiện cái còn tin (01/11/2026) */
+  demTheoNoi?: (l: LocationSel) => number;
+  demLoai?: (loai: string) => number;
 }) {
   // coDiaDanh trong điều kiện tính lại của các useMemo dùng địa danh: dữ liệu về sau lần tính đầu thì phải tính lại
   const coDiaDanh = useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
@@ -291,7 +308,7 @@ export default function FilterBar({
     : []), [typed, kwHieu, purpose, coDiaDanh, dsDuAn, goiYThatDs]); // eslint-disable-line react-hooks/exhaustive-deps
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "gợi ý phổ biến" toàn tên tỉnh trơn — vô dụng)
   // Bỏ gợi ý khớp ký tự kiểu Google (địa danh trùng tên tỉnh khác, "Tất cả biệt thự"…) — chủ dự án 21/10/2026: chỉ gợi ý theo ý câu
-  const panelItems: Suggestion[] = typed ? bacThang : recentShown;
+  const panelItems: Suggestion[] = typed ? (goiYRieng ? goiYRieng(kwHoan) : bacThang) : recentShown; // tên dự án (chữ Anh) không qua sửa chính tả
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
   // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
   // phải nói đã hiểu gì và gợi ý theo đúng tiêu chí đó.
@@ -379,21 +396,22 @@ export default function FilterBar({
 
   const areaLabel = areaRangeText(f.areaMin, f.areaMax);
   const priceLabel = priceRangeText(f.priceMin, f.priceMax);
-  const locLabel =
-    f.locations.length === 0 ? "" :
-    f.locations.length === 1 ? locationLabel(f.locations[0]) :
-    `${locationLabel(f.locations[0])} +${f.locations.length - 1}`;
-  const typeLabel =
-    f.types.length === 0 ? "" : f.types.length === 1 ? tenLoaiHinh(f.types[0]) : `${f.types.length} loại hình`;
+  const locLabel = nhanNoi(f.locations);
+  const loaiGom = gomLoai(f.types, typeGroups);
+  const typeLabel = loaiGom.length === 0 ? "" : loaiGom.length === 1 ? loaiGom[0].nhan : `${loaiGom.length} loại hình`;
   // Lọc thêm ĐẶC THÙ theo ý định: mua bán = Hướng + Pháp lý · cho thuê = Nội thất.
   // + 2 công tắc Tin xác thực / Môi giới chuyên nghiệp (đã gộp vào drawer "Lọc thêm").
   const moreCount =
+    (f.project ? 1 : 0) +
     (f.beds ? 1 : 0) +
     (purpose === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0)) +
     (f.verified ? 1 : 0) + (f.broker ? 1 : 0);
 
-  // Mỗi ô lọc rộng vừa đúng nội dung (pill gọn, hiện đủ chữ, không kéo giãn).
-  const ddClass = "shrink-0";
+  // LỐI RA của mỗi bảng chọn (chủ dự án 01/11/2026): một nút "Xem N tin" ghi đúng số kết quả theo lựa chọn — bấm là đóng bảng, tới kết quả
+  const chuXem = nhanXem ?? (soKetQua != null ? `Xem ${soKetQua} tin` : "Tìm kiếm");
+  const loiRa = (close: () => void, datLai: () => void) => <NutXem nhan={chuXem} onClick={() => { close(); chayTim(); }} onReset={datLai} />;
+  // Điện thoại: mỗi ô rộng vừa nội dung (hàng cuộn ngang). Máy tính: các ô CHIA ĐỀU hàng, chọn xong không đổi cỡ (01/11/2026).
+  const ddClass = "shrink-0 sm:min-w-0 sm:flex-1";
 
   // ===== "Loại nhà đất" — dòng 2 (bố cục Batdongsan) =====
   const typeDropdown = (
@@ -401,34 +419,38 @@ export default function FilterBar({
       {({ close }) => {
         // LOGIC CHỌN LOẠI HÌNH (chủ dự án 20/10/2026): chưa chọn loại nào = TẤT CẢ (không lọc). Bấm "Tất cả" = bỏ lọc;
         // đang "Tất cả" mà bấm một loại = chỉ loại đó; chọn đủ mọi loại = quay về "Tất cả" (không hiện "13 loại hình").
-        const allChecked = f.types.length === 0 || typeOptions.every((t) => f.types.includes(t));
         const doiLoai = (t: string, checked: boolean) => {
           const next = checked ? f.types.filter((x) => x !== t) : [...f.types, t];
           set({ types: typeOptions.every((x) => next.includes(x)) ? [] : next });
         };
         return (
           <div>
-            {/* Chọn tất cả */}
-            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">
-              <input
-                type="checkbox"
-                checked={allChecked}
-                onChange={() => set({ types: [] })}
-                className="h-4 w-4 shrink-0 accent-cvr-blue"
-              />
-              <span>Tất cả loại nhà đất</span>
-            </label>
+            <DaChon muc={loaiGom.map((g) => ({ nhan: g.nhan, bo: () => set({ types: f.types.filter((y) => !g.cac.includes(y)) }) }))} macDinh="Tất cả loại nhà đất" />
+            {/* "Tất cả" KHÔNG lặp hai lần (chủ dự án 01/11/2026): chưa chọn gì thì dòng đã chọn trên cùng ghi "Tất cả …"; bỏ chọn bằng × hoặc Đặt lại */}
 
-            <div className="mt-1 max-h-64 space-y-1.5 overflow-y-auto pr-1">
-              {typeGroups.map((g) => (
+            <div className="mt-1 space-y-1.5 pr-1">
+              {typeGroups.map((g0) => ({ ...g0, items: g0.items.filter((t) => !demLoai || demLoai(t) > 0 || f.types.includes(t)) })).filter((g) => g.items.length > 0).map((g) => (
                 <div key={g.label}>
-                  <p className="px-2 pb-0.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">{g.label}</p>
+                  {/* Bấm NHÓM = chọn cả nhóm (xong); muốn chi tiết thì bấm loại con (chủ dự án 01/11/2026) */}
+                  {(() => {
+                    const ca = g.items.every((t) => f.types.includes(t));
+                    const doiNhom = () => {
+                      const next = ca ? f.types.filter((x) => !g.items.includes(x)) : [...new Set([...f.types, ...g.items])];
+                      set({ types: typeOptions.every((x) => next.includes(x)) ? [] : next });
+                    };
+                    return (
+                      <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 pb-0.5 pt-1.5 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">
+                        <input type="checkbox" checked={ca} onChange={doiNhom} className="h-4 w-4 shrink-0 accent-cvr-blue" />
+                        <span className="truncate">{g.label}</span>
+                      </label>
+                    );
+                  })()}
                   {g.items.map((t) => {
                     const checked = f.types.includes(t);
                     return (
                       <label
                         key={t}
-                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-cvr-ink/80 transition hover:bg-black/5"
+                        className="flex cursor-pointer items-center gap-2.5 rounded-lg py-1.5 pl-8 pr-2 text-sm text-cvr-ink/80 transition hover:bg-black/5"
                       >
                         <input
                           type="checkbox"
@@ -436,7 +458,8 @@ export default function FilterBar({
                           onChange={() => doiLoai(t, checked)}
                           className="h-4 w-4 shrink-0 accent-cvr-blue"
                         />
-                        <span className="truncate">{tenLoaiHinh(t)}</span>
+                        <span className="flex-1 truncate">{tenLoaiHinh(t)}</span>
+                        {demLoai && <span className="shrink-0 text-xs text-cvr-faint">{demLoai(t)}</span>}
                       </label>
                     );
                   })}
@@ -444,10 +467,8 @@ export default function FilterBar({
               ))}
             </div>
 
-            {/* HÀNG KẾT THÚC CHỌN — bỏ chọn hết · "Xong" đóng bảng và RA KẾT QUẢ NGAY.
-                Trước đây chỉ có nút bỏ chọn, chọn xong không biết bấm đâu để tìm. */}
-            {/* Hàng nút ĐỒNG BỘ mọi bảng lọc: Đặt lại · Áp dụng (chủ dự án 20/10/2026) */}
-            <PanelActions onReset={() => set({ types: [] })} onApply={() => { close(); chayTim(); }} />
+            {/* CHỌN LÀ LỌC NGAY — không nút Đặt lại · Áp dụng (chủ dự án 01/11/2026: mỗi mức nhu cầu có lựa chọn, không ép khách bấm thêm) */}
+            {loiRa(close, () => set({ types: [] }))}
           </div>
         );
       }}
@@ -457,43 +478,30 @@ export default function FilterBar({
   // ===== Các dropdown chi tiết — dòng 2 (thứ tự hiển thị xếp ở phần return) =====
   // Khu vực — ĐA CHỌN (tối đa 5) theo tầng Tỉnh→Quận→Phường (kiểu Batdongsan)
   const locationDropdown = (
-      <FilterDropdown label="Toàn quốc" summary={locLabel} active={f.locations.length > 0} panelClassName="w-80" compact={compact} className={ddClass}>
-        {({ close }) => (
+      <FilterDropdown label="Toàn quốc" summary={locLabel} active={f.locations.length > 0} panelClassName="w-96" compact={compact} className={ddClass}>
+        {({ close }) => (<>
           <LocationPanel
             locations={f.locations}
             onChange={(locations) => set({ locations })}
+            demTheoNoi={demTheoNoi}
             // "Xong" = kết thúc chọn VÀ ra kết quả ngay (đóng bảng rồi chạy tìm),
             // không phải chỉ đóng bảng để khách ngồi đoán đã tìm hay chưa.
             onClose={() => { close(); chayTim(); }}
           />
+          {loiRa(close, () => set({ locations: [] }))}
+          </>
         )}
       </FilterDropdown>
   );
 
-  // Dự án — LỌC ĐỘNG theo khu vực đã chọn (kiểu Batdongsan)
-  const projectDropdown = (
-      <FilterDropdown label="Dự án" summary={f.project} active={!!f.project} panelClassName="w-72" compact={compact} className={ddClass}>
-        {({ close }) => (
-          <ProjectPanel
-            locations={f.locations}
-            project={f.project}
-            // Chọn dự án = chốt luôn → đóng bảng + ra kết quả ngay
-            onPick={(name) => {
-              const next = { ...f, project: f.project === name ? "" : name };
-              onChange(next);
-              close();
-              chayTim(next, false);
-            }}
-          />
-        )}
-      </FilterDropdown>
-  );
 
   // Khoảng giá (tên nhãn kiểu Batdongsan)
   const priceDropdown = (
       <FilterDropdown label="Khoảng giá" summary={priceLabel} active={f.priceMin != null || f.priceMax != null} panelClassName="w-80" compact={compact} className={ddClass}>
-        {({ close }) => (
+        {({ close }) => (<>
+          <DaChon muc={priceLabel ? [{ nhan: priceLabel, bo: () => set({ priceMin: null, priceMax: null }) }] : []} onBoHet={() => set({ priceMin: null, priceMax: null })} />
           <RangePanel
+            key={`${f.priceMin}-${f.priceMax}`}
             unit="tỷ"
             step={0.5}
             sliderMax={50}
@@ -504,15 +512,18 @@ export default function FilterBar({
             onReset={() => set({ priceMin: null, priceMax: null })}
             onApply={() => { close(); chayTim(); }}
           />
-        )}
+          {loiRa(close, () => set({ priceMin: null, priceMax: null }))}
+        </>)}
       </FilterDropdown>
   );
 
   // Diện tích
   const areaDropdown = (
       <FilterDropdown label="Diện tích" summary={areaLabel} active={f.areaMin != null || f.areaMax != null} panelClassName="w-80" compact={compact} className={ddClass}>
-        {({ close }) => (
+        {({ close }) => (<>
+          <DaChon muc={areaLabel ? [{ nhan: areaLabel, bo: () => set({ areaMin: null, areaMax: null }) }] : []} onBoHet={() => set({ areaMin: null, areaMax: null })} />
           <RangePanel
+            key={`${f.areaMin}-${f.areaMax}`}
             unit="m²"
             step={10}
             sliderMax={purpose === "thue" ? 5000 : 500}
@@ -523,7 +534,8 @@ export default function FilterBar({
             onReset={() => set({ areaMin: null, areaMax: null })}
             onApply={() => { close(); chayTim(); }}
           />
-        )}
+          {loiRa(close, () => set({ areaMin: null, areaMax: null }))}
+        </>)}
       </FilterDropdown>
   );
 
@@ -539,6 +551,17 @@ export default function FilterBar({
       >
         {({ close }) => (
           <div className="space-y-4">
+            {/* Lọc thêm CHỈ thứ mục Mua bán / Cho thuê cần (chủ dự án 01/11/2026: Dự án đã có mục riêng — không nhồi vào đây); dự án
+                đang lọc (đến từ ô tìm) vẫn hiện ở Đã chọn để bỏ */}
+            <DaChon muc={[
+              ...(f.project ? [{ nhan: f.project, bo: () => set({ project: "" }) }] : []),
+              ...(f.beds ? [{ nhan: f.beds === 5 ? "5+ PN" : `${f.beds} PN`, bo: () => set({ beds: 0 }) }] : []),
+              ...(f.direction ? [{ nhan: f.direction, bo: () => set({ direction: "" }) }] : []),
+              ...(f.legal ? [{ nhan: f.legal, bo: () => set({ legal: "" }) }] : []),
+              ...(f.furnishing ? [{ nhan: f.furnishing, bo: () => set({ furnishing: "" }) }] : []),
+              ...(f.verified ? [{ nhan: "Tin xác thực", bo: () => set({ verified: false }) }] : []),
+              ...(f.broker ? [{ nhan: "Môi giới chuyên nghiệp", bo: () => set({ broker: false }) }] : []),
+            ]} onBoHet={() => set({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false })} />
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Số phòng ngủ</p>
               <div className="flex flex-wrap gap-1.5">
@@ -593,7 +616,8 @@ export default function FilterBar({
                 <SwitchRow label="Môi giới chuyên nghiệp" checked={f.broker} onChange={(v) => set({ broker: v })} />
               </div>
             </div>
-            <PanelActions onReset={() => set({ beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false })} onApply={() => { close(); chayTim(); }} />
+            {/* CHỌN LÀ LỌC NGAY — không nút Đặt lại · Áp dụng (chủ dự án 01/11/2026: mỗi mức nhu cầu có lựa chọn, không ép khách bấm thêm) */}
+            {loiRa(close, () => set({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false }))}
           </div>
         )}
       </FilterDropdown>
@@ -874,12 +898,13 @@ export default function FilterBar({
             {hasActiveFilters(f) && (
               <button type="button" aria-label="Làm mới" title="Làm mới" onClick={() => { setCauCu(""); onChange(emptyFilters()); }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-blue-ink transition active:scale-90 active:bg-cvr-surface">{/* Làm mới = BIỂU TƯỢNG đậm ở đầu hàng lọc (chủ dự án 20/10/2026) */}<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg></button>
             )}
+            {hangLoc ?? <>
             {locationDropdown}
-            {projectDropdown}
             {typeDropdown}
             {priceDropdown}
             {areaDropdown}
             {moreDropdown}
+            </>}
           </div>
         )}
         {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
@@ -887,7 +912,7 @@ export default function FilterBar({
             gọn; vào đây mới có đủ chỗ chọn, và chọn xong bấm Tìm là ra ĐÚNG mục. */}
         {/* Kéo danh sách gợi ý → hạ bàn phím (kiểu Google) */}
         <div onTouchMove={() => overlayInputRef.current?.blur()} className="flex-1 overflow-y-auto p-1.5">
-          {noHits && (
+          {noHits && !goiYRieng && (
             <p className="px-2.5 pb-1.5 pt-2 text-[13px] text-cvr-muted">
               {dongDanDat}
             </p>
@@ -941,12 +966,13 @@ export default function FilterBar({
             {hasActiveFilters(f) && (
               <button type="button" aria-label="Làm mới" title="Làm mới" onClick={() => { setCauCu(""); onChange(emptyFilters()); }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-blue-ink transition active:scale-90 active:bg-cvr-surface sm:hidden">{/* Làm mới = BIỂU TƯỢNG đậm ở đầu hàng lọc (chủ dự án 20/10/2026) */}<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg></button>
             )}
+            {hangLoc ?? <>
             {locationDropdown}
-            {projectDropdown}
             {typeDropdown}
             {priceDropdown}
             {areaDropdown}
             {moreDropdown}
+            </>}
             {/* Bỏ nút "Đặt lại" (chủ dự án 17/10/2026): trùng việc với nút "Xoá lọc" cạnh tiêu đề kết quả */}
           </div>
         </div>
@@ -955,14 +981,34 @@ export default function FilterBar({
   );
 }
 
+
+/** Nhãn trường khu vực đã chọn — cùng cách ghi với dòng đã chọn trong bảng ("Đà Nẵng › Hải Châu, Hòa Cường"; nhiều nhánh thì +N).
+ *  MỘT hàm dùng chung cho Mua bán · Cho thuê · Dự án · trang chủ (01/11/2026). */
+export function nhanNoi(locations: LocationSel[]): string {
+  if (!locations.length) return "";
+  const nhanh = new Map<string, string[]>();
+  for (const l of locations) {
+    const goc = l.district ? `${l.province} › ${l.district}` : l.province;
+    const ds = nhanh.get(goc) ?? [];
+    if (l.ward) ds.push(l.ward.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, ""));
+    nhanh.set(goc, ds);
+  }
+  const [[goc, ds]] = [...nhanh.entries()];
+  const dau = ds.length ? `${goc} › ${ds.join(", ")}` : goc;
+  return nhanh.size > 1 ? `${dau} +${nhanh.size - 1}` : dau;
+}
+
 // ===== Bộ phận con =====
 
 // Bộ chọn khu vực ĐA TẦNG + ĐA CHỌN (kiểu Batdongsan): duyệt Tỉnh→Quận→Phường,
 // thêm cả tỉnh/quận hoặc chọn tới phường; mỗi khu vực là 1 chip (tối đa MAX_LOCATIONS).
 export function LocationPanel({
-  locations, onChange, onClose,
+  locations, onChange, demTheoNoi,
 }: {
   locations: LocationSel[];
+  /** Trang có dữ liệu ít (Dự án): đếm số kết quả của một nơi → CHỈ hiện nơi CÓ kết quả, kèm số (chủ dự án 01/11/2026: không cho
+   *  khách chọn nơi trống rồi cụt đường). Không truyền → hiện đủ danh mục như cũ (Mua bán / Cho thuê). */
+  demTheoNoi?: (l: LocationSel) => number;
   onChange: (locations: LocationSel[]) => void;
   // Đóng panel từ bên trong (nút "Xong") — trước đây chỉ đóng được bằng cách
   // bấm ra ngoài, người dùng không biết đã chọn xong hay chưa.
@@ -972,6 +1018,14 @@ export function LocationPanel({
   const [q, setQ] = useState("");
   const [prov, setProv] = useState(""); // đường dẫn đang duyệt (chưa cam kết)
   const [dist, setDist] = useState("");
+  // Đổi tầng (Toàn quốc → tỉnh → phường) = cuộn bảng về đầu, không đứng lưng chừng danh sách mới (chủ dự án 01/11/2026: vuốt chọn lên
+  // xuống phải đúng)
+  const gocRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let el: HTMLElement | null = gocRef.current?.parentElement ?? null;
+    while (el && getComputedStyle(el).overflowY !== "auto") el = el.parentElement;
+    el?.scrollTo({ top: 0 });
+  }, [prov, dist]);
   // Hệ đơn vị hành chính: "moi" (sau sát nhập 2025 — 2 cấp) hoặc "cu" (trước — 3 cấp).
   // Nhớ lựa chọn để áp đồng bộ cho Dự án · Mua bán · Cho thuê (cả PC & Mobile).
   const [mode, setMode] = useState<GeoMode>("moi");
@@ -979,8 +1033,35 @@ export function LocationPanel({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc localStorage một lần khi mở (có từ trước)
     try { const m = localStorage.getItem(GEO_MODE_KEY); if (m === "moi" || m === "cu") setMode(m); } catch { /* noop */ }
   }, []);
+  // ĐỔI HỆ CŨ ↔ MỚI = ĐỔI LUÔN những nơi đã chọn sang hệ kia (chủ dự án 01/11/2026: "chuyển đổi qua lại phải đồng bộ") — dùng bảng
+  // sáp nhập của web; nơi không có trong bảng thì giữ nguyên (không đoán). Kết quả lọc không đổi vì bộ lọc vẫn khớp cả hai hệ.
+  const doiHe = (ls: LocationSel[], m: GeoMode): LocationSel[] => {
+    const ra: LocationSel[] = [];
+    const them = (l: LocationSel) => { if (!ra.some((x) => sameLocation(x, l))) ra.push(l); };
+    for (const l of ls) {
+      if (m === "cu") {
+        if (l.ward && !l.district) {
+          const cu = choCuCua(l.province, l.ward);
+          if (cu.length) cu.forEach((c) => them({ province: c.tinh, district: c.quan, ward: c.phuong }));
+          else them(l);
+        } else if (!l.district && !l.ward) oldNamesOf(l.province).forEach((p) => them({ province: p }));
+        else them(l);
+      } else {
+        if (l.ward && l.district) {
+          const moi = phuongMoiCua(l.province, l.district, l.ward);
+          them(moi ? { province: moi.tinh, ward: moi.phuong } : l);
+        } else if (l.district) {
+          const ws = phuongMoiCuaQuan(l.province, l.district);
+          if (ws.length) ws.forEach((w) => them({ province: newProvinceOf(l.province), ward: w }));
+          else them(l);
+        } else them({ province: newProvinceOf(l.province) });
+      }
+    }
+    return ra; // không cắt: đổi hệ là đổi CÁCH GỌI, không được làm rơi nơi khách đã chọn (01/11/2026)
+  };
   const switchMode = (m: GeoMode) => {
     if (m === mode) return;
+    if (locations.length) onChange(doiHe(locations, m));
     setMode(m); setProv(""); setDist(""); setQ("");
     try { localStorage.setItem(GEO_MODE_KEY, m); } catch { /* noop */ }
   };
@@ -993,23 +1074,54 @@ export function LocationPanel({
       : isNew ? "ward"
       : !dist ? "district" : wardList.length ? "ward" : "district";
 
-  const list = level === "province" ? provinceNamesFor(mode) : level === "district" ? districtsOf(prov) : wardList;
+  // Mỗi tầng xếp A–Z theo tên riêng (bỏ chữ Phường/Xã/Quận/Huyện… khi so) — khách dò tên nhanh (chủ dự án 01/11/2026)
+  const tenRieng = (x: string) => normalizeVi(x.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, ""));
+  const list = [...(level === "province" ? provinceNamesFor(mode) : level === "district" ? districtsOf(prov) : wardList)]
+    .sort((x, y) => tenRieng(x).localeCompare(tenRieng(y), "vi"));
   const nq = normalizeVi(q);
-  const filtered = nq ? list.filter((x) => normalizeVi(x).includes(nq)) : list;
+  const noiCua = (name: string): LocationSel =>
+    !prov ? { province: name } : !isNew && !dist ? { province: prov, district: name } : isNew ? { province: prov, ward: name } : { province: prov, district: dist, ward: name };
+  const soCua = (name: string) => (demTheoNoi ? demTheoNoi(noiCua(name)) : 0);
+  const filtered = (nq ? list.filter((x) => khopTen(x, q)).sort((x, y) => diemTen(y, q) - diemTen(x, q)) : list).filter((x) => !demTheoNoi || soCua(x) > 0);
 
   const full = locations.length >= MAX_LOCATIONS;
-  const add = (sel: LocationSel) => {
-    if (full || locations.some((l) => sameLocation(l, sel))) return;
-    onChange([...locations, sel]);
-    setProv(""); setDist(""); setQ("");
-  };
-  const remove = (i: number) => onChange(locations.filter((_, k) => k !== i));
 
-  const pick = (name: string) => {
-    if (level === "province") { setProv(name); setQ(""); }
-    else if (level === "district") { setDist(name); setQ(""); }
-    else add(isNew ? { province: prov, ward: name } : { province: prov, district: dist, ward: name }); // tới phường = thêm luôn
+  // CÁCH CHỌN NHƯ NGƯỜI BÌNH THƯỜNG (chủ dự án 01/11/2026): bấm TỈNH = chọn cả tỉnh ngay + mở danh sách phường; bấm PHƯỜNG = chọn
+  // phường đó (thay "toàn bộ tỉnh"), bấm thêm phường = chọn thêm (tối đa ${MAX_LOCATIONS}); bỏ hết phường = về toàn bộ tỉnh. Chọn là lọc
+  // ngay — không nút "Thêm cả", không "Áp dụng". Hệ cũ: Tỉnh → Quận/Huyện → Phường/Xã cùng cách.
+  const cungTinh = (l: LocationSel, p: string) => l.province === p;
+  const cungQuan = (l: LocationSel, p: string, d: string) => l.province === p && l.district === d;
+  const chonTinh = (p: string) => {
+    if (!locations.some((l) => cungTinh(l, p)) && !full) onChange([...locations, { province: p }]);
+    setProv(p); setDist(""); setQ("");
   };
+  const chonQuan = (d: string) => {
+    if (!locations.some((l) => cungQuan(l, prov, d))) {
+      const conLai = locations.filter((l) => !(cungTinh(l, prov) && !l.district && !l.ward));
+      if (conLai.length < MAX_LOCATIONS) onChange([...conLai, { province: prov, district: d }]);
+    }
+    setDist(d); setQ("");
+  };
+  const toanBo: LocationSel = isNew || !dist ? { province: prov } : { province: prov, district: dist };
+  const laToanBo = (l: LocationSel) => sameLocation(l, toanBo);
+  const phuongCua = (w: string): LocationSel => (isNew ? { province: prov, ward: w } : { province: prov, district: dist, ward: w });
+  const doiPhuong = (w: string) => {
+    const sel = phuongCua(w);
+    const daChon = locations.some((l) => sameLocation(l, sel));
+    let next = daChon ? locations.filter((l) => !sameLocation(l, sel)) : [...locations.filter((l) => !laToanBo(l)), sel];
+    const conPhuong = next.some((l) => l.province === prov && (isNew || l.district === dist) && !!l.ward);
+    if (daChon && !conPhuong) next = [...next, toanBo]; // bỏ hết phường → về toàn bộ tỉnh / quận
+    if (next.length > MAX_LOCATIONS) return;
+    onChange(next);
+  };
+  const chonToanBo = () => onChange([...locations.filter((l) => !(l.province === prov && (isNew || l.district === dist || !dist))), toanBo]);
+  const daChon = (name: string) =>
+    level === "province" ? locations.some((l) => cungTinh(l, name))
+      : level === "district" ? locations.some((l) => cungQuan(l, prov, name))
+      : locations.some((l) => sameLocation(l, phuongCua(name)));
+  const pick = (name: string) => (level === "province" ? chonTinh(name) : level === "district" ? chonQuan(name) : doiPhuong(name));
+  // TẦNG NÀO TÌM TẦNG ĐÓ (chủ dự án 01/11/2026: "đây là chọn Tỉnh / Thành phố"): ô gõ chỉ lọc đúng danh sách tầng đang mở — tầng tỉnh ra tỉnh
+  // thành, vào tỉnh rồi mới tìm phường (đã bỏ tìm phường cả nước ở tầng tỉnh).
 
   const Crumb = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
     <button
@@ -1021,8 +1133,29 @@ export function LocationPanel({
     </button>
   );
 
+  // ĐÃ CHỌN gom theo nhánh (chủ dự án 01/11/2026: hệ mới 2 cấp, hệ cũ 3 cấp — hiện NGẮN GỌN, không bung mỗi phường một nút):
+  // "Bắc Giang › Lan Mẫu, Yên Sơn" · "Toàn bộ Huế" · hệ cũ "Thừa Thiên Huế › Huế › Vỹ Dạ, Xuân Phú". × bỏ cả nhánh; bỏ từng phường thì bấm lại phường đó.
+  const nhanh = new Map<string, { goc: string; ten: string[]; ca: boolean; tinh: string; quan: string }>();
+  for (const l of locations) {
+    const goc = l.district ? `${l.province} › ${l.district}` : l.province;
+    const g = nhanh.get(goc) ?? { goc, ten: [], ca: false, tinh: l.province, quan: l.district ?? "" };
+    if (l.ward) g.ten.push(l.ward.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, "")); else g.ca = true;
+    nhanh.set(goc, g);
+  }
+  const mucDaChon = [...nhanh.values()].map((g) => ({
+    // nhiều phường (đổi sang hệ cũ: một phường mới = nhiều phường cũ) → 2 tên đầu + số còn lại, giữ một dòng ngắn
+    nhan: g.ten.length ? `${g.goc} › ${g.ten.length > 3 ? `${g.ten.slice(0, 2).join(", ")} +${g.ten.length - 2}` : g.ten.join(", ")}` : `Toàn bộ ${g.goc}`,
+    bo: () => onChange(locations.filter((l) => (l.district ? `${l.province} › ${l.district}` : l.province) !== g.goc)),
+    // bấm vào dòng = mở đúng tỉnh (hệ cũ: đúng quận) để thêm / bớt phường
+    mo: () => {
+      const heDong: GeoMode = g.quan ? "cu" : "moi";
+      if (heDong !== mode) { setMode(heDong); try { localStorage.setItem(GEO_MODE_KEY, heDong); } catch { /* noop */ } }
+      setProv(g.tinh); setDist(g.quan); setQ("");
+    },
+  }));
   return (
-    <div>
+    <div ref={gocRef}>
+      <DaChon muc={mucDaChon} macDinh="Toàn quốc" />
       {/* Công tắc: Tìm theo địa chỉ MỚI sau sáp nhập (2025). Bật = hệ mới 2 cấp
           (Tỉnh/Thành → Phường/Xã); Tắt = hệ cũ 3 cấp (Tỉnh → Quận/Huyện → Phường/Xã). */}
       <button
@@ -1030,30 +1163,13 @@ export function LocationPanel({
         role="switch"
         aria-checked={isNew}
         onClick={() => switchMode(isNew ? "cu" : "moi")}
-        className="mb-1.5 flex w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-3 py-2.5 text-left transition hover:bg-cvr-blue/[0.1]"
+        className="mb-2 flex w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-3 py-2.5 text-left transition hover:bg-cvr-blue/[0.1]"
       >
         <span className="text-[13px] font-semibold text-cvr-ink">Tìm theo địa chỉ mới sau sáp nhập</span>
         <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${isNew ? "bg-cvr-blue" : "bg-black/20"}`}>
           <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${isNew ? "left-[18px]" : "left-0.5"}`} />
         </span>
       </button>
-      <p className="mb-2 px-0.5 text-[11px] text-cvr-faint">
-        {isNew ? "Tỉnh/Thành phố → Phường/Xã (sau sáp nhập 2025)" : "Tỉnh → Quận/Huyện → Phường/Xã (trước sáp nhập)"}
-      </p>
-
-      {/* Khu vực ĐÃ CHỌN — chip gỡ riêng */}
-      {locations.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {locations.map((l, i) => (
-            <span key={`${locationLabel(l)}-${i}`} className="inline-flex items-center gap-1 rounded-full bg-cvr-blue/10 py-1 pl-2.5 pr-1.5 text-xs font-medium text-cvr-blue-ink">
-              <span className="max-w-[9rem] truncate">{locationLabel(l)}</span>
-              <button type="button" onClick={() => remove(i)} aria-label="Gỡ khu vực" className="text-cvr-blue/60 transition hover:text-cvr-blue-ink">
-                <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
 
       {/* Breadcrumb tầng đang duyệt */}
       <div className="mb-2 flex flex-wrap items-center gap-0.5 text-xs">
@@ -1064,17 +1180,11 @@ export function LocationPanel({
         {dist && <><span className="text-cvr-faint">›</span><span className="max-w-[8rem] truncate px-1.5 py-0.5 font-semibold text-cvr-ink">{dist}</span></>}
       </div>
 
-      {/* Thêm nhanh cả tỉnh / cả quận đang duyệt */}
-      {prov && !full && (
-        <button
-          type="button"
-          onClick={() => add(dist ? { province: prov, district: dist } : { province: prov })}
-          className="mb-2 w-full rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.06] px-2.5 py-1.5 text-left text-xs font-medium text-cvr-blue-ink transition hover:bg-cvr-blue/15"
-        >
-          ＋ Thêm cả {dist || prov}
-        </button>
-      )}
 
+      {/* TIÊU ĐỀ TẦNG — khách biết đang chọn cấp nào (chủ dự án 01/11/2026) */}
+      <p className="mb-1.5 px-0.5 text-[13px] font-semibold text-cvr-ink">
+        {level === "province" ? "Chọn Tỉnh / Thành phố" : level === "district" ? `Chọn Quận / Huyện của ${prov}` : `Chọn Phường / Xã của ${dist || prov}`}
+      </p>
       {/* Lọc nhanh trong tầng hiện tại — kính lúp kiểu Google */}
       <div className="relative">
         <svg className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -1090,27 +1200,42 @@ export function LocationPanel({
       </div>
 
       {/* Danh sách bấm chọn */}
-      <div className="mt-2 max-h-56 space-y-0.5 overflow-y-auto">
+      <div className="mt-2 space-y-0.5">
         {full && <p className="px-2 py-2 text-center text-xs font-medium text-cvr-blue-ink">Đã đạt tối đa {MAX_LOCATIONS} khu vực</p>}
         {filtered.length === 0 && <p className="px-2 py-3 text-center text-sm text-cvr-faint">Không có kết quả</p>}
-        {filtered.map((name) => (
-          <button
-            key={name}
-            type="button"
-            onClick={() => pick(name)}
-            className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm text-cvr-ink/80 transition hover:bg-black/5"
-          >
-            <span className="truncate"><HighlightLabel label={name} q={q} /></span>
-            {level !== "ward" ? <span className="shrink-0 text-cvr-faint">›</span> : <span className="shrink-0 text-[11px] text-cvr-faint">＋ Thêm</span>}
+        {prov && !nq && (
+          <button type="button" onClick={() => (locations.some(laToanBo) ? onChange(locations.filter((l) => !laToanBo(l))) : chonToanBo())}
+            className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold transition hover:bg-black/5 ${locations.some(laToanBo) ? "text-cvr-blue-ink" : "text-cvr-ink"}`}>
+            <span className="truncate">Toàn bộ {dist || prov}</span>
+            {locations.some(laToanBo) && <span className="shrink-0">✓</span>}
           </button>
-        ))}
+        )}
+        {/* Danh sách giữ nguyên A–Z ở mọi tầng, mục đã chọn chỉ in đậm — chọn / bỏ chọn không làm dòng nào đổi chỗ (chủ dự án 01/11/2026:
+            vuốt, chọn không được nhảy). Nơi đã chọn hiện ở dòng trên cùng của bảng. */}
+        {filtered.map((name) => {
+          const on = daChon(name);
+          // TỈNH / QUẬN đã chọn: bấm tên = mở vào sửa phường · dấu × = bỏ chọn cả nhánh (chủ dự án 01/11/2026: bỏ chọn chỉ cần một dấu ×)
+          const boNhanh = () => onChange(locations.filter((l) => (level === "province" ? !cungTinh(l, name) : !cungQuan(l, prov, name))));
+          return (
+            <div key={name} className="flex items-center rounded-lg transition hover:bg-black/5">
+              <button
+                type="button"
+                onClick={() => pick(name)}
+                className={`flex min-w-0 flex-1 items-center justify-between gap-2 px-2.5 py-1.5 text-left text-sm ${on ? "font-semibold text-cvr-blue-ink" : "text-cvr-ink/80"}`}
+              >
+                <span className="truncate">{name}</span>
+                <span className="flex shrink-0 items-center gap-1.5">{demTheoNoi && <span className="text-xs text-cvr-faint">{soCua(name)}</span>}{on && level === "ward" && <span>✓</span>}{level !== "ward" && <span className="text-cvr-faint">›</span>}</span>
+              </button>
+              {on && level !== "ward" && (
+                <button type="button" onClick={boNhanh} aria-label={`Bỏ chọn ${name}`} className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-cvr-muted transition hover:bg-black/5 hover:text-cvr-ink">
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      {/* ── HÀNG THAO TÁC — luôn nhìn thấy ở đáy panel ──────────────────────────
-          Trước đây chọn xong không có nút nào để đóng, phải bấm ra ngoài mới thoát;
-          cũng không có cách bỏ hết khu vực đã chọn ngoài việc gỡ từng chip. */}
-      {/* Hàng nút ĐỒNG BỘ mọi bảng lọc: Đặt lại · Áp dụng (chủ dự án 20/10/2026) */}
-      <PanelActions onReset={() => { onChange([]); setProv(""); setDist(""); setQ(""); }} onApply={() => onClose?.()} />
     </div>
   );
 }
@@ -1118,19 +1243,35 @@ export function LocationPanel({
 // Danh sách dự án — LỌC ĐỘNG theo khu vực đã chọn (kiểu Batdongsan): chọn Đà Nẵng
 // → chỉ hiện dự án Đà Nẵng. Chưa chọn khu vực → hiện tất cả.
 export function ProjectPanel({
-  locations, project, onPick,
+  locations, project, onPick, ds, hienSan = false,
 }: {
   locations: LocationSel[];
   project: string;
   onPick: (name: string) => void;
+  /** Danh sách dự án thật trang cha có sẵn (trang /du-an, 01/11/2026); không truyền → như cũ */
+  ds?: { slug: string; name: string; location: string; developer: string }[];
+  /** Đã thu hẹp bằng trường trước (khu vực, loại hình, chủ đầu tư) → hiện sẵn danh sách; không thì gõ mới hiện */
+  hienSan?: boolean;
 }) {
   const [q, setQ] = useState("");
+  // DỰ ÁN THẬT (chủ dự án 01/11/2026 — trước đây lấy dự án MẪU trong data.ts): trang cha truyền ds, không thì nạp danh mục dự án
+  // của web (/api/du-an/ten — hồ sơ dự án + dự án ghi trên tin, chỉ biết tỉnh/thành → khu vực so theo tỉnh)
+  const [napDs, setNapDs] = useState<{ slug: string; name: string; location: string; developer: string }[]>([]);
+  useEffect(() => {
+    if (ds) return;
+    void napDsDuAn().then((x) => setNapDs(x.map((d) => ({ slug: d.slug, name: d.ten, location: d.tinh, developer: d.cdt ?? "" }))));
+  }, [ds]);
   const inArea = (loc: string) =>
     locations.length === 0 ||
-    locations.some((l) => loc.includes(l.province) && (!l.district || loc.includes(l.district)) && (!l.ward || loc.includes(l.ward)));
-  const base = projects.filter((p) => inArea(p.location));
+    locations.some((l) => loc.includes(l.province) && (!ds || ((!l.district || loc.includes(l.district)) && (!l.ward || loc.includes(l.ward)))));
+  const base = (ds ?? napDs).filter((p) => inArea(p.location)).sort((a, b) => a.name.localeCompare(b.name, "vi"));
   const nq = normalizeVi(q);
-  const list = nq ? base.filter((p) => normalizeVi(`${p.name} ${p.location} ${p.developer}`).includes(nq)) : base;
+  // TRƯỜNG CHỌN (chủ dự án 01/11/2026): chưa gõ thì không bày cả danh sách — gõ tên dự án / chủ đầu tư mới hiện đúng dự án khớp để chọn
+  const list = nq ? base.filter((p) => khopTen(`${p.name} ${p.location} ${p.developer}`, q))
+      // XẾP: trùng TÊN dự án trước, rồi chủ đầu tư, cuối cùng địa chỉ (gõ "sun" → Sun Galaxy trước dự án của chủ đầu tư Sun)
+      .map((p) => ({ p, d: diemTen(p.name, q) * 100 + diemTen(p.developer, q) * 10 + diemTen(p.location, q) }))
+      .sort((x, y) => y.d - x.d)
+      .map((x) => x.p) : hienSan || locations.length ? base : [];
 
   return (
     <div>
@@ -1146,8 +1287,8 @@ export function ProjectPanel({
           className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
         />
       </div>
-      <div className="mt-2 max-h-64 space-y-0.5 overflow-y-auto">
-        {list.length === 0 && (
+      <div className="mt-2 space-y-0.5">
+        {nq && list.length === 0 && (
           <p className="px-2 py-3 text-center text-sm text-cvr-faint">
             {locations.length ? "Chưa có dự án ở khu vực đã chọn" : "Không có dự án khớp"}
           </p>
@@ -1161,7 +1302,7 @@ export function ProjectPanel({
               onClick={() => onPick(p.name)}
               className={`flex w-full flex-col rounded-lg px-2.5 py-1.5 text-left text-sm transition ${active ? "bg-cvr-blue/10 text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"}`}
             >
-              <span className="truncate font-medium">{active ? p.name : <HighlightLabel label={p.name} q={q} />}</span>
+              <span className="truncate font-medium">{p.name}</span>
               <span className="truncate text-[11px] text-cvr-faint">{p.location}</span>
             </button>
           );
@@ -1222,7 +1363,7 @@ export function Chip({ active, onClick, children }: { active: boolean; onClick: 
 }
 
 export function RangePanel({
-  unit, step, sliderMax, min, max, presets, onPick, onReset, onApply,
+  unit, step, sliderMax, min, max, presets, onPick, onApply,
 }: {
   unit: string;
   step: number;
@@ -1288,6 +1429,7 @@ export function RangePanel({
           value={draftMin}
           onChange={(e) => setDraftMin(e.target.value)}
           onBlur={() => commit(draftMin, draftMax)}
+          onKeyDown={(e) => { if (e.key === "Enter") { commit(draftMin, draftMax); onApply(); } }}
           className="h-10 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
         />
         <span className="text-cvr-faint">–</span>
@@ -1296,13 +1438,14 @@ export function RangePanel({
           value={draftMax}
           onChange={(e) => setDraftMax(e.target.value)}
           onBlur={() => commit(draftMin, draftMax)}
+          onKeyDown={(e) => { if (e.key === "Enter") { commit(draftMin, draftMax); onApply(); } }}
           className="h-10 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
         />
         <span className="shrink-0 text-xs text-cvr-faint">{unit}</span>
       </div>
 
       {/* Khoảng có sẵn */}
-      <div className="mt-3 max-h-52 space-y-0.5 overflow-y-auto">
+      <div className="mt-3 space-y-0.5">
         {presets.map((p) => {
           const active = min === p.min && (max ?? null) === (p.max ?? null);
           return (
@@ -1313,6 +1456,7 @@ export function RangePanel({
                 setDraftMin(String(p.min));
                 setDraftMax(p.max == null ? "" : String(p.max));
                 onPick(p.min, p.max);
+                onApply(); // bấm mốc = chọn xong, đóng bảng
               }}
               className={`block w-full rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
                 active ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/75 hover:bg-black/5"
@@ -1324,10 +1468,51 @@ export function RangePanel({
         })}
       </div>
 
-      <PanelActions
-        onReset={() => { setDraftMin(""); setDraftMax(""); onReset(); }}
-        onApply={onApply}
-      />
+      {/* CHỌN LÀ LỌC NGAY — không nút Đặt lại · Áp dụng (chủ dự án 01/11/2026: mỗi mức nhu cầu có lựa chọn, không ép khách bấm thêm) */}
+    </div>
+  );
+}
+
+/** Loại đã chọn gom theo NHÓM (chủ dự án 01/11/2026: chọn "Nhà" là một lựa chọn, không bung 4 loại con) — trọn nhóm → tên nhóm */
+export function gomLoai(types: string[], nhom: { label: string; items: string[] }[]): { nhan: string; cac: string[] }[] {
+  const ra: { nhan: string; cac: string[] }[] = [];
+  const daGom = new Set<string>();
+  for (const g of nhom) if (g.items.length > 1 && g.items.every((x) => types.includes(x))) { ra.push({ nhan: g.label, cac: g.items }); g.items.forEach((x) => daGom.add(x)); }
+  for (const x of types) if (!daGom.has(x)) ra.push({ nhan: tenLoaiHinh(x), cac: [x] });
+  return ra;
+}
+
+// ĐÃ CHỌN đầu mọi bảng chọn (chủ dự án 01/11/2026: khách thấy rõ mình chọn gì; chọn 1, 2, 3 mục thì xoá từng mục được, nhiều mục
+// cha – con thì nút Đặt lại). Chỉ các mục đã chọn, mỗi mục một dấu × — không chữ giải thích. muc: tên ĐỦ ("Phường Vỹ Dạ, Huế") + cách xoá.
+export function DaChon({ muc, macDinh = "Tất cả" }: { muc: { nhan: string; bo: () => void; mo?: () => void }[]; onBoHet?: () => void; macDinh?: string }) {
+  // GIỮ CHỖ CỐ ĐỊNH kể cả khi chưa chọn gì (chủ dự án 01/11/2026: vuốt / chọn không được nhảy): dòng này hiện ra hay mất đi không đẩy
+  // danh sách bên dưới chạy dưới tay khách. DÍNH TRÊN CÙNG khi cuộn — khách luôn thấy mình đang chọn gì.
+  return (
+    <div className="sticky top-0 z-10 -mx-1 mb-2 h-[34px] bg-white px-1 pb-1">
+      {/* MỘT HÀNG cố định (dài thì vuốt ngang) — chọn thêm không đẩy danh sách bên dưới chạy dưới tay khách (01/11/2026) */}
+      <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1">
+        {/* chưa chọn gì → hiện lựa chọn đang áp (Toàn quốc / Tất cả), không để dòng trống (01/11/2026) */}
+        {!muc.length && <span className="inline-flex shrink-0 items-center rounded-full border border-cvr-line bg-cvr-surface px-3 py-1 text-[13px] font-semibold text-cvr-muted">{macDinh}</span>}
+        {muc.map((m) => (
+          <span key={m.nhan} className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-cvr-blue/40 bg-cvr-blue/[0.06] py-1 pl-3 pr-1.5 text-[13px] font-semibold text-cvr-ink">
+            {m.mo ? <button type="button" onClick={m.mo} className="text-left">{m.nhan}</button> : <span>{m.nhan}</span>}
+            <button type="button" onClick={m.bo} aria-label={`Xoá ${m.nhan}`} className="flex h-5 w-5 items-center justify-center rounded-full text-cvr-muted transition hover:bg-black/5 hover:text-cvr-ink">
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// LỐI RA đáy bảng chọn = NÚT CHUẨN đã chốt cho mọi bảng: Đặt lại · Áp dụng (chủ dự án 20/10/2026, nhắc lại 01/11/2026 — không thêm
+// nút kiểu khác), dính đáy bảng để danh sách dài vẫn luôn thấy (luật 0A1).
+export function NutXem({ onClick, onReset }: { nhan?: string; onClick: () => void; onReset: () => void }) {
+  return (
+    // LUÔN ở ĐÁY bảng (mt-auto — bảng nội dung ngắn nút cũng không lơ lửng giữa màn), dính sát đáy khi cuộn, trùm cả phần đệm đáy
+    <div className="sticky -bottom-4 -mx-1 -mb-4 mt-auto bg-white px-1 pb-4 sm:-bottom-3 sm:-mb-3 sm:pb-3">
+      <PanelActions onReset={onReset} onApply={onClick} />
     </div>
   );
 }

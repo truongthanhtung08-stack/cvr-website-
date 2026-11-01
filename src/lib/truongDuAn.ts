@@ -5,6 +5,9 @@
 // contentDb điền sẵn chữ thay thế khi cột trống ("Đang cập nhật", "Dự án bất động sản") — các chữ đó KHÔNG phải admin ghi.
 // ============================================================================
 
+/** Tình trạng dự án — đúng 4 giá trị chuẩn (hồ sơ nạp hàng loạt + bộ lọc mục Dự án) */
+export const TINH_TRANG_DU_AN = ["Sắp mở bán", "Đang mở bán", "Đã bàn giao", "Đã hoàn thành"];
+
 const CHU_THAY_THE = new Set(["", "Đang cập nhật", "Dự án bất động sản"]);
 
 /** Giá trị admin thật sự ghi; chữ thay thế → "" */

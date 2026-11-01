@@ -39,6 +39,8 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
       anh phải chỉ ra → **trả về / gỡ việc một phiên = gỡ cả mã LẪN dữ liệu nó ghi (bảng, nội dung admin), rồi gõ thử trên web thật mới báo xong.**
       Kể cả khi anh bảo làm bộ lọc cho Dự án: chỉ làm trong phần Dự án; mã hay dữ liệu thêm vào (tên dự án…) không được làm lệch ô tìm
       trang chủ, Mua bán, Cho thuê — trước khi báo xong gõ thử ô tìm cả ba nơi, so với trước khi sửa.
+    - 02/11: anh mới nói việc trong ngày, chưa nói "làm", Điều phối đã giao phiên MÃ WEB sửa ô tìm + bộ lọc Dự án → **anh chưa nói "làm"
+      thì không giao ai, không sửa gì; nắm đúng ý anh, nói ngắn, chờ lệnh.**
     - Ghi tệp ổ D: chèn nhầm chỗ (tệp xuống dòng kiểu Windows) · viết câu chưa kiểm vào trả lời Cowork rồi phải sửa → **ghi xong đọc lại đúng chỗ; câu nào cũng phải có căn cứ đã xem.**
 
 ---

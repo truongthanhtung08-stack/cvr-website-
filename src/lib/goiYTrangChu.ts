@@ -12,7 +12,7 @@ import { tatCaTrang, tieuDe, cha, NGUONG_INDEX } from "@/lib/pseo";
 // ============================================================================
 
 // loai: cụm có loại hình (cụ thể) — lúc chưa gõ chỉ hiện loại này
-export type CauGoiY = { nhan: string; sub: string; href: string; muc: "ban" | "thue"; loai: boolean };
+export type CauGoiY = { nhan: string; sub: string; href: string; muc: "ban" | "thue" | "duan"; loai: boolean };
 
 export function goiYTrangChu(tin: Listing[]): CauGoiY[] {
   const ds = [...tatCaTrang(tin).values()]

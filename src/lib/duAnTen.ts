@@ -12,6 +12,7 @@ export type DuAnTen = {
   coTrang: boolean;     // có trang thông tin dự án /du-an/<slug>
   ban: number;          // số tin bán còn hạn thuộc dự án
   thue: number;         // số tin cho thuê còn hạn thuộc dự án
+  cdt?: string;         // chủ đầu tư (hồ sơ dự án) — bảng chọn Chủ đầu tư mục Dự án
 };
 
 // Phần CHUNG không phải tên riêng: loại hình đứng đầu tên, tên tỉnh/thành, vài phường hay đi kèm tên dự án

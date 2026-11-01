@@ -1,5 +1,6 @@
 import type { Listing, Project } from "@/lib/data";
 import { khoaDuAn, type DuAnTen } from "@/lib/duAnTen";
+import { giaTriThat } from "@/lib/truongDuAn";
 
 // Dựng danh mục tên dự án từ bảng Dự án + trường "Dự án" của tin còn hạn, gộp tên trùng (cùng mã hoặc cùng tên lõi).
 // Dùng ở máy chủ: /api/du-an/ten (gửi cho ô tìm) và /api/goi-y/that (gợi ý theo dữ liệu thật).
@@ -19,7 +20,11 @@ export function dungDsDuAn(tin: Listing[], duAn: Project[]): DuAnTen[] {
     theoMa.set(slug, moi);
     return moi;
   };
-  for (const p of duAn) lay(p.name, p.slug, p.location.split(",").pop()?.trim() ?? "", true);
+  for (const p of duAn) {
+    const d = lay(p.name, p.slug, p.location.split(",").pop()?.trim() ?? "", true);
+    const cdt = giaTriThat(p.developer);
+    if (cdt) d.cdt = cdt;
+  }
   for (const l of tin) {
     const ten = l.projectName?.trim();
     if (!ten || !l.projectSlug) continue;

@@ -265,6 +265,11 @@ export type Filters = {
   verified: boolean;   // chỉ tin đã xác thực (toggle kiểu Batdongsan)
   broker: boolean;     // chỉ tin của môi giới chuyên nghiệp (toggle)
   keyword: string;
+  // TRƯỜNG RIÊNG MỤC DỰ ÁN (chủ dự án 01/11/2026: bộ lọc chung, bổ sung cho dự án các trường theo chuẩn tra cứu dự án) — không bắt
+  // buộc, Mua bán / Cho thuê không dùng: loaiDuAn = slug nhóm loại hình dự án (projectCategories), tinhTrang, chuDauTu = tên chủ đầu tư
+  loaiDuAn?: string[];
+  tinhTrang?: string;
+  chuDauTu?: string;
 };
 
 // Nhãn hiển thị 1 khu vực: ưu tiên cấp sâu nhất (phường → quận → tỉnh).
@@ -342,6 +347,10 @@ export function filtersFromParams(params: URLSearchParams): Filters {
   f.verified = params.get("xacthuc") === "1";
   f.broker = params.get("moigioi") === "1";
   f.keyword = params.get("q") ?? "";
+  const loaida = params.get("loaida");
+  if (loaida) f.loaiDuAn = loaida.split(",").map((s) => s.trim()).filter(Boolean);
+  if (params.get("tinhtrang")) f.tinhTrang = params.get("tinhtrang")!;
+  if (params.get("cdt")) f.chuDauTu = params.get("cdt")!;
   return f;
 }
 
@@ -364,6 +373,9 @@ export function filtersToParams(f: Filters): URLSearchParams {
   if (f.verified) p.set("xacthuc", "1");
   if (f.broker) p.set("moigioi", "1");
   if (f.keyword.trim()) p.set("q", f.keyword.trim());
+  if (f.loaiDuAn?.length) p.set("loaida", f.loaiDuAn.join(","));
+  if (f.tinhTrang) p.set("tinhtrang", f.tinhTrang);
+  if (f.chuDauTu) p.set("cdt", f.chuDauTu);
   return p;
 }
 
@@ -373,12 +385,35 @@ export function hasActiveFilters(f: Filters): boolean {
     f.locations.length || f.project || f.types.length ||
     f.priceMin != null || f.priceMax != null ||
     f.areaMin != null || f.areaMax != null ||
-    f.beds || f.direction || f.legal || f.furnishing || f.verified || f.broker || f.keyword.trim()
+    f.beds || f.direction || f.legal || f.furnishing || f.verified || f.broker || f.keyword.trim() ||
+    f.loaiDuAn?.length || f.tinhTrang || f.chuDauTu
   );
 }
 
 // Bỏ dấu tiếng Việt + thường hoá để khớp gần đúng / không phân biệt dấu.
 // Gõ "hoa xuan" hay "hoas xuan" vẫn khớp "Hòa Xuân".
+/** KHỚP TÊN KIỂU GOOGLE cho ô tìm trong bảng lọc (chủ dự án 01/11/2026: gõ "Hồ" mà ra Cần Thơ, Phú Thọ — vô lý): mỗi chữ khách gõ phải
+ *  là ĐẦU một chữ trong tên ("hồ" → Hồ Chí Minh, Tây Hồ; không lọt vào giữa "Thơ"). Gõ CÓ DẤU thì so có dấu ("hồ" không ra "Hòa"),
+ *  gõ không dấu thì so không dấu ("ho" ra cả Hồ, Hòa). MỘT hàm dùng chung cho mọi ô tìm trong bảng lọc. */
+export function khopTen(ten: string, go: string): boolean {
+  return diemTen(ten, go) > 0;
+}
+/** Điểm khớp để XẾP gợi ý: 0 không khớp · 1 khớp đầu chữ · 2 mọi chữ gõ trùng TRỌN một chữ trong tên ("da nang" → Đà Nẵng trước Đại Năng)
+ *  · 3 đúng thứ tự liền nhau */
+export function diemTen(ten: string, go: string): number {
+  const thuong = (s: string) => s.normalize("NFC").toLowerCase();
+  const tuGo = thuong(go).split(/\s+/).filter(Boolean);
+  if (!tuGo.length) return 1;
+  const tuTen = thuong(ten).split(/[\s,.;:/()–-]+/).filter(Boolean);
+  const tuTenKhong = tuTen.map(normalizeVi);
+  const nguon = (g: string) => (normalizeVi(g) !== g ? tuTen : tuTenKhong);
+  if (!tuGo.every((g) => nguon(g).some((w) => w.startsWith(g)))) return 0;
+  // 3: đúng THỨ TỰ chữ khách gõ, liền nhau ("hoa xuan" → Hòa Xuân trước Xuân Hòa)
+  const cum = tuGo.map(normalizeVi).join(" ");
+  if (` ${tuTenKhong.join(" ")} `.includes(` ${cum}`)) return 3;
+  return tuGo.every((g) => nguon(g).includes(g)) ? 2 : 1;
+}
+
 export function normalizeVi(s: string): string {
   return s
     .normalize("NFD")
@@ -422,7 +457,7 @@ function tachDiaChiCap(s: string): string[] {
   return (s || "").split(/[,·]/).map((x) => chuanTenCap(x)).filter(Boolean);
 }
 
-type FilterableListing = {
+export type FilterableListing = {
   id: string; title: string; price: string; area: string;
   projectSlug?: string; projectName?: string; // trường "Dự án" của tin (tin thuộc dự án nào)
   // Hướng · pháp lý · nội thất THẬT người đăng nhập (sửa 15/10/2026 — trước đây bộ lọc so với

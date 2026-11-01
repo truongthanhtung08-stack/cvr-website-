@@ -18,6 +18,7 @@ export function goiKetQua(kq: KetQuaLoc): KetQuaLoc {
   return {
     trang: goiNheTin(kq.trang),
     tong: kq.tong,
+    khop: kq.khop,
     soTrang: kq.soTrang,
     trangHienTai: kq.trangHienTai,
     tangDau: kq.tangDau,

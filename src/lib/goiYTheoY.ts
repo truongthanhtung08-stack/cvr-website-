@@ -1,5 +1,5 @@
 import { normalizeVi } from "@/lib/filters";
-import { chuChuaHieu, parseQuery } from "@/lib/smartSearch";
+import { chuChuaHieu, LOAI_HINH, parseQuery } from "@/lib/smartSearch";
 import { duongDanGanNhat } from "@/lib/duongDanTim";
 import { timDuAn, type DuAnTen } from "@/lib/duAnTen";
 
@@ -15,7 +15,9 @@ import { timDuAn, type DuAnTen } from "@/lib/duAnTen";
 // Không hiểu được loại hình hay khu vực nào → không gợi ý gì (chỉ còn dòng câu khách gõ, nơi gọi tự thêm).
 // ============================================================================
 export type MucTim = "ban" | "thue";
-export type DongGoiY = { nhan: string; muc: MucTim; href: string };
+/** Mục của một dòng gợi ý trên bộ lọc tổng: Mua bán · Cho thuê · Dự án */
+export type MucGoiY = MucTim | "duan";
+export type DongGoiY = { nhan: string; muc: MucGoiY; href: string };
 
 const DONG_TU: Record<MucTim, string> = { ban: "Bán", thue: "Cho thuê" };
 
@@ -51,7 +53,15 @@ export function goiYTheoY(raw: string, mucDangDung: MucTim, dsDuAn: DuAnTen[] = 
 
   // TÊN DỰ ÁN (từ khoá ngắn ngoài các trường đã cấu trúc — chủ dự án 21/10/2026): "Dự án X" mở trang thông tin dự án (nếu có);
   // "Bán / Cho thuê … X" mở tin THUỘC dự án đó (trường Dự án của tin) — chỉ hiện phía có tin, trừ khi khách nói rõ mua/thuê.
-  const khopDa = dsDuAn.length ? timDuAn(raw, dsDuAn, true) : null;
+  // Câu gõ đúng TRỌN một địa danh ("đà nẵng", "an cựu", "mỹ an") → địa danh, không phải tên dự án chứa / bắt đầu bằng chữ đó
+  // (Da Nang Downtown, An Cựu City, Phú Mỹ An — chủ dự án 01/11/2026); gõ thêm chữ của tên dự án thì vẫn ra dự án.
+  const goc = (s: string) => normalizeVi(s.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "")).replace(/[^a-z0-9]+/g, " ").trim();
+  const laTenNoi = [pl?.ward, pl?.district, pl?.province, ...p.places].some((x) => !!x && goc(x) === nq.trim())
+    // gõ đúng TÊN LOẠI HÌNH ("căn hộ", "chung cư") → loại hình, không phải dự án có tên bắt đầu bằng chữ đó (01/11/2026: "Căn hộ" ra
+    // "Căn Hộ 5 sao Golden Bay")
+    || LOAI_HINH.some(([nhan, cach]) => goc(nhan) === nq.trim() || cach.includes(nq.trim()))
+    || /^(du|du an)$/.test(nq.trim()); // "dự án" trơn = mục Dự án, không phải dự án có tên bắt đầu bằng "Dự án …"
+  const khopDa = dsDuAn.length && !laTenNoi ? timDuAn(raw, dsDuAn, true) : null;
   const tronDa = khopDa && timDuAn(raw, dsDuAn, false);
   // TỪ CHƯA HIỂU (chủ dự án 21/10/2026: không hiểu một từ ≠ không hiểu câu): giữ NGUYÊN cụm từ khách gõ trong dòng gợi ý,
   // không ép vào trường mặc định nào; bấm tìm thì dò trong nội dung tin (cauThanhBoLoc). Không hiểu được trường nào → không gợi ý.

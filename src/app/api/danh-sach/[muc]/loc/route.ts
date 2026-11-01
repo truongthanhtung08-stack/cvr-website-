@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { goiKetQua } from "@/lib/ketQuaDau";
 import { emptyFilters, type Filters, type SortKey } from "@/lib/filters";
+import { soTheoLoai } from "@/lib/thuHepTin";
 import { locDanhSach, diemTuTin, MOI_TRANG_PC, PER_PAGE } from "@/lib/locDanhSach";
 
 // ============================================================================
@@ -27,7 +28,12 @@ type YeuCau = {
   banDo?: boolean;
   /** Lần nạp đầu: kèm dữ liệu cho câu gợi ý trong ô tìm */
   goiY?: boolean;
+  /** Kèm số tin theo loại hình để bảng chọn chỉ hiện loại còn khớp */
+  matSo?: boolean;
 };
+
+// THU HẸP HAI CHIỀU: số tin theo loại hình — gốc chung lib/thuHepTin (cùng hàm với bộ lọc tổng trang chủ). Cùng lượt gọi lọc sẵn có — không
+// thêm lượt gọi hàm; thêm ~1 lần duyệt kho tin (vài ms CPU).
 
 const TOI_DA_GOI_Y = 300;
 
@@ -57,6 +63,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
     // Cùng một cách gói với trang 1 máy chủ dựng sẵn (lib/ketQuaDau): tinhHieu — tỉnh máy hiểu từ câu gõ, để ghi đúng dòng
     // "Gợi ý khác tại …" (lỗi 17/10/2026) · khoangRe — khách tìm "giá rẻ" · thongBao — không có tin đúng nhu cầu: câu nói rõ
     ...goiKetQua(kq),
+    ...(yc.matSo
+      ? {
+          matSo: {
+            loai: soTheoLoai(tin, boLoc),
+          },
+        }
+      : {}),
     ...(yc.banDo ? { diem: kq.ketQua.filter((l) => !l.banSao).map(diemTuTin) } : {}),
     ...(yc.goiY
       ? { goiY: tin.slice(0, TOI_DA_GOI_Y).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price })) }

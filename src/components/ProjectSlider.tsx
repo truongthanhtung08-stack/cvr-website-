@@ -21,11 +21,12 @@ import { useHomeSection } from "@/components/HomeExpand";
 
 const TIER_RANK: Record<string, number> = { diamond: 0, gold: 1, silver: 2, basic: 3 };
 
-// Xếp theo cấp VIP, giữ nguyên thứ tự gốc (mới nhất trước) khi cùng cấp.
+// Nổi bật trước, xếp theo cấp VIP (cùng cấp giữ thứ tự gốc, mới nhất trước); tra cứu (dangThe) sau, xếp tên A–Z
+// (chủ dự án: "nổi bật theo cấp, tra cứu theo ABCD" — 01/11/2026).
 export function sortProjectsByTier(list: Project[]): Project[] {
   return list
-    .map((p, i) => ({ p, i, r: TIER_RANK[p.tier ?? "basic"] ?? 3 }))
-    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .map((p, i) => ({ p, i, t: p.dangThe ? 1 : 0, r: TIER_RANK[p.tier ?? "basic"] ?? 3 }))
+    .sort((a, b) => a.t - b.t || (a.t ? a.p.name.localeCompare(b.p.name, "vi") : a.r - b.r || a.i - b.i))
     .map((e) => e.p);
 }
 

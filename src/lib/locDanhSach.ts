@@ -24,6 +24,8 @@ const TOI_DA_GOI_Y = 12; // số tin gợi ý tối đa khi ít tin khớp đủ
 export type KetQuaLoc = {
   trang: Listing[];
   tong: number;
+  /** Số tin KHỚP ĐÚNG lựa chọn (không tính tin gợi ý tương tự) — nút "Xem … tin" của bảng lọc (01/11/2026) */
+  khop?: number;
   soTrang: number;
   trangHienTai: number;
   /** Tầng khớp của tin đầu trang (1 = khớp đủ) — để hiện nhãn tầng */
@@ -326,6 +328,7 @@ export function locDanhSach(
     ketQua,
     trang,
     tong: ketQua.length,
+    khop: coTuKhoa ? chuTrong.length + khopDu.filter((l) => !daCo.has(l.id)).length : khopDu.length,
     soTrang,
     trangHienTai,
     tangDau: trang[0] ? tierById.get(trang[0].id) ?? 1 : 1,

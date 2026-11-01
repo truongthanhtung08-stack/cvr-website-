@@ -20,6 +20,9 @@ const nextConfig: NextConfig = isPages
       allowedDevOrigins: ["10.*.*.*", "192.168.*.*", "*.local"],
       // nút tròn "N" của bản chạy thử che nội dung khi chủ dự án xem trên điện thoại — chỉ có ở npm run dev
       devIndicators: false,
+      // Build KIỂM ở máy ra thư mục riêng (NEXT_DIST_DIR=.next-kiem) để máy xem thử đang chạy không bị đứt link điện thoại lúc build
+      // (chủ dự án 01/11/2026). Không đặt biến → .next như cũ (Vercel không đổi).
+      ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
       // TRÌNH DUYỆT dùng bản địa danh NẠP SAU (~300 KB không nằm trong mã tải lúc mở trang — đo 20/10/2026); máy chủ
       // (dựng trang, API, sitemap) vẫn dùng bản nạp sẵn. Xem src/lib/diaDanhNguon.ts.
       turbopack: {
