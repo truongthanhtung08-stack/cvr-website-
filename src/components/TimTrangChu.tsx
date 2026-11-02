@@ -407,7 +407,10 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // ghi tạm vào sessionStorage theo đường dẫn — ô tìm trang kết quả hiện lại đúng câu đó (chỉ trên máy khách, không gọi máy chủ)
   const di = (url: string, cau = "") => {
     try { if (cau) { sessionStorage.setItem("cvr-cau:" + url.split("?")[0], cau); sessionStorage.setItem("cvr-tim-cuoi", cau); } } catch { /* bỏ qua */ }
-    setDangTim(true); batDauTim(); router.push(url); // vạch xanh chung chạy tới khi trang kết quả hiện
+    setDangTim(true); batDauTim(); // vạch xanh chung chạy tới khi trang kết quả hiện
+    // QUAY LẠI TỪ KẾT QUẢ = VỀ TRANG CHỦ MỘT LẦN BẤM (02/11/2026): màn tìm điện thoại đã thêm một bước lịch sử (cvrTim) → trang kết quả
+    // THAY bước đó, lịch sử chỉ còn Trang chủ → Kết quả (trước: phải bấm ← hai lần, lần đầu đứng yên ở trang chủ)
+    if (history.state?.cvrTim === dauMo.current) router.replace(url); else router.push(url);
   };
   // QUAY LẠI TRANG CHỦ như Google (chủ dự án 18/10/2026): ô tìm vẫn giữ câu vừa tìm để sửa tiếp; bấm × xoá là thoát tìm kiếm
   useEffect(() => {
@@ -428,20 +431,27 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     const cauLuu = (n ? n.nhan : cau).trim();
     const den = (u: string) => di(u, cauLuu);
     const kw = cau.trim();
+    // TÊN DỰ ÁN CHƯA NẠP (gõ nhanh rồi Enter ngay): chờ nạp xong rồi mới đọc mục đích — không thì gõ trọn tên dự án không sang Dự án (02/11/2026)
+    if (kw && !n && dsDuAnDaNap() === null) { void napDsDuAn().then(() => tim(cau, n, mucGhiDe)); return; }
+    const dsDa = dsDuAnDaNap() ?? dsDuAn;
     // MỤC ĐÍCH ĐỌC NGAY TỪ CÂU lúc bấm Tìm / Enter (01/11/2026: gõ "dự án căn hộ đà nẵng" Enter nhanh → tab chưa kịp đổi theo câu
     // (đổi sau một nhịp) nên đi sang Cho thuê) — câu nói rõ mục đích thì theo câu, không thì theo tab đang đứng
-    const muc = mucGhiDe ?? (kw && !n ? mucDichCau(kw, dsDuAn) : null) ?? mucDangChon;
+    const muc = mucGhiDe ?? (kw && !n ? mucDichCau(kw, dsDa) : null) ?? mucDangChon;
     const mb: "ban" | "thue" = muc === "thue" ? "thue" : "ban";
     if (kw && !n) luu({ label: kw, kind: "Gợi ý", sub: "Từ khoá đã tìm", keyword: kw });
-    // GÕ ĐÚNG TÊN DỰ ÁN (21/10/2026): nói rõ mua/thuê → tin thuộc dự án đó; không nói → trang thông tin dự án (nếu có), không có
-    // trang thì tin thuộc dự án ở phía có tin
-    const da = kw && !n ? timDuAn(kw, dsDuAn) : null;
+    // GÕ ĐÚNG TÊN DỰ ÁN: nói rõ mua/thuê → tin thuộc dự án đó (21/10/2026); không nói → mục DỰ ÁN (chủ dự án 02/11/2026: "gõ dự án phải
+    // đổi qua Dự án" — chuẩn bắt buộc): trang thông tin dự án nếu có, không có trang thì trang Dự án tìm theo tên
+    const da = kw && !n ? timDuAn(kw, dsDa) : null;
     if (da) {
       const pq = parseQuery(kw);
       const d = da.duAn;
-      if (!pq.purpose && d.coTrang) return den(`/du-an/${d.slug}`);
-      const m = pq.purpose ?? (d.ban > 0 || d.thue === 0 ? "ban" : "thue");
-      return den(`${m === "thue" ? "/cho-thue" : "/mua-ban"}?duan=${encodeURIComponent(d.ten)}`);
+      if (!pq.purpose) {
+        if (d.coTrang) return den(`/du-an/${d.slug}`);
+        const p = filtersToParams({ ...emptyFilters(), keyword: kw });
+        p.set("mode", "Dự án");
+        return den(`/du-an?${p.toString()}`);
+      }
+      return den(`${pq.purpose === "thue" ? "/cho-thue" : "/mua-ban"}?duan=${encodeURIComponent(d.ten)}`);
     }
     // KHÁCH PHẢI THẤY CÂU MÌNH ĐÃ GÕ (chủ dự án 17/10/2026): trường lọc chỉ là phần máy tự tách từ câu → đi
     // đường câu gõ (trang kết quả hiện nguyên câu trong ô tìm). Khách tự chỉnh trường → tìm theo trường, kèm câu.

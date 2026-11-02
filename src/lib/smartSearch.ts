@@ -459,10 +459,16 @@ export function docLocThem(raw: string): { direction: string; legal: string; fur
 export function docMucDich(raw: string, laTenDuAn?: (nq: string) => boolean): "ban" | "thue" | "duan" | null {
   const pq = parseQuery(raw);
   const w = ` ${normalizeVi(raw).replace(/[^a-z0-9]+/g, " ")} `;
+  // DỰ ÁN XÉT TRƯỚC (chủ dự án 02/11/2026: "đọc mục đích liên quan đến dự án phải coi lại"): câu nói tới dự án (dự án · mở bán · bàn giao ·
+  // chủ đầu tư · khu đô thị · tiến độ · trọn tên dự án) mà KHÔNG nói rõ mua / bán / thuê → Dự án. "mở bán", "bàn giao" có chữ "bán"/"ban"
+  // nhưng là chữ của dự án, không phải khách nói mua bán (trước đây "dự án đang mở bán…" bị hiểu là Mua bán).
+  const wDa = w.replace(/ dat nen du an /g, " dat nen ");
+  const coDuAn = / du an | mo ban | ban giao | chu dau tu | khu do thi | tien do /.test(wDa) || !!laTenDuAn?.(w);
+  const noiMuaThue = / (mua|ban|thue|chuyen nhuong) /.test(w.replace(/ (mo ban|ban giao) /g, " "));
+  if (coDuAn && !noiMuaThue) return "duan";
   if (/ (chuyen nhuong|can ban|ban gap) /.test(w) && !/ thue /.test(w)) return "ban";
   if (pq.purpose) return pq.purpose;
-  const wDa = w.replace(/ dat nen du an /g, " dat nen ");
-  if (/ du an | mo ban | ban giao | chu dau tu | khu do thi | tien do /.test(wDa) || laTenDuAn?.(w)) return "duan";
+  if (coDuAn) return "duan";
   const chiThue = pq.types.length > 0 && pq.types.every((t) => ["Phòng trọ", "Văn phòng", "Mặt bằng"].includes(t));
   if (/ thang | nguyen can | o ghep | ngan han | dai han /.test(w) || chiThue) return "thue";
   // giá từ 100 TRIỆU trở lên ("căn hộ 800 triệu") là giá bán — không ai thuê trăm triệu một tháng

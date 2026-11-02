@@ -45,30 +45,6 @@ export type KetQuaLoc = {
   thongBao?: string;
 };
 
-// TRƯỜNG KHÁCH ĐÃ TỰ BỎ sau khi tìm bằng câu (chủ dự án 02/11/2026: tìm "căn hộ hải châu đà nẵng" rồi bấm Đặt lại ở Khu vực — câu
-// vẫn còn chữ "đà nẵng" nên máy điền lại ngay, Đặt lại "không được"). Câu giữ nguyên trong ô; trường khách đã bỏ thì KHÔNG điền lại
-// từ câu nữa — cả ở ô chọn lẫn ở kết quả. Tìm câu mới là hết hiệu lực.
-export type TruongCau = "kv" | "lh" | "gia" | "dt" | "pn" | "huong" | "phap" | "nt" | "xt" | "mg";
-const TRUONG_CAU: Record<TruongCau, { rong: (f: Filters) => boolean; bo: Partial<Filters> }> = {
-  kv: { rong: (f) => !f.locations.length, bo: { locations: [] } },
-  lh: { rong: (f) => !f.types.length, bo: { types: [] } },
-  gia: { rong: (f) => f.priceMin == null && f.priceMax == null, bo: { priceMin: null, priceMax: null } },
-  dt: { rong: (f) => f.areaMin == null && f.areaMax == null, bo: { areaMin: null, areaMax: null } },
-  pn: { rong: (f) => !f.beds, bo: { beds: 0 } },
-  huong: { rong: (f) => !f.direction, bo: { direction: "" } },
-  phap: { rong: (f) => !f.legal, bo: { legal: "" } },
-  nt: { rong: (f) => !f.furnishing, bo: { furnishing: "" } },
-  xt: { rong: (f) => !f.verified, bo: { verified: false } },
-  mg: { rong: (f) => !f.broker, bo: { broker: false } },
-};
-/** Trường đang có ở `truoc` mà khách vừa bỏ trống ở `sau` */
-export const truongVuaBo = (truoc: Filters, sau: Filters): TruongCau[] =>
-  (Object.keys(TRUONG_CAU) as TruongCau[]).filter((t) => !TRUONG_CAU[t].rong(truoc) && TRUONG_CAU[t].rong(sau));
-/** Để trống các trường khách đã bỏ — CHỈ khi khách vẫn để trống trường đó (`goc`: lựa chọn của khách). Khách chọn lại (vd bỏ "Mặt
- *  bằng" rồi tick "Văn phòng") thì giữ đúng lựa chọn mới (02/11/2026: chọn lại sau Đặt lại "lúc được lúc không") */
-export const boTruongCau = (f: Filters, ds: TruongCau[], goc: Filters): Filters =>
-  ds.filter((t) => TRUONG_CAU[t].rong(goc)).reduce((g, t) => ({ ...g, ...TRUONG_CAU[t].bo }), f);
-
 // CÂU GÕ MÁY HIỂU ĐƯỢC → BỘ LỌC (chủ dự án 17/10/2026: "đất giá rẻ dưới 3 tỷ tại Hòa Xuân" phải ra đất Hòa Xuân
 // trước, rồi giá, rồi khu vực Đà Nẵng — không phải xếp theo số chữ trùng). Bóc được nơi / loại nhà / giá thì lọc
 // đúng như khách chọn trường lọc; "đất" trần = cả nhóm Đất (đất nền, đất thổ cư…).

@@ -34,7 +34,7 @@ import {
   tenLoaiHinh,
 } from "@/lib/filters";
 import { suggest, type Suggestion } from "@/lib/suggest";
-import { chuChuaHieu, goiYNoiLong, parseQuery, suaChinhTa } from "@/lib/smartSearch";
+import { chuChuaHieu, docMucDich, goiYNoiLong, parseQuery, suaChinhTa } from "@/lib/smartSearch";
 import { gopCau } from "@/lib/locTuCau";
 import { hintsFor, listingHints, pageHints, type HintMode, type TinGoiY } from "@/lib/searchHints";
 import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
@@ -269,6 +269,27 @@ export default function FilterBar({
   //   • Trang có onSearch (trang chủ) → sang trang kết quả.
   //   • Trang danh sách tự lọc tại chỗ → CUỘN xuống khối kết quả (#ket-qua).
   // Kèm trạng thái "đang tìm" ~0,7s để khách thấy máy đang chạy, không tưởng đứng yên.
+  // ĐIỀU HƯỚNG TÌM CHUẨN — MỘT VÒNG TÌM (chủ dự án 02/11/2026: "chỗ đang vào gõ ở đâu — làm một vòng — quay lại, đích là chỗ đang gõ"):
+  // trang khách đứng gõ lần đầu (trang chủ, hoặc Mua bán / Cho thuê / Dự án vào từ menu) là ĐIỂM XUẤT PHÁT. Kết quả → đổi trường → gõ
+  // mới → kết quả… mỗi trang kết quả THAY trang kết quả trước trong lịch sử (trang kết quả mang dấu cvrKq), nên bấm Quay lại MỘT LẦN là
+  // về điểm xuất phát. Gõ ở điểm xuất phát thì trang kết quả đầu là bước MỚI (điểm xuất phát còn nguyên phía sau). Màn tìm điện thoại
+  // đang giữ một bước lịch sử riêng (nút ← đóng màn tìm) → lùi bỏ bước đó trước rồi mới sang trang. Câu vừa gõ đi theo sang trang mới.
+  const diKetQua = (url: string, cau: string) => {
+    try { if (cau) sessionStorage.setItem("cvr-cau:" + url.split("?")[0], cau); } catch { /* bỏ qua */ }
+    boQuaLui();
+    const st = (history.state ?? {}) as Record<string, unknown>;
+    if (dangLui.current) { dangLui.current = url; return; } // gọi lặp (Enter + gửi form) trong lúc đang lùi: chỉ đổi đích, không lùi thêm
+    const di = (u: string) => (st.cvrKq ? router.replace(u) : router.push(u));
+    if (!Object.keys(st).some((k) => k.startsWith("cvrBang"))) return di(url);
+    dangLui.current = url;
+    const sau = () => {
+      window.removeEventListener("popstate", sau);
+      window.setTimeout(() => { const u = dangLui.current; dangLui.current = ""; if (u) di(u); }, 0);
+    };
+    window.addEventListener("popstate", sau);
+    history.back();
+  };
+  const dangLui = useRef("");
   const [dangTim, setDangTim] = useState(false);
   const chayTim = (next?: Filters, luu = true) => {
     setSugOpen(false);
@@ -279,29 +300,55 @@ export default function FilterBar({
     window.setTimeout(() => setDangTim(false), 1200);
     // Báo khối kết quả chạy chuyển động (kể cả khi bộ lọc không đổi) — khách thấy trang vừa tìm
     window.dispatchEvent(new Event("cvr-tim"));
+    const kw = f.keyword.trim();
+    // TÊN DỰ ÁN CHƯA NẠP (khách gõ nhanh rồi Enter ngay — danh sách nạp khi bắt đầu gõ): chờ nạp xong rồi mới đọc mục đích, không thì gõ
+    // trọn tên dự án vẫn ở lại Mua bán / Cho thuê (02/11/2026)
+    if (!next && kw && dsDuAnDaNap() === null) { void napDsDuAn().then(() => chayTim(next, false)); return; }
+    const dsDa = dsDuAnDaNap() ?? dsDuAn;
+    // CÂU NÓI MỤC ĐÍCH KHÁC TAB ĐANG ĐỨNG → SANG ĐÚNG TAB (chủ dự án 02/11/2026: "đứng ở Mua bán gõ cho thuê phải đổi qua Cho thuê",
+    // Mua bán · Cho thuê · Dự án như nhau). DÙNG CHUNG bộ đọc mục đích của ô tìm trang chủ (docMucDich + gõ trọn tên dự án = Dự án,
+    // y hệt mucDichCau ở TimTrangChu — chủ dự án 02/11/2026). Sang tab mới bằng diKetQua: Quay lại về đúng trang đang đứng gõ.
+    if (!next && kw && kw !== daTim && (!onSearch || mode === "duan")) {
+      const md = docMucDich(kw, () => dsDa.length > 0 && !!timDuAn(kw, dsDa, false));
+      if (md && md !== (mode === "duan" ? "duan" : purpose)) {
+        setDaTim(kw);
+        const da = timDuAn(kw, dsDa);
+        if (md === "duan") {
+          if (da?.duAn.coTrang) return diKetQua(`/du-an/${da.duAn.slug}`, kw);
+          const p = filtersToParams({ ...emptyFilters(), keyword: kw });
+          p.set("mode", "Dự án");
+          return diKetQua(`/du-an?${p.toString()}`, kw);
+        }
+        const goc = md === "thue" ? "/cho-thue" : "/mua-ban";
+        if (da) return diKetQua(`${goc}?duan=${encodeURIComponent(da.duAn.ten)}`, kw);
+        const u = duongDanCau(md, kw);
+        if (u) return diKetQua(u, kw);
+        const q = filtersToParams({ ...emptyFilters(), keyword: kw });
+        q.set("mode", md === "thue" ? "Cho thuê" : "Mua bán");
+        return diKetQua(`${goc}?${q.toString()}`, kw);
+      }
+    }
     if (onSearch) { boQuaLui(); return onSearch(next); }
     // TRANG KẾT QUẢ: khách gõ CÂU MỚI rồi bấm Tìm → câu mới thắng bộ lọc cũ (chủ dự án 17/10/2026: đang ở
     // "nhà Đà Nẵng" gõ "Phòng trọ cho thuê tại Huế" mà vẫn ra Đà Nẵng). Câu máy hiểu trọn → sang đúng trang sạch
     // như ô tìm trang chủ; câu còn chi tiết riêng → lọc lại từ đầu theo câu (khu vực · loại hình · giá tách từ câu).
-    const kw = f.keyword.trim();
     if (!next && kw && mode === "duan" && kw !== daTim) { apDungCau(kw); return; }
     if (!next && kw && mode !== "duan" && kw !== daTim) {
       setDaTim(kw);
       // GÕ ĐÚNG TÊN DỰ ÁN (21/10/2026): như ô tìm trang chủ — nói rõ mua/thuê hoặc đang ở trang Mua bán/Cho thuê → tin thuộc dự án
-      const da = timDuAn(kw, dsDuAn);
+      const da = timDuAn(kw, dsDa);
       if (da) {
         const m = parseQuery(kw).purpose ?? purpose;
-        boQuaLui();
-        return router.push(`${m === "thue" ? "/cho-thue" : "/mua-ban"}?duan=${encodeURIComponent(da.duAn.ten)}`);
+        return diKetQua(`${m === "thue" ? "/cho-thue" : "/mua-ban"}?duan=${encodeURIComponent(da.duAn.ten)}`, kw);
       }
       const u = duongDanCau(purpose, kw);
-      if (u && u !== window.location.pathname) { boQuaLui(); return router.push(u); }
+      if (u && u !== window.location.pathname) return diKetQua(u, kw);
       // Địa chỉ trang đi theo câu mới (tải lại / gửi link vẫn đúng câu khách tìm). Đang ở trang con cố định nơi
       // (VD /cho-thue/nha/da-nang) → về trang mục đích gốc, không để lọc cố định của trang con đè câu mới.
       const goc = purpose === "thue" ? "/cho-thue" : "/mua-ban";
       const q = filtersToParams({ ...emptyFilters(), keyword: kw });
       q.set("mode", purpose === "thue" ? "Cho thuê" : "Mua bán");
-      if (window.location.pathname !== goc) { boQuaLui(); return router.push(`${goc}?${q.toString()}`); }
+      if (window.location.pathname !== goc) return diKetQua(`${goc}?${q.toString()}`, kw);
       onChange(gopCau(f, kw, purpose));
       window.history.replaceState(window.history.state, "", `${goc}?${q.toString()}`);
     }
@@ -316,6 +363,7 @@ export default function FilterBar({
     // Ô tìm HIỆN ĐÚNG CÂU VỪA TÌM (01/11/2026): Dự án đọc hết câu vào trường thì từ khoá còn lại rỗng → ô từng hiện lại câu CŨ từ trang
     // chủ, gõ tiếp bị nối vào câu cũ ("căn hộ sơn tràcăn hộ sơn trà")
     setCauCu(cau);
+    tuCau.current = true;
     try { sessionStorage.setItem("cvr-cau:" + window.location.pathname, cau); } catch { /* bỏ qua */ }
     if (mode === "duan") {
       // Dự án: chỉ Khu vực · Loại hình đọc từ câu; trường khách tự chọn (chủ đầu tư, tình trạng…) giữ; phần chưa đọc làm từ khoá
@@ -374,9 +422,17 @@ export default function FilterBar({
   const gonKhiCuon = dinh && dangCuon;
   useEffect(() => {
     try {
-      const s = sessionStorage.getItem("cvr-cau:" + window.location.pathname);
+      // QUAY LẠI CHỖ ĐANG GÕ (chủ dự án 02/11/2026): câu gõ ở trang này nằm theo ĐÚNG BƯỚC LỊCH SỬ của trang (history.state.cvrCau) —
+      // từ trang kết quả sau bấm Quay lại thì ô tìm hiện lại đúng câu đã gõ ở đây; vào trang bằng menu là bước mới, không có câu cũ
+      // TRANG KẾT QUẢ CỦA VÒNG TÌM: trang mở ra từ ô tìm / đổi trường được đánh dấu cvrKq trên bước lịch sử của nó (xem diKetQua)
+      const st = (history.state ?? {}) as Record<string, unknown>;
+      const sCau = sessionStorage.getItem("cvr-cau:" + window.location.pathname);
+      const tuTruong = sessionStorage.getItem("cvr-kq-den") === window.location.pathname;
+      const s = sCau || (typeof st.cvrCau === "string" ? st.cvrCau : "");
       // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc một lần khi mở trang
       if (s) setCauCu(s);
+      if (s || sCau || tuTruong) history.replaceState({ ...st, ...(s ? { cvrCau: s } : {}), ...(sCau || tuTruong ? { cvrKq: 1 } : {}) }, "");
+      if (tuTruong) sessionStorage.removeItem("cvr-kq-den");
       // ĐỌC MỘT LẦN RỒI BỎ (02/11/2026): để lại thì lần sau vào trang này bằng menu câu cũ lại hiện ra; tải lại trang đã có ?q= giữ câu
       sessionStorage.removeItem("cvr-cau:" + window.location.pathname);
     } catch { /* bỏ qua */ }
@@ -384,6 +440,18 @@ export default function FilterBar({
   // KHÁCH ĐÃ XOÁ CÂU (×, xoá tay, Làm mới) → XOÁ HẾT MỌI CHỖ GIỮ CÂU, không chỗ nào làm câu cũ hiện lại (chủ dự án 02/11/2026:
   // "bấm về trang chủ, hiện lại câu đó dù đã xoá" — "xử lý triệt để"): câu ghi tạm của trang chủ + mọi trang, và ?q= trên địa chỉ
   // (tải lại / Quay lại). Các trường lọc đang chọn (Khánh Hòa, Căn hộ…) ghi lại vào địa chỉ thay cho câu, tải lại vẫn đúng kết quả.
+  // KHÁCH SỬA TRƯỜNG LỌC → câu cũ hết vai, ô tìm không hiện lại câu đó (02/11/2026 — cùng gốc với ListingBrowser doiBoLoc). Đọc câu vào
+  // trường (apDungCau) cũng đổi trường: bỏ qua đúng lần đó.
+  const khoaTruong = JSON.stringify({ ...f, keyword: "" });
+  const truongCu = useRef(khoaTruong);
+  const tuCau = useRef(false);
+  useEffect(() => {
+    if (khoaTruong === truongCu.current) return;
+    truongCu.current = khoaTruong;
+    if (tuCau.current) { tuCau.current = false; return; }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- trường vừa đổi do khách chọn
+    if (!f.keyword.trim()) setCauCu("");
+  }, [khoaTruong, f.keyword]);
   const coCau = (f.keyword || cauCu).trim().length > 0;
   const daCoCau = useRef(false);
   useEffect(() => {
@@ -444,17 +512,21 @@ export default function FilterBar({
   // GỢI Ý THEO DỮ LIỆU THẬT dùng chung mọi ô tìm (máy chủ đếm tin — lib/goiYThat, chủ dự án 21/10/2026): mục đích + loại hình +
   // khu vực + đặc điểm, chỉ câu có tin, giá và nơi thực tế. Máy chủ lỗi → gợi ý theo ý câu ở máy khách (goiYTheoY) làm dự phòng.
   // trang Dự án (hintMode duan): gợi ý máy chủ của mục Dự án — đọc loại hình, tỉnh thành, mục đích trong câu (gợi ý tổng, lib/goiYTong)
-  const goiYThatDs = useGoiYThat(typed ? kwHieu : "", hintMode === "duan" ? "duan" : purpose === "thue" ? "thue" : "ban", !compact);
+  // GỢI Ý THEO MỤC ĐÍCH CỦA CÂU (chủ dự án 02/11/2026: "gõ câu mới, mục đích khác trang hiện tại thì phải chuyển qua đúng tab"): câu nói
+  // rõ mục đích (bộ đọc chung docMucDich, như trang chủ) → gợi ý của mục đó, bấm vào là sang đúng tab; câu không nói → mục trang đang đứng
+  const mucCau = useMemo(() => (typed ? docMucDich(kwHieu, () => dsDuAn.length > 0 && !!timDuAn(kwHieu, dsDuAn, false)) : null), [typed, kwHieu, dsDuAn]);
+  const mucGoiY = mucCau ?? (hintMode === "duan" ? "duan" : purpose === "thue" ? "thue" : "ban");
+  const goiYThatDs = useGoiYThat(typed ? kwHieu : "", mucGoiY, !compact);
   const bacThang: Suggestion[] = useMemo(() => (typed
-    ? (goiYThatDs ?? goiYTheoY(kwHieu, purpose === "thue" ? "thue" : "ban", dsDuAn)).map((g) => ({ label: g.nhan, kind: "Gợi ý" as const, href: g.href }))
-    : []), [typed, kwHieu, purpose, coDiaDanh, dsDuAn, goiYThatDs]); // eslint-disable-line react-hooks/exhaustive-deps
+    ? (goiYThatDs ?? goiYTheoY(kwHieu, mucGoiY === "thue" ? "thue" : "ban", dsDuAn)).map((g) => ({ label: g.nhan, kind: "Gợi ý" as const, href: g.href }))
+    : []), [typed, kwHieu, mucGoiY, coDiaDanh, dsDuAn, goiYThatDs]); // eslint-disable-line react-hooks/exhaustive-deps
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "gợi ý phổ biến" toàn tên tỉnh trơn — vô dụng)
   // Bỏ gợi ý khớp ký tự kiểu Google (địa danh trùng tên tỉnh khác, "Tất cả biệt thự"…) — chủ dự án 21/10/2026: chỉ gợi ý theo ý câu
   // Ô TÌM PHẢI HƠN CHỌN TRƯỜNG (chủ dự án 01/11/2026, ảnh trang Dự án gõ "Căn ho" chỉ ra một tên dự án): gõ là đọc TỈNH THÀNH · LOẠI
   // HÌNH · MỤC ĐÍCH (gợi ý máy chủ — "Dự án căn hộ chung cư tại…", dự án đúng loại, Bán / Cho thuê), rồi mới đến dự án khớp tên theo
   // các trường đang chọn (goiYRieng), không lặp
   const panelItems: Suggestion[] = typed
-    ? (goiYRieng ? [...bacThang, ...goiYRieng(kwHoan).filter((s) => !bacThang.some((b) => b.href === s.href || b.label === s.label))] : bacThang)
+    ? (goiYRieng && mucGoiY === "duan" ? [...bacThang, ...goiYRieng(kwHoan).filter((s) => !bacThang.some((b) => b.href === s.href || b.label === s.label))] : bacThang)
     : recentShown; // tên dự án (chữ Anh) không qua sửa chính tả
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
   // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
@@ -480,6 +552,7 @@ export default function FilterBar({
     }
     // Sản phẩm / Dự án / Tin tức → mở thẳng trang chi tiết (đã là "kết quả").
     if (s.href) {
+      if (/^\/(mua-ban|cho-thue)(\/|\?|$)|^\/du-an(\?|$)/.test(s.href)) return diKetQua(s.href, s.label);
       boQuaLui();
       router.push(s.href);
       return;
@@ -1048,7 +1121,7 @@ export default function FilterBar({
                 setActiveIdx(-1);
                 gianO(e.currentTarget);
               }}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); chayTim(); } onKeyNav(e); }} // phím Tìm: chạy tìm thật (có vạch chạy báo đang tìm)
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); chayTim(); return; } onKeyNav(e); }} // phím Tìm: chạy tìm thật (có vạch chạy báo đang tìm)
               placeholder="" // màn tìm đã mở: chữ gợi ý KHÔNG chạy (18/10/2026), ô TRỐNG — không chữ mờ in sẵn (02/11/2026: "xoá vẫn cứ hiện lại")
               aria-label="Tìm kiếm"
               autoComplete="off"

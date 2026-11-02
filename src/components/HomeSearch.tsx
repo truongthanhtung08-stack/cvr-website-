@@ -6,6 +6,7 @@ import FilterBar from "@/components/FilterBar";
 import { emptyFilters, filtersToParams, type Filters } from "@/lib/filters";
 import type { HintMode, TinGoiY } from "@/lib/searchHints";
 import { duongDanSach, duongDanTuCau } from "@/lib/duongDanTim";
+import { docMucDich } from "@/lib/smartSearch";
 
 const tabs = ["Mua bán", "Cho thuê", "Dự án"];
 
@@ -25,15 +26,19 @@ export default function HomeSearch({ defaultTab, items }: { defaultTab?: string;
   // Trước đây mọi tab đều đổ về /tim-kiem nên bấm "Dự án" lại ra tin bán/thuê.
   // #ket-qua: khi bấm search, trình duyệt tự cuộn tới khối KẾT QUẢ (bỏ qua banner Hero
   // rất to ở trang Dự án) — khỏi phải cuộn tay. Trang không có mốc này thì bỏ qua.
-  function trangDich(params: URLSearchParams): string {
-    if (tab === "Dự án") return `/du-an?${params.toString()}#ket-qua`;
-    if (tab === "Cho thuê") return `/cho-thue?${params.toString()}#ket-qua`;
+  function trangDich(params: URLSearchParams, t = tab): string {
+    if (t === "Dự án") return `/du-an?${params.toString()}#ket-qua`;
+    if (t === "Cho thuê") return `/cho-thue?${params.toString()}#ket-qua`;
     return `/mua-ban?${params.toString()}#ket-qua`;
   }
 
   // Kiểu Google: ra kết quả ngay. `searchFilters` = bộ lọc truyền kèm khi bấm gợi ý/lịch sử
   // (đảm bảo đúng lựa chọn vừa chọn); không truyền → dùng bộ lọc hiện tại (nút search / Enter).
   function handleSearch(searchFilters?: Filters) {
+    // ĐỌC MỤC ĐÍCH DÙNG CHUNG (docMucDich — như ô tìm trang chủ, Mua bán, Cho thuê, Dự án; chủ dự án 02/11/2026): câu nói rõ mục đích
+    // thì sang đúng mục đó, không thì theo tab đang chọn
+    const md = docMucDich((searchFilters ?? filters).keyword);
+    const tab = md === "duan" ? "Dự án" : md === "thue" ? "Cho thuê" : md === "ban" ? "Mua bán" : tabDangChon;
     // Khớp đúng một trang sạch đang lên Google (loại hình · tỉnh · mức giá) → về trang đó
     if (tab !== "Dự án") {
       const f = searchFilters ?? filters;
@@ -45,8 +50,9 @@ export default function HomeSearch({ defaultTab, items }: { defaultTab?: string;
     }
     const params = filtersToParams(searchFilters ?? filters);
     params.set("mode", tab);
-    window.location.href = trangDich(params);
+    window.location.href = trangDich(params, tab);
   }
+  const tabDangChon = tab;
 
   // Mở trang kết quả ở chế độ bản đồ (bản đồ sẽ hiển thị khi xây xong).
   function handleMap() {

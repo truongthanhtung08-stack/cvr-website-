@@ -1,10 +1,12 @@
 "use client";
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
-import { xongTim } from "@/components/VachTim";
+import { batDauTim, xongTim } from "@/components/VachTim";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
+import { duongDanSach } from "@/lib/duongDanTim";
 
 // Bản đồ chỉ chạy phía trình duyệt (Leaflet đụng tới window) → nạp động, tắt SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), {
@@ -14,7 +16,7 @@ const MapView = dynamic(() => import("@/components/MapViewMo"), {
 import PropertyCard from "@/components/PropertyCard";
 import TheTinMobile from "@/components/TheTinMobile";
 import FilterBar from "@/components/FilterBar";
-import { cauThanhBoLoc, boLocKhoiDau, truongVuaBo, boTruongCau, type TruongCau } from "@/lib/locDanhSach";
+import { cauThanhBoLoc, boLocKhoiDau } from "@/lib/locDanhSach";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
   filtersFromParams,
@@ -147,17 +149,7 @@ export default function ListingBrowser({
   tuKhoaSong.current = filtersSong.keyword;
   const [tuKhoaDaTim, setTuKhoaDaTim] = useState(() => filtersSong.keyword);
   useEffect(() => { if (!filtersSong.keyword.trim()) setTuKhoaDaTim(""); }, [filtersSong.keyword]);
-  const filtersGoc = useMemo(() => ({ ...filtersHoan, keyword: tuKhoaDaTim }), [filtersHoan, tuKhoaDaTim]);
-  // TRƯỜNG KHÁCH ĐÃ TỰ BỎ cho câu đang tìm (Đặt lại / × — 02/11/2026, xem truongVuaBo): câu không điền lại các trường đó. Kết quả lọc
-  // theo các trường máy đọc được TRỪ trường đã bỏ, từ khoá chỉ còn phần câu máy chưa đọc thành trường
-  const [boTruong, setBoTruong] = useState<{ kw: string; ds: TruongCau[] }>({ kw: "", ds: [] });
-  const boDangAp = boTruong.kw === tuKhoaDaTim && tuKhoaDaTim.trim() ? boTruong.ds : [];
-  const khoaBo = boDangAp.join();
-  const filters = useMemo(() => {
-    if (!khoaBo) return filtersGoc;
-    const h = cauThanhBoLoc(filtersGoc, purpose);
-    return h ? { ...boTruongCau(h, khoaBo.split(",") as TruongCau[], filtersGoc), keyword: h.keyword } : filtersGoc;
-  }, [filtersGoc, khoaBo, purpose]);
+  const filters = useMemo(() => ({ ...filtersHoan, keyword: tuKhoaDaTim }), [filtersHoan, tuKhoaDaTim]);
   // ?sapxep=gia-tang (ô tìm thông minh: câu có "giá rẻ" → giá thấp trước)
   const [sort, setSort] = useState<SortKey>(() => sapXepTu(params));
   // Chế độ BẢN ĐỒ (kiểu Batdongsan): bật là cả trang chuyển sang xem bản đồ,
@@ -326,15 +318,89 @@ export default function ListingBrowser({
   // Thẻ lọc hiểu từ câu: chỉ theo từ khoá ĐÃ TÌM — đang gõ dở thì thanh lọc giữ nguyên
   const hieu = useMemo(() => {
     if (filtersSong.keyword !== tuKhoaDaTim) return null;
-    const h = cauThanhBoLoc(filtersSong, purpose);
-    return h && khoaBo ? boTruongCau(h, khoaBo.split(",") as TruongCau[], filtersSong) : h;
-  }, [filtersSong, tuKhoaDaTim, purpose, coDiaDanh, khoaBo]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: tính lại khi địa danh về
-  // Khách đổi TRƯỜNG (không phải gõ chữ) mà bỏ trống trường câu đã điền → nhớ lại để câu không điền lại (Đặt lại, ×)
+    return cauThanhBoLoc(filtersSong, purpose);
+  }, [filtersSong, tuKhoaDaTim, purpose, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: tính lại khi địa danh về
+  // Địa chỉ thay cho câu đã hết vai. Bảng chọn trường điện thoại đóng bằng history.back() → trình duyệt trả lại địa chỉ CŨ (?q= câu cũ)
+  // → mỗi lần lùi về đúng trang này mà địa chỉ còn câu cũ thì ghi lại địa chỉ mới.
+  const boCau = useRef<{ cau: string; url: string } | null>(null);
+  const thayCauCu = () => {
+    const b = boCau.current;
+    if (!b) return;
+    const u = new URL(window.location.href);
+    if (u.pathname === new URL(b.url).pathname && u.searchParams.get("q") === b.cau) window.history.replaceState(window.history.state, "", b.url);
+  };
+  useEffect(() => {
+    window.addEventListener("popstate", thayCauCu);
+    return () => window.removeEventListener("popstate", thayCauCu);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- thayCauCu chỉ đọc ref
+  }, []);
+  // KHÁCH SỬA TRƯỜNG LỌC = CÂU ĐÃ TÌM HẾT VAI (chủ dự án 02/11/2026: "sửa, Đặt lại trường lọc vẫn ra lại trường của câu search cũ" —
+  // gốc: trường được đọc lại từ câu MỖI LẦN vẽ, nên bỏ trường nào câu điền lại trường đó). Đổi trường (không phải gõ chữ): các trường
+  // khách đang thấy thành bộ lọc thật, từ khoá chỉ còn phần câu máy chưa đọc thành trường ("view biển"…); ?q= cũ trên địa chỉ thay
+  // bằng các trường — tải lại / Quay lại không đưa câu cũ về.
+  // ĐỔI TRƯỜNG = TRANG KẾT QUẢ MỚI (chủ dự án 02/11/2026: "đổi khu vực, đổi loại hình thì phải ra kết quả mới" — "sao đổi vẫn ghi lại
+  // trường cũ"): trang Mua bán / Cho thuê dựng sẵn theo một bộ trường (vd /cho-thue/can-ho-chung-cu/da-nang: tiêu đề, dòng giá, địa chỉ
+  // đều của Đà Nẵng). Đổi trường mà vẫn đứng đó thì danh sách đổi còn tiêu đề, địa chỉ ghi trường cũ → mở đúng trang của bộ trường mới
+  // (trang sạch nếu có, không thì trang mục + tham số). theo luật MỘT VÒNG TÌM (FilterBar diKetQua — Quay lại về điểm xuất phát); bảng chọn
+  // điện thoại ĐANG MỞ (Đặt lại, tick từng mục…) thì chỉ lọc tại chỗ, khách bấm Áp dụng / đóng bảng mới sang trang mới — không đóng bảng
+  // giữa chừng.
+  const router = useRouter();
+  const urlTheoTruong = (f: Filters): string | null => {
+    if (nested || trangChu || (nguon !== "ban" && nguon !== "thue")) return null;
+    const goc = purpose === "thue" ? "/cho-thue" : "/mua-ban";
+    const sach = duongDanSach(purpose, { ...f, keyword: "" });
+    const dich = sach ?? goc;
+    if (dich === window.location.pathname.replace(/\/trang\/\d+$/, "")) return null;
+    const kw = f.keyword.trim();
+    const p = sach ? new URLSearchParams(kw ? { q: kw } : {}) : filtersToParams(f);
+    if (!sach) p.set("mode", purpose === "thue" ? "Cho thuê" : "Mua bán");
+    return p.toString() ? `${dich}?${p.toString()}` : dich;
+  };
+  const coBuocBang = () => Object.keys((history.state ?? {}) as Record<string, unknown>).some((k) => k === "cvrLoc" || k.startsWith("cvrBang"));
+  const choDi = useRef<Filters | null>(null); // bộ trường chờ bảng chọn đóng để sang trang
+  const diTheoTruong = () => {
+    const f = choDi.current;
+    if (!f || coBuocBang()) return;
+    choDi.current = null;
+    const url = urlTheoTruong(f);
+    if (!url) return;
+    batDauTim();
+    // cùng luật một vòng tìm với ô tìm (FilterBar diKetQua): đang ở trang kết quả (cvrKq) → thay; đang ở điểm xuất phát → bước mới
+    try { sessionStorage.setItem("cvr-kq-den", url.split("?")[0]); } catch { /* bỏ qua */ }
+    if ((history.state as Record<string, unknown> | null)?.cvrKq) router.replace(url, { scroll: false });
+    else router.push(url, { scroll: false });
+  };
+  useEffect(() => {
+    const onPop = () => window.setTimeout(diTheoTruong, 0);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ đọc ref
+  }, []);
   const doiBoLoc = (nf: Filters) => {
-    if (hieu && nf.keyword === filtersSong.keyword) {
-      const moi = truongVuaBo(hieu, nf);
-      if (moi.length) setBoTruong({ kw: tuKhoaDaTim, ds: [...new Set([...boDangAp, ...moi])] });
+    const doiTruong = nf.keyword === filtersSong.keyword || !nf.keyword.trim();
+    if (doiTruong) {
+      const f2 = hieu && nf.keyword === filtersSong.keyword ? { ...nf, keyword: hieu.keyword.trim() } : nf;
+      if (urlTheoTruong(f2)) {
+        choDi.current = f2;
+        if (!coBuocBang()) { diTheoTruong(); return; }
+      } else choDi.current = null;
     }
+    if (hieu && nf.keyword === filtersSong.keyword) {
+      const conLai = hieu.keyword.trim();
+      const moi = { ...nf, keyword: conLai };
+      setTuKhoaDaTim(conLai);
+      setFilters(moi);
+      const u = new URL(window.location.href);
+      if (u.searchParams.has("q")) {
+        const giu = ["mode", "sapxep"].map((k) => [k, u.searchParams.get(k)] as const);
+        u.search = filtersToParams(moi).toString();
+        giu.forEach(([k, v]) => { if (v) u.searchParams.set(k, v); });
+        boCau.current = { cau: filtersSong.keyword, url: u.href };
+        thayCauCu();
+      }
+      return;
+    }
+    if (nf.keyword !== filtersSong.keyword) boCau.current = null; // khách gõ câu mới → câu mới làm chủ địa chỉ
     setFilters(nf);
   };
 
