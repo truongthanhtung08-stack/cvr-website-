@@ -37,10 +37,13 @@ export default function NapDuAnPage() {
   // Chọn lại ảnh cùng tên → giữ tệp chọn sau cùng
   function chonAnh(ds: FileList | null) {
     if (!ds?.length) return;
+    // CHÉP RA NGAY (chủ dự án 02/11/2026: "chọn 43 ảnh, Open, không lên ảnh nào"): FileList của ô chọn tệp là danh sách SỐNG — ô bị xoá
+    // (e.target.value = "") ngay sau khi gọi hàm này thì danh sách rỗng theo, mà hàm cập nhật state chạy SAU đó một nhịp → không nhận ảnh nào
+    const moi = Array.from(ds);
     setKetQua("");
     setTepAnh((cu) => {
       const theoTen = new Map(cu.map((f) => [f.name.toLowerCase(), f]));
-      for (const f of Array.from(ds)) if (f.type.startsWith("image/") || /\.(jpe?g|png|webp|avif|heic|heif)$/i.test(f.name)) theoTen.set(f.name.toLowerCase(), f);
+      for (const f of moi) if (f.type.startsWith("image/") || /\.(jpe?g|png|webp|avif|heic|heif)$/i.test(f.name)) theoTen.set(f.name.toLowerCase(), f);
       return [...theoTen.values()];
     });
   }
