@@ -378,6 +378,7 @@ export default function FilterBar({
   // Câu khách vừa gõ ở trang chủ rồi được đưa tới trang sạch (pSEO) — hiện lại trong ô để SỬA TIẾP như Google
   // (chủ dự án 17/10/2026). Chỉ để hiện; khách sửa là thành từ khoá thật. Đọc sau khi dựng trang (máy chủ không có sessionStorage).
   const [cauCu, setCauCu] = useState("");
+  const [veChoGo, setVeChoGo] = useState(false); // trang này là trang kết quả của một vòng tìm → hiện nút ‹ về chỗ đang gõ
   // ĐIỆN THOẠI, ĐANG CUỘN (lên hay xuống) khi khối lọc đã dính trên đầu → thu gọn hàng trường lọc, chỉ chừa thanh tìm; DỪNG CUỘN thì hiện
   // lại (chủ dự án 02/11/2026: "cuộn xuống, cuộn lên thì ẩn, dừng lại thì hiện ra"). Chỉ khi dải lọc nằm trong khối dính (.khoi-loc-dinh:
   // trang chủ → Xem thêm, Mua bán, Cho thuê, Dự án). Thanh menu dưới cùng KHÔNG đụng tới.
@@ -433,6 +434,7 @@ export default function FilterBar({
       if (s) setCauCu(s);
       if (s || sCau || tuTruong) history.replaceState({ ...st, ...(s ? { cvrCau: s } : {}), ...(sCau || tuTruong ? { cvrKq: 1 } : {}) }, "");
       if (tuTruong) sessionStorage.removeItem("cvr-kq-den");
+      setVeChoGo(!!(sCau || tuTruong || st.cvrKq) && history.length > 1);
       // ĐỌC MỘT LẦN RỒI BỎ (02/11/2026): để lại thì lần sau vào trang này bằng menu câu cũ lại hiện ra; tải lại trang đã có ?q= giữ câu
       sessionStorage.removeItem("cvr-cau:" + window.location.pathname);
     } catch { /* bỏ qua */ }
@@ -939,7 +941,16 @@ export default function FilterBar({
     {/* Trang danh sách: ô tìm co giãn hết khung, nút "Xem bản đồ" nằm SÁT MÉP PHẢI
         → không còn mảng trống hụt bên phải như khi giới hạn bề ngang. */}
     <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2.5"}>
-      <div className={compact ? "relative flex-1" : "relative flex h-11 min-w-0 flex-1 items-center rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.14)] ring-1 ring-black/15 transition sm:bg-cvr-surface sm:shadow-none focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-xl sm:ring-1"}>
+      {/* NÚT VỀ CHỖ ĐANG GÕ (chủ dự án 02/11/2026: "chưa có nút điều hướng về chỗ đang gõ"): chỉ hiện ở trang kết quả của một vòng tìm
+          (cvrKq) — bấm là về đúng trang khách đứng gõ tìm (luật một vòng tìm: trang kết quả thay nhau nên một bước lùi là về chỗ gõ) */}
+      {!compact && veChoGo && (
+        <button type="button" aria-label="Quay lại chỗ đang tìm" title="Quay lại chỗ đang tìm" onClick={() => history.back()}
+          className="-ml-1 -mr-1.5 flex h-11 w-7 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface sm:h-12">
+          {/* cùng kiểu nút ‹ của màn tìm (mũi tên trơn), gọn, cao bằng ô tìm, căn giữa theo ô */}
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+      )}
+      <div className={compact ? "relative flex-1" :"relative flex h-11 min-w-0 flex-1 items-center rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.14)] ring-1 ring-black/15 transition sm:bg-cvr-surface sm:shadow-none focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-xl sm:ring-1"}>
         {/* Kính lúp trái — trang Mua bán / Cho thuê: HIỆN cả trên điện thoại cho khách nhận ra ngay là ô tìm (chủ dự án
             20/10/2026); ô tìm lớn ở Hero điện thoại vẫn ẩn (đã có nút tìm xanh) */}
         <svg className={`pointer-events-none absolute top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-muted ${compact ? "left-4 hidden sm:block" : "left-3.5 sm:left-4"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
