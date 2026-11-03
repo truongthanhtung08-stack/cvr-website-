@@ -106,7 +106,12 @@ export async function lapKeHoach(
     }
     const canAnh = anh.co && !webCoAnh;
     if (canAnh) doi.push({ o: "ảnh tiêu biểu", moi: "ảnh trong tệp" });
-    else if (anh.co) giuWeb.push("ảnh");
+    // NẠP HÀNG LOẠT KHÔNG ĐƯA DỰ ÁN LÊN NỔI BẬT (chủ dự án 02/11/2026: "dự án nổi bật xếp trước, tra cứu xếp sau theo ABC"): hồ sơ chưa có
+    // ảnh đang nằm ở Tra cứu (contentDb: không ảnh = tra cứu); nạp ảnh vào mà không có dấu dạng thẻ thì nó nhảy lên Nổi bật → đóng dấu
+    // dangThe để ở lại Tra cứu. Dự án nổi bật chỉ do chủ dự án đưa lên trong Admin.
+    if (canAnh) {
+      if (!ctCu.dangThe) patch.details = { ...ctCu, ...((patch.details as Dong | undefined) ?? {}), dangThe: true };
+    } else if (anh.co) giuWeb.push("ảnh");
     return { d, loai: doi.length ? "capNhat" : "khongDoi", chan, doi, giuWeb, canAnh, id: cu.id as string, patch };
   });
 }

@@ -241,7 +241,7 @@ export default function ProjectsBrowser({
       { ten: "tình trạng", chon: !!boLoc.tinhTrang, ok: (p) => dsTinhTrang(boLoc.tinhTrang).includes(p.status) },
     ],
   });
-  const visible = hits.map((h) => h.item);
+  const visible = sortProjectsByTier(hits.map((h) => h.item));
   // Tầng + chữ cần bôi đậm của từng dự án
   const tierBySlug = new Map(hits.map((h) => [h.item.slug, h.tier]));
   const termsBySlug = new Map(hits.map((h) => [h.item.slug, h.matched]));
