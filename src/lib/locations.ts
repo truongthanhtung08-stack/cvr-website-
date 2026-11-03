@@ -145,11 +145,11 @@ export const provinceMergers: Record<string, string[]> = {
   "An Giang": ["An Giang", "Kiên Giang"],
 };
 
-// Danh sách tên tỉnh CŨ (63) — kèm tỉnh mới chứa nó. Sắp theo A→Z (bảng chọn "tỉnh cũ").
+// Danh sách tên tỉnh CŨ (63) — kèm tỉnh mới chứa nó. Nhóm theo tỉnh MỚI (cha),
+// giữ thứ tự tỉnh mới và các tỉnh cũ được gộp vào trong provinceMergers.
 export type OldProvince = { name: string; newName: string };
-export const oldProvinces: OldProvince[] = Object.entries(provinceMergers)
-  .flatMap(([newName, olds]) => olds.map((name) => ({ name, newName })))
-  .sort((a, b) => a.name.localeCompare(b.name, "vi"));
+export const oldProvinces: OldProvince[] = provinceNamesNew
+  .flatMap((newName) => (provinceMergers[newName] ?? [newName]).map((name) => ({ name, newName })));
 
 // Tên các tỉnh CŨ — cho select cấp 1 ở chế độ "tỉnh cũ".
 export const oldProvinceNames: string[] = oldProvinces.map((o) => o.name);
