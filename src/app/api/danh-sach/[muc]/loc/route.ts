@@ -40,11 +40,14 @@ const TOI_DA_GOI_Y = 300;
 
 export async function POST(req: Request, { params }: { params: Promise<{ muc: string }> }) {
   const { muc } = await params;
-  if (muc !== "ban" && muc !== "thue") return NextResponse.json({ loi: "muc" }, { status: 404 });
+  // "tat-ca": danh sách "Xem thêm" trang chủ — cả Mua bán lẫn Cho thuê, xếp chung theo cấp VIP như khối Bất động sản nổi bật (03/11/2026)
+  if (muc !== "ban" && muc !== "thue" && muc !== "tat-ca") return NextResponse.json({ loi: "muc" }, { status: 404 });
+  const caHai = muc === "tat-ca";
+  const mucDoc: "ban" | "thue" = muc === "thue" ? "thue" : "ban"; // đơn vị giá khi đọc câu gõ
   const yc = (await req.json().catch(() => ({}))) as YeuCau;
 
   const [tatCa, hetHan] = await Promise.all([getListings(), getListingsHetHan()]);
-  let tin = tatCa.filter((l) => ((l.purpose ?? "ban") === "thue" ? "thue" : "ban") === muc);
+  let tin = caHai ? tatCa : tatCa.filter((l) => ((l.purpose ?? "ban") === "thue" ? "thue" : "ban") === muc);
   if (yc.boQuaId?.length) {
     const bo = new Set(yc.boQuaId);
     tin = tin.filter((l) => !bo.has(l.id));
@@ -58,7 +61,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
   // Chỉ đúng các tin được chỉ định (tin thuộc dự án, tin tương tự) → tin hết hạn cũng chỉ trong danh sách đó; trước 31/10/2026 chèn tin
   // hết hạn của CẢ WEB vào cuối nên 15 tin của dự án ra 4 trang
   const hetHanLoc = yc.chiId ? hetHan.filter((l) => yc.chiId!.includes(l.id)) : hetHan;
-  const kq = locDanhSach(tin, hetHanLoc, muc, boLoc, yc.sapXep ?? "moi", yc.trang ?? 1, yc.moiTrang === MOI_TRANG_PC ? MOI_TRANG_PC : PER_PAGE, tatCa);
+  const kq = locDanhSach(tin, hetHanLoc, mucDoc, boLoc, yc.sapXep ?? "moi", yc.trang ?? 1, yc.moiTrang === MOI_TRANG_PC ? MOI_TRANG_PC : PER_PAGE, tatCa, !caHai);
 
   return NextResponse.json({
     // Cùng một cách gói với trang 1 máy chủ dựng sẵn (lib/ketQuaDau): tinhHieu — tỉnh máy hiểu từ câu gõ, để ghi đúng dòng
@@ -73,7 +76,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
       : {}),
     ...(yc.banDo ? { diem: kq.ketQua.filter((l) => !l.banSao).map(diemTuTin) } : {}),
     ...(yc.goiY
-      ? { cauSeo: cauSeoTheoMuc(tatCa, muc), goiY: tin.slice(0, TOI_DA_GOI_Y).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price })) }
+      ? { cauSeo: cauSeoTheoMuc(tatCa, mucDoc), goiY: tin.slice(0, TOI_DA_GOI_Y).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price })) }
       : {}),
   });
 }

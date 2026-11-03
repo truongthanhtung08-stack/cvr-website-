@@ -92,7 +92,7 @@ export default function ListingBrowser({
   // NẠP DỮ LIỆU Ở TRÌNH DUYỆT (SEO 15/10/2026): trang danh sách lớn không nhét dữ liệu tin vào
   // HTML nữa mà truyền `nguon`; danh sách tự nạp /api/danh-sach/<nguon> (CDN lưu sẵn, mọi trang
   // dùng chung).
-  nguon?: "ban" | "thue";
+  nguon?: "ban" | "thue" | "tat-ca";
   // TRANG 1 MÁY CHỦ DỰNG SẴN (SEO 21/10/2026, lib/ketQuaDau): kết quả lọc mặc định của trang → HTML có sẵn tin thật khách
   // nhìn thấy, không còn chờ /api/danh-sach mới hiện danh sách.
   ketQuaDau?: KetQuaLoc;

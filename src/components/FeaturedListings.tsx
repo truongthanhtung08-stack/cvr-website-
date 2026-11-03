@@ -112,7 +112,8 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
           trangChu
           purpose={expandPurpose}
           // Danh sách đầy đủ nạp từ /api/danh-sach (trang chủ chỉ chở 20 tin mỗi tab — 16/10/2026)
-          nguon={expandPurpose}
+          // Tab "Tất cả": danh sách gồm CẢ Mua bán lẫn Cho thuê, xếp theo cấp VIP như khối trên (chủ dự án 03/11/2026)
+          nguon={activeTab === "Tất cả" ? "tat-ca" : expandPurpose}
         />
       </section>
     );

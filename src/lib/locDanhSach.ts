@@ -116,6 +116,8 @@ export function locDanhSach(
   moiTrang = PER_PAGE,
   /** tin cả hai mục — tra nơi của dự án khách gõ tên (mục này không có tin của dự án) */
   tinCaHaiMuc: Listing[] = items,
+  /** false = không lọc theo mục: danh sách "Xem thêm" trang chủ gồm CẢ Mua bán lẫn Cho thuê, xếp chung theo cấp VIP (chủ dự án 03/11/2026) */
+  theoMuc = true,
 ): KetQuaLoc & { ketQua: Listing[] } {
   // Câu có "giá rẻ" → trong cùng nhóm, tin rẻ đứng trước (cùng quy ước với trang sạch ?sapxep=gia-tang)
   const timRe = / gia re /.test(` ${normalizeVi(filters.keyword)} `);
@@ -143,14 +145,14 @@ export function locDanhSach(
     if (noiDuAn) filters = { ...filters, locations: [{ province: noiDuAn.province, district: noiDuAn.district, ward: noiDuAn.ward }] };
   }
   // Nguồn theo đúng MỤC ĐÍCH + NHÂN ĐÔI HIỂN THỊ của CVR Diamond (nhanDoiHienThi.ts)
-  const base = nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose));
+  const base = nhanDoiHienThi(theoMuc ? items.filter((l) => (l.purpose ?? "ban") === purpose) : items);
   // NỚI LỎNG THÔNG MINH: tin khớp đủ lên đầu (Tầng 1), thiếu tiêu chí phụ xuống Tầng 2/3
   const hits = smartFilter(base, { ...filters, keyword: "" });
   const coTuKhoa = filters.keyword.trim().length > 0;
   const search = smartSearch(hits.map((h) => h.item), filters.keyword);
 
   // Tin hết hạn: cùng mục đích + khớp ĐỦ bộ lọc (Tầng 1) và từ khoá — không nới lỏng.
-  const gocHetHan = hetHan.filter((l) => (l.purpose ?? "ban") === purpose);
+  const gocHetHan = theoMuc ? hetHan.filter((l) => (l.purpose ?? "ban") === purpose) : hetHan;
   let ketQuaHetHan: Listing[] = [];
   if (gocHetHan.length) {
     const khop = smartFilter(gocHetHan, { ...filters, keyword: "" }).filter((h) => h.tier === 1).map((h) => h.item);
