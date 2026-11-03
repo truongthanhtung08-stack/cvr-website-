@@ -1343,8 +1343,11 @@ export function LocationPanel({
 
   // Mỗi tầng xếp A–Z theo tên riêng (bỏ chữ Phường/Xã/Quận/Huyện… khi so) — khách dò tên nhanh (chủ dự án 01/11/2026)
   const tenRieng = (x: string) => normalizeVi(x.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, ""));
-  const list = [...(level === "province" ? provinceNamesFor(mode) : level === "district" ? districtsOf(prov) : wardList)]
-    .sort((x, y) => tenRieng(x).localeCompare(tenRieng(y), "vi"));
+  const soSanhTenTinh = (a: string, b: string) => a.localeCompare(b, "vi", { sensitivity: "base" });
+  const list = [...(level === "province" ? provinceNamesFor(mode) : level === "district" ? districtsOf(prov) : wardList)];
+  // Hệ địa chỉ cũ: giữ tỉnh cũ được nhóm theo tỉnh mới cha từ locations.ts; các tầng khác vẫn A–Z.
+  if (level === "province") list.sort(isNew ? soSanhTenTinh : (a, b) => newProvinceOf(a).localeCompare(newProvinceOf(b), "vi", { sensitivity: "base" }) || soSanhTenTinh(a, b));
+  else list.sort((a, b) => tenRieng(a).localeCompare(tenRieng(b), "vi"));
   const nq = normalizeVi(q);
   const noiCua = (name: string): LocationSel =>
     !prov ? { province: name } : !isNew && !dist ? { province: prov, district: name } : isNew ? { province: prov, ward: name } : { province: prov, district: dist, ward: name };
@@ -1411,6 +1414,45 @@ export function LocationPanel({
   // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chốt lại khi chuyển tầng, không theo từng lần bấm
   const dauTang = useMemo(() => new Set(list.filter(daChon)), [khoaTang]);
   const xepLen = nq ? filtered : [...filtered.filter((x) => dauTang.has(x)), ...filtered.filter((x) => !dauTang.has(x))];
+  const nhomTinhCu = level === "province" && !isNew
+    ? [...new Set(list.map(newProvinceOf))]
+        .sort((a, b) => soSanhTenTinh(a, b))
+        .map((cha) => ({
+          cha,
+          con: xepLen
+            .filter((ten) => newProvinceOf(ten) === cha)
+            .sort((a, b) => nq ? 0 : Number(dauTang.has(b)) - Number(dauTang.has(a)) || soSanhTenTinh(a, b)),
+        }))
+        .filter((nhom) => nhom.con.length > 0)
+    : [];
+  const renderTinh = (name: string) => {
+    const on = daChon(name);
+    // CHỌN / BỎ CHỌN MỘT KIỂU cho mọi tầng, cả hệ mới lẫn hệ cũ (chủ dự án 02/11/2026 — cùng ô tick bảng Loại hình):
+    // ô tick trái = chọn / bỏ chọn · tên tỉnh, quận (có ›) = mở cấp con (chưa chọn thì chọn luôn — cách đã chốt 01/11) ·
+    // phường: bấm cả dòng = chọn / bỏ chọn.
+    const doiTick = () => {
+      if (level === "ward") return doiPhuong(name);
+      if (on) return onChange(locations.filter((l) => (level === "province" ? !cungTinh(l, name) : !cungQuan(l, prov, name))));
+      if (level === "province") { if (!full) onChange([...locations, { province: name }]); return; }
+      const conLai = locations.filter((l) => !(cungTinh(l, prov) && !l.district && !l.ward));
+      if (conLai.length < MAX_LOCATIONS) onChange([...conLai, { province: prov, district: name }]);
+    };
+    return (
+      <div key={name} className={`flex items-center rounded-lg transition hover:bg-black/5 ${on ? "font-semibold text-cvr-blue-ink" : "text-cvr-ink/80"}`}>
+        <label className="flex shrink-0 cursor-pointer items-center py-1.5 pl-2 pr-1">
+          <input type="checkbox" checked={on} onChange={doiTick} aria-label={`${on ? "Bỏ chọn" : "Chọn"} ${name}`} className="h-4 w-4 accent-cvr-blue" />
+        </label>
+        <button
+          type="button"
+          onClick={() => pick(name)}
+          className="flex min-w-0 flex-1 items-center justify-between gap-2 py-1.5 pl-1.5 pr-2.5 text-left text-sm"
+        >
+          <span className="truncate">{name}</span>
+          <span className="flex shrink-0 items-center gap-1.5">{demTheoNoi && <span className="text-xs text-cvr-faint">{soCua(name)}</span>}{level !== "ward" && <span className="text-cvr-faint">›</span>}</span>
+        </button>
+      </div>
+    );
+  };
   // TẦNG NÀO TÌM TẦNG ĐÓ (chủ dự án 01/11/2026: "đây là chọn Tỉnh / Thành phố"): ô gõ chỉ lọc đúng danh sách tầng đang mở — tầng tỉnh ra tỉnh
   // thành, vào tỉnh rồi mới tìm phường (đã bỏ tìm phường cả nước ở tầng tỉnh).
 
@@ -1521,34 +1563,14 @@ export function LocationPanel({
         )}
         {/* Nơi đã chọn (xanh, đậm) nằm ĐẦU danh sách, còn lại A–Z — thứ tự chốt lúc mở bảng / chuyển tầng (xepLen), đang bấm thì không
             đổi chỗ (chủ dự án 01/11/2026: vuốt, chọn không được nhảy). */}
-        {xepLen.map((name) => {
-          const on = daChon(name);
-          // CHỌN / BỎ CHỌN MỘT KIỂU cho mọi tầng, cả hệ mới lẫn hệ cũ (chủ dự án 02/11/2026 — cùng ô tick bảng Loại hình):
-          // ô tick trái = chọn / bỏ chọn · tên tỉnh, quận (có ›) = mở cấp con (chưa chọn thì chọn luôn — cách đã chốt 01/11) ·
-          // phường: bấm cả dòng = chọn / bỏ chọn.
-          const doiTick = () => {
-            if (level === "ward") return doiPhuong(name);
-            if (on) return onChange(locations.filter((l) => (level === "province" ? !cungTinh(l, name) : !cungQuan(l, prov, name))));
-            if (level === "province") { if (!full) onChange([...locations, { province: name }]); return; }
-            const conLai = locations.filter((l) => !(cungTinh(l, prov) && !l.district && !l.ward));
-            if (conLai.length < MAX_LOCATIONS) onChange([...conLai, { province: prov, district: name }]);
-          };
-          return (
-            <div key={name} className={`flex items-center rounded-lg transition hover:bg-black/5 ${on ? "font-semibold text-cvr-blue-ink" : "text-cvr-ink/80"}`}>
-              <label className="flex shrink-0 cursor-pointer items-center py-1.5 pl-2 pr-1">
-                <input type="checkbox" checked={on} onChange={doiTick} aria-label={`${on ? "Bỏ chọn" : "Chọn"} ${name}`} className="h-4 w-4 accent-cvr-blue" />
-              </label>
-              <button
-                type="button"
-                onClick={() => pick(name)}
-                className="flex min-w-0 flex-1 items-center justify-between gap-2 py-1.5 pl-1.5 pr-2.5 text-left text-sm"
-              >
-                <span className="truncate">{name}</span>
-                <span className="flex shrink-0 items-center gap-1.5">{demTheoNoi && <span className="text-xs text-cvr-faint">{soCua(name)}</span>}{level !== "ward" && <span className="text-cvr-faint">›</span>}</span>
-              </button>
-            </div>
-          );
-        })}
+        {nhomTinhCu.length
+          ? nhomTinhCu.map(({ cha, con }) => (
+              <div key={cha} className="pt-1">
+                <p className="px-2 pb-1 pt-1.5 text-xs font-semibold text-cvr-ink">{cha}</p>
+                <div className="ml-3 space-y-0.5 border-l border-black/10 pl-2">{con.map(renderTinh)}</div>
+              </div>
+            ))
+          : xepLen.map(renderTinh)}
       </div>
 
     </div>
