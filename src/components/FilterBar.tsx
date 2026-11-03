@@ -1408,15 +1408,14 @@ export function LocationPanel({
       : level === "district" ? locations.some((l) => cungQuan(l, prov, name))
       : locations.some((l) => sameLocation(l, phuongCua(name)));
   const pick = (name: string) => (level === "province" ? chonTinh(name) : level === "district" ? chonQuan(name) : doiPhuong(name));
-  // NƠI ĐÃ CHỌN LÊN ĐẦU, TÔ XANH (chủ dự án 01/11/2026) — thứ tự CHỐT lúc mở bảng / chuyển tầng (tỉnh → phường, đổi hệ): đang bấm chọn
-  // thì chỉ đổi màu, không đổi chỗ, nên danh sách không nhảy dưới tay; mở lại / chuyển tầng thì nơi đã chọn nằm trên cùng.
-  const khoaTang = `${mode}|${prov}|${dist}|${rong}`;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chốt lại khi chuyển tầng, không theo từng lần bấm
-  const dauTang = useMemo(() => new Set(list.filter(daChon)), [khoaTang]);
+  // NƠI ĐÃ CHỌN LÊN ĐẦU, TÔ XANH (chủ dự án 01/11/2026): cập nhật thứ tự ngay khi chọn.
+  const dauTang = new Set(list.filter(daChon));
   const xepLen = nq ? filtered : [...filtered.filter((x) => dauTang.has(x)), ...filtered.filter((x) => !dauTang.has(x))];
   const nhomTinhCu = level === "province" && !isNew
     ? [...new Set(list.map(newProvinceOf))]
-        .sort((a, b) => soSanhTenTinh(a, b))
+        .sort((a, b) =>
+          (nq ? 0 : Number(list.some((ten) => newProvinceOf(ten) === b && dauTang.has(ten))) - Number(list.some((ten) => newProvinceOf(ten) === a && dauTang.has(ten))))
+          || soSanhTenTinh(a, b))
         .map((cha) => ({
           cha,
           con: xepLen
