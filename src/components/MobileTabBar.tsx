@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth } from "@/lib/useAuth";
-import { useSoTinCanXem } from "@/lib/useSoTinCanXem";
+import { useSoViecKhach } from "@/lib/useSoTinCanXem";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 
 // ── Thanh tab DƯỚI CÙNG — chỉ hiện trên điện thoại/tablet (< lg). Desktop KHÔNG đổi gì.
@@ -180,7 +180,7 @@ export default function MobileTabBar() {
   const { count } = useSaved();
   const { user } = useAuth();
   // Chấm đỏ "Tin đăng" (chế độ người bán): chờ duyệt · bị từ chối · sắp hết hạn — chỉ đếm khi đang ở khu tài khoản (06/11/2026)
-  const soTinCanXem = useSoTinCanXem(pathname.startsWith("/tai-khoan") ? user?.id : null, pathname);
+  const soViec = useSoViecKhach(pathname.startsWith("/tai-khoan") ? user?.id : null, pathname);
 
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
@@ -201,7 +201,7 @@ export default function MobileTabBar() {
       },
     ];
     // Nút ‹ trong khu quản lý đi theo tầng, Tổng quan là trang chủ (BackBar.tsx).
-    return <ThanhTab tabs={tabsBan} count={0} soTinDang={soTinCanXem} nutDangTinNoi />;
+    return <ThanhTab tabs={tabsBan} count={0} soViec={soViec} nutDangTinNoi />;
   }
 
   const tabs = [
@@ -221,7 +221,7 @@ export default function MobileTabBar() {
 }
 
 // Khung thanh tab — dùng chung cho chế độ người mua và chế độ người bán.
-function ThanhTab({ tabs, count, soTinDang = 0, nutDangTinNoi = false }: { tabs: { href: string; label: string; icon: keyof typeof ICONS; on: boolean }[]; count: number; soTinDang?: number; nutDangTinNoi?: boolean }) {
+function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false }: { tabs: { href: string; label: string; icon: keyof typeof ICONS; on: boolean }[]; count: number; soViec?: Record<string, number>; nutDangTinNoi?: boolean }) {
   // ĐANG CUỘN thì trượt thanh xuống khuất, DỪNG CUỘN 0,35 s thì hiện lại (chủ dự án 02/11/2026: "cần không gian hiển thị trên mobile, ẩn
   // luôn menu ở footer khi cuộn"). Thanh nằm cố định đè lên trang nên ẩn / hiện không làm nội dung xê dịch.
   const [anKhiCuon, setAnKhiCuon] = useState(false);
@@ -277,7 +277,7 @@ function ThanhTab({ tabs, count, soTinDang = 0, nutDangTinNoi = false }: { tabs:
                   icon={t.icon}
                   label={t.label}
                   on={t.on}
-                  badge={t.href === "/tin-luu" ? count : t.href === "/tai-khoan/tin-dang" ? soTinDang : 0}
+                  badge={t.href === "/tin-luu" ? count : t.href === "/tai-khoan/ca-nhan" ? (soViec["/tai-khoan/nap-tien"] ?? 0) + (soViec["/tai-khoan/hoi-vien"] ?? 0) : soViec[t.href] ?? 0}
                 />
               </Link>
               )}
