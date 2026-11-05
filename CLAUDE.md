@@ -23,6 +23,22 @@ chạy lệnh push. Sửa xong chỉ báo link xem thử + "chưa push". Chỉ k
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
 
+## ⏳ 06/11/2026 SÁNG (phiên 69797164) — TRÊN MÁY, CHƯA PUSH (gồm cả 268d6b8 bên dưới)
+- `16990c5` Admin "Cập nhật và đăng" tin đang ẩn còn hạn: giữ mốc lúc duyệt.
+- `4dfcfee` + `e32fb6b` **UP TIN = CHỌN LẠI GÓI (anh chốt 06/11): ô nào (hạng × số ngày) GIÁ CAO HƠN gói đang chạy là Up được — kể cả
+  Basic nhiều ngày hơn.** So giá bảng Admin chưa VAT (`oNangDuoc`, `giaGoiDangChay` ở `src/lib/nangGoi.ts`; giá ô `giaOUpTin` ở
+  `billing.ts`: bảng Nâng gói đã duyệt, hạng không có trong đó → bảng gói tin). Bảng khách khoá từng ô (`BangGiaGoiTin` `khoaO`),
+  máy chủ `api/tin-dang/nang-goi` kiểm cùng luật. Tiền: giá gói mới − bù trừ gói cũ còn lại (tính theo lúc khách GỬI) − hội viên − voucher + 8% VAT.
+- `0fc218f` Trang chủ, ô "Bất động sản theo khu vực": đếm CẢ TỈNH chứa khu vực (Quy Nhơn → Gia Lai, Nha Trang → Khánh Hòa) và
+  TÍNH CẢ TIN HẾT HẠN (anh 06/11). Máy thử: Đà Nẵng 100 · Huế 31 · Quy Nhơn 17 · Nha Trang 34 · Quảng Ngãi 4.
+- **Đã kiểm trên Chrome của anh (localhost, tin thử 3650c745):** hiển thị Hiệu lực/Hết hạn · sửa tin lưu ngay, giữ 3 mốc · bảng Up
+  tin (mọi ô, giá đúng) · Nạp thêm → trang nạp đúng chuẩn · Đẩy tin giá đúng. **Luật anh nhắc:** sửa tin, đẩy tin lên NGAY (không duyệt);
+  chỉ đăng tin mới và Up tin qua Admin duyệt.
+- **Chưa kiểm được:** trả tiền thật (ví 0 đ) · Admin duyệt Up + SQL 0071 Ẩn/Hiện lại (tài khoản anh dùng không phải Admin).
+- **Anh đã bác, ĐỪNG LÀM:** email báo Admin khi khách gửi Up tin · chấm đỏ khách khi tin hết hạn.
+- Biết mà chưa sửa: khách sửa tin → trang tin đổi sau ≤ 1 phút (cron); Admin → Tổng quan treo chấm đỏ 2 sự cố cũ 29/09 (Mini App) — anh bấm "Đã xử lý".
+- **Việc tiếp:** tệp `C:\Users\X1 GEN 8\OneDrive\Desktop\YÊU CẦU CHÍNH SỮA 03112026.docx` — rà mục đã làm / chưa làm rồi làm tiếp đến hết.
+
 ## ⏳ BÀN GIAO 06/11/2026 ~02:00 (phiên cba6a1e3, anh: "bàn giao lại việc đang dở") — web chạy 84e959b (đã push 00:25)
 **⛔ MỐC THỜI GIAN — MỘT CHUẨN (anh chốt 06/11, cấm hỏi lại): mốc = LÚC TIN ĐƯỢC DUYỆT.**
 - Sửa tin (khách / Admin): giữ mốc duyệt — web ĐÚNG. · Đẩy tin: hạn giữ nguyên, chỉ lần đẩy = lúc đẩy — web ĐÚNG, không cần duyệt.
