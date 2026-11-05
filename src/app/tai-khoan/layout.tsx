@@ -11,6 +11,7 @@ import { signOut } from "@/lib/useAuth";
 import { vnd } from "@/lib/billing";
 import { MUC_TAI_KHOAN } from "@/lib/menuTaiKhoan";
 import BieuTuong, { type TenBieuTuong } from "@/components/BieuTuong";
+import { useSoTinCanXem, nhanSoDo } from "@/lib/useSoTinCanXem";
 
 // ============================================================================
 // KHU VỰC QUẢN LÝ CỦA KHÁCH HÀNG (/tai-khoan) — "trang admin của khách".
@@ -45,6 +46,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const { profile, loading } = useProfile();
   const { user } = useAuth();
   useRoiKhiMatPhien(); // đăng xuất / mất phiên khi đang mở trang → về Đăng nhập ngay
+  const soTinCanXem = useSoTinCanXem(user?.id, pathname); // chấm đỏ "Tin đăng": chờ duyệt · bị từ chối · sắp hết hạn (06/11/2026)
   // Số dư ví: cột balance có thể chưa bật trong CSDL → coi như 0.
   const soDu = (profile as unknown as { balance?: number } | null)?.balance ?? 0;
 
@@ -96,7 +98,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                     {loading ? "Tài khoản" : <>Xin chào,<strong className="block break-words font-semibold text-cvr-ink">{profile?.full_name || "bạn"}</strong></>}
                   </p>
                 </Link>
-                <div className="space-y-0.5">{MUC_CHINH.map((m) => dong(m))}</div>
+                <div className="space-y-0.5">{MUC_CHINH.map((m) => dong(m, m.href === "/tai-khoan/tin-dang" && soTinCanXem > 0 ? (
+                  <span className="min-w-[20px] shrink-0 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white">{nhanSoDo(soTinCanXem)}</span>
+                ) : undefined))}</div>
 
                 <div className="mt-4 border-t border-cvr-line pt-4">
                   {/* Tiêu đề nhóm = trang Tài khoản (menu avatar trỏ tới đây) → bấm được, sáng khi đang đứng */}
