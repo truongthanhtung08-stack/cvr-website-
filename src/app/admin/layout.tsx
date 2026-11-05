@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { signOut, useRoiKhiMatPhien } from "@/lib/useAuth";
 
@@ -55,10 +56,41 @@ function isActive(href: string, pathname: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+// CHẤM ĐỎ TRÊN TỪNG MỤC MENU (chủ dự án 06/11/2026: "khi đăng nhập vào phải có thông báo từ admin — ví dụ hiện lên dấu đỏ từ chính
+// cái mục đó"): mục nào có việc mới thì hiện số đỏ. Đếm cùng điều kiện với Admin → Tổng quan (Việc cần làm · Sự cố). Đếm lại mỗi
+// lần đổi trang admin — 5 lệnh đếm nhẹ (head), chỉ quản trị viên chạy, không đáng kể với gói Supabase.
+function useSoViec(pathname: string, bat: boolean): Record<string, number> {
+  const [so, setSo] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (!bat) return;
+    const sb = createClient();
+    let huy = false;
+    (async () => {
+      const dem = async (q: PromiseLike<{ count: number | null; error: unknown }>) => { const r = await q; return r.error ? 0 : r.count ?? 0; };
+      const [tin, duAn, yeuCau, khach, suCo] = await Promise.all([
+        dem(sb.from("listings").select("*", { count: "exact", head: true }).or("status.eq.pending,and(status.eq.hidden,details->>choChuDuyet.eq.true)")),
+        dem(sb.from("projects").select("*", { count: "exact", head: true }).eq("status", "pending")),
+        dem(sb.from("customer_requests").select("*", { count: "exact", head: true }).eq("status", "moi")),
+        dem(sb.from("profiles").select("*", { count: "exact", head: true }).eq("status", "pending")),
+        dem(sb.from("su_co").select("*", { count: "exact", head: true }).eq("da_xu_ly", false)),
+      ]);
+      if (!huy) setSo({ "/admin": suCo, "/admin/tin-dang": tin, "/admin/du-an": duAn, "/admin/yeu-cau": yeuCau, "/admin/khach-hang": khach });
+    })();
+    return () => { huy = true; };
+  }, [pathname, bat]);
+  return so;
+}
+
+function ChamDo({ n }: { n?: number }) {
+  if (!n) return null;
+  return <span className="ml-auto min-w-[20px] rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white">{n > 99 ? "99+" : n}</span>;
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useProfile();
   useRoiKhiMatPhien(); // đăng xuất / mất phiên khi đang mở trang → về Đăng nhập ngay
   const pathname = usePathname();
+  const soViec = useSoViec(pathname, !loading && profile?.role === "admin");
 
   // Gác phía client (lớp 2, cùng với middleware): không phải admin → về trang chủ.
   useEffect(() => {
@@ -117,6 +149,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     >
                       <NavIcon name={item.icon} />
                       {item.label}
+                      <ChamDo n={soViec[item.href]} />
                     </Link>
                   );
                 })}
@@ -198,6 +231,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <NavIcon name={item.icon} />
                 {item.label}
+                <ChamDo n={soViec[item.href]} />
               </Link>
             );
           })}

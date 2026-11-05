@@ -5,6 +5,7 @@ import { phatMa, kiemMa, guiMaQuaZalo } from "@/lib/maXacThuc";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
 import { danhDauGop } from "@/lib/gopTaiKhoan";
+import { baoLoi } from "@/lib/baoLoi";
 
 // ============================================================================
 // POST /api/xac-thuc/xac-minh-sdt — TÀI KHOẢN ĐANG ĐĂNG NHẬP XÁC MINH SỐ CỦA MÌNH
@@ -42,13 +43,22 @@ async function dinhTien(admin: NonNullable<ReturnType<typeof createAdminClient>>
 // GỘP LÀ VIỆC CỦA WEB, KHÔNG BẮT KHÁCH (chủ dự án 05/11/2026): tài khoản cần gộp mà dính tiền → web KHÔNG tự gộp nhưng cũng KHÔNG
 // chặn khách: số vừa xác minh ghi là số liên hệ đã xác minh của tài khoản đang dùng (sdt_lien_he_xac_minh — được đăng tin, nạp tiền),
 // tin đăng mang số đó. Khách không phải liên hệ, không phải làm gì.
-// ⛔ KHÔNG GỬI EMAIL BÁO CHỦ DỰ ÁN (chủ dự án 06/11/2026: "CẤM gửi cho tôi lúc khách đăng tin").
-async function choAdminGop(admin: NonNullable<ReturnType<typeof createAdminClient>>, uid: string, sdt: string, _ids: string[]) {
-  void _ids;
+// ⛔ KHÔNG GỬI EMAIL BÁO CHỦ DỰ ÁN (chủ dự án 06/11/2026: "CẤM gửi cho tôi lúc khách đăng tin") — CHỈ HIỆN TRONG ADMIN
+// ("trang admin cần phải có thông báo … những gì khách cần"): baoLoi KHÔNG cờ khach = ghi sổ su_co, hiện Admin → Tổng quan, không email.
+async function choAdminGop(admin: NonNullable<ReturnType<typeof createAdminClient>>, uid: string, sdt: string, ids: string[]) {
   await admin.from("profiles").update({ sdt_lien_he_xac_minh: true }).eq("id", uid);
   // Nhớ số trên tài khoản đang dùng (user_metadata.sdt_lien_he) → đăng tin / nạp tiền lần sau không hỏi lại, tin mang số này
   const { data: uu } = await admin.auth.admin.getUserById(uid);
   await admin.auth.admin.updateUserById(uid, { user_metadata: { ...(uu?.user?.user_metadata ?? {}), sdt_lien_he: sdt } }).then(() => {}, () => {});
+  await baoLoi({
+    noi: "gop-tai-khoan",
+    mucDo: "nhe",
+    tomTat: "Khách có tài khoản khác cùng số điện thoại — chưa gộp",
+    chiTiet: `Số ${sdt} (khách đã xác minh) · tài khoản đang dùng ${uid} · tài khoản khác cùng số ${ids.join(", ")}`,
+    hauQua: "Khách vẫn đăng tin, nạp tiền bình thường bằng tài khoản đang dùng; tin, tiền, gói ở tài khoản kia giữ nguyên.",
+    canLam: "Anh quyết: gộp thì vào Admin → Khách hàng, đối chiếu ví, gói, voucher; không gộp thì để nguyên.",
+    khoa: `gop-tay:${sdt}`,
+  }).catch(() => {});
   return NextResponse.json({ ok: true, sdt, soTinGop: 0, choAdminGop: true });
 }
 
