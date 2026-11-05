@@ -14,7 +14,7 @@ import NewsSection from "@/components/NewsSection";
 import Footer from "@/components/Footer";
 import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { HomeExpandProvider, HomeCollapsible, AnKhiMo } from "@/components/HomeExpand";
-import { getListings, getListingsThe } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan, getListingsThe } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
 import { getArticles, getProjectsNoiBat } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
@@ -38,9 +38,9 @@ export default async function Home() {
   // Dự án + Tin tức: nội dung admin tự tạo (contentDb) — chưa có → mẫu
   // Hero ảnh + khu vực: ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
   // tinDu: bản đầy đủ (cùng lần đọc có cache) — chỉ dùng ở máy chủ để dựng cụm gợi ý, không gửi xuống máy khách
-  const [listings, tinDu, projects, articles, homeAreas, featuredSlug, heroBanners] = await Promise.all([
+  const [listings, tinDu, projects, articles, homeAreas, featuredSlug, heroBanners, tinHetHan] = await Promise.all([
     getListingsThe(), getListings(), getProjectsNoiBat(), getArticles(), getHomeAreas(),
-    getFeaturedArticleSlug(), getHeroBanners(),
+    getFeaturedArticleSlug(), getHeroBanners(), getListingsHetHan().catch(() => []),
   ]);
 
   // 20/10/2026 (trang chủ 603 KB > ngưỡng 450): thẻ chỉ cần phần đầu — bỏ toàn văn bài viết và phần giới thiệu, bảng giá,
@@ -93,10 +93,12 @@ export default async function Home() {
           <LocationGrid areas={homeAreas.map((a) => {
             const ten = decodeURIComponent(a.href.match(/[?&]tinh=([^&]+)/)?.[1] ?? "");
             const tp = ten ? THANH_PHO.find((t) => t.name === ten) : undefined;
-            // SỐ TIN THẬT (chủ dự án 31/10/2026: cấm số liệu mẫu — web thật từng hiện "Đà Nẵng 1.240 tin" viết sẵn): đếm tin bán
-            // đang hiện có địa chỉ (mới hoặc cũ) chứa tên khu vực, cùng cách bộ lọc ?tinh= dò chuỗi con
-            const so = ten ? tinDu.filter((l) => (l.purpose ?? "ban") === "ban"
-              && normalizeVi(`${l.location} ${l.locationCu ?? ""}`).includes(normalizeVi(ten))).length : null;
+            // SỐ TIN THẬT (chủ dự án 31/10/2026: cấm số liệu mẫu — web thật từng hiện "Đà Nẵng 1.240 tin" viết sẵn): đếm tin bán.
+            // 06/11/2026 (chủ dự án): GỘP CẢ TỈNH chứa khu vực (Quy Nhơn → cả Gia Lai, Nha Trang → cả Khánh Hòa…) và TÍNH CẢ TIN
+            // HẾT HẠN (tin hết hạn vẫn hiện ở trang danh sách). Tỉnh = phần cuối địa chỉ hệ mới, như demTinTheoKhuVuc.
+            const tinhO = normalizeVi(tp?.tinh ?? ten);
+            const so = ten ? [...tinDu, ...tinHetHan].filter((l) => (l.purpose ?? "ban") === "ban"
+              && normalizeVi(l.location.split(",").pop() ?? "") === tinhO).length : null;
             const b = so === null ? a : { ...a, count: `${so.toLocaleString("vi-VN")} tin` };
             return tp ? { ...b, href: `/mua-ban/${slugKhuVuc(tp.tinh)}/${tp.slug}` } : b;
           })} />
