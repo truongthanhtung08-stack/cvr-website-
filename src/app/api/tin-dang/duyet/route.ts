@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, thanhVienMoi, chonKhuyenMai, laChuThat, lucGuiTin, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
-import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
+import { guiThongBao, MAU_DUYET_TIN, maTin } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import { SU_CO } from "@/lib/chuThongBao";
 import type { TierId } from "@/lib/packages";
@@ -193,7 +193,7 @@ export async function POST(request: Request) {
       ],
       znsTemplateId: MAU_DUYET_TIN,
       znsData: {
-        ma_giao_dich: String(tin.id),
+        ma_giao_dich: maTin(String(tin.id)), // mã tin NGẮN như trên web — mã đầy đủ 36 ký tự vượt giới hạn 30 của Zalo, bị cắt kèm "…" (06/11/2026: duyệt xong không có tin Zalo)
         ten_tin: tin.title,
         so_tien: vnd(0),
         so_du: vnd(soDuHienTai),
@@ -304,7 +304,7 @@ export async function POST(request: Request) {
         ],
         znsTemplateId: MAU_DUYET_TIN,
         znsData: {
-          ma_giao_dich: String(tin.id),
+          ma_giao_dich: maTin(String(tin.id)), // mã tin NGẮN như trên web — mã đầy đủ 36 ký tự vượt giới hạn 30 của Zalo, bị cắt kèm "…" (06/11/2026: duyệt xong không có tin Zalo)
           ten_tin: tin.title,
           so_tien: vnd(0),
           so_du: vnd(Number(hs.balance ?? 0)),
@@ -493,7 +493,7 @@ export async function POST(request: Request) {
     ],
     znsTemplateId: MAU_DUYET_TIN,
     znsData: {
-      ma_giao_dich: String(tin.id),
+      ma_giao_dich: maTin(String(tin.id)), // mã tin NGẮN như trên web — mã đầy đủ 36 ký tự vượt giới hạn 30 của Zalo, bị cắt kèm "…" (06/11/2026: duyệt xong không có tin Zalo)
       ten_tin: tin.title,
       so_tien: vnd(tien.tongTra),
       so_du: vnd(soDuConLai),

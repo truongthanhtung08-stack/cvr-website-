@@ -119,6 +119,21 @@ export async function guiThongBao(t: NoiDungThongBao): Promise<KetQuaKenh[]> {
   for (const k of ketQua) {
     if (!k.daGui && k.lyDo) console.warn(`[thong-bao] ${k.kenh}: ${k.lyDo}`);
   }
+  // ZALO GỬI HỎNG (khách có số, sự kiện có mẫu) → GHI SỰ CỐ, hiện Admin → Tổng quan, KHÔNG email (06/11/2026: duyệt tin xong khách
+  // không nhận Zalo mà không ai biết lý do — trước đây chỉ ghi khi CẢ HAI kênh hỏng). Cùng một lỗi gộp một dòng mỗi giờ (khoá).
+  const zalo = ketQua.find((k) => k.kenh === "zalo");
+  if (zalo && !zalo.daGui && t.phone && t.znsTemplateId && zalo.lyDo && !/đang tắt/.test(zalo.lyDo)) {
+    const { baoLoi } = await import("@/lib/baoLoi");
+    await baoLoi({
+      noi: "thong-bao-zalo",
+      mucDo: "nhe",
+      tomTat: `Gửi Zalo cho khách không được: ${t.tieuDe}`,
+      chiTiet: `Mẫu ${t.znsTemplateId} · ${zalo.lyDo}`,
+      hauQua: "Khách không nhận tin Zalo (email vẫn gửi nếu khách có email).",
+      canLam: "Xem mã lỗi Zalo ở dòng chi tiết; lỗi mẫu tin thì sửa tham số, lỗi tài khoản ZBS thì nạp tiền / cấp lại quyền.",
+      khoa: `zalo:${t.znsTemplateId}:${zalo.lyDo.slice(0, 40)}`,
+    }).catch(() => {});
+  }
   return ketQua;
 }
 
