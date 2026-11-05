@@ -57,7 +57,12 @@ async function demViec(userId: string, pathname: string): Promise<Record<string,
         dem(sb.from("listings").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("status", "pending")),
         dem(sb.from("listings").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("status", "rejected")),
         dem(sb.from("listings").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("status", "approved").gt("tier_expires_at", bay.toISOString()).lte("tier_expires_at", sau(3))),
-        dem(sb.from("up_cho").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("trang_thai", "cho")),
+        // Chỉ yêu cầu chờ nạp của TIN CÒN (không đếm tin đã xoá) và trong 7 ngày (quá 7 ngày máy tự huỷ — xuLyUpCho) —
+        // trước đây tin xoá rồi chấm đỏ vẫn treo mãi (chủ dự án 06/11/2026: "báo xong thì phải tắt")
+        ids.length
+          ? dem(sb.from("up_cho").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("trang_thai", "cho")
+              .in("listing_id", ids).gt("tao_luc", sau(-7)))
+          : Promise.resolve(0),
         dem(sb.from("hoi_vien").select("id", { count: "exact", head: true }).eq("user_id", userId).gt("het_han", bay.toISOString()).lte("het_han", sau(7))),
         ids.length
           ? dem(sb.from("listing_leads").select("id", { count: "exact", head: true }).in("listing_id", ids).gt("created_at", moc))

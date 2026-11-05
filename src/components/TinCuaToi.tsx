@@ -66,6 +66,14 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
   // ── NÂNG GÓI (chủ dự án 01/11/2026) ── chỉ chính chủ đã tự vào; trên web chỉ hiện khi chữ phía khách đã Duyệt trong Admin
   // (máy xem thử chạy với chữ mẫu). Từ trang nạp tiền quay về (?nang=<id>&tier=&days=) → mở lại đúng tin, đúng gói đã chọn.
   const [laChu, setLaChu] = useState(false);
+  // Thông báo nhanh trên đầu trang (thành công / lỗi), tự ẩn sau 6 giây
+  const [bao, setBao] = useState<{ chu: string; loi?: boolean } | null>(null);
+  const baoNhanh = (chu: string, loi = false) => setBao({ chu, loi });
+  useEffect(() => {
+    if (!bao) return;
+    const t = setTimeout(() => setBao(null), 6000);
+    return () => clearTimeout(t);
+  }, [bao]);
   const [nangCho, setNangCho] = useState<{ r: ListingRow; chon: { tier: TierId; days: number } | null } | null>(null);
   const moNangGoi = daDuyetNangGoi(billing); // Up tin: giá Nâng gói đã Duyệt trong Admin (06/11/2026)
   const moDay = daDuyetDayTin(billing); // Đẩy tin: giá Đẩy tin đã Duyệt trong Admin
@@ -100,7 +108,8 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
       const maDay = q.get("day");
       const tinDay = maDay ? list.find((x) => x.id === maDay && x.status === "approved") : undefined;
       if (tinDay) {
-        tuDay.current = true;
+        // CHỈ tự đẩy khi NẠP THÀNH CÔNG (?nap=thanh-cong). Huỷ / quay lại → chỉ mở lại bảng Đẩy tin đúng gói đã chọn (06/11/2026)
+        tuDay.current = q.get("nap") === "thanh-cong";
         setMuaCho({ r: tinDay, conDay: soNgayConDay(tinDay.tier_expires_at, tinDay.bump_lich, false), cap: thongTinGoi(tinDay).cap, coLe: true });
         setLuotChon(Math.max(1, Number(q.get("luot")) || 1));
       }
@@ -165,14 +174,14 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
       });
       const kq = await res.json().catch(() => ({}));
       if (!res.ok || !kq.ok) {
-        window.alert(kq.loi || "Đẩy tin không thành công.");
+        baoNhanh(kq.loi || "Đẩy tin không thành công.", true);
         return;
       }
       // Cập nhật ngay tại chỗ để khách thấy kết quả, khỏi tải lại trang.
       setRows((rows) => rows.map((x) => (x.id === r.id
         ? { ...x, bumped_at: kq.bumpedAt, ...(kq.dungLuot ? { bump_credits: kq.conLai } : {}) }
         : x)));
-      window.alert(kq.dungLuot
+      baoNhanh(kq.dungLuot
         ? `Đã đẩy tin lên đầu bằng gói đã mua. Còn ${kq.conLai} lượt.`
         : `Đã đẩy tin lên đầu. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.`);
     } finally {
@@ -216,9 +225,9 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
         body: JSON.stringify({ id: r.id, soLuot: g.soLuot }),
       });
       const kq = await res.json().catch(() => ({}));
-      if (!res.ok || !kq.ok) { window.alert(kq.loi || "Mua gói không thành công."); return; }
+      if (!res.ok || !kq.ok) { baoNhanh(kq.loi || "Mua gói không thành công.", true); return; }
       setRows((rows) => rows.map((x) => (x.id === r.id ? { ...x, bump_credits: kq.conLai, ...(kq.bumpedAt ? { bumped_at: kq.bumpedAt } : {}) } : x)));
-      window.alert(`Đã mua ${g.soLuot} lượt. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.\n` +
+      baoNhanh(`Đã mua ${g.soLuot} lượt. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}. ` +
         (kq.bumpedAt
           ? `Đã đẩy lần đầu ngay bây giờ. Còn ${kq.conLai} lượt, tự đẩy mỗi sáng.`
           : `Hôm nay tin đã được đẩy rồi — lượt đầu chạy sáng mai. Còn ${kq.conLai} lượt.`));
@@ -277,12 +286,12 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
         if (di) window.location.href = `/tai-khoan/nap-tien?can=${kq.viThieu}&ve=${encodeURIComponent("/tai-khoan/tin-dang")}`;
         return;
       }
-      if (!res.ok || !kq.ok) { window.alert(kq.loi || "Đăng lại không thành công."); return; }
+      if (!res.ok || !kq.ok) { baoNhanh(kq.loi || "Đăng lại không thành công.", true); return; }
       setChoUp((ds) => { const m = new Set(ds); m.delete(upCho.id); return m; });
       setRows((ds) => ds.map((x) => (x.id === upCho.id
         ? { ...x, status: "pending", tier_expires_at: null, details: { ...(x.details ?? {}), plan: { tier: upChon.tier, days: upChon.soNgay } } }
         : x)));
-      window.alert(
+      baoNhanh(
         "Đã gửi đăng lại — tin chờ kiểm duyệt như tin mới.\n" +
         (kq.mienPhi ? "Miễn phí theo chương trình thành viên mới." : `Phí ${vnd(kq.phaiTra)} trừ vào ví lúc tin được duyệt.`) +
         "\nDuyệt xong tin hiển thị lại, ngày đăng và thời hạn tính từ lúc duyệt.",
@@ -303,7 +312,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
     if (!window.confirm("Huỷ yêu cầu nâng gói? Tiền tạm giữ trả lại ví khả dụng.")) return;
     const res = await fetch("/api/tin-dang/nang-goi", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: r.id, huy: true }) });
     const kq = await res.json().catch(() => ({}));
-    if (!kq.ok) return window.alert(kq.loi || "Chưa huỷ được.");
+    if (!kq.ok) return baoNhanh(kq.loi || "Chưa huỷ được.", true);
     const { nang_cho: _bo, ...details } = (r.details ?? {}) as Record<string, unknown>;
     void _bo;
     setRows((ds) => ds.map((x) => (x.id === r.id ? { ...x, details: details as ListingRow["details"] } : x)));
@@ -615,7 +624,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
           onDaGui={(details) => {
             setRows((ds) => ds.map((x) => (x.id === nangCho.r.id ? { ...x, details: details as ListingRow["details"] } : x)));
             setNangCho(null);
-            window.alert("Đã gửi yêu cầu nâng gói. Tin vẫn hiện với gói hiện tại; khi được duyệt, phí trừ vào ví và gói mới chạy từ lúc duyệt.");
+            baoNhanh("Đã gửi yêu cầu Up tin. Tin vẫn hiện với gói hiện tại; khi được duyệt, phí trừ vào ví và gói mới chạy từ lúc duyệt.");
           }}
         />
       )}
@@ -645,6 +654,18 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
         </div>
       )}
 
+      {/* THÔNG BÁO NHANH (thay hộp báo của trình duyệt — chủ dự án 06/11/2026: "làm cho nó thẩm mỹ") */}
+      {bao && (
+        <div role="status" className="fixed inset-x-0 top-4 z-[90] flex justify-center px-4">
+          <div className={`flex w-full max-w-md items-start gap-3 rounded-2xl border bg-white px-4 py-3 text-[14px] shadow-xl ${bao.loi ? "border-red-200" : "border-cvr-line"}`}>
+            <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-white ${bao.loi ? "bg-red-600" : "bg-emerald-600"}`} aria-hidden>{bao.loi ? "!" : "✓"}</span>
+            <p className={`min-w-0 flex-1 whitespace-pre-line leading-snug ${bao.loi ? "text-red-700" : "text-cvr-ink"}`}>{bao.chu}</p>
+            <button type="button" onClick={() => setBao(null)} aria-label="Đóng" className="-mr-1 shrink-0 text-cvr-muted hover:text-cvr-ink">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
