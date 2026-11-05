@@ -265,7 +265,8 @@ export function giaNangGoi(args: {
 }): GiaNangGoi | null {
   if (!COT_NANG_GOI.includes(args.tierMoi)) return null;
   const ng = args.data.nangGoi;
-  const daCongBo = !!ng?.bat && bangNangGoi(args.data, args.purpose).length > 0;
+  // Giá Up tin = bảng Nâng gói ĐÃ DUYỆT trong Admin (06/11/2026: "up tin có gói up tin — là gói đã duyệt"); trước đòi thêm ô "Bật"
+  const daCongBo = bangNangGoi(args.data, args.purpose).length > 0;
   const bang = daCongBo ? bangNangGoi(args.data, args.purpose) : bangTheoMucDich(args.data, args.purpose).plans;
   const term = bang.find((p) => p.tierId === args.tierMoi)?.terms.find((t) => t.days === args.soNgay);
   if (!term) return null;
