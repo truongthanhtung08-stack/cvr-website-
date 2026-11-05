@@ -232,6 +232,9 @@ export default function AdminListingsPage() {
   async function xoaNhieu() {
     const ds = [...chon];
     if (!ds.length) return;
+    // Xoá hàng loạt KHÔNG đụng tin đã duyệt (chỉ tin thử mới xoá, và xoá từng tin một — 06/11/2026)
+    const soDaDuyet = ds.filter((id) => rows.find((r) => r.id === id)?.status === "approved").length;
+    if (soDaDuyet) { window.alert(`Có ${soDaDuyet} tin đã duyệt trong số đã chọn. Tin đã duyệt không xoá hàng loạt — bỏ chọn các tin đó (tin thử thì xoá từng tin).`); return; }
     if (!window.confirm(`Chuyển ${ds.length} tin đã chọn vào mục Đã xoá?`)) return;
     const { error } = await createClient().rpc("xoa_tin", { p_ids: ds });
     if (error) {
@@ -243,7 +246,11 @@ export default function AdminListingsPage() {
   }
 
   async function xoaTin(id: string, tieuDe: string) {
-    if (!window.confirm(`Chuyển tin này vào mục Đã xoá?\n\n${tieuDe}`)) return;
+    // TIN ĐÃ DUYỆT THÌ ADMIN KHÔNG XOÁ — chỉ ngoại lệ TIN THỬ (chủ dự án 06/11/2026: "tin đã duyệt thì admin không xoá" · "chỉ với
+    // trường hợp THỬ, để không hiện lên web"). Tin thật đã duyệt muốn gỡ khỏi web thì dùng nút Ẩn.
+    const daDuyet = rows.find((r) => r.id === id)?.status === "approved";
+    if (daDuyet && !window.confirm(`Tin này ĐÃ DUYỆT. Tin đã duyệt chỉ được xoá khi là TIN THỬ — tin thật của khách thì bấm Huỷ và dùng nút Ẩn.\n\nĐây là tin thử, xoá?\n\n${tieuDe}`)) return;
+    if (!daDuyet && !window.confirm(`Chuyển tin này vào mục Đã xoá?\n\n${tieuDe}`)) return;
     const { error } = await createClient().rpc("xoa_tin", { p_ids: [id] });
     if (error) {
       window.alert(HOP_BAO.chuaXoa(error.message));
