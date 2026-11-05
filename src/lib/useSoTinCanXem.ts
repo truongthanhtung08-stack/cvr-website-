@@ -53,7 +53,7 @@ async function demViec(userId: string, pathname: string): Promise<Record<string,
       if (!moc) moc = new Date(Date.now() - 7 * 86_400_000).toISOString(); // chưa mở lần nào → người quan tâm 7 ngày gần nhất
       const { data: tinCua } = await sb.from("listings").select("id").eq("owner_id", userId).neq("status", "deleted").limit(1000);
       const ids = (tinCua ?? []).map((t) => t.id as string);
-      const [cho, tuChoi, sapHet, choNap, hoiVien, quanTam] = await Promise.all([
+      const [cho, tuChoi, sapHet, choNap, hoiVien, quanTam, biAn] = await Promise.all([
         dem(sb.from("listings").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("status", "pending")),
         dem(sb.from("listings").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("status", "rejected")),
         dem(sb.from("listings").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("status", "approved").gt("tier_expires_at", bay.toISOString()).lte("tier_expires_at", sau(3))),
@@ -67,9 +67,13 @@ async function demViec(userId: string, pathname: string): Promise<Record<string,
         ids.length
           ? dem(sb.from("listing_leads").select("id", { count: "exact", head: true }).in("listing_id", ids).gt("created_at", moc))
           : Promise.resolve(0),
+        // Tin bị ADMIN ẩn (không phải khách tự hạ) — chỉ báo trong trang tài khoản khách, không email / Zalo (chủ dự án 06/11/2026);
+        // Admin hiện lại thì chấm tự tắt
+        dem(sb.from("listings").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("status", "hidden")
+          .or("details->>ha_boi.is.null,details->>ha_boi.neq.khach")),
       ]);
       return {
-        "/tai-khoan/tin-dang": cho + tuChoi + sapHet,
+        "/tai-khoan/tin-dang": cho + tuChoi + sapHet + biAn,
         "/tai-khoan/nap-tien": choNap,
         "/tai-khoan/hoi-vien": hoiVien,
         "/tai-khoan/khach-hang": pathname.startsWith("/tai-khoan/khach-hang") ? 0 : quanTam,

@@ -205,7 +205,7 @@ export default function PostListingForm() {
   const [batDau, setBatDau] = useState("");
   const [moLich, setMoLich] = useState(false); // bảng lịch chọn ngày (máy tính)
   // Tin ĐANG HIỂN THỊ / ĐÃ HẾT HẠN đang sửa → gói cố định, chỉ hiện thông tin gói (không chọn lại).
-  const [goiDangDung, setGoiDangDung] = useState<{ tier: TierId; het: string | null } | null>(null);
+  const [goiDangDung, setGoiDangDung] = useState<{ tier: TierId; het: string | null; tu?: string | null } | null>(null);
   // Số ảnh / video của tin đã đăng lúc mở form sửa — sửa tin không bị đòi xoá bớt ảnh đã được duyệt (05/11/2026)
   const [soAnhDaLuu, setSoAnhDaLuu] = useState({ anh: 0, video: 0 });
   // Thông tin ví/hồ sơ dùng để tính ưu đãi (null = chưa đăng nhập hoặc chưa tải xong)
@@ -774,7 +774,7 @@ export default function PostListingForm() {
       const r = data as ListingRow;
       // Tin đã lên web (đang hiện · hết hạn · khách tự hạ): sửa nội dung giữ nguyên gói, KHÔNG bắt chọn gói (chủ dự án 05/11/2026)
       const khachHa = r.status === "hidden" && (r.details as { ha_boi?: string } | null)?.ha_boi === "khach";
-      if (r.status === "approved" || r.status === "expired" || khachHa) setGoiDangDung({ tier: r.tier as TierId, het: r.tier_expires_at });
+      if (r.status === "approved" || r.status === "expired" || khachHa) setGoiDangDung({ tier: r.tier as TierId, het: r.tier_expires_at, tu: r.published_at });
       // Tin NHÁP / CHỜ DUYỆT: nạp lại gói khách đã chọn (details.plan) — trước đây form mở ra trống gói, khách lưu
       // là gói của tin bị ghi thành trống (26/10/2026)
       if (r.status === "draft" || r.status === "pending") {
@@ -1395,6 +1395,7 @@ export default function PostListingForm() {
           dangLuu={saving === "publish"}
           chuaCoAnh={!images.some((x) => !isVideoUrl(x))}
           soNgay={planTier ? soNgayThat : undefined}
+          moc={goiDangDung ? { tu: goiDangDung.tu ?? null, den: goiDangDung.het } : undefined}
           batDau={batDau}
         />
       )}

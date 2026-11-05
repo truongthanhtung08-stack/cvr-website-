@@ -71,7 +71,7 @@ export async function POST(request: Request) {
   // ── 2. Lấy tin ────────────────────────────────────────────────────────────
   const { data: tin, error: loiTin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details,tier_expires_at,created_at,description,type,price_vnd,area_m2,images")
+    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details,tier_expires_at,published_at,bumped_at,created_at,description,type,price_vnd,area_m2,images")
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin", 404);
@@ -102,6 +102,17 @@ export async function POST(request: Request) {
       .update({ status: conHan ? "approved" : "expired" })
       .eq("id", id);
     if (error) return loi(error.message, 500);
+    // GIỮ NGUYÊN MỐC CŨ (chủ dự án 06/11/2026: "ẩn rồi hiện lại — lấy nguyên mốc cũ"): trigger CSDL tin_luon_co_han (0053/0062)
+    // coi bật lại là kỳ mới → đặt ngày đăng / hạn / lần đẩy = bây giờ (gia hạn miễn phí, đo 06/11 tin 3650c745). Ghi trả mốc cũ;
+    // hạn đổi khác giá trị trigger vừa đặt nên trigger không mở kỳ mới lần nữa.
+    if (conHan) {
+      const t = tin as { published_at?: string | null; bumped_at?: string | null; tier_expires_at: string };
+      const { error: loiMoc } = await admin
+        .from("listings")
+        .update({ published_at: t.published_at ?? null, tier_expires_at: t.tier_expires_at, ...(t.bumped_at ? { bumped_at: t.bumped_at } : {}) })
+        .eq("id", id);
+      if (loiMoc) return loi(loiMoc.message, 500);
+    }
     revalidateTag("listings", "max");
     return NextResponse.json({ ok: true, duyetLai: true, hetHan: !conHan });
   }

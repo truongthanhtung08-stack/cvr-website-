@@ -27,6 +27,7 @@ export default function XemTruocTin({
   chuaCoAnh,
   soNgay,
   batDau,
+  moc,
 }: {
   du: ListingFull;
   tier: TierId | "";
@@ -38,6 +39,8 @@ export default function XemTruocTin({
   /** Gói + ngày khách đã chọn (chủ dự án 06/11/2026: "khách đã chọn gói, chọn ngày rồi") → dòng Hiệu lực · Hết hạn như trang tin thật */
   soNgay?: number;
   batDau?: string; // "YYYY-MM-DD" (hẹn ngày) · "" = ngay khi được duyệt
+  /** Tin ĐÃ LÊN WEB (đang đăng · hết hạn · đã hạ): mốc THẬT — lúc duyệt → hạn đang ghi (06/11/2026: sửa tin xem trước không hiện thời gian gói) */
+  moc?: { tu: string | null; den: string | null };
 }) {
   useNutQuayLai(true, onDong); // nút Quay lại điện thoại đóng lớp này, không rời trang (hàm chung, 22/10/2026)
   const l = du.listing;
@@ -96,7 +99,14 @@ export default function XemTruocTin({
           </div>
           {/* HIỆU LỰC · HẾT HẠN theo gói + ngày khách đã chọn — cùng chỗ, cùng kiểu trang tin thật (bat-dong-san/[id]). Hẹn ngày
               thì ra đúng ngày; "Ngay khi được duyệt" thì hạn tính từ ngày duyệt (máy chủ ghi lúc duyệt). */}
-          {soNgay ? (
+          {moc?.tu && moc.den ? (
+            <p className="mt-2 text-[12px] font-medium leading-relaxed text-cvr-faint">
+              {(() => {
+                const f = (s: string) => new Date(s).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+                return <>Hiệu lực: {f(moc.tu)} · Hết hạn: {f(moc.den)}</>;
+              })()}
+            </p>
+          ) : soNgay ? (
             <p className="mt-2 text-[12px] font-medium leading-relaxed text-cvr-faint">
               {(() => {
                 // NGÀY GIỜ CỤ THỂ (chủ dự án 06/11/2026): hẹn ngày → 00:00 giờ VN ngày đó (như api/tin-dang/duyet); ngay khi duyệt →

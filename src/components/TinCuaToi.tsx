@@ -503,12 +503,15 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
                 (/api/tin-dang/thao-tac, trang /tai-khoan/tin-dang/<id>). Nút phụ (Sửa · Xem) bên trái; nút chính Up tin · Đẩy tin bên phải —
                 cùng cỡ h-9, bo rounded-lg như nút chính của web (btn-dangtin). Điện thoại: hai nút chính chia đôi một hàng riêng. */}
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-cvr-line pt-3">
+              {/* TIN DO ADMIN ẨN: khách không làm gì được — ẩn cả nút Sửa; tin KHÁCH TỰ HẠ vẫn sửa được (chủ dự án 06/11/2026) */}
+              {!(r.status === "hidden" && r.details?.ha_boi !== "khach") && (
               <Link href={`/dang-tin?id=${r.id}`} className={NUT_PHU}>
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Sửa
               </Link>
+              )}
               {r.status === "approved" && (
                 <Link href={`/bat-dong-san/${r.id}`} target="_blank" className={NUT_PHU}>Xem ↗</Link>
               )}
