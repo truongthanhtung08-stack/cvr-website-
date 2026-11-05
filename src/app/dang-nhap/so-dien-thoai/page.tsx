@@ -40,6 +40,16 @@ export default function PhoneLoginPage() {
     try {
       const supabase = createClient();
       let { error } = await supabase.auth.signInWithPassword({ phone: e164(phone), password: matKhau });
+      // TÀI KHOẢN BỊ CẤM TỪ BẢN GỘP CŨ (05/11/2026) → web tự gỡ (lib/gopTaiKhoan tuSuaTkKhoa) rồi đăng nhập lại;
+      // vào tài khoản đã gộp thì useAuth tự chuyển sang tài khoản giữ lại. Khách không phải làm gì.
+      if (error && /banned/i.test(error.message)) {
+        await fetch("/api/xac-thuc/mo-tk-khoa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sdt: phone }),
+        }).catch(() => null);
+        ({ error } = await supabase.auth.signInWithPassword({ phone: e164(phone), password: matKhau }));
+      }
       // Không khớp trực tiếp → có thể là tài khoản đăng ký bằng email/Google đã xác minh số
       // này. Máy chủ dò đúng tài khoản rồi đăng nhập bằng mật khẩu của nó.
       if (error && /invalid login credentials/i.test(error.message)) {

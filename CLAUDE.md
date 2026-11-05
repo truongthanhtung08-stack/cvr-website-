@@ -19,6 +19,13 @@ chạy lệnh push. Sửa xong chỉ báo link xem thử + "chưa push". Chỉ k
   cái nào có trước — giữ tới khi khách tự đổi. Số điện thoại, email không có ảnh.
 - Đăng ký bằng email có điền số có Zalo → cùng mã gửi cả email lẫn Zalo.
 
+## ⏳ CHƯA PUSH (06/11 khuya) — commit c2dac97 + commit kế tiếp trên máy; anh: "push sau, mỗi lần push là mỗi lần lỗi — tao kiểm"
+- Tài khoản bị cấm từ bản gộp cũ: khách đăng nhập (Zalo · email/số + mật khẩu · trang số · Quên mật khẩu) → web tự gỡ cấm,
+  có bằng chứng (số đã xác minh / mã Zalo đang gắn tài khoản khác) thì tự gộp vào đó (`tuSuaTkKhoa`).
+- **Còn treo:** `fbe1d9ec` (Zalo thứ hai của tài khoản `0b9e07d6`, không số, không bằng chứng) — anh đã vào bằng Zalo này 05/11 21:10
+  → web gỡ cấm, vào tài khoản trống. Gộp vào `0b9e07d6` phải ghi CSDL (app_metadata.gop_vao) — auto mode chặn Claude ghi;
+  kịch bản sẵn: scratchpad phiên 6da46c5b `chuan-tk-da-gop.mjs`.
+
 ## ✅ 06/11/2026 tối — GỘP TÀI KHOẢN KHÔNG KHOÁ (anh: "gộp là quy trình của web", "đã xác minh thì gộp, khoá cái gì")
 Gộp (xác minh số bằng mã) → tài khoản thừa KHÔNG khoá, chỉ mang dấu `app_metadata.gop_vao` (một chỗ: `src/lib/gopTaiKhoan.ts`);
 vào bằng cửa nào cũng tự về tài khoản giữ lại (`useAuth` → `/api/xac-thuc/ve-tai-khoan-gop`; Zalo đổi ở máy chủ). Tài khoản khoá đời

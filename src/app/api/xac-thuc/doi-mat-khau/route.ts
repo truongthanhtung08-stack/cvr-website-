@@ -3,7 +3,7 @@ import { kiemMa } from "@/lib/maXacThuc";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { chuanHoaSdt } from "@/lib/phone";
 import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
-import { taiKhoanGiu } from "@/lib/gopTaiKhoan";
+import { tuSuaTkKhoa } from "@/lib/gopTaiKhoan";
 
 // ============================================================================
 // POST /api/xac-thuc/doi-mat-khau — QUÊN MẬT KHẨU BẰNG MÃ 6 SỐ
@@ -69,7 +69,8 @@ export async function POST(req: Request) {
   // Tài khoản ĐÃ GỘP vào tài khoản khác: đặt mật khẩu cho tài khoản được giữ lại (05/11/2026).
   // ⛔ Dấu gộp đọc ở app_metadata (chỉ máy chủ ghi — lib/gopTaiKhoan). user_metadata khách tự sửa được → từng có thể gắn
   // "gộp vào <tài khoản người khác>" rồi đổi mật khẩu tài khoản đó.
-  const gopVao = await taiKhoanGiu(db, user.id);
+  // Gỡ dấu CẤM từ bản gộp cũ (05/11/2026) trước — không thì đặt mật khẩu xong đăng nhập vẫn báo lỗi (tuSuaTkKhoa)
+  const gopVao = await tuSuaTkKhoa(db, user.id);
   if (gopVao !== user.id) {
     const { data: dich } = await db.auth.admin.getUserById(gopVao);
     if (dich?.user) {
