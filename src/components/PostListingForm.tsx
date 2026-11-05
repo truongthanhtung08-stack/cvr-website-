@@ -1445,7 +1445,8 @@ export default function PostListingForm() {
           số thứ tự khớp nhau. Gói chọn TRƯỚC ảnh (10/10/2026: số ảnh / video tối đa theo gói).
           Ô bắt buộc có dấu *; thiếu thì báo lỗi và tự mở đúng bước có ô đó (baoLoi). ── */}
       {/* 1. Loại tin & vị trí */}
-      <Card id="b-loai" step={buoc()} title="Loại hình & địa chỉ" khoa={editStatus === "approved"}>
+      {/* KHÔNG KHOÁ nữa (chủ dự án 06/11/2026: "sửa tin là sửa được tất cả, trừ gói tin" — bỏ luật 0045, migration 0070) */}
+      <Card id="b-loai" step={buoc()} title="Loại hình & địa chỉ">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Tin cũ có nhu cầu đã tạm ẩn (Cần mua / Cần thuê) vẫn hiện đúng giá trị của nó khi sửa */}
           <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={[...new Set([...demandTypes, ...(duocDangDuAn ? [DEMAND_DU_AN] : []), demand])]} />
