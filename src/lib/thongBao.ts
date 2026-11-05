@@ -258,7 +258,8 @@ function chuanHoaThamSo(data: Record<string, string>): Record<string, string> {
     // (docs/MAU-ZBS-MOI.md). 26/10/2026 Zalo trả -1124 "so_tien has invalid format" với "0 đ" (tin miễn phí).
     if (THAM_SO_TIEN.has(khoa)) {
       const so = s.replace(/[^\d]/g, "");
-      s = so ? `${Number(so).toLocaleString("vi-VN")}đ` : s.replace(/₫/g, "đ");
+      // 0 ĐỒNG (tin miễn phí) GỬI "0" — Zalo trả -1124 với "0đ" (gửi thử thật 06/11/2026: "0đ" lỗi, "0" thành công)
+      s = so ? (Number(so) === 0 ? "0" : `${Number(so).toLocaleString("vi-VN")}đ`) : s.replace(/₫/g, "đ");
     }
     const max = GIOI_HAN_THAM_SO[khoa];
     // Cắt ở ranh giới ký tự, thêm "…" để người đọc biết là còn nữa.
