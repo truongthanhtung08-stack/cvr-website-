@@ -59,7 +59,7 @@ export default function NangGoiTin({ r, billing, demoVi, chonDau, onDong, onDaGu
   // Bảng hiện: cấp nâng được lấy bảng giá nâng đã công bố (chưa công bố → bảng gói tin, như giaNangGoi); cấp khoá giữ bảng gói tin.
   const plans: Plan[] = useMemo(() => {
     const goc = bangTheoMucDich(billing, r.purpose).plans;
-    const nang = billing.nangGoi?.bat ? bangNangGoi(billing, r.purpose) : [];
+    const nang = bangNangGoi(billing, r.purpose); // giá Nâng gói ĐÃ DUYỆT trong Admin (06/11/2026 — trước đòi thêm ô "Bật", hiện nhầm giá gói thường)
     return goc.map((p) => nang.find((n) => n.tierId === p.tierId) ?? p);
   }, [billing, r.purpose]);
   const nangDuoc = goiNangDuoc(tin);
