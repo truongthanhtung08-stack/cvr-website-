@@ -71,10 +71,17 @@ export async function POST(req: Request) {
     const phat = await phatMa(email, "email", viec);
     if (!phat.ok) return NextResponse.json({ ok: false, loi: phat.loi }, { status: 429 });
 
-    const gui = await guiMaQuaEmail(email, phat.ma, viec);
-    if (!gui.ok) return NextResponse.json({ ok: false, loi: gui.loi }, { status: 502 });
+    // ĐĂNG KÝ BẰNG EMAIL CÓ GHI SỐ (chủ dự án 06/11/2026: "gửi hết nếu trong form đăng ký khách điền số đt có tài khoản Zalo"):
+    // CÙNG MỘT MÃ gửi cả email lẫn Zalo của số đó — nhận ở đâu nhập cũng được. Mã gắn với EMAIL, nên chỉ chứng minh email;
+    // số vẫn là số CHƯA xác minh (không biết khách nhận mã ở kênh nào) — xác minh số làm ở bước đăng tin. Zalo không gửi được
+    // (số không có Zalo) thì bỏ qua, email vẫn tới.
+    const [gui, guiZalo] = await Promise.all([
+      guiMaQuaEmail(email, phat.ma, viec),
+      viec === "dang-ky" && laSdtVN(sdt) ? guiMaQuaZalo(sdt, phat.ma) : Promise.resolve({ ok: false }),
+    ]);
+    if (!gui.ok && !guiZalo.ok) return NextResponse.json({ ok: false, loi: gui.loi }, { status: 502 });
 
-    return NextResponse.json({ ok: true, kenh: "email", toi: email });
+    return NextResponse.json({ ok: true, kenh: "email", toi: email, quaZalo: guiZalo.ok });
   }
 
   return NextResponse.json({ ok: false, loi: "Chưa có email hoặc số điện thoại." }, { status: 400 });

@@ -184,6 +184,8 @@ export default function BangGiaGoiTin({
                     return <td key={p.tierId} className="border-l border-cvr-line/70 px-3 py-3 text-center text-cvr-faint">–</td>;
                   }
                   const dangChon = chon?.tier === p.tierId && chon.days === ngay;
+                  // MÀU KHỚP NHÃN GÓI (chủ dự án 06/11/2026): nút Chọn + ô đang chọn dùng đúng màu huy hiệu gói (NhanGoi / khung Tổng tiền)
+                  const mau = getTier(p.tierId as TierId);
                   // Hệ số tiếp cận X luôn hiện dưới mỗi mức giá (chủ dự án 09/10/2026)
                   const noiDung = (
                     <span className="flex flex-col items-center gap-0.5">
@@ -199,11 +201,15 @@ export default function BangGiaGoiTin({
                           onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, ngay))}
                           aria-pressed={dangChon}
                           // MỘT LỚP KHUNG (chủ dự án 23/10/2026: "phần giá có 2 cái khung"): ô giá không viền riêng — chỉ ô đang chọn có viền đậm.
-                          className={`w-full rounded-xl px-2 py-2.5 transition ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
+                          className={`w-full rounded-xl px-2 py-2.5 transition ${dangChon ? "" : "hover:bg-cvr-surface"}`}
+                          style={dangChon ? { background: `${mau.accent}14`, boxShadow: `inset 0 0 0 2px ${mau.accent}` } : undefined}
                         >
                           {noiDung}
-                          {/* Nút chọn rõ ràng (chủ dự án 09/10/2026) */}
-                          <span className={`mt-1.5 inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
+                          {/* Nút chọn rõ ràng (chủ dự án 09/10/2026) — màu theo nhãn gói */}
+                          <span
+                            className="mt-1.5 inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold"
+                            style={dangChon ? { border: `1px solid ${mau.accent}`, background: "#fff", color: "#1d1d1f" } : { background: mau.accent, color: mau.badgeText }}
+                          >
                             {dangChon ? "Bỏ chọn" : "Chọn"}
                           </span>
                         </button>

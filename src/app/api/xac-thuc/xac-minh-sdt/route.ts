@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient as taoClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { phatMa, kiemMa, guiMaQuaZalo, guiMaQuaEmail } from "@/lib/maXacThuc";
+import { phatMa, kiemMa, guiMaQuaZalo } from "@/lib/maXacThuc";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
-import { baoLoi } from "@/lib/baoLoi";
 import { danhDauGop } from "@/lib/gopTaiKhoan";
 
 // ============================================================================
@@ -42,21 +41,14 @@ async function dinhTien(admin: NonNullable<ReturnType<typeof createAdminClient>>
 
 // GỘP LÀ VIỆC CỦA WEB, KHÔNG BẮT KHÁCH (chủ dự án 05/11/2026): tài khoản cần gộp mà dính tiền → web KHÔNG tự gộp nhưng cũng KHÔNG
 // chặn khách: số vừa xác minh ghi là số liên hệ đã xác minh của tài khoản đang dùng (sdt_lien_he_xac_minh — được đăng tin, nạp tiền),
-// tin đăng mang số đó; Coastal Land nhận email báo việc để gộp tay, đối chiếu tiền. Khách không phải liên hệ, không phải làm gì.
-async function choAdminGop(admin: NonNullable<ReturnType<typeof createAdminClient>>, uid: string, sdt: string, ids: string[]) {
+// tin đăng mang số đó. Khách không phải liên hệ, không phải làm gì.
+// ⛔ KHÔNG GỬI EMAIL BÁO CHỦ DỰ ÁN (chủ dự án 06/11/2026: "CẤM gửi cho tôi lúc khách đăng tin").
+async function choAdminGop(admin: NonNullable<ReturnType<typeof createAdminClient>>, uid: string, sdt: string, _ids: string[]) {
+  void _ids;
   await admin.from("profiles").update({ sdt_lien_he_xac_minh: true }).eq("id", uid);
   // Nhớ số trên tài khoản đang dùng (user_metadata.sdt_lien_he) → đăng tin / nạp tiền lần sau không hỏi lại, tin mang số này
   const { data: uu } = await admin.auth.admin.getUserById(uid);
   await admin.auth.admin.updateUserById(uid, { user_metadata: { ...(uu?.user?.user_metadata ?? {}), sdt_lien_he: sdt } }).then(() => {}, () => {});
-  await baoLoi({
-    noi: "gop-tai-khoan",
-    mucDo: "nang",
-    tomTat: "Cần gộp tay tài khoản cùng số (dính tiền)",
-    chiTiet: `Số ${sdt} · tài khoản đang dùng ${uid} · tài khoản cần gộp ${ids.join(", ")}`,
-    hauQua: "Khách đang dùng 2 tài khoản cùng số; tiền / gói nằm ở tài khoản kia.",
-    canLam: "Vào Admin → Khách hàng, đối chiếu ví, gói, voucher rồi gộp tay về một tài khoản.",
-    khoa: `gop-tay:${sdt}`,
-  }).catch(() => {});
   return NextResponse.json({ ok: true, sdt, soTinGop: 0, choAdminGop: true });
 }
 
@@ -74,16 +66,30 @@ async function giuNgayThanhVienSomNhat(admin: NonNullable<ReturnType<typeof crea
 // (user_metadata) như datDaiDien để đầu trang hiện đúng. Khách đã tự đặt tên (cờ tu_dat) thì giữ nguyên.
 async function layBuTenAnh(admin: NonNullable<ReturnType<typeof createAdminClient>>, giu: string, tu: string[]) {
   if (!tu.length) return;
+  // MỘT QUY TẮC (chủ dự án 06/11/2026: "khách làm cái đó qua Cài đặt thì lấy cái đó"; còn lại lấy của TÀI KHOẢN TẠO ĐẦU TIÊN):
+  // xếp các tài khoản: khách TỰ ĐẶT trong Cài đặt (tu_dat) trước — tài khoản giữ lại trước nếu nhiều cái tự đặt — rồi theo ngày
+  // tạo tài khoản sớm nhất. Tên = tên đầu tiên theo thứ tự đó (bỏ tên chỉ là số điện thoại, trừ khi khách tự đặt); ảnh = ảnh
+  // đầu tiên theo thứ tự đó. Không phụ thuộc khách đăng nhập bằng gì, vào trước hay vào sau.
   const { data: ds } = await admin.from("profiles").select("id,full_name,avatar_url").in("id", [giu, ...tu]);
   const hsGiu = (ds ?? []).find((p) => p.id === giu);
-  const khac = (ds ?? []).filter((p) => p.id !== giu);
+  // Tự đặt TÊN và tự đặt ẢNH là hai dấu riêng (tu_dat_ten · tu_dat_anh — Cài đặt / DoiAnhDaiDien, 06/11/2026). Tài khoản đời
+  // cũ chỉ có dấu chung tu_dat (không biết khách đổi cái nào) → coi như tự đặt cả hai.
+  const nguoi = await Promise.all((ds ?? []).map(async (p) => {
+    const { data: x } = await admin.auth.admin.getUserById(p.id as string);
+    const m = (x?.user?.user_metadata ?? {}) as Record<string, unknown>;
+    const cu = !!m.tu_dat && !m.tu_dat_ten && !m.tu_dat_anh;
+    return { p, tuDatTen: !!m.tu_dat_ten || cu, tuDatAnh: !!m.tu_dat_anh || cu, tao: new Date(x?.user?.created_at ?? Date.now()).getTime() };
+  }));
+  const xep = (dau: "tuDatTen" | "tuDatAnh") => [...nguoi].sort((a, b) => Number(b[dau]) - Number(a[dau])
+    || (a[dau] && b[dau] ? Number(b.p.id === giu) - Number(a.p.id === giu) : 0) || a.tao - b.tao);
   const { data: uGiu } = await admin.auth.admin.getUserById(giu);
   const meta = (uGiu?.user?.user_metadata ?? {}) as Record<string, unknown>;
   const laSo = (t: string) => /^[\d\s+.]+$/.test(t);
-  const tenCo = String(hsGiu?.full_name ?? "").trim();
-  const tenBu = khac.map((p) => String(p.full_name ?? "").trim()).find((t) => t && !laSo(t));
-  const ten = (!tenCo || (!meta.tu_dat && laSo(tenCo))) && tenBu ? tenBu : tenCo || null;
-  const anh = (hsGiu?.avatar_url as string | null) || khac.map((p) => p.avatar_url as string | null).find(Boolean) || null;
+  const ten = xep("tuDatTen").map((n) => ({ t: String(n.p.full_name ?? "").trim(), tuDat: n.tuDatTen })).find((x) => x.t && (x.tuDat || !laSo(x.t)))?.t
+    || String(hsGiu?.full_name ?? "").trim() || null;
+  // Ảnh = ảnh khách tự đặt; không có thì ảnh của tài khoản CÓ ẢNH tạo sớm nhất (Zalo / Google — cái nào có trước), giữ tới khi
+  // khách tự đổi ảnh (chủ dự án 06/11/2026: "tuỳ cái nào có trước, lấy cái đó cho đến khi khách tự thay đổi ảnh đại diện")
+  const anh = xep("tuDatAnh").map((n) => n.p.avatar_url as string | null).find(Boolean) || null;
   if (ten === (hsGiu?.full_name ?? null) && anh === (hsGiu?.avatar_url ?? null)) return;
   await admin.from("profiles").update({ full_name: ten, avatar_url: anh }).eq("id", giu);
   await admin.auth.admin.updateUserById(giu, { user_metadata: { ...meta, full_name: ten, avatar_url: anh, picture: anh } }).then(() => {}, () => {});
@@ -91,7 +97,7 @@ async function layBuTenAnh(admin: NonNullable<ReturnType<typeof createAdminClien
 
 export async function POST(req: Request) {
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-  const b = (await req.json().catch(() => ({}))) as { buoc?: string; sdt?: string; ma?: string };
+  const b = (await req.json().catch(() => ({}))) as { buoc?: string; sdt?: string; ma?: string; dangTin?: boolean };
   const sdt = chuanHoaSdt(b.sdt ?? "");
   if (!laSdtVN(sdt)) return loi("Số điện thoại chưa đúng (VD: 0905123456).");
 
@@ -109,23 +115,22 @@ export async function POST(req: Request) {
   //   · Nhóm Email (Email + Google): (05/11/2026, thay chốt cũ "giữ riêng") xác thực số đã có tài khoản → GỘP mọi
   //     tài khoản của số đó (tài khoản SĐT + tài khoản Zalo ghi số đó) về tài khoản email đang dùng — xem khối gộp bên dưới.
   const tim = await timTaiKhoan(admin, sdt, { boQuaAdmin: true });
-  if (tim === "trung") return loi("Số này đang gắn với nhiều tài khoản. Vui lòng liên hệ Coastal Land.", 409);
-  const idCu = tim && tim.id !== uid ? tim.id : null;
+  // SỐ ĐANG GẮN NHIỀU TÀI KHOẢN: khách vừa nhận đúng mã ở số này = chính chủ → web gộp HẾT các tài khoản đó về tài khoản đang
+  // dùng (khối gộp bên dưới). Trước đây chặn, bắt khách liên hệ — chủ dự án 06/11/2026: "CẤM tuyệt đối hỏi hay yêu cầu khách gộp".
+  const trung = tim === "trung";
+  const idCu = tim && tim !== "trung" && tim.id !== uid ? tim.id : null;
   const laTkZalo = /^zalo_.+@users\.coastalland\.vn$/.test(u.user?.email ?? "");
 
+  // ⛔ 06/11/2026: trước đây mã xác minh số gửi CẢ email (05/11) — mã email không chứng minh số: ai cũng gõ số người khác, nhận
+  // mã ở email của mình là chiếm được tài khoản của chủ số (lỗ hổng). Nay chỉ gửi tới chính số đó.
   if (b.buoc === "gui-ma") {
+    // XÁC MINH SỐ = MÃ TỚI CHÍNH SỐ ĐÓ (chủ dự án 06/11/2026: "khách chưa gõ số thì khi đăng tin BUỘC phải xác minh số"): chỉ
+    // gửi qua Zalo của số đó (sau này thêm SMS cho số không có Zalo). KHÔNG gửi qua email — mã email không chứng minh số.
     const phat = await phatMa(sdt, "zalo", "xac-minh-sdt");
     if (!phat.ok) return loi(phat.loi, 429);
-    // MÃ GỬI CẢ ZALO LẪN EMAIL (chủ dự án 05/11/2026: "khách nhập số đt, có mã qua cả email và Zalo để xác thực và gộp tài
-    // khoản" · "có cả 2 nếu khách có email"): Zalo về đúng số đó + email thật của tài khoản đang dùng (email kỹ thuật
-    // …@users.coastalland.vn không tính). Một mã, nhận ở kênh nào cũng nhập được. Một kênh tới là đủ.
-    const emailTk = u.user?.email && !/@users\.coastalland\.vn$/i.test(u.user.email) ? u.user.email : null;
-    const [gui, guiEmail] = await Promise.all([
-      guiMaQuaZalo(sdt, phat.ma),
-      emailTk ? guiMaQuaEmail(emailTk, phat.ma, "xac-minh-sdt") : Promise.resolve({ ok: false }),
-    ]);
-    if (!gui.ok && !guiEmail.ok) return loi("Chưa gửi được mã. Vui lòng thử lại sau ít phút.", 503);
-    return NextResponse.json({ ok: true, quaZalo: gui.ok, quaEmail: guiEmail.ok ? emailTk : null });
+    const gui = await guiMaQuaZalo(sdt, phat.ma);
+    if (!gui.ok) return loi("Chưa gửi được mã qua Zalo tới số này. Vui lòng thử lại sau ít phút.", 503);
+    return NextResponse.json({ ok: true, quaZalo: true, quaEmail: null });
   }
 
   if (b.buoc !== "xac-nhan") return loi("Bước không hợp lệ.");
@@ -134,11 +139,22 @@ export async function POST(req: Request) {
 
   let soTinGop = 0;
 
+  // ⛔ CHỦ DỰ ÁN CHỐT ĐIỀU KIỆN GỘP (06/11/2026): "tất cả TK trên web để nguyên. Chỉ gộp cho những trường hợp: KHÁCH ĐANG ĐĂNG NHẬP
+  // VÀO BẰNG CHÍNH HỌ và có đủ điều kiện là xác minh số điện thoại và đã đăng tin" · "gộp phải CHUẨN: tên TK, ảnh đại diện, số điện
+  // thoại, email, tin đăng của khách" · KHÔNG hỏi / yêu cầu khách gì · không khoá đăng nhập ở bất kỳ trường hợp nào.
+  //   Đang đăng nhập bằng chính họ = phiên của khách (token) gọi đường này · xác minh số = mã vừa đúng · đã đăng tin = xác minh ngay
+  //   trong lúc đăng tin (dangTin, form đăng tin) hoặc tài khoản đã có tin. Thiếu điều kiện / dính tiền → không gộp (choAdminGop:
+  //   khách vẫn đăng tin, nạp tiền bình thường bằng tài khoản đang dùng; email báo chủ dự án). Tắt hẳn tự gộp → đặt cờ này false.
+  const WEB_TU_GOP = true;
+  // CHỈ GỘP TRONG LÚC ĐĂNG TIN (06/11/2026: "mọi thứ khác khách tự thay đổi trong Cài đặt, kể cả thêm số thì cứ thêm") — Cài đặt / nạp tiền không gộp
+  const duDieuKienGop = WEB_TU_GOP && b.dangTin === true;
+
   // TÀI KHOẢN SINH RA TỪ ZALO (email kỹ thuật zalo_…) mà số này đã có tài khoản cũ → gộp
   // NGƯỢC: tài khoản Zalo nhập vào tài khoản cũ, Zalo gắn sang tài khoản cũ (0049), mở
   // phiên tài khoản cũ. Không cửa đăng nhập nào bị mất (Gmail/số + mật khẩu của tài khoản
   // cũ vẫn vào được; bấm Zalo lần sau tìm theo zalo_id → ra tài khoản cũ).
   if (idCu && laTkZalo) {
+    if (!duDieuKienGop) return await choAdminGop(admin, uid, sdt, [idCu]);
     const [{ data: hsMoi }, { data: hvMoi }] = await Promise.all([
       admin.from("profiles").select("balance,zalo_id").eq("id", uid).maybeSingle(),
       admin.from("hoi_vien").select("user_id").eq("user_id", uid).gt("het_han", new Date().toISOString()).limit(1),
@@ -147,14 +163,16 @@ export async function POST(req: Request) {
       return await choAdminGop(admin, uid, sdt, [idCu]);
     const { data: hsCu } = await admin.from("profiles").select("zalo_id").eq("id", idCu).maybeSingle();
     const zaloId = hsMoi?.zalo_id ?? u.user!.email!.replace(/^zalo_|@users\.coastalland\.vn$/g, "");
-    if (hsCu?.zalo_id && hsCu.zalo_id !== zaloId)
-      return loi("Số này đã gắn với một tài khoản Zalo khác. Vui lòng liên hệ Coastal Land.", 409);
+    // Tài khoản cũ ĐÃ CÓ một mã Zalo khác (Zalo cấp mã riêng cho mỗi ứng dụng — cùng một người vẫn có 2 mã): số đã xác minh =
+    // đủ điều kiện → VẪN GỘP (trước đây từ chối, bắt khách liên hệ — chủ dự án 06/11/2026: "đã xác minh thì gộp", "cấm hỏi khách
+    // chuyện gộp"). Tài khoản cũ giữ Zalo của nó; mã Zalo này ở lại tài khoản bị gộp → bấm Zalo vẫn vào, tự về tài khoản cũ (gop_vao).
+    const chuyenZalo = !hsCu?.zalo_id || hsCu.zalo_id === zaloId;
 
     const { data: chuyen } = await admin.from("listings").update({ owner_id: idCu }).eq("owner_id", uid).select("id");
     soTinGop = (chuyen ?? []).length;
     // Nhả zalo_id ở tài khoản Zalo trước (cột duy nhất) rồi gắn sang tài khoản cũ.
-    await admin.from("profiles").update({ zalo_id: null }).eq("id", uid);
-    await admin.from("profiles").update({ zalo_id: zaloId, phone: sdt, phone_verified: true }).eq("id", idCu);
+    if (chuyenZalo) await admin.from("profiles").update({ zalo_id: null }).eq("id", uid);
+    await admin.from("profiles").update({ ...(chuyenZalo ? { zalo_id: zaloId } : {}), phone: sdt, phone_verified: true }).eq("id", idCu);
     // Tài khoản bị gộp KHÔNG KHOÁ — mang dấu gộp vào idCu (lib/gopTaiKhoan): mọi cửa đăng nhập cũ tự về tài khoản giữ lại
     await danhDauGop(admin, [uid], idCu);
 
@@ -166,14 +184,14 @@ export async function POST(req: Request) {
     if (!emailCu) {
       emailCu = `sdt_${sdt}@users.coastalland.vn`;
       const { error } = await admin.auth.admin.updateUserById(idCu, { email: emailCu, email_confirm: true });
-      if (error) return loi("Đã gộp nhưng chưa mở được phiên. Vui lòng đăng nhập lại bằng Zalo.", 500);
+      if (error) return loi("Chưa mở được phiên đăng nhập. Vui lòng đăng nhập lại.", 500);
     }
     const sbMo = taoClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data: link } = await admin.auth.admin.generateLink({ type: "magiclink", email: emailCu });
     const hash = link?.properties?.hashed_token;
     let phien = hash ? (await sbMo.auth.verifyOtp({ type: "email", token_hash: hash })).data.session : null;
     if (!phien && hash) phien = (await sbMo.auth.verifyOtp({ type: "magiclink", token_hash: hash })).data.session;
-    if (!phien) return loi("Đã gộp nhưng chưa mở được phiên. Vui lòng đăng nhập lại bằng Zalo.", 500);
+    if (!phien) return loi("Chưa mở được phiên đăng nhập. Vui lòng đăng nhập lại.", 500);
 
     const sbCu = taoClient(url, anon, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -193,16 +211,17 @@ export async function POST(req: Request) {
   // không đưa số, khách tự ghi) — chuyển tin, số đăng nhập, Zalo sang; khoá các tài khoản thừa. Không gộp tài khoản quản trị.
   // Tài khoản thừa còn tiền ví / gói hội viên → DỪNG, không tự chuyển tiền (giống luật gộp Zalo ở trên).
   const so84g = `84${sdt.slice(1)}`;
-  const { data: cungSo } = await admin.from("profiles").select("id,email,role,balance,zalo_id")
+  const { data: cungSo } = await admin.from("profiles").select("id,email,role,balance,zalo_id,phone_verified")
     .or(`phone.eq.${sdt},phone.eq.${so84g},phone.eq.+${so84g}`).neq("id", uid);
   const gopTu = (cungSo ?? []).filter((p) => p.role !== "admin"
-    && (p.id === idCu || /^zalo_.+@users\.coastalland\.vn$/.test(String(p.email ?? ""))));
+    && (p.id === idCu || (trung && p.phone_verified) || /^zalo_.+@users\.coastalland\.vn$/.test(String(p.email ?? ""))));
   if (idCu && !gopTu.some((p) => p.id === idCu)) {
-    const { data: pCu } = await admin.from("profiles").select("id,email,role,balance,zalo_id").eq("id", idCu).maybeSingle();
+    const { data: pCu } = await admin.from("profiles").select("id,email,role,balance,zalo_id,phone_verified").eq("id", idCu).maybeSingle();
     if (pCu) gopTu.push(pCu);
   }
   if (gopTu.length) {
     const ids = gopTu.map((p) => p.id as string);
+    if (!duDieuKienGop) return await choAdminGop(admin, uid, sdt, ids);
     const { data: hv } = await admin.from("hoi_vien").select("user_id").in("user_id", ids).gt("het_han", new Date().toISOString()).limit(1);
     if (gopTu.some((p) => Number(p.balance ?? 0) > 0) || (hv ?? []).length || (await dinhTien(admin, ids)))
       return await choAdminGop(admin, uid, sdt, ids);
@@ -210,9 +229,14 @@ export async function POST(req: Request) {
     const { data: chuyen } = await admin.from("listings").update({ owner_id: uid }).in("owner_id", ids).select("id");
     soTinGop = (chuyen ?? []).length;
     // Zalo đăng nhập web: ưu tiên mã Zalo của tài khoản sinh từ Zalo (đúng cửa "Tiếp tục với Zalo"), không có thì lấy mã đã gắn.
-    const zaloGiu = (gopTu.find((p) => /^zalo_/.test(String(p.email ?? "")) && p.zalo_id) ?? gopTu.find((p) => p.zalo_id))?.zalo_id ?? null;
-    // Nhả số + Zalo ở các tài khoản thừa trước (cột duy nhất), rồi gắn sang tài khoản đang dùng.
-    await admin.from("profiles").update({ phone: null, phone_verified: false, zalo_id: null }).in("id", ids);
+    // Tài khoản đang dùng ĐÃ CÓ Zalo riêng → giữ nguyên, không ghi đè (ghi đè làm mã Zalo cũ mất cửa vào → bấm Zalo đẻ tài
+    // khoản trùng). Mã Zalo nào không chuyển thì ở lại tài khoản bị gộp: bấm Zalo vẫn tìm ra theo zalo_id → tự về tài khoản này.
+    const { data: hsDang } = await admin.from("profiles").select("zalo_id").eq("id", uid).maybeSingle();
+    const zaloGiu = hsDang?.zalo_id ? null
+      : (gopTu.find((p) => /^zalo_/.test(String(p.email ?? "")) && p.zalo_id) ?? gopTu.find((p) => p.zalo_id))?.zalo_id ?? null;
+    // Nhả số ở các tài khoản thừa (và đúng mã Zalo sẽ chuyển) trước (cột duy nhất), rồi gắn sang tài khoản đang dùng.
+    await admin.from("profiles").update({ phone: null, phone_verified: false }).in("id", ids);
+    if (zaloGiu) await admin.from("profiles").update({ zalo_id: null }).in("id", ids).eq("zalo_id", zaloGiu);
     await admin.from("sdt_nguoi_dung").update({ user_id: uid }).in("user_id", ids).eq("sdt", sdt).then(() => {}, () => {});
     for (const id of ids) await admin.auth.admin.updateUserById(id, { phone: "" }).then(() => {}, () => {});
     const { error } = await admin.from("profiles")

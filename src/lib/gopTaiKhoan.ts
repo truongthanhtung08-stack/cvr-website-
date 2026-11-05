@@ -45,21 +45,7 @@ export async function tuSuaTkKhoa(admin: Admin, id: string): Promise<string> {
   const { data } = await admin.auth.admin.getUserById(id);
   const u = data?.user;
   if (!u?.banned_until || new Date(u.banned_until).getTime() <= Date.now()) return id;
-  let dich: string | null = null;
-  const sdt = u.phone ? `0${u.phone.replace(/^\+?84/, "")}` : null;
-  if (sdt && /^0\d{9}$/.test(sdt)) {
-    const t = await timTaiKhoan(admin, sdt);
-    if (t && t !== "trung" && t.id !== id) dich = t.id;
-  }
-  const zid = /^zalo_(.+)@users\.coastalland\.vn$/.exec(u.email ?? "")?.[1];
-  if (!dich && zid) {
-    const { data: p } = await admin.from("profiles").select("id").eq("zalo_id", zid).neq("id", id).limit(1).maybeSingle();
-    if (p?.id) dich = p.id as string;
-  }
-  if (dich) {
-    await danhDauGop(admin, [id], dich);
-    return taiKhoanGiu(admin, dich);
-  }
+  // CHỈ MỞ KHOÁ, KHÔNG TỰ GỘP (chủ dự án 06/11/2026: "tôi là người quyết định GỘP hay không") — khách vào tài khoản của mình bình thường.
   await admin.auth.admin.updateUserById(id, { ban_duration: "none" }).then(() => {}, () => {});
   return id;
 }

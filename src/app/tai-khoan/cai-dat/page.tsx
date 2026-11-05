@@ -48,7 +48,7 @@ export default function AccountSettingsPage() {
       })
       .eq("id", profile.id);
     // Tên mới hiện ngay ở đầu trang (đầu trang đọc tên trong phiên đăng nhập)
-    if (!error) await supabase.auth.updateUser({ data: { full_name: fullName.trim() || null, tu_dat: true } }); // tu_dat: khách tự đặt → đăng nhập lại không đè (datDaiDien)
+    if (!error) await supabase.auth.updateUser({ data: { full_name: fullName.trim() || null, tu_dat: true, tu_dat_ten: true } }); // tu_dat: khách tự đặt → đăng nhập lại không đè (datDaiDien) · tu_dat_ten: riêng TÊN (gộp tài khoản — xac-minh-sdt)
     if (!error && (tenCu ?? "").trim() !== fullName.trim()) await dongBoTenAnhTin({ tenCu });
     if (!error) tenDaLuu.current = fullName.trim() || null;
     setSaving(false);

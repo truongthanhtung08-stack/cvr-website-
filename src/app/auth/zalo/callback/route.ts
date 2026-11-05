@@ -155,8 +155,14 @@ export async function GET(request: Request) {
     const moTkKhoa = async (id: string): Promise<string> => {
       const giu = await tuSuaTkKhoa(admin, id); // khoá đời cũ: đủ điều kiện thì gộp, không thì mở khoá (lib/gopTaiKhoan)
       if (giu !== id) {
-        await admin.from("profiles").update({ zalo_id: null }).eq("id", id).eq("zalo_id", me.id!);
-        await admin.from("profiles").update({ zalo_id: me.id }).eq("id", giu).is("zalo_id", null);
+        // Chuyển mã Zalo sang tài khoản giữ lại CHỈ KHI bên đó chưa có Zalo; bên đó đã có mã khác thì mã này ở lại tài khoản cũ
+        // (vẫn tìm ra theo zalo_id → gop_vao). Nhả trước rồi gắn (cột duy nhất); gắn hỏng thì trả lại, không để mất mã.
+        const { data: giuHs } = await admin.from("profiles").select("zalo_id").eq("id", giu).maybeSingle();
+        if (giuHs && !giuHs.zalo_id) {
+          await admin.from("profiles").update({ zalo_id: null }).eq("id", id).eq("zalo_id", me.id!);
+          const { error: loiGan } = await admin.from("profiles").update({ zalo_id: me.id }).eq("id", giu).is("zalo_id", null);
+          if (loiGan) await admin.from("profiles").update({ zalo_id: me.id }).eq("id", id).is("zalo_id", null);
+        }
       }
       return giu;
     };

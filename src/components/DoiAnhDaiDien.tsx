@@ -21,7 +21,7 @@ export default function DoiAnhDaiDien({ idHoSo, url, ten, className }: { idHoSo:
     if (!moi) { setDang(false); window.alert("Chưa tải được ảnh. " + (error ?? "")); return; }
     const sb = createClient();
     const { error: e } = await sb.from("profiles").update({ avatar_url: moi }).eq("id", idHoSo);
-    if (!e) await sb.auth.updateUser({ data: { avatar_url: moi, picture: moi, tu_dat: true } }); // tu_dat: khách tự đặt → đăng nhập lại không đè (datDaiDien)
+    if (!e) await sb.auth.updateUser({ data: { avatar_url: moi, picture: moi, tu_dat: true, tu_dat_anh: true } }); // tu_dat: khách tự đặt → đăng nhập lại không đè (datDaiDien) · tu_dat_anh: riêng ẢNH (gộp tài khoản — xac-minh-sdt)
     setDang(false);
     if (e) { window.alert("Lưu thất bại: " + e.message); return; }
     void dongBoTenAnhTin({ anhCu: anh ?? url }); // tin đang hiện ảnh cũ đổi theo

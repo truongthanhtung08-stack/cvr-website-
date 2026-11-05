@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     if (cu?.length === 1) {
       const id = cu[0].id as string;
       const { error: loiGop } = await db.auth.admin.updateUserById(id, { phone: `+${so84}`, phone_confirm: true, password: matKhau });
-      if (loiGop) return NextResponse.json({ ok: false, loi: "Chưa gộp được vào tài khoản cũ. Vui lòng liên hệ Coastal Land." }, { status: 500 });
+      if (loiGop) return NextResponse.json({ ok: false, loi: "Chưa đăng ký được. Vui lòng thử lại." }, { status: 500 });
       await db.from("profiles").update({ phone: sdt, phone_verified: true }).eq("id", id);
       return NextResponse.json({ ok: true, gop: true });
     }

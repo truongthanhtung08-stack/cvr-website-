@@ -86,6 +86,11 @@ const MucMoCtx = createContext<{ moMuc: (step: string) => void; loi?: { buoc: st
 
 const DU_AN_KHAC = "__khac";
 const DU_AN_TU_GHI = "Khác — tự ghi";
+// Số trên tin (phần 7): 1 hoặc 2 số khách tích (tối đa 2 — chủ dự án 06/11/2026), ghép "số 1 - số 2"
+const soDangChon = (soChon: string, dsSo: string[], soTaiKhoan: string): string[] => {
+  const chon = soChon.split(" - ").filter((x) => dsSo.includes(x)).slice(0, 2);
+  return chon.length ? chon : [soTaiKhoan || dsSo[0]].filter(Boolean);
+};
 // Khoá trình duyệt giữ bản nháp tự lưu của form đăng tin mới — RIÊNG TỪNG TÀI KHOẢN
 // (máy dùng chung thì người sau không thấy bản nháp của người trước).
 const KHOA_NHAP_MAY = "cvr-dang-tin-nhap";
@@ -727,7 +732,9 @@ export default function PostListingForm() {
           setSoTaiKhoan(chuanHoaSdt(p.phone ?? "") || chuanHoaSdt(String((user.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he ?? "")));
           void supabase.from("sdt_nguoi_dung").select("sdt").eq("user_id", user.id).eq("da_xac_minh", true).then(({ data }) => {
             const chinh = chuanHoaSdt(p.phone ?? "");
-            setDsSo([...new Set([chinh, ...(data ?? []).map((x) => chuanHoaSdt(x.sdt))].filter(Boolean))]);
+            // HIỆN HẾT CÁC SỐ KHÁCH ĐÃ CÓ để chọn (chủ dự án 06/11/2026): số chính · số thêm trong Cài đặt · số đã xác minh lúc đăng tin
+            const lienHe = chuanHoaSdt(String((user.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he ?? ""));
+            setDsSo([...new Set([chinh, lienHe, ...(data ?? []).map((x) => chuanHoaSdt(x.sdt))].filter(Boolean))]);
           }, () => {});
           setContactName((v) => v || p.full_name || "");
           setTenTaiKhoan((p.full_name ?? "").trim() || chuanHoaSdt(p.phone ?? ""));
@@ -820,6 +827,8 @@ export default function PostListingForm() {
       if (d.contact) {
         setContactName(d.contact.name ?? "");
         setContactPhone(d.contact.phone ?? "");
+        // Mở lại tin: giữ đúng số đã chọn (một số, hay cặp hai số)
+        { const ds = tachNhieuSdt(d.contact.phone ?? ""); if (ds.length > 1) setSoChon(ds.slice(0, 2).join(" - ")); else if (ds[0]) setSoChon(ds[0]); }
         setContactEmail(emailThat(d.contact.email));
         setContactAvatar(d.contact.avatar ?? "");
       }
@@ -919,7 +928,7 @@ export default function PostListingForm() {
       projectName: projectName.trim() || undefined,
       // TIN CỦA CHÍNH KHÁCH = THÔNG TIN TÀI KHOẢN (chủ dự án 05/11/2026: "mặc định thì để mặc định, cấm sửa — sửa ở Cài đặt")
       contact: laCuaMinh
-        ? { name: tenTaiKhoan || soTaiKhoan, phone: (soChon && dsSo.includes(soChon) ? soChon : soTaiKhoan), email: tk.email, avatar: tk.anh || undefined }
+        ? { name: tenTaiKhoan || soTaiKhoan, phone: (dsSo.length > 1 ? soDangChon(soChon, dsSo, soTaiKhoan).join(" - ") : soTaiKhoan), email: tk.email, avatar: tk.anh || undefined }
         : (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
         ? {
             // Ô Họ tên khách ghi; để trống → tên tài khoản (admin mở tin của khách thì không lấy tên admin)
@@ -1399,6 +1408,7 @@ export default function PostListingForm() {
             <XacMinhSdt
               // Chỉ TỰ GỬI mã khi là số của chính tài khoản; số lấy từ ô liên hệ (có thể là số chủ nhà) thì khách xem lại rồi bấm gửi
               tuGui={!!soTaiKhoan}
+              dangTin
               tieuDe={soTaiKhoan || soXacMinh ? "Xác nhận số điện thoại của bạn" : "Số điện thoại của bạn"}
               soGoiY={soTaiKhoan || soXacMinh}
               onXong={(_so, _gop, idMoi) => {
@@ -1978,10 +1988,13 @@ export default function PostListingForm() {
                   </span>
                   <span className="shrink-0 text-right">
                     <span className="block text-xl font-bold tabular-nums tracking-tight text-cvr-ink">{thanhTien > 0 ? vnd(tienThue.tongTra) : "0 ₫"}</span>
+                    {/* GỌN (chủ dự án 06/11/2026: "quá rườm rà"): 0 đ thì không có Chi tiết — không có gì để chi tiết */}
+                    {(thanhTien > 0 || duocMienPhi) && (
                     <button type="button" onClick={() => setXemChiTietTien(!xemChiTietTien)} aria-expanded={xemChiTietTien} className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-cvr-blue-ink">
                       Chi tiết
                       <svg className={`h-3.5 w-3.5 transition ${xemChiTietTien ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                     </button>
+                    )}
                   </span>
                 </div>
                 <div className="mt-2.5 border-t pt-2" style={{ borderColor: `${t.accent}40` }}>
@@ -1990,10 +2003,12 @@ export default function PostListingForm() {
                   <Dong nhan="Thời gian hiển thị" giaTri={`${soNgayThat} ngày`} />
                   <Dong nhan="Bắt đầu hiển thị" giaTri={batDau ? batDau.split("-").reverse().join("/") : "Ngay khi được duyệt"} />
                 </div>
-                {xemChiTietTien && (
+                {xemChiTietTien && (thanhTien > 0 || duocMienPhi) && (
                 <div className="mt-2 border-t pt-2" style={{ borderColor: `${t.accent}40` }}>
+                {/* ĐỦ MỌI KHOẢN ĐANG ÁP (chủ dự án 06/11/2026: "đơn giá theo gói, tính theo ngày, chiết khấu, khuyến mãi hay bất cứ thứ
+                    gì: thành viên – hội viên, voucher — có là đưa vào hết"); khoản nào không có thì không hiện. */}
                 <Dong nhan="Thành viên" giaTri={laThanhVienMoi ? "Thành viên mới" : "Thành viên"} />
-                {!duocMienPhi && <Dong nhan="Đơn giá / ngày"giaTri={vnd(planDays > 0 ? Math.round(baoGia.base / planDays) : 0)} />}
+                {!duocMienPhi && <Dong nhan="Đơn giá / ngày" giaTri={vnd(planDays > 0 ? Math.round(baoGia.base / planDays) : 0)} />}
                 {duocMienPhi ? (
                   <Dong nhan={chuongTrinhTvMoi(billing).ten || "Ưu đãi thành viên mới"} giaTri="Miễn phí" nhan2 />
                 ) : (
@@ -2099,13 +2114,37 @@ export default function PostListingForm() {
               )}
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-cvr-ink">{tenTaiKhoan}</p>
-                <a href="/tai-khoan/cai-dat" target="_blank" rel="noopener" className="mt-1 inline-block text-sm font-medium text-cvr-blue-ink hover:underline">Sửa trong Cài đặt</a>
+                {/* Bỏ dòng "Sửa trong Cài đặt" dưới tên (chủ dự án 06/11/2026) — khách tự vào Cài đặt */}
               </div>
             </div>
             <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
               <div id="o-ten"><Label>Họ và tên</Label><input value={tenTaiKhoan} readOnly className={oKhoa} /></div>
               <div id="o-sdt"><Label>Số điện thoại</Label>{dsSo.length > 1
-                ? <ChonCoTim value={soChon || soTaiKhoan} onChange={setSoChon} options={dsSo} placeholder="Chọn số" timPlaceholder="Tìm số" khongTim className={inputCls} />
+                // KHÁCH CÓ NHIỀU SỐ (chủ dự án 06/11/2026: "tối đa 2 số · khách muốn chọn số nào tuỳ khách"): tích 1 hoặc 2 số bất kỳ;
+                // đủ 2 thì các số khác mờ; không bỏ được số cuối cùng. Mặc định số chính. Trang tin hiện các số đã tích khi bấm Hiện số.
+                ? (() => { const dang = soDangChon(soChon, dsSo, soTaiKhoan); return (
+                  <div className="space-y-2">
+                    {dsSo.map((s) => {
+                      const co = dang.includes(s);
+                      const khoa = !co && dang.length >= 2;
+                      return (
+                        <label key={s} className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-3 text-[15px] tabular-nums text-cvr-ink transition ${co ? "border-cvr-ink" : "border-cvr-line"} ${khoa ? "cursor-not-allowed opacity-45" : ""}`}>
+                          <input
+                            type="checkbox"
+                            checked={co}
+                            disabled={khoa}
+                            onChange={() => {
+                              const moi = co ? dang.filter((x) => x !== s) : [...dang, s];
+                              if (moi.length) setSoChon(dsSo.filter((x) => moi.includes(x)).join(" - "));
+                            }}
+                            className="h-5 w-5 shrink-0 accent-[#1d1d1f]"
+                          />
+                          {s}
+                        </label>
+                      );
+                    })}
+                  </div>
+                ); })()
                 : <input value={soTaiKhoan} readOnly placeholder="Xác minh khi bấm Đăng" className={oKhoa} />}</div>
               <div id="o-email"><Label>Email</Label><input value={tk.email} readOnly placeholder="—" className={oKhoa} /></div>
             </div>

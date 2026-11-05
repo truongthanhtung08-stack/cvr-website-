@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 // Hai bước ngay tại chỗ: nhập số → nhận mã Zalo → nhập mã. Xong là đăng tin tiếp.
 // ============================================================================
 // tuGui: mở ra là GỬI MÃ LUÔN (dùng trong hộp bật lên khi bấm Đăng tin) — khách chỉ việc nhập mã.
-export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, tieuDe = "Xác minh số điện thoại để đăng tin" }: { soGoiY?: string; onXong: (sdt: string, soTinGop: number, idTaiKhoanMoi?: string) => void; onSoMoi?: (sdt: string) => void; tuGui?: boolean; tieuDe?: string }) {
+export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, dangTin, tieuDe = "Xác minh số điện thoại để đăng tin" }: { soGoiY?: string; onXong: (sdt: string, soTinGop: number, idTaiKhoanMoi?: string) => void; onSoMoi?: (sdt: string) => void; tuGui?: boolean; /** Xác minh trong lúc ĐĂNG TIN (form đăng tin) — một điều kiện gộp tài khoản (xac-minh-sdt) */ dangTin?: boolean; tieuDe?: string }) {
   const [sdt, setSdt] = useState(soGoiY ?? "");
   const [ma, setMa] = useState("");
   const [daGui, setDaGui] = useState(false);
@@ -34,7 +34,7 @@ export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, tieuDe = "X
       const r = await fetch("/api/xac-thuc/xac-minh-sdt", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` },
-        body: JSON.stringify({ buoc, sdt, ma }),
+        body: JSON.stringify({ buoc, sdt, ma, dangTin: !!dangTin }),
       });
       const j = await r.json();
       if (!j.ok) return setLoi(j.loi || "Chưa xác minh được. Vui lòng thử lại.");

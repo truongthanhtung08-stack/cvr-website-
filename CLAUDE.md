@@ -9,6 +9,16 @@
 Claude **CẤM tự push** ở phiên này và mọi phiên. Không push, không chạy lệnh push, không nhắc / hỏi / gợi ý push, không bảo anh tự
 chạy lệnh push. Sửa xong chỉ báo link xem thử + "chưa push". Chỉ khi anh nhắn đúng chữ **"Push"** mới làm.
 
+## ⛔ LUẬT TÀI KHOẢN — ANH CHỐT 06/11/2026, CẤM HỎI LẠI ("đừng để tao nói lại")
+- Khách **đăng nhập bằng bất cứ cách nào** (số, email, Google, Zalo). **Đăng ký bắt buộc họ tên.**
+- **Đăng tin: số điện thoại BẮT BUỘC, đã xác minh.** Chưa có số → xác minh bằng mã gửi **tới chính số đó** (Zalo; sau thêm SMS
+  cho số không có Zalo — chờ anh có nhà cung cấp). KHÔNG xác minh số bằng mã email. Có số rồi thì không hỏi.
+- **Gộp: web tự làm, không hỏi/yêu cầu khách** — khi khách đang tự đăng nhập + xác minh số (mã tới số) + đang đăng tin/đã có tin.
+  Dính tiền / tài khoản quản trị → không gộp, email báo anh. Tài khoản cũ trên web để nguyên. Không khoá đăng nhập bất kỳ trường hợp nào.
+- **Tên / ảnh khi gộp:** khách tự đặt trong Cài đặt (tên, ảnh riêng) thì giữ; không thì tên của tài khoản tạo đầu tiên, ảnh Zalo/Google
+  cái nào có trước — giữ tới khi khách tự đổi. Số điện thoại, email không có ảnh.
+- Đăng ký bằng email có điền số có Zalo → cùng mã gửi cả email lẫn Zalo.
+
 ## ✅ 06/11/2026 tối — GỘP TÀI KHOẢN KHÔNG KHOÁ (anh: "gộp là quy trình của web", "đã xác minh thì gộp, khoá cái gì")
 Gộp (xác minh số bằng mã) → tài khoản thừa KHÔNG khoá, chỉ mang dấu `app_metadata.gop_vao` (một chỗ: `src/lib/gopTaiKhoan.ts`);
 vào bằng cửa nào cũng tự về tài khoản giữ lại (`useAuth` → `/api/xac-thuc/ve-tai-khoan-gop`; Zalo đổi ở máy chủ). Tài khoản khoá đời
