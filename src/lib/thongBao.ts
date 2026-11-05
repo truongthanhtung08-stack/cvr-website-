@@ -274,7 +274,7 @@ const MAU_ZBS: Record<string, string> = {
 };
 
 /** Khớp dữ liệu với ĐÚNG mẫu Zalo: đủ ô bắt buộc, bỏ ô thừa, đúng kiểu, đúng độ dài. Mẫu lạ (vd OTP) để nguyên. */
-function khopMauZbs(templateId: string, data: Record<string, string>, phone?: string | null): Record<string, string> {
+export function khopMauZbs(templateId: string, data: Record<string, string>, phone?: string | null): Record<string, string> {
   const mau = MAU_ZBS[templateId];
   if (!mau) return chuanHoaThamSo(data);
   const ra: Record<string, string> = {};
