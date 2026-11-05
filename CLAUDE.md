@@ -5,7 +5,76 @@
 
 ---
 
-## ⏳ BÀN GIAO PHIÊN 05/11/2026 (anh dừng phiên: "bàn giao lại") — CHƯA COMMIT, CHƯA PUSH, tất cả nằm trên máy
+## ⛔⛔⛔ CẤM TỰ PUSH (anh chốt 06/11/2026)
+Claude **CẤM tự push** ở phiên này và mọi phiên. Không push, không chạy lệnh push, không nhắc / hỏi / gợi ý push, không bảo anh tự
+chạy lệnh push. Sửa xong chỉ báo link xem thử + "chưa push". Chỉ khi anh nhắn đúng chữ **"Push"** mới làm.
+
+## ✅ 06/11/2026 tối — GỘP TÀI KHOẢN KHÔNG KHOÁ (anh: "gộp là quy trình của web", "đã xác minh thì gộp, khoá cái gì")
+Gộp (xác minh số bằng mã) → tài khoản thừa KHÔNG khoá, chỉ mang dấu `app_metadata.gop_vao` (một chỗ: `src/lib/gopTaiKhoan.ts`);
+vào bằng cửa nào cũng tự về tài khoản giữ lại (`useAuth` → `/api/xac-thuc/ve-tai-khoan-gop`; Zalo đổi ở máy chủ). Tài khoản khoá đời
+cũ: khách đăng nhập là web tự gộp (cùng số đã xác minh / cùng mã Zalo) hoặc mở khoá (`tuSuaTkKhoa`, `/api/xac-thuc/mo-tk-khoa`).
+⛔ Dấu gộp CHỈ ở app_metadata — user_metadata khách tự sửa được (lỗ hổng Quên mật khẩu chiếm tài khoản, đã vá trong `doi-mat-khau`).
+Form đăng tin chỉ hỏi số khi tài khoản chưa có số. Thử form không cần đăng nhập ở máy thử: `/dang-tin?xem-thu=1`.
+
+## ⏳ BÀN GIAO 06/11/2026 (phiên e744a177, anh dừng: "bàn giao lại ngay từ chỗ này") — CHƯA COMMIT, CHƯA PUSH
+**Đã sửa (trên máy, chưa commit):** `src/components/ChonCoTim.tsx` `moBang` — điện thoại (`pointer: coarse` hoặc < 640px) dùng lại
+**bảng trượt từ đáy** (như trước df72002); máy tính giữ xổ dưới ô. Một chỗ sửa áp cho MỌI ô chọn form đăng tin (Loại hình, Tỉnh,
+Phường, Dự án, Hướng, Pháp lý, Nội thất, Đơn vị giá, Chọn số) + form Admin.
+**Đã kiểm:** khung điện thoại 375px: 5 ô (Loại hình · Tỉnh · Phường · Dự án · Hướng) đều mở + chọn được · **điện thoại thật của anh**
+(Samsung Internet, qua link cloudflared): mở Tỉnh, chạm "Điện Biên" → chọn được, bảng đóng (bộ ghi cú chạm xác nhận).
+**Vì sao anh cứ thấy "vẫn lỗi":** anh bấm "Tiếp tục với Google" → Supabase trả về **web thật coastalland.vn** (bản cũ, còn lỗi). Thử trên
+link thử phải đăng nhập bằng số / email + mật khẩu, hoặc thêm Redirect URL `https://<link cloudflared>/**` trong Supabase (anh CHƯA đồng ý).
+**Link thử ngoài mạng:** anh tự chạy `C:\Users\X1 GEN 8\cloudflared\cloudflared.exe tunnel --url http://localhost:3000` (máy chặn Claude
+tự tải / tự mở đường hầm). Lấy link: `curl http://127.0.0.1:20241/quicktunnel`. Link đổi mỗi lần chạy. Đã thêm rồi GỠ `*.trycloudflare.com`
+khỏi `allowedDevOrigins` (`next.config.ts`) — muốn dùng lại link cloudflared trên máy dev thì thêm lại (thiếu là trang không bấm được).
+**Đã xoá bản thử:** `src/app/thu-tam`, `src/app/api/thu-log`, `src/components/DoChamTam.tsx` + 2 dòng trong `layout.tsx`. Còn tệp
+`.claude/quet-de-xem.png` (mã QR, không commit).
+**Việc tiếp (anh bảo mới làm):** `NEXT_DIST_DIR=.next-kiem npx next build` (đã chạy dở, anh dừng) → commit đúng các tệp: ChonCoTim.tsx,
+useAuth.ts, tai-khoan/layout.tsx, admin/layout.tsx, tai-khoan/page.tsx, tai-khoan/ca-nhan/page.tsx, Header.tsx, XemTruocTin.tsx,
+auth/zalo/callback/route.ts, CLAUDE.md (KHÔNG add `.claude/*`, `next-env.d.ts`, `next.config.ts`) → push CHỈ khi anh nhắn "Push"
+(máy có thể chặn Claude push → anh tự chạy). Sau push: thử coastalland.vn/dang-tin trên điện thoại thật.
+
+## ⏳ BÀN GIAO 05/11/2026 KHUYA (phiên 71fa83c8, anh dừng: "bàn giao hết") — CHƯA PUSH, anh cấm push tới khi bảo
+**Lỗi anh báo, CHƯA XONG:** điện thoại THẬT (anh thử trên máy anh, link http://192.168.0.189:3000/thu-tam) **không chọn được Tỉnh / Thành
+và mọi ô chọn** (Loại hình…) ở form đăng tin. Web thật (coastalland.vn) cũng lỗi y vậy — mọi khách điện thoại.
+- Gốc ở ô chọn dùng chung `src/components/ChonCoTim.tsx` (df72002 đổi sang "xổ tại chỗ", điện thoại giống máy tính: bảng vẽ vào `<body>`
+  bằng portal, đặt theo toạ độ trang, `absolute z-[44]`).
+- **Đã sửa trên máy (chưa đủ — điện thoại thật vẫn lỗi):** ① đóng bảng khi `resize` chỉ khi đổi BỀ NGANG (bàn phím / thanh địa chỉ chỉ đổi
+  bề cao, trước đây làm bảng tự tắt) · ② điện thoại (`pointer: coarse`) không `autoFocus` ô tìm trong bảng xổ (khỏi bật bàn phím).
+- **Đã đo bằng Edge giả lập (390×844, chạm, UA Android):** mở bảng được · kéo ngón tay trong danh sách Tỉnh CÓ cuộn (scrollTop 360) · chạm
+  "Căn hộ" ở Loại hình chọn được. Nhưng anh thử máy thật vẫn KHÔNG được → giả lập không giống máy thật; chưa tìm ra gốc thật. Đang dở bước:
+  chạm một dòng nhìn thấy sau khi cuộn danh sách Tỉnh, xem có chọn được không.
+- Nghi vấn chưa kiểm: lớp nào đè lên bảng trên máy thật (thanh dưới, nút chat z cao hơn 44) · sự kiện `mousedown` bắt ngoài (capture) ·
+  `useNutQuayLai` (pushState/popstate) đóng bảng · bảng đặt theo `window.scrollY` lệch khi trình duyệt điện thoại cuộn khác.
+  Cách chắc nhất: anh mở trang thử trên điện thoại, cắm cáp, Chrome PC `chrome://inspect` xem trực tiếp; hoặc so với bản trước df72002
+  (bảng trượt từ đáy — điện thoại đã chạy đúng) — nếu không tìm ra gốc nhanh thì trả điện thoại về bảng trượt đáy như trước df72002.
+- **06/11 (phiên e744a177): đã trả điện thoại (chạm hoặc < 640px) về BẢNG TRƯỢT ĐÁY** trong `ChonCoTim.tsx` `moBang`; máy tính giữ
+  xổ dưới ô. Giả lập 375px: mở Tỉnh, chọn được. Máy thật của anh (Samsung Internet, qua link cloudflared) chọn được Điện Biên.
+  Đã xoá bản thử (thu-tam, api/thu-log, DoChamTam). Build dở (anh dừng), CHƯA commit, CHƯA push. Đăng nhập Google trên link
+  cloudflared cần thêm Redirect URL trong Supabase — anh chưa đồng ý. `cloudflared` ở `C:\Users\X1 GEN 8\cloudflared\`.
+- **Trang thử tạm `src/app/thu-tam/page.tsx`** (2 ô Loại hình + Tỉnh/Thành, không cần đăng nhập) — KHÔNG commit, xoá trước khi push.
+- Kịch bản giả lập: thư mục scratchpad phiên 71fa83c8 (`lai.mjs`, `thu5.mjs`).
+
+**Cũng chưa push (đã build qua trước khi thêm trang thử):** `useAuth.ts`, `tai-khoan/layout.tsx`, `admin/layout.tsx`, `tai-khoan/page.tsx`,
+`tai-khoan/ca-nhan/page.tsx`, `Header.tsx`, `XemTruocTin.tsx`, `auth/zalo/callback/route.ts` — chi tiết ở khối "05/11 ĐÊM" bên dưới mục 2.
+Máy chặn Claude push (auto mode "Production Deploy") → anh tự chạy lệnh push khi bảo.
+
+**Môi trường:** máy 3000 = `next dev` · IP 192.168.0.189 · Wi-Fi "Gia Thieu T3 2" đang để Public · điện thoại anh (192.168.0.155) vào được
+máy. Đăng nhập Google trên link 192.168… bị Supabase đẩy về web thật → cần thêm Redirect URL `http://192.168.0.189:3000/auth/callback**`
+trong Supabase (Authentication → URL Configuration) — anh chưa trả lời có cho Claude làm trên Chrome không. Email/số + mật khẩu thì vào được.
+Phiên local_a9700850 xác nhận không đụng ChonCoTim / PostListingForm.
+
+## ⏳ BÀN GIAO 05/11/2026 ĐÊM — ĐÃ PUSH 50150a7 (tài khoản khách + mục 3–9); CÒN SỬA CHƯA PUSH (anh cấm push tới khi bảo)
+**Việc đầu tiên: điện thoại không chọn được ô Tỉnh / Thành ở form đăng tin** (nghi `ChonCoTim.tsx`). Rồi mục 10 → 19. Bàn giao đủ:
+`C:\Users\X1 GEN 8\AppData\Local\Claude-Data\claude_pzs8sxrjxfjjc\side-session-notes\local_a9700850-09f9-4979-90f2-b826d448ebff\BAN-GIAO-tai-khoan-khach-05-11-dem.md`
+Local đăng nhập Google: dùng http://localhost:3000.
+
+## ⏳ BÀN GIAO 05/11/2026 CHIỀU — ĐÃ PUSH df72002 (mục 1–2 + sửa tin không bắt gói + bảng chọn/lọc + xác thực số, tự gộp tài khoản + thông báo Zalo/email)
+**Việc tiếp: mục 3 → 19 tệp yêu cầu 03/11.** Bàn giao đủ (đã làm · chưa làm · còn treo · luật làm việc với anh):
+`C:\Users\X1 GEN 8\AppData\Local\Claude-Data\claude_pzs8sxrjxfjjc\side-session-notes\local_2ade8ed7-97f1-4b69-bbec-ed3b1fa6b7ff\BAN-GIAO-YEU-CAU-03-11-tu-05-11-chieu.md`
+CSDL 0068, 0069 đã chạy. Khối bàn giao sáng 05/11 bên dưới là lịch sử (các việc "chưa commit" trong đó nay đã lên web).
+
+## ⏳ BÀN GIAO PHIÊN 05/11/2026 SÁNG (lịch sử) — anh dừng phiên: "bàn giao lại"
 
 **Đang dở:** tệp `C:\Users\X1 GEN 8\OneDrive\Desktop\YÊU CẦU CHỈNH SỮA 03112026.docx` — 19 mục, mới làm mục 1–2 (loại hình), mục 3–19 chưa làm.
 **Câu hỏi treo (anh chưa trả lời):** gộp "Căn hộ" + "Chung cư" thành MỘT mục "Căn hộ chung cư" trong ô Loại hình (chuẩn Batdongsan, web chỉ có

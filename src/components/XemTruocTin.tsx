@@ -198,7 +198,7 @@ export default function XemTruocTin({
                 <div className="min-w-0">
                   <p className="break-words font-semibold text-cvr-ink">{d.contact.name}</p>
                   <p className="mt-0.5 text-[15px] text-cvr-body">{d.contact.phone}</p>
-                  {d.contact.email && <p className="mt-0.5 break-all text-[14px] text-cvr-muted">{d.contact.email}</p>}
+                  {/* Email KHÔNG hiện trên tin (chủ dự án 05/11/2026) — xem trước phải giống tin thật */}
                 </div>
               </div>
             </Section>

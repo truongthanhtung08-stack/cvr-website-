@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useProfile } from "@/lib/useProfile";
-import { signOut } from "@/lib/useAuth";
+import { signOut, useRoiKhiMatPhien } from "@/lib/useAuth";
 
 // Điều hướng quản trị — chia NHÓM cho dễ tìm (thay vì 9 mục phẳng):
 //   Tổng quan · Đăng bán (nội dung tin) · Kinh doanh (khách, giá, thu tiền) · Website
@@ -57,6 +57,7 @@ function isActive(href: string, pathname: string): boolean {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useProfile();
+  useRoiKhiMatPhien(); // đăng xuất / mất phiên khi đang mở trang → về Đăng nhập ngay
   const pathname = usePathname();
 
   // Gác phía client (lớp 2, cùng với middleware): không phải admin → về trang chủ.

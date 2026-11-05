@@ -3,6 +3,7 @@ import { kiemMa } from "@/lib/maXacThuc";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { chuanHoaSdt } from "@/lib/phone";
 import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
+import { taiKhoanGiu } from "@/lib/gopTaiKhoan";
 
 // ============================================================================
 // POST /api/xac-thuc/doi-mat-khau — QUÊN MẬT KHẨU BẰNG MÃ 6 SỐ
@@ -65,9 +66,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, loi: "Không đổi được mật khẩu. Vui lòng đăng ký tài khoản mới." }, { status: 404 });
   }
 
-  // Tài khoản ĐÃ GỘP vào tài khoản khác (gop_vao — xac-minh-sdt): đặt mật khẩu cho tài khoản được giữ lại (05/11/2026)
-  const gopVao = (user.user_metadata as Record<string, unknown> | undefined)?.gop_vao;
-  if (typeof gopVao === "string" && gopVao) {
+  // Tài khoản ĐÃ GỘP vào tài khoản khác: đặt mật khẩu cho tài khoản được giữ lại (05/11/2026).
+  // ⛔ Dấu gộp đọc ở app_metadata (chỉ máy chủ ghi — lib/gopTaiKhoan). user_metadata khách tự sửa được → từng có thể gắn
+  // "gộp vào <tài khoản người khác>" rồi đổi mật khẩu tài khoản đó.
+  const gopVao = await taiKhoanGiu(db, user.id);
+  if (gopVao !== user.id) {
     const { data: dich } = await db.auth.admin.getUserById(gopVao);
     if (dich?.user) {
       const { error: e2 } = await db.auth.admin.updateUserById(dich.user.id, { password: matKhauMoi, user_metadata: { co_mat_khau: true } });

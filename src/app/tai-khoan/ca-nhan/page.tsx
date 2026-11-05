@@ -35,10 +35,10 @@ export default function TaiKhoanCaNhanPage() {
       <Link href="/tai-khoan/cai-dat" className="flex items-center justify-between gap-3 rounded-2xl border border-cvr-line bg-white p-4 shadow-sm transition hover:border-cvr-ink active:bg-cvr-surface">
         <AnhDaiDien url={profile.avatar_url || anhDaiDien(user)} ten={profile.full_name || "T"} className="h-14 w-14 bg-cvr-surface text-xl text-cvr-ink ring-1 ring-cvr-line" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-semibold text-cvr-ink">{profile.full_name || "Thành viên"}</p>
-          <p className="truncate text-sm text-cvr-muted">
-            {[profile.phone, emailThat(profile.email)].filter(Boolean).join(" · ")}
-          </p>
+          <p className="break-words text-[15px] font-semibold text-cvr-ink">{profile.full_name || "Thành viên"}</p>
+          {/* Dưới tên: số + email, mỗi thứ một dòng — giống Tổng quan (05/11/2026) */}
+          {profile.phone && <p className="text-sm text-cvr-muted">{profile.phone}</p>}
+          {emailThat(profile.email) && <p className="break-all text-sm text-cvr-muted">{emailThat(profile.email)}</p>}
           <p className="mt-0.5 text-[13px] text-cvr-muted">{roleLabel(profile.role)}</p>
         </div>
         <div className="shrink-0">{statusBadge(profile.status)}</div>

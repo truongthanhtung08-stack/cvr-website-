@@ -109,6 +109,18 @@ export default function LoginForm() {
           error = null;
         }
       }
+      // TÀI KHOẢN KHOÁ ĐỜI CŨ (gộp trước 05/11/2026): web tự sửa (gộp đúng chỗ / mở khoá — lib/gopTaiKhoan) rồi đăng nhập lại;
+      // vào tài khoản đã gộp thì useAuth tự chuyển sang tài khoản giữ lại. Khách không phải làm gì.
+      if (error && /banned/i.test(error.message)) {
+        await fetch("/api/xac-thuc/mo-tk-khoa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dungSdt ? { sdt: soDT } : { email: email.trim() }),
+        }).catch(() => null);
+        ({ error } = dungSdt
+          ? await supabase.auth.signInWithPassword({ phone: `+84${soDT.slice(1)}`, password: pw })
+          : await supabase.auth.signInWithPassword({ email: email.trim(), password: pw }));
+      }
       if (error) {
         // Tài khoản cũ đã GỘP vào tài khoản cùng số (bị khoá) → báo rõ đường vào, không hiện lỗi tiếng Anh (05/11/2026)
         if (/banned/i.test(error.message)) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { datDaiDien } from "@/lib/daiDien";
+import { tuSuaTkKhoa } from "@/lib/gopTaiKhoan";
 import {
   COOKIE_NEXT,
   COOKIE_STATE,
@@ -146,7 +147,26 @@ export async function GET(request: Request) {
 
     // Zalo đã GẮN vào một tài khoản (0049 — vd đã gộp vào tài khoản theo số) → vào ĐÚNG
     // tài khoản đó, không đẻ tài khoản Zalo riêng (1 số = 1 tài khoản).
-    const { data: daGan } = await admin.from("profiles").select("id").eq("zalo_id", me.id).maybeSingle();
+    // TÀI KHOẢN ZALO ĐÃ BỊ KHOÁ VÌ GỘP (thử thật 05/11/2026: bấm Zalo báo zalo_mo_phien_that_bai — đợt gộp 26/10 khoá tài khoản Zalo
+    // nhưng để mã Zalo + email kỹ thuật ở lại tài khoản khoá): đã ghi gộp vào đâu (gop_vao) → vào tài khoản giữ lại, chuyển Zalo sang
+    // nếu bên đó chưa có Zalo; không ghi (gộp đời cũ, không biết gộp vào đâu) → mở khoá để khách vào được, xác minh số sẽ gộp lại đúng.
+    // Dấu gộp ở app_metadata (lib/gopTaiKhoan — chỉ máy chủ ghi). Gộp xong → vào tài khoản giữ lại, chuyển Zalo sang nếu bên
+    // đó chưa có Zalo. Tài khoản còn KHOÁ đời cũ (gộp trước khi có dấu) → mở khoá để khách vào được, xác minh số sẽ gộp đúng.
+    const moTkKhoa = async (id: string): Promise<string> => {
+      const giu = await tuSuaTkKhoa(admin, id); // khoá đời cũ: đủ điều kiện thì gộp, không thì mở khoá (lib/gopTaiKhoan)
+      if (giu !== id) {
+        await admin.from("profiles").update({ zalo_id: null }).eq("id", id).eq("zalo_id", me.id!);
+        await admin.from("profiles").update({ zalo_id: me.id }).eq("id", giu).is("zalo_id", null);
+      }
+      return giu;
+    };
+    let { data: daGan } = await admin.from("profiles").select("id").eq("zalo_id", me.id).maybeSingle();
+    // Không ai giữ mã Zalo mà email kỹ thuật của Zalo đã có tài khoản (vd tài khoản bị khoá) → xét tài khoản đó như trên
+    if (!daGan) {
+      const { data: theoEmail } = await admin.from("profiles").select("id").eq("email", email).maybeSingle();
+      if (theoEmail) daGan = theoEmail;
+    }
+    if (daGan) daGan = { id: await moTkKhoa(daGan.id) };
     if (daGan) {
       const { data: uGan } = await admin.auth.admin.getUserById(daGan.id);
       if (uGan?.user?.email) email = uGan.user.email;

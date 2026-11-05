@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useProfile } from "@/lib/useProfile";
-import { useAuth, anhDaiDien } from "@/lib/useAuth";
+import { useAuth, anhDaiDien, useRoiKhiMatPhien } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
 import { signOut } from "@/lib/useAuth";
 import { vnd } from "@/lib/billing";
@@ -44,6 +44,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const { profile, loading } = useProfile();
   const { user } = useAuth();
+  useRoiKhiMatPhien(); // đăng xuất / mất phiên khi đang mở trang → về Đăng nhập ngay
   // Số dư ví: cột balance có thể chưa bật trong CSDL → coi như 0.
   const soDu = (profile as unknown as { balance?: number } | null)?.balance ?? 0;
 
@@ -90,8 +91,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                 {/* Bấm avatar / tên → Cài đặt đổi tên + ảnh đại diện (như điện thoại — chủ dự án 26/10/2026) */}
                 <Link href="/tai-khoan/cai-dat" className="flex items-center gap-2.5 rounded-xl px-3 pb-3 pt-1 transition hover:bg-cvr-surface">
                   <AnhDaiDien url={profile?.avatar_url || anhDaiDien(user)} ten={profile?.full_name || "T"} className="h-9 w-9 bg-cvr-surface text-sm text-cvr-ink ring-1 ring-cvr-line" />
-                  <p className="min-w-0 truncate text-sm text-cvr-muted">
-                    {loading ? "Tài khoản" : <>Xin chào, <strong className="font-semibold text-cvr-ink">{profile?.full_name || "bạn"}</strong></>}
+                  {/* TÊN HIỆN ĐỦ, KHÔNG CẮT (thử thật 05/11/2026: "Xin chào, Tung Tru…" mất tên) — tên xuống dòng riêng, dài thì gập dòng */}
+                  <p className="min-w-0 text-sm leading-snug text-cvr-muted">
+                    {loading ? "Tài khoản" : <>Xin chào,<strong className="block break-words font-semibold text-cvr-ink">{profile?.full_name || "bạn"}</strong></>}
                   </p>
                 </Link>
                 <div className="space-y-0.5">{MUC_CHINH.map((m) => dong(m))}</div>

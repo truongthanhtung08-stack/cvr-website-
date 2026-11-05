@@ -56,6 +56,7 @@ export default function ChonCoTim({
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [mo, setMo] = useState(false);
+  const laCham = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
   // MÁY TÍNH = XỔ NGAY DƯỚI Ô (chủ dự án 05/11/2026: "chuẩn PC"): danh sách bám đúng ô vừa bấm, rộng bằng ô. Danh sách là MỘT
   // PHẦN CỦA TRANG (đặt theo toạ độ trang, nằm DƯỚI thanh menu): khách lăn chuột thì trang cuộn, danh sách cuộn cùng ô; cuộn hết
   // danh sách lăn tiếp thì trang chạy tiếp; bấm ra ngoài là đóng. Không khoá cuộn, không giật.
@@ -70,7 +71,10 @@ export default function ChonCoTim({
       const t = e.target as Node;
       if (!bangRef.current?.contains(t) && !nutRef.current?.contains(t)) dong();
     };
-    const dongNgay = () => dong();
+    // CHỈ ĐÓNG KHI ĐỔI BỀ NGANG (xoay máy, kéo cửa sổ). Bàn phím điện thoại bật lên chỉ đổi BỀ CAO — trước đây cũng đóng bảng nên
+    // trên điện thoại chạm ô chọn là bảng mở rồi tự tắt, không chọn được gì (thử thật 05/11/2026).
+    const ngangLuc = window.innerWidth;
+    const dongNgay = () => { if (window.innerWidth !== ngangLuc) dong(); };
     document.addEventListener("mousedown", ngoai, true);
     window.addEventListener("resize", dongNgay);
     return () => {
@@ -113,8 +117,11 @@ export default function ChonCoTim({
   const moBang = () => {
     if (mo && xo) return dong(); // bấm lại vào ô đang mở → đóng (như ô chọn chuẩn)
     const r = nutRef.current?.getBoundingClientRect();
-    // ĐIỆN THOẠI CŨNG VẬY (chủ dự án 05/11/2026: "mobile cũng vậy thôi, không khác gì — chỉ khác là chạm tay cuộn lên xuống")
-    if (r) {
+    // ĐIỆN THOẠI (chạm hoặc < 640px) = BẢNG TRƯỢT TỪ ĐÁY như trước df72002 (05/11/2026 khuya): xổ tại chỗ trên điện thoại THẬT
+    // không chọn được Tỉnh / Thành và mọi ô chọn (anh thử máy thật + web thật). Bảng trượt đáy phủ trên mọi lớp (z-90), khoá
+    // trang nền — bản điện thoại đã chạy đúng trước đó. Máy tính giữ xổ ngay dưới ô.
+    const laDienThoai = laCham || window.innerWidth < 640;
+    if (r && !laDienThoai) {
       const width = Math.min(Math.max(r.width, 280), window.innerWidth - 16);
       const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8)) + window.scrollX;
       // Xổ XUỐNG (khách cuộn trang để xem hết); chỉ xổ LÊN khi sát cuối trang, phía dưới không còn chỗ để cuộn tới.
@@ -171,7 +178,8 @@ export default function ChonCoTim({
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
               </button>}
               {dangTim || xo ? (
-                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); xongGo(); } }} placeholder={timPlaceholder} className={className} enterKeyHint={tuGhi ? "done" : "search"} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
+                // Điện thoại (chạm): KHÔNG tự bật ô gõ — mở ra là danh sách để kéo chọn, muốn tìm thì chạm ô gõ (chốt 15/10/2026)
+                <input autoFocus={!xo || !laCham} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); xongGo(); } }} placeholder={timPlaceholder} className={className} enterKeyHint={tuGhi ? "done" : "search"} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               ) : (
                 <span className="min-w-0 flex-1 truncate px-1 text-[15px] font-semibold text-cvr-ink">{placeholder}</span>
               )}

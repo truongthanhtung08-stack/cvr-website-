@@ -5,6 +5,7 @@ import { phatMa, kiemMa, guiMaQuaZalo, guiMaQuaEmail } from "@/lib/maXacThuc";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
 import { baoLoi } from "@/lib/baoLoi";
+import { danhDauGop } from "@/lib/gopTaiKhoan";
 
 // ============================================================================
 // POST /api/xac-thuc/xac-minh-sdt — TÀI KHOẢN ĐANG ĐĂNG NHẬP XÁC MINH SỐ CỦA MÌNH
@@ -154,8 +155,8 @@ export async function POST(req: Request) {
     // Nhả zalo_id ở tài khoản Zalo trước (cột duy nhất) rồi gắn sang tài khoản cũ.
     await admin.from("profiles").update({ zalo_id: null }).eq("id", uid);
     await admin.from("profiles").update({ zalo_id: zaloId, phone: sdt, phone_verified: true }).eq("id", idCu);
-    // gop_vao: tài khoản bị gộp nhớ đã gộp vào đâu — Quên mật khẩu / đăng nhập bằng cửa cũ dẫn về đúng tài khoản (05/11/2026)
-    await admin.auth.admin.updateUserById(uid, { ban_duration: "876000h", user_metadata: { gop_vao: idCu } }).then(() => {}, () => {});
+    // Tài khoản bị gộp KHÔNG KHOÁ — mang dấu gộp vào idCu (lib/gopTaiKhoan): mọi cửa đăng nhập cũ tự về tài khoản giữ lại
+    await danhDauGop(admin, [uid], idCu);
 
     await giuNgayThanhVienSomNhat(admin, idCu, [uid]);
     await layBuTenAnh(admin, idCu, [uid]); // tên + ảnh: giữ của tài khoản cũ, ô trống lấy bù từ Zalo
@@ -219,7 +220,7 @@ export async function POST(req: Request) {
     if (error) return loi("Chưa lưu được số. Vui lòng thử lại.", 500);
     // Số thành cửa đăng nhập của tài khoản đang dùng (hỏng thì bỏ qua — vẫn đăng nhập được bằng email/Google).
     await admin.auth.admin.updateUserById(uid, { phone: so84g, phone_confirm: true }).then(() => {}, () => {});
-    for (const id of ids) await admin.auth.admin.updateUserById(id, { ban_duration: "876000h", user_metadata: { gop_vao: uid } }).then(() => {}, () => {});
+    await danhDauGop(admin, ids, uid); // không khoá — mang dấu gộp, mọi cửa đăng nhập cũ tự về tài khoản này (lib/gopTaiKhoan)
     await giuNgayThanhVienSomNhat(admin, uid, ids);
     await layBuTenAnh(admin, uid, ids); // tên + ảnh: giữ của tài khoản đang dùng, ô trống lấy bù từ tài khoản bị gộp
     return NextResponse.json({ ok: true, sdt, soTinGop });

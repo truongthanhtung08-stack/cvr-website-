@@ -9,7 +9,7 @@ import { TIEN_ICH } from "@/lib/packages";
 import BieuTuong, { type TenBieuTuong } from "@/components/BieuTuong";
 import { cayLoaiHinh } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
-import { useAuth, displayName, anhDaiDien, signOut } from "@/lib/useAuth";
+import { useAuth, displayName, anhDaiDien, signOut, lienHeTaiKhoan } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
 
 // href KHÔNG bắt buộc: mục chỉ có `children` là NHÃN NHÓM (không bấm được),
@@ -242,7 +242,7 @@ const TAI_KHOAN_PHU: { label: string; href: string; icon: TenBieuTuong }[] = [
   { label: "Tài khoản", href: "/tai-khoan/ca-nhan", icon: "taiKhoan" },
 ];
 
-function AccountMenu({ name, anh, onLogout }: { name: string; anh: string; onLogout: () => void }) {
+function AccountMenu({ name, anh, phu, onLogout }: { name: string; anh: string; phu: string[]; onLogout: () => void }) {
   const links = TAI_KHOAN_LINKS;
 
   return (
@@ -257,8 +257,8 @@ function AccountMenu({ name, anh, onLogout }: { name: string; anh: string; onLog
 
       <DropdownPanel align="right">
         <div className="mb-1 rounded-xl bg-cvr-surface px-3.5 py-2.5">
-          <p className="truncate text-sm font-semibold text-cvr-ink">{name}</p>
-          <p className="text-xs text-cvr-muted">Thành viên</p>
+          <p className="break-words text-sm font-semibold text-cvr-ink">{name}</p>
+          {phu.length ? phu.map((x) => <p key={x} className="break-all text-xs text-cvr-muted">{x}</p>) : <p className="text-xs text-cvr-muted">Thành viên</p>}
         </div>
         {links.map((child) => (
           <DropdownItem key={child.href} href={child.href} label={child.label} />
@@ -334,8 +334,8 @@ function MobileMenu({
             <Link href="/tai-khoan" onClick={onClose} className="mb-4 flex min-w-0 items-center gap-3">
               <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-10 w-10 shrink-0 bg-white/15 text-[15px] text-white ring-1 ring-white/20" />
               <span className="min-w-0">
-                <span className="block truncate text-[16px] font-semibold leading-tight text-white">{displayName(user)}</span>
-                <span className="mt-0.5 block text-[13px] leading-tight text-white/55">Thành viên</span>
+                <span className="block break-words text-[16px] font-semibold leading-tight text-white">{displayName(user)}</span>
+                {lienHeTaiKhoan(user).length ? lienHeTaiKhoan(user).map((x) => <span key={x} className="mt-0.5 block break-all text-[13px] leading-tight text-white/55">{x}</span>) : <span className="mt-0.5 block text-[13px] leading-tight text-white/55">Thành viên</span>}
               </span>
             </Link>
           )}
@@ -540,7 +540,7 @@ export default function Header() {
               drawer menu (kiểu Batdongsan) → thanh header mobile chỉ Logo · ♡ · ☰. */}
           <div className="hidden items-center xl:flex">
             {user ? (
-              <AccountMenu name={displayName(user)} anh={anhDaiDien(user)} onLogout={signOut} />
+              <AccountMenu name={displayName(user)} anh={anhDaiDien(user)} phu={lienHeTaiKhoan(user)} onLogout={signOut} />
             ) : (
               // Chưa đăng nhập: CHỈ "Đăng nhập" — trang đăng nhập tự lo cả tài khoản mới, không cần nút Đăng ký (chủ dự án 25/10/2026)
               <Link

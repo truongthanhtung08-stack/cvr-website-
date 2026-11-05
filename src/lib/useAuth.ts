@@ -8,6 +8,8 @@ import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 // Hook đọc trạng thái đăng nhập thật từ Supabase Auth (thay demo localStorage "cvr-member").
 // Có guard: thiếu env Supabase (vd chạy dev chưa có .env.local) → coi như chưa đăng nhập,
 // không ném lỗi làm sập trang.
+let dangDoiTk = false; // nhiều thành phần cùng dùng useAuth → chỉ đổi tài khoản một lần
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,13 +54,33 @@ export function useAuth() {
     let boTheoDoi = () => {};
     void napSupabase().then((supabase) => {
       if (huy) return;
-      nguoiDungHienTai(supabase).then((u) => {
+      // TÀI KHOẢN ĐÃ GỘP (app_metadata.gop_vao — lib/gopTaiKhoan): vào bằng cửa nào của tài khoản cũ cũng đổi ngay sang
+      // phiên tài khoản giữ lại (05/11/2026: "gộp là trách nhiệm web làm"). Một chỗ cho mọi cửa đăng nhập.
+      const veTkGiu = async (u: User | null): Promise<boolean> => {
+        if (!u || !(u.app_metadata as Record<string, unknown> | undefined)?.gop_vao || dangDoiTk) return false;
+        dangDoiTk = true;
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const r = await fetch("/api/xac-thuc/ve-tai-khoan-gop", { method: "POST", headers: { Authorization: `Bearer ${session?.access_token ?? ""}` } })
+            .then((x) => x.json()).catch(() => null);
+          if (!r?.ok) return false;
+          await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
+          return true;
+        } finally { dangDoiTk = false; }
+      };
+      nguoiDungHienTai(supabase).then(async (u) => {
         if (huy) return;
+        if (await veTkGiu(u)) return; // onAuthStateChange đưa tài khoản giữ lại vào
         setUser(u);
         setLoading(false);
       });
       const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ?? null);
+        const u = session?.user ?? null;
+        void veTkGiu(u).then((daDoi) => {
+          if (daDoi || huy) return;
+          setUser(u);
+          setLoading(false);
+        });
       });
       boTheoDoi = () => sub.subscription.unsubscribe();
     });
@@ -66,6 +88,25 @@ export function useAuth() {
   }, []);
 
   return { user, loading };
+}
+
+// KHU CẦN ĐĂNG NHẬP (Tài khoản, Admin) — MẤT PHIÊN LÀ RỜI NGAY (thử thật 05/11/2026: đăng xuất ở tab khác / phiên bị thu hồi khi
+// đổi mật khẩu → đầu trang đã "Đăng nhập" mà trang Tài khoản vẫn hiện dữ liệu tài khoản cũ). Máy chủ (middleware) chỉ chặn lúc
+// MỞ trang; đang mở mà mất phiên thì hook này đưa về Đăng nhập, kèm ?next để vào lại đúng trang.
+export function useRoiKhiMatPhien() {
+  const { user, loading } = useAuth();
+  useEffect(() => {
+    if (loading || user) return;
+    window.location.replace(`/dang-nhap?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+  }, [user, loading]);
+}
+
+// Số + email của tài khoản để hiện dưới tên (menu tài khoản) — THỐNG NHẤT với Tổng quan, trang Tài khoản (05/11/2026).
+// Email chỉ hiện trong khu tài khoản, KHÔNG hiện trên tin đăng.
+export function lienHeTaiKhoan(user: User | null): string[] {
+  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  const so = user?.phone ? user.phone.replace(/^\+?84/, "0") : String(meta.phone ?? "");
+  return [so, emailThat(user?.email)].filter(Boolean);
 }
 
 // Ảnh đại diện thật do Google / Zalo cấp lúc đăng nhập ("" nếu không có).
