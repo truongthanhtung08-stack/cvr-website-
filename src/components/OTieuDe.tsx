@@ -59,7 +59,8 @@ export default function OTieuDe({
         // Enter XUỐNG DÒNG được, giữ mọi ký tự khách gõ (chủ dự án 15/10/2026). Trang tin hiện đúng
         // chỗ xuống dòng; chỗ dùng cho Google / thẻ tin thì gộp thành một dòng.
         onChange={(e) => onChange(e.target.value)}
-        className={`${className} resize-none overflow-hidden leading-snug`}
+        // py-2.5: lớp ô chung (h-11, chỉ có lề ngang) làm chữ dính sát mép trên — "ô tiêu đề bố trí rất lệch" (chủ dự án 03/11/2026 mục 8)
+        className={`${className.replace(/\bh-11\b/, "min-h-11")} resize-none overflow-hidden py-2.5 leading-snug`}
       />
       {demKyTu && (
         <p className="mt-1 text-xs text-cvr-faint">

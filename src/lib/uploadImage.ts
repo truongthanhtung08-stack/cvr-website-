@@ -120,15 +120,16 @@ async function uploadMedia(file: File, kind: "image" | "video", maxMB: number): 
 // ảnh GỐC — ảnh máy ảnh cỡ lớn vẫn nhận, nén xong chỉ còn vài trăm KB.
 // dauChim: false = KHÔNG đóng dấu "COASTAL LAND" — ảnh hero, banner, giới thiệu công ty
 // (chủ dự án 08/10/2026). Ảnh TIN ĐĂNG vẫn đóng dấu như cũ.
-export const uploadImageFile = async (file: File, { dauChim = true }: { dauChim?: boolean } = {}) => {
+// canh: cạnh dài tối đa của ảnh KHÔNG dấu (mặc định 2880) — ảnh đại diện 512px (05/11/2026), đủ nét cho mọi chỗ hiện, nhẹ.
+export const uploadImageFile = async (file: File, { dauChim = true, canh }: { dauChim?: boolean; canh?: number } = {}) => {
   if (file.size > 15 * 1024 * 1024)
     return { error: `Ảnh "${file.name}" quá 15MB — chọn ảnh nhỏ hơn.` };
   // Ảnh trang (hero/banner/giới thiệu): KHÔNG đóng dấu, giữ nét tới 2880px.
-  const nen = dauChim ? await nenAnh(file) : await nenAnh(file, 2880, CHAT_LUONG, false);
+  const nen = dauChim ? await nenAnh(file) : await nenAnh(file, canh ?? 2880, CHAT_LUONG, false);
   const kq = await uploadMedia(nen, "image", 15);
   // Bản nhỏ làm từ ẢNH GỐC CHƯA ĐÓNG DẤU (chủ dự án 24/10/2026: "ảnh lên là đóng dấu, mở ảnh thì mới có watermark"):
   // thẻ tin dùng bản nhỏ → sạch; dấu chỉ nằm ở ảnh lớn khi khách mở xem.
-  if (kq.url) void taoBanNho(file, kq.url);
+  if (kq.url && !(canh && canh <= 1280)) void taoBanNho(file, kq.url); // ảnh đã nhỏ hơn bản nhỏ → không cần bản nhỏ
   return kq;
 };
 

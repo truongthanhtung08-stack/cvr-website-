@@ -65,7 +65,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, loi: "Không đổi được mật khẩu. Vui lòng đăng ký tài khoản mới." }, { status: 404 });
   }
 
-  const { error } = await db.auth.admin.updateUserById(user.id, { password: matKhauMoi });
+  // Tài khoản ĐÃ GỘP vào tài khoản khác (gop_vao — xac-minh-sdt): đặt mật khẩu cho tài khoản được giữ lại (05/11/2026)
+  const gopVao = (user.user_metadata as Record<string, unknown> | undefined)?.gop_vao;
+  if (typeof gopVao === "string" && gopVao) {
+    const { data: dich } = await db.auth.admin.getUserById(gopVao);
+    if (dich?.user) {
+      const { error: e2 } = await db.auth.admin.updateUserById(dich.user.id, { password: matKhauMoi, user_metadata: { co_mat_khau: true } });
+      if (e2) return NextResponse.json({ ok: false, loi: "Không đổi được mật khẩu." }, { status: 500 });
+      await db.auth.admin.signOut(dich.user.id, "global").catch(() => {});
+      return NextResponse.json({ ok: true, emailDangNhap: dich.user.email ?? null });
+    }
+  }
+  const { error } = await db.auth.admin.updateUserById(user.id, { password: matKhauMoi, user_metadata: { co_mat_khau: true } } /* đã có mật khẩu Coastal Land → Cài đặt hiện Đổi mật khẩu kể cả tài khoản Gmail / Zalo (mat-khau-tk) */);
   if (error) return NextResponse.json({ ok: false, loi: "Không đổi được mật khẩu." }, { status: 500 });
 
   // Thu hồi mọi phiên cũ — đổi mật khẩu là để cắt đường của người khác.

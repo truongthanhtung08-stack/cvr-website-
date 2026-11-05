@@ -18,11 +18,12 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       // TÊN + ẢNH MẶC ĐỊNH theo Google (chủ dự án 26/10/2026) — hàm chung datDaiDien, rồi làm mới phiên để đầu trang hiện ngay.
-      if (searchParams.get("cach") === "google") {
+      const cach = searchParams.get("cach");
+      if (cach === "google" || cach === "facebook") {
         const { data: { user: nguoi } } = await supabase.auth.getUser();
         const admin = createAdminClient();
         if (nguoi && admin) {
-          await datDaiDien(admin, nguoi.id, "google");
+          await datDaiDien(admin, nguoi.id, cach);
           await supabase.auth.refreshSession();
         }
       }

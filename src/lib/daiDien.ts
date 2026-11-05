@@ -12,7 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // Chạy 1 lần mỗi lần đăng nhập: 2 lệnh đọc + tối đa 2 lệnh ghi — không đáng kể với gói Supabase.
 // ============================================================================
 
-export type CachDangNhap = "google" | "zalo" | "email" | "sdt";
+export type CachDangNhap = "google" | "facebook" | "zalo" | "email" | "sdt";
 
 export async function datDaiDien(
   admin: SupabaseClient,
@@ -29,8 +29,9 @@ export async function datDaiDien(
   // Tên + ảnh MẶC ĐỊNH của cách vừa đăng nhập
   let tenMacDinh: string | null;
   let anhMacDinh: string | null = null;
-  if (cach === "google") {
-    const g = (user.identities ?? []).find((i) => i.provider === "google")?.identity_data ?? {};
+  if (cach === "google" || cach === "facebook") {
+    // Facebook trả tên + ảnh cùng kiểu Google (identity_data: full_name/name, avatar_url/picture) — 05/11/2026
+    const g = (user.identities ?? []).find((i) => i.provider === cach)?.identity_data ?? {};
     tenMacDinh = (g.full_name as string) || (g.name as string) || null;
     anhMacDinh = (g.avatar_url as string) || (g.picture as string) || null;
   } else if (cach === "zalo") {

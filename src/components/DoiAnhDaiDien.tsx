@@ -4,6 +4,7 @@ import { useState } from "react";
 import AnhDaiDien from "@/components/AnhDaiDien";
 import { uploadImageFile } from "@/lib/uploadImage";
 import { createClient } from "@/lib/supabase/client";
+import { dongBoTenAnhTin } from "@/lib/dongBoTenAnh";
 
 // ============================================================================
 // BẤM VÀO AVATAR LÀ ĐỔI ẢNH (chuẩn các web — chủ dự án 26/10/2026). Avatar có biểu tượng máy ảnh nhỏ; bấm → chọn
@@ -16,13 +17,14 @@ export default function DoiAnhDaiDien({ idHoSo, url, ten, className }: { idHoSo:
 
   async function doi(f: File) {
     setDang(true);
-    const { url: moi, error } = await uploadImageFile(f);
+    const { url: moi, error } = await uploadImageFile(f, { dauChim: false, canh: 512 }); // ảnh đại diện: KHÔNG đóng dấu, cỡ nhỏ (chuẩn — 05/11/2026)
     if (!moi) { setDang(false); window.alert("Chưa tải được ảnh. " + (error ?? "")); return; }
     const sb = createClient();
     const { error: e } = await sb.from("profiles").update({ avatar_url: moi }).eq("id", idHoSo);
     if (!e) await sb.auth.updateUser({ data: { avatar_url: moi, picture: moi, tu_dat: true } }); // tu_dat: khách tự đặt → đăng nhập lại không đè (datDaiDien)
     setDang(false);
     if (e) { window.alert("Lưu thất bại: " + e.message); return; }
+    void dongBoTenAnhTin({ anhCu: anh ?? url }); // tin đang hiện ảnh cũ đổi theo
     setAnh(moi);
   }
 

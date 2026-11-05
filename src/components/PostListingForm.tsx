@@ -48,7 +48,6 @@ import { getTier, type TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
 import { chuanHoaSdt, tachNhieuSdt } from "@/lib/phone";
 import XacMinhSdt from "@/components/XacMinhSdt";
-import { uploadImageFile } from "@/lib/uploadImage";
 import ODiaChiGoiY from "@/components/ODiaChiGoiY";
 import { ganNhanPhimEnter, enterSangOTiep } from "@/lib/oTiepTheo";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
@@ -125,6 +124,8 @@ export default function PostListingForm() {
   const [editLoad, setEditLoad] = useState<"" | "loading" | "ok" | "notfound">(editId ? "loading" : "");
   const [editStatus, setEditStatus] = useState<string>("");
   const [editOwner, setEditOwner] = useState<string | null>(null);
+  // Tin của CHÍNH khách (không phải admin mở tin của khách) → tên, số, email, ảnh theo tài khoản, không sửa trong form (05/11/2026)
+  const laCuaMinh = !editOwner || editOwner === userId;
   const [demand, setDemand] = useState(demandTypes[0]);
   // LOẠI HÌNH phải lấy từ ĐÚNG danh mục của cả web (filters.ts) — trước đây form
   // này dùng danh sách riêng nên khách chọn "Đất nền / Đất" trong khi bộ lọc và
@@ -166,12 +167,18 @@ export default function PostListingForm() {
   // TÊN TÀI KHOẢN (chủ dự án 26/10/2026): ô Họ tên trong form KHÔNG bắt buộc, tự điền tên này; khách để trống thì tin
   // lấy tên tài khoản. Đăng nhập bằng số chưa đổi tên → tên = số điện thoại. Đổi tên tài khoản ở Cài đặt.
   const [tenTaiKhoan, setTenTaiKhoan] = useState("");
+  // Email + ảnh của TÀI KHOẢN — tin của chính khách luôn mang tên, số, email, ảnh của tài khoản (05/11/2026)
+  const [tk, setTk] = useState({ email: "", anh: "" });
+  // NHIỀU SỐ (chủ dự án 05/11/2026): số chính + các số phụ ĐÃ XÁC MINH trong Cài đặt — khách chọn 1 số cho tin, không hỏi mã
+  const [dsSo, setDsSo] = useState<string[]>([]);
+  const [soChon, setSoChon] = useState("");
+  // Xác minh số xong → chờ state số tài khoản cập nhật rồi mới lưu tin (lưu ngay thì tin còn mang số rỗng) — hiệu ứng bên dưới
+  const [guiSauXacMinh, setGuiSauXacMinh] = useState(false);
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   // ẢNH ĐẠI DIỆN NGƯỜI ĐĂNG — hiện trên thẻ tin và trong danh bạ chuyên gia.
   // Người có ảnh thật được khách bấm gọi nhiều hơn hẳn ảnh chữ cái mặc định.
   const [contactAvatar, setContactAvatar] = useState("");
-  const [dangTaiAvatar, setDangTaiAvatar] = useState(false);
   // Tin thuộc dự án nào (không bắt buộc) — hiện trong mục tin liên quan của dự án đó
   // Gói đăng tin khách chọn (giá do quản trị đặt ở /admin/gia-khuyen-mai)
   // Bảng giá HIỆN HÀNH (bản admin đã lưu ở /admin/gia-khuyen-mai), không phải giá cứng trong code
@@ -716,13 +723,19 @@ export default function PostListingForm() {
           if (pv.role === "admin") setDuocDangDuAn(true);
           else void supabase.from("customer_requests").select("id").eq("user_id", user.id).eq("loai", "dang_du_an").eq("status", "xong").limit(1)
             .then(({ data }) => setDuocDangDuAn(!!data?.length), () => {});
-          setSoTaiKhoan(chuanHoaSdt(p.phone ?? ""));
+          // Số tài khoản; chưa có mà đang chờ admin gộp (choAdminGop) → số đã xác minh nhớ trong phiên — không hỏi lại
+          setSoTaiKhoan(chuanHoaSdt(p.phone ?? "") || chuanHoaSdt(String((user.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he ?? "")));
+          void supabase.from("sdt_nguoi_dung").select("sdt").eq("user_id", user.id).eq("da_xac_minh", true).then(({ data }) => {
+            const chinh = chuanHoaSdt(p.phone ?? "");
+            setDsSo([...new Set([chinh, ...(data ?? []).map((x) => chuanHoaSdt(x.sdt))].filter(Boolean))]);
+          }, () => {});
           setContactName((v) => v || p.full_name || "");
           setTenTaiKhoan((p.full_name ?? "").trim() || chuanHoaSdt(p.phone ?? ""));
           setContactPhone((v) => v || p.phone || ""); // MỘT NGUỒN: số trong hồ sơ tài khoản (05/11/2026)
           // Email kỹ thuật (zalo_… / sdt_…@users.coastalland.vn) không bao giờ điền vào tin (26/10/2026)
           setContactEmail((v) => v || emailThat(p.email));
           // Ảnh đại diện mặc định = ảnh tài khoản (tự đặt / Google / Zalo) — chuẩn: tên + avatar theo tài khoản
+          setTk({ email: emailThat(p.email), anh: (p as { avatar_url?: string | null }).avatar_url || anhDaiDien(user) || "" });
           setContactAvatar((v) => v || (p as { avatar_url?: string | null }).avatar_url || anhDaiDien(user));
           setHoSoVi({
             created_at: p.created_at ?? null,
@@ -904,7 +917,10 @@ export default function PostListingForm() {
       plan: { tier: planTier, days: planDays, giaBao: thanhTien, khuyenMai: duocMienPhi, ...(batDau ? { batDau } : {}) },
       project: slugDuAn() || undefined,
       projectName: projectName.trim() || undefined,
-      contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
+      // TIN CỦA CHÍNH KHÁCH = THÔNG TIN TÀI KHOẢN (chủ dự án 05/11/2026: "mặc định thì để mặc định, cấm sửa — sửa ở Cài đặt")
+      contact: laCuaMinh
+        ? { name: tenTaiKhoan || soTaiKhoan, phone: (soChon && dsSo.includes(soChon) ? soChon : soTaiKhoan), email: tk.email, avatar: tk.anh || undefined }
+        : (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
         ? {
             // Ô Họ tên khách ghi; để trống → tên tài khoản (admin mở tin của khách thì không lấy tên admin)
             name: contactName.trim() || (editOwner && editOwner !== userId ? "" : tenTaiKhoan) || chuanHoaSdt(contactPhone),
@@ -961,6 +977,14 @@ export default function PostListingForm() {
 
   // diNap: nút "Nạp thêm" — KHÔNG KIỂM Ô NÀO (chủ dự án 26/10/2026: "khi nộp tiền không bắt buộc gì hết"), lưu nháp kèm gói
   // rồi sang nạp tiền. Tin đủ thông tin thì nạp xong tự gửi duyệt; chưa đủ thì nạp xong khách về tin điền tiếp.
+  useEffect(() => {
+    if (!guiSauXacMinh) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- chạy một lần ngay sau khi xác minh số xong
+    setGuiSauXacMinh(false);
+    void save(false, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guiSauXacMinh]);
+
   async function save(asDraft: boolean, daXacMinhXong = false, diNap = false) {
     // Đợi lượt tự lưu đang chạy (nếu có) và chặn lượt mới để không tạo hai tin.
     dangBamLuu.current = true;
@@ -1019,9 +1043,12 @@ export default function PostListingForm() {
     if (soVideo > toiDaVideo) return [`Mỗi tin chỉ đăng tối đa ${toiDaVideo} video — xoá video cũ rồi thêm lại.`, "6"];
     // Bước 7 — Liên hệ. Số điện thoại BẮT BUỘC ở mọi tin (27/09/2026) — phải là số gọi được.
     // Báo ĐÚNG Ô THIẾU (26/10/2026: đã đăng nhập, tên đã tự điền mà vẫn bị đòi "họ tên và số điện thoại")
-    if (!contactPhone.trim()) return ["Nhập số điện thoại liên hệ.", "7", "o-sdt"];
-    if (loiSdt(contactPhone)) return [loiSdt(contactPhone), "7", "o-sdt"];
-    if (loiEmail(contactEmail)) return [loiEmail(contactEmail), "7", "o-email"];
+    // Tin của chính khách: số = số tài khoản (chưa có thì bấm Đăng hỏi số + xác minh một lần) — không kiểm ô ở đây
+    if (!laCuaMinh) {
+      if (!contactPhone.trim()) return ["Nhập số điện thoại liên hệ.", "7", "o-sdt"];
+      if (loiSdt(contactPhone)) return [loiSdt(contactPhone), "7", "o-sdt"];
+      if (loiEmail(contactEmail)) return [loiEmail(contactEmail), "7", "o-email"];
+    }
     return null;
   }
 
@@ -1060,15 +1087,14 @@ export default function PostListingForm() {
     // KHÁCH CHỈ GÕ SỐ MỘT LẦN (chuẩn các sàn lớn, chủ dự án 26/10/2026): tài khoản chưa có số → lấy chính số liên hệ
     // khách vừa gõ trong form làm số tài khoản — không bắt gõ lại, chỉ nhập mã xác thực. Số đã có tài khoản / tin cũ:
     // hộp xác nhận điền sẵn số đó, tự gửi mã Zalo một lần để gộp.
-    if (!asDraft && !diNap && soDaXacMinh === false && !daXacMinhXong) {
-      const soDung = soTaiKhoan || chuanHoaSdt(contactPhone);
-      if (!soDung) {
-        setMoXacMinh(true);
-        return;
-      }
-      // NHẬP SỐ PHẢI XÁC THỰC (chủ dự án 05/11/2026: "nhập số phải xác thực"): số nào cũng gửi mã qua Zalo của chính số đó,
-      // nhập đúng mã mới lưu làm số tài khoản và gửi tin — không còn "số mới lưu luôn, không hỏi mã".
-      setSoXacMinh(soDung);
+    // CẢ ĐƯỜNG "NẠP THÊM" (05/11/2026): nạp xong máy tự gửi tin đi duyệt (upTin.xuLyUpCho) — trước đây đường này bỏ qua xác
+    // minh số → tin chờ duyệt mà số chưa chính chủ. Số bắt buộc xác minh MỘT LẦN trước khi tin đi duyệt, đường nào cũng vậy.
+    // CHỈ HỎI KHI TÀI KHOẢN CHƯA CÓ SỐ (chủ dự án 05/11/2026: "bỏ bước hỏi số khi đăng tin — chỉ khi khách chưa có số mới hỏi"):
+    // tài khoản đã có số → đăng luôn, không hỏi gì. Chưa có (vào bằng Gmail / Zalo) → hộp hỏi số + mã một lần → số thành số tài khoản
+    // (tự gộp tài khoản cùng số), đường Đăng lẫn Nạp thêm như nhau. Admin mở tin của khách thì không hỏi.
+    // CHỈ HỎI DUY NHẤT KHI TÀI KHOẢN KHÔNG CÓ SỐ (chủ dự án 05/11/2026 chốt: "có số thì không hỏi, chỉ hỏi duy nhất khi không có số")
+    if (!asDraft && !daXacMinhXong && laCuaMinh && !soTaiKhoan) {
+      setSoXacMinh("");
       setMoXacMinh(true);
       return;
     }
@@ -1371,14 +1397,16 @@ export default function PostListingForm() {
             {/* Đã có số tài khoản (số đó có tài khoản/tin cũ) → mã tự gửi để gộp.
                 Chưa có số → hỏi "Số điện thoại của bạn": số mới lưu luôn, số cũ mới hỏi mã. */}
             <XacMinhSdt
-              tuGui={!!(soTaiKhoan || soXacMinh)}
+              // Chỉ TỰ GỬI mã khi là số của chính tài khoản; số lấy từ ô liên hệ (có thể là số chủ nhà) thì khách xem lại rồi bấm gửi
+              tuGui={!!soTaiKhoan}
               tieuDe={soTaiKhoan || soXacMinh ? "Xác nhận số điện thoại của bạn" : "Số điện thoại của bạn"}
               soGoiY={soTaiKhoan || soXacMinh}
               onXong={(_so, _gop, idMoi) => {
                 if (idMoi) { uidGop.current = idMoi; setUserId(idMoi); }
                 setSoDaXacMinh(true);
+                if (_so) { setSoTaiKhoan(chuanHoaSdt(_so)); setContactPhone(chuanHoaSdt(_so)); } // số vừa xác minh = số tài khoản = số trên tin
                 setMoXacMinh(false);
-                save(false, true);
+                setGuiSauXacMinh(true); // lưu ở lượt vẽ sau, khi số tài khoản đã vào state
               }}
             />
           </div>
@@ -1695,7 +1723,8 @@ export default function PostListingForm() {
             NỘI THẤT MỘT CHỖ (chủ dự án 22/10/2026: "Tình trạng nội thất" và danh sách nội thất từng tách xa nhau).
             Chọn tình trạng trước; có nội thất (cơ bản / đầy đủ / cao cấp) — hoặc tin đã tick sẵn — mới hiện danh sách. */}
         {coNoiThat(loaiHinh) && (
-          <MucAnHien ten="Nội thất" goiY={furnish || goiYDanhSach(interiorItems)} soChon={interior.length + (furnish ? 1 : 0)}>
+          // NỘI THẤT CHỈ MỘT DÒNG → KHÔNG CẦN NÚT XEM THÊM (chủ dự án 03/11/2026 mục 7): ô Tình trạng nội thất hiện sẵn; có nội thất mới bày danh sách.
+          <div className="space-y-4">
           <div>
             <Label>Tình trạng nội thất</Label>
             <ChonHoacGhi value={furnish} onChange={setFurnish} options={furnishLevels} className={inputCls} />
@@ -1712,7 +1741,7 @@ export default function PostListingForm() {
             <ThemTuGhi boc="" onThem={(v) => setInterior((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
           </div>
           )}
-          </MucAnHien>
+          </div>
         )}
         <MucAnHien ten="Tiện ích" goiY={goiYDanhSach(tienIchCho(loaiHinh).flatMap((g) => g.items))} soChon={amenities.length}>
         <div className="space-y-4">
@@ -1867,7 +1896,7 @@ export default function PostListingForm() {
                 <div
                   role="dialog"
                   aria-label="Mẫu tin hiển thị"
-                  className="max-h-[85dvh] w-full max-w-[21.5rem] overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl ring-1 ring-black/10 sm:max-w-2xl sm:p-5"
+                  className="max-h-[85dvh] w-full max-w-[21.5rem] overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl ring-1 ring-black/10 sm:max-w-2xl sm:p-5 lg:max-w-[76rem]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="mb-2 flex items-center justify-between gap-3">
@@ -1935,12 +1964,16 @@ export default function PostListingForm() {
                   </div>
                 )}
               </div>
-              <div className="mt-5 rounded-2xl border border-cvr-line bg-cvr-surface px-4 py-3.5 text-sm text-cvr-body">
+              {/* KHUNG TỔNG TIỀN THEO MÀU GÓI (chủ dự án 03/11/2026 mục 5–6): viền + nền nhạt cùng màu huy hiệu gói (Silver xanh ·
+                  Gold vàng · Diamond đỏ · Basic xám); hiện rõ tên gói, thời gian hiển thị, bắt đầu, số tin. CHỈ HIỂN THỊ — mọi số tiền
+                  vẫn từ các biến tính sẵn bên trên (baoGia, tienThue…), không đổi công thức. */}
+              {(() => { const t = getTier(planTier as TierId); return (
+              <div className="mt-5 rounded-2xl border-2 px-4 py-3.5 text-sm text-cvr-body" style={{ borderColor: t.accent, background: `${t.accent}12` }}>
                 <div className="flex items-start justify-between gap-3">
                   <span className="min-w-0">
-                    <span className="block text-[15px] font-semibold text-cvr-ink">Tổng tiền</span>
-                    <span className="mt-0.5 block text-[12.5px] text-cvr-muted">
-                      {getTier(planTier as TierId).name} · {soNgayThat} ngày · {batDau ? batDau.split("-").reverse().join("/") : "Ngay khi được duyệt"}
+                    <span className="flex items-center gap-2">
+                      <span className="rounded-md px-2 py-0.5 text-[12px] font-bold uppercase tracking-wide" style={{ background: t.accent, color: t.badgeText }}>{t.short}</span>
+                      <span className="text-[15px] font-semibold text-cvr-ink">Tổng tiền</span>
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
@@ -1951,9 +1984,16 @@ export default function PostListingForm() {
                     </button>
                   </span>
                 </div>
+                <div className="mt-2.5 border-t pt-2" style={{ borderColor: `${t.accent}40` }}>
+                  <Dong nhan="Gói tin" giaTri={t.name} />
+                  <Dong nhan="Số tin" giaTri="1 tin" />
+                  <Dong nhan="Thời gian hiển thị" giaTri={`${soNgayThat} ngày`} />
+                  <Dong nhan="Bắt đầu hiển thị" giaTri={batDau ? batDau.split("-").reverse().join("/") : "Ngay khi được duyệt"} />
+                </div>
                 {xemChiTietTien && (
-                <div className="mt-3 border-t border-cvr-line pt-2">
-                {!duocMienPhi && <Dong nhan="Đơn giá / ngày" giaTri={vnd(planDays > 0 ? Math.round(baoGia.base / planDays) : 0)} />}
+                <div className="mt-2 border-t pt-2" style={{ borderColor: `${t.accent}40` }}>
+                <Dong nhan="Thành viên" giaTri={laThanhVienMoi ? "Thành viên mới" : "Thành viên"} />
+                {!duocMienPhi && <Dong nhan="Đơn giá / ngày"giaTri={vnd(planDays > 0 ? Math.round(baoGia.base / planDays) : 0)} />}
                 {duocMienPhi ? (
                   <Dong nhan={chuongTrinhTvMoi(billing).ten || "Ưu đãi thành viên mới"} giaTri="Miễn phí" nhan2 />
                 ) : (
@@ -1998,6 +2038,7 @@ export default function PostListingForm() {
                   </div>
                 )}
               </div>
+              ); })()}
               </>
             )}
 
@@ -2044,64 +2085,47 @@ export default function PostListingForm() {
 
       {/* 7. Liên hệ */}
       <Card id="b-lienhe" step={buoc()} title="Thông tin liên hệ">
-        {/* ẢNH ĐẠI DIỆN — ô chọn tệp nằm TRONG <label> và ẩn bằng sr-only.
-            KHÔNG dùng display:none rồi gọi .click(): điện thoại đời cũ bỏ qua,
-            khách bấm mãi không mở được thư viện ảnh. */}
-        <div className="mb-4 flex items-center gap-4">
-          {contactAvatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={contactAvatar} alt="Ảnh đại diện" className="h-16 w-16 rounded-full object-cover ring-1 ring-cvr-line" />
-          ) : (
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-cvr-surface text-xs text-cvr-faint ring-1 ring-cvr-line">
-              Chưa có
-            </span>
-          )}
-          <div className="min-w-0">
-            <label className="inline-flex cursor-pointer items-center rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  setDangTaiAvatar(true);
-                  const { url, error } = await uploadImageFile(f);
-                  setDangTaiAvatar(false);
-                  if (url) setContactAvatar(url);
-                  else if (error) alert(error);
-                  e.target.value = "";
-                }}
-              />
-              {dangTaiAvatar ? "Đang tải ảnh…" : contactAvatar ? "Đổi ảnh đại diện" : "Thêm ảnh đại diện"}
-            </label>
-            {contactAvatar && (
-              <button
-                type="button"
-                onClick={() => setContactAvatar("")}
-                className="ml-2 text-sm font-medium text-cvr-muted transition hover:text-red-600"
-              >
-                Bỏ ảnh
-              </button>
-            )}
-            <p className="mt-1.5 text-xs text-cvr-faint">Ảnh chân dung của bạn — hiện trên tin và trong danh bạ chuyên gia.</p>
+        {laCuaMinh ? (
+          // TIN CỦA CHÍNH KHÁCH = THÔNG TIN TÀI KHOẢN, CHỈ XEM (chủ dự án 05/11/2026: "cái mặc định thì để mặc định, cấm để họ sửa — chỉ
+          // sửa khi vào tài khoản cài đặt"; "bỏ bước hỏi số — chỉ khi khách chưa có số mới hỏi"). Sửa ở Tài khoản → Cài đặt (thẻ mới,
+          // không mất tin đang soạn). Chưa có số → bấm Đăng hiện hộp hỏi số + mã một lần.
+          <>
+            <div className="mb-4 flex items-center gap-4">
+              {tk.anh ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={tk.anh} alt="Ảnh đại diện" className="h-16 w-16 rounded-full object-cover ring-1 ring-cvr-line" />
+              ) : (
+                <span className="h-16 w-16 shrink-0 rounded-full bg-cvr-surface ring-1 ring-cvr-line" />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-cvr-ink">{tenTaiKhoan}</p>
+                <a href="/tai-khoan/cai-dat" target="_blank" rel="noopener" className="mt-1 inline-block text-sm font-medium text-cvr-blue-ink hover:underline">Sửa trong Cài đặt</a>
+              </div>
+            </div>
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
+              <div id="o-ten"><Label>Họ và tên</Label><input value={tenTaiKhoan} readOnly className={oKhoa} /></div>
+              <div id="o-sdt"><Label>Số điện thoại</Label>{dsSo.length > 1
+                ? <ChonCoTim value={soChon || soTaiKhoan} onChange={setSoChon} options={dsSo} placeholder="Chọn số" timPlaceholder="Tìm số" khongTim className={inputCls} />
+                : <input value={soTaiKhoan} readOnly placeholder="Xác minh khi bấm Đăng" className={oKhoa} />}</div>
+              <div id="o-email"><Label>Email</Label><input value={tk.email} readOnly placeholder="—" className={oKhoa} /></div>
+            </div>
+          </>
+        ) : (
+          // Admin mở tin của khách: giữ thông tin liên hệ của tin, sửa được như trước
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
+            <div id="o-ten"><Label>Họ và tên</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} className={inputCls} /></div>
+            <div id="o-sdt">
+              <Label>Số điện thoại *</Label>
+              <input type="text" inputMode="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} onBlur={() => setDaRoiO((o) => ({ ...o, sdt: true }))} placeholder="09xx xxx xxx" className={inputCls} />
+              {daRoiO.sdt && loiSdt(contactPhone) && <p className="mt-1 text-xs text-red-600">{loiSdt(contactPhone)}</p>}
+            </div>
+            <div id="o-email">
+              <Label>Email</Label>
+              <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} onBlur={() => setDaRoiO((o) => ({ ...o, email: true }))} className={inputCls} />
+              {daRoiO.email && loiEmail(contactEmail) && <p className="mt-1 text-xs text-red-600">{loiEmail(contactEmail)}</p>}
+            </div>
           </div>
-        </div>
-        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-          {/* Họ tên KHÔNG bắt buộc (chủ dự án 26/10/2026): tự điền tên tài khoản; để trống thì tin lấy tên tài khoản */}
-          <div id="o-ten"><Label>Họ và tên</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
-          {/* Kiểm ĐỊNH DẠNG ngay dưới ô (chuẩn chung src/lib/kiemNhap.ts) — báo khi khách rời ô. */}
-          <div id="o-sdt">
-            <Label>Số điện thoại *</Label>
-            <input type="text" inputMode="tel" autoComplete="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} onBlur={() => setDaRoiO((o) => ({ ...o, sdt: true }))} placeholder="09xx xxx xxx" className={inputCls} />
-            {daRoiO.sdt && loiSdt(contactPhone) && <p className="mt-1 text-xs text-red-600">{loiSdt(contactPhone)}</p>}
-          </div>
-          <div id="o-email">
-            <Label>Email</Label>
-            <input type="email" inputMode="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} onBlur={() => setDaRoiO((o) => ({ ...o, email: true }))} placeholder="email@example.com" className={inputCls} />
-            {daRoiO.email && loiEmail(contactEmail) && <p className="mt-1 text-xs text-red-600">{loiEmail(contactEmail)}</p>}
-          </div>
-        </div>
+        )}
       </Card>
 
       {error && (
@@ -2159,6 +2183,8 @@ export default function PostListingForm() {
 // Số ảnh được up khi khách CHƯA chọn gói (chủ dự án chốt 22/10/2026). Chọn gói rồi thì theo số của gói trong admin.
 const ANH_CHUA_CHON_GOI = 3;
 
+// Ô lấy MẶC ĐỊNH từ tài khoản — chỉ xem (sửa ở Cài đặt)
+const oKhoa = "h-11 w-full rounded-lg border border-cvr-line bg-cvr-surface px-3 text-sm text-cvr-body outline-none";
 const inputCls = "h-11 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint caret-cvr-blue outline-none transition focus:border-cvr-blue focus:ring-1 focus:ring-cvr-blue";
 
 // ════════════════════════════════════════════════════════════════════════════

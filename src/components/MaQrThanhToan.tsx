@@ -147,15 +147,68 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
     ["Nội dung", don.description ?? "", true],
   ];
 
+  // ẢNH LƯU = MÃ QR + ĐỦ THÔNG TIN (chủ dự án 03/11/2026 mục 9: "bấm lưu phải có đầy đủ thông tin — công ty, số tài khoản…, không
+  // chỉ lưu mỗi cái mã"): khung trắng gồm tên công ty, đơn hàng, số tiền, mã QR (app ngân hàng vẫn quét được từ ảnh), rồi đúng các
+  // dòng của bảng tài khoản bên dưới. Vẽ một lần khi mã đã có.
+  const [anhLuu, setAnhLuu] = useState("");
+  useEffect(() => {
+    if (!anh) return;
+    let huy = false;
+    (async () => {
+      const qr = new Image();
+      qr.src = anh;
+      await qr.decode().catch(() => {});
+      const W = 760, P = 48, Q = 520;
+      const cv = document.createElement("canvas");
+      cv.width = W;
+      cv.height = 230 + Q + 40 + dong.length * 56 + 70;
+      const ctx = cv.getContext("2d");
+      if (!ctx) return;
+      const font = (co: number, dam = false) => `${dam ? "700" : "400"} ${co}px Inter, Arial, sans-serif`;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, W, cv.height);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#1d1d1f";
+      ctx.font = font(30, true);
+      ctx.fillText("COASTAL LAND", W / 2, 70);
+      ctx.font = font(20);
+      ctx.fillStyle = "#6e6e73";
+      ctx.fillText(PHAP_LY.tenCongTy, W / 2, 104);
+      ctx.fillText(`Thanh toán đơn hàng ${don.orderCode}`, W / 2, 150);
+      ctx.font = font(40, true);
+      ctx.fillStyle = "#1d1d1f";
+      ctx.fillText(vnd(don.amount), W / 2, 200);
+      ctx.drawImage(qr, (W - Q) / 2, 230, Q, Q);
+      let y = 230 + Q + 40;
+      ctx.strokeStyle = "#e5e5ea";
+      for (const [nhan, giaTri] of dong) {
+        ctx.beginPath(); ctx.moveTo(P, y); ctx.lineTo(W - P, y); ctx.stroke();
+        ctx.textAlign = "left"; ctx.font = font(21); ctx.fillStyle = "#6e6e73";
+        ctx.fillText(nhan, P, y + 36);
+        ctx.textAlign = "right"; ctx.font = font(22, true); ctx.fillStyle = "#1d1d1f";
+        let gt = giaTri;
+        while (gt.length > 4 && ctx.measureText(gt).width > W - 2 * P - 170) gt = gt.slice(0, -2);
+        ctx.fillText(gt === giaTri ? gt : gt + "…", W - P, y + 36);
+        y += 56;
+      }
+      ctx.beginPath(); ctx.moveTo(P, y); ctx.lineTo(W - P, y); ctx.stroke();
+      ctx.textAlign = "center"; ctx.font = font(19); ctx.fillStyle = "#6e6e73";
+      ctx.fillText("coastalland.vn", W / 2, y + 44);
+      if (!huy) setAnhLuu(cv.toDataURL("image/png"));
+    })();
+    return () => { huy = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anh]);
+
   // LƯU MÃ QR = tệp ảnh PNG (chủ dự án 27/10/2026):
   // · iPhone: bảng chia sẻ → "Lưu hình ảnh" vào Ảnh (Safari tải thẳng chỉ vào Tệp, không vào Ảnh)
   // · Android: tải thẳng → thư mục Download, hiện trong Bộ sưu tập / Google Ảnh
   // · Máy tính: hộp "Lưu thành" chọn chỗ lưu (Chrome, Edge); trình duyệt khác tải về theo cài đặt của trình duyệt
   async function luuMa() {
-    if (!anh) return;
+    if (!anh || !anhLuu) return;
     const ten = `coastal-land-${don.orderCode}.png`;
     // Đổi ảnh sang tệp NGAY (không chờ mạng): Safari chỉ cho mở bảng chia sẻ liền sau cú bấm
-    const nhiPhan = atob(anh.split(",")[1]);
+    const nhiPhan = atob(anhLuu.split(",")[1]);
     const anhTep = new Blob([Uint8Array.from(nhiPhan, (c) => c.charCodeAt(0))], { type: "image/png" });
     const iphone = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
     if (iphone) {
@@ -173,7 +226,7 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
       return;
     }
     const lk = document.createElement("a");
-    lk.href = anh;
+    lk.href = anhLuu;
     lk.download = ten;
     lk.click();
   }

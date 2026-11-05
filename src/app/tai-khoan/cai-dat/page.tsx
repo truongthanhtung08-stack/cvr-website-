@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { PageHeader } from "@/components/Ui";
@@ -8,6 +8,8 @@ import SoDienThoaiKhac from "@/components/SoDienThoaiKhac";
 import XacMinhSdt from "@/components/XacMinhSdt";
 import { loiEmail } from "@/lib/kiemNhap";
 import DoiAnhDaiDien from "@/components/DoiAnhDaiDien";
+import KhoiMatKhau from "@/components/KhoiMatKhau";
+import { dongBoTenAnhTin } from "@/lib/dongBoTenAnh";
 import { useAuth, anhDaiDien, emailThat } from "@/lib/useAuth";
 
 // Cài đặt tài khoản: thành viên tự sửa thông tin cơ bản của mình
@@ -20,6 +22,7 @@ export default function AccountSettingsPage() {
   const [city, setCity] = useState("");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const tenDaLuu = useRef<string | null>(null); // tên vừa lưu — lần đổi tiếp theo trong cùng phiên lấy làm tên cũ
 
   useEffect(() => {
     if (profile) {
@@ -34,6 +37,8 @@ export default function AccountSettingsPage() {
     if (!profile) return;
     setSaving(true);
     setNotice("");
+    // tên trước khi đổi — tin đang hiện tên này đổi theo; lần đổi thứ hai trong cùng phiên lấy tên vừa lưu (tenDaLuu)
+    const tenCu = tenDaLuu.current ?? profile.full_name;
     const supabase = createClient();
     const { error } = await supabase
       .from("profiles")
@@ -44,6 +49,8 @@ export default function AccountSettingsPage() {
       .eq("id", profile.id);
     // Tên mới hiện ngay ở đầu trang (đầu trang đọc tên trong phiên đăng nhập)
     if (!error) await supabase.auth.updateUser({ data: { full_name: fullName.trim() || null, tu_dat: true } }); // tu_dat: khách tự đặt → đăng nhập lại không đè (datDaiDien)
+    if (!error && (tenCu ?? "").trim() !== fullName.trim()) await dongBoTenAnhTin({ tenCu });
+    if (!error) tenDaLuu.current = fullName.trim() || null;
     setSaving(false);
     setNotice(error ? "Lưu thất bại: " + error.message : "Đã lưu thay đổi ✓");
   }
@@ -55,9 +62,6 @@ export default function AccountSettingsPage() {
     <div className="space-y-5">
       <PageHeader title="Cài đặt tài khoản" />
 
-      {/* Môi giới hay dùng 2 số để đăng tin — khai đủ ở đây thì tin mới gom về
-          một tài khoản được. Xem src/components/SoDienThoaiKhac.tsx */}
-      <SoDienThoaiKhac />
       <form onSubmit={onSubmit} className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-base font-semibold text-cvr-ink">Thông tin cá nhân</h2>
 
@@ -101,14 +105,14 @@ export default function AccountSettingsPage() {
         </button>
       </form>
 
+      {/* Thông tin cá nhân (ảnh, tên) đứng ĐẦU trang như chuẩn — khối số phụ xếp sau (05/11/2026) */}
+      {/* Môi giới hay dùng 2 số để đăng tin — khai đủ ở đây thì tin mới gom về
+          một tài khoản được. Xem src/components/SoDienThoaiKhac.tsx */}
+      <SoDienThoaiKhac />
+
       <KhoiHoaDon profile={profile} />
 
-      <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-base font-semibold text-cvr-ink">Mật khẩu</h2>
-        <a href="/quen-mat-khau" className="mt-3 inline-block rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-          Đặt lại mật khẩu
-        </a>
-      </div>
+      <KhoiMatKhau />
     </div>
   );
 }

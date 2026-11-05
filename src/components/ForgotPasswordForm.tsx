@@ -89,9 +89,23 @@ export default function ForgotPasswordForm() {
       // Đổi xong ĐĂNG NHẬP LUÔN — không bắt gõ lại mật khẩu vừa đặt.
       const supabase = createClient();
       const so = chuanHoaSdt(dinhDanh);
-      const { error } = kenh === "zalo"
+      let { error } = kenh === "zalo"
         ? await supabase.auth.signInWithPassword({ phone: `+84${so.slice(1)}`, password: pw })
-        : await supabase.auth.signInWithPassword({ email: dinhDanh.trim(), password: pw });
+        : await supabase.auth.signInWithPassword({ email: kq.emailDangNhap || dinhDanh.trim(), password: pw } /* tài khoản đã gộp: vào tài khoản được giữ lại (doi-mat-khau trả emailDangNhap) */);
+      // QUÊN MẬT KHẨU CHO MỌI CÁCH VÀO (chủ dự án 05/11/2026): số ghi trong hồ sơ tài khoản Gmail / Zalo / email (không phải số đăng
+      // nhập của Supabase) → máy chủ dò đúng tài khoản giữ số rồi vào bằng mật khẩu vừa đặt — như trang đăng nhập số. Trước đây
+      // đổi được mật khẩu nhưng không vào luôn, bị đẩy về /dang-nhap.
+      if (error && kenh === "zalo") {
+        const r2 = await fetch("/api/xac-thuc/dang-nhap-sdt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ buoc: "mat-khau", sdt: so, matKhau: pw }),
+        }).then((x) => x.json()).catch(() => null);
+        if (r2?.ok) {
+          await supabase.auth.setSession({ access_token: r2.access_token, refresh_token: r2.refresh_token });
+          error = null;
+        }
+      }
       if (!error) await baoCachDangNhap(kenh === "zalo" ? "sdt" : "email"); // tên + ảnh mặc định theo cách đăng nhập
       window.location.href = error ? "/dang-nhap" : "/tai-khoan";
     } catch {

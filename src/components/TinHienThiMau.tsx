@@ -85,7 +85,7 @@ function DacDiemGoi({ id, mau, dangChon, gon }: { id: TierId; mau: React.ReactNo
   return (
     // GỌN (chủ dự án 22/10/2026 tối: "tin minh hoạ — có thể giảm đồng đều khung hình các cấp cho gọn"): khung ảnh theo bề
     // rộng thẻ nên thẻ thu nhỏ đều (TheMau). Điện thoại 290px (thấy mép thẻ sau), máy tính 300px.
-    <article data-cap={id} className={`${gon ? "w-[248px]" : "w-[290px] sm:w-[300px]"} shrink-0 snap-start overflow-hidden rounded-2xl border bg-white ${dangChon ? "border-cvr-ink ring-1 ring-cvr-ink" : "border-cvr-line"}`}>
+    <article data-cap={id} className={`${gon ? "w-[248px] lg:w-[285px]" : "w-[290px] sm:w-[300px]"} shrink-0 snap-start overflow-hidden rounded-2xl border bg-white ${dangChon ? "border-cvr-ink ring-1 ring-cvr-ink" : "border-cvr-line"}`}>
       {mau}
     </article>
   );
@@ -99,7 +99,7 @@ function DacDiemGoi({ id, mau, dangChon, gon }: { id: TierId; mau: React.ReactNo
 // 300px máy tính) → khung ảnh, chữ, nút nhỏ đều nhau, các dòng giữ nguyên như thẻ thật, không xuống dòng thêm.
 function TheMau({ listing, gon }: { listing: Listing; gon?: boolean }) {
   return (
-    <div className={`pointer-events-none w-[343px] select-none ${gon ? "[zoom:0.723]" : "[zoom:0.8455] sm:[zoom:0.8746]"}`} aria-hidden>
+    <div className={`pointer-events-none w-[343px] select-none ${gon ? "[zoom:0.723] lg:[zoom:0.831]" : "[zoom:0.8455] sm:[zoom:0.8746]"}`} aria-hidden>
       <TheTinMobile item={listing} />
     </div>
   );

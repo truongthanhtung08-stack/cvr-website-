@@ -128,7 +128,8 @@ export default function SocialAuth({ onSoDienThoai, onEmail }: { onSoDienThoai?:
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        // cach=facebook: trang quay về đặt tên + ảnh mặc định theo Facebook (datDaiDien), như Google (05/11/2026)
+        redirectTo: `${window.location.origin}/auth/callback?cach=${provider}&next=${encodeURIComponent(next)}`,
         // LƯU Ý: Supabase LUÔN tự thêm `email` vào scope Facebook, không bỏ được từ đây.
         // Nếu Facebook báo "Invalid Scopes: email" thì phải sửa ở Facebook Developer
         // (thêm use case Facebook Login + quyền email), không phải sửa dòng này.

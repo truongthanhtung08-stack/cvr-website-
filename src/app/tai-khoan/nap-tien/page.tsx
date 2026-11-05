@@ -8,6 +8,7 @@ import { useBilling } from "@/lib/useBilling";
 import { emailThat } from "@/lib/useAuth";
 import { createClient } from "@/lib/supabase/client";
 import MaQrThanhToan, { type DonQr, veHuy } from "@/components/MaQrThanhToan";
+import XacMinhSdt from "@/components/XacMinhSdt";
 
 // ============================================================================
 // NẠP TIỀN VÀO TÀI KHOẢN — cổng thanh toán PayOS.
@@ -58,6 +59,7 @@ function TopUpForm() {
   const [custom, setCustom] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [canXacMinh, setCanXacMinh] = useState(false); // số chưa xác minh → xác minh một lần rồi nạp (05/11/2026)
   const [don, setDon] = useState<DonQr | null>(null); // đơn vừa tạo → hiện mã QR tại trang
   // GIỮ ĐƠN khi khách sang app ngân hàng (27/10/2026): điện thoại có thể tải lại trang lúc khách quay về → mở lại đúng
   // đơn đó (trang hỏi trạng thái, đã nộp thì tự về đúng chỗ). Huỷ hoặc nộp xong thì xoá.
@@ -161,6 +163,7 @@ function TopUpForm() {
         setLoading(false);
         return;
       }
+      if (json.code === "CAN_XAC_MINH_SDT") { setCanXacMinh(true); setLoading(false); return; }
       setErr(json.code === "CHUA_CAU_HINH" ? "Cổng thanh toán chưa được kết nối. Vui lòng liên hệ quản trị viên." : "Không tạo được mã thanh toán. Vui lòng thử lại.");
     } catch {
       setErr("Không kết nối được máy chủ thanh toán.");
@@ -265,6 +268,12 @@ function TopUpForm() {
         </div>
 
         {err && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{err}</p>}
+        {/* SỐ ĐIỆN THOẠI BẮT BUỘC KHI NỘP TIỀN — xác minh xong (tự gộp tài khoản cùng số) là tạo mã nạp luôn */}
+        {canXacMinh && (
+          <div className="mt-3">
+            <XacMinhSdt tieuDe="Xác minh số điện thoại để nạp tiền" soGoiY={profile?.phone ?? ""} onXong={() => { setCanXacMinh(false); void pay(); }} />
+          </div>
+        )}
 
         <button
           ref={nutTtRef}

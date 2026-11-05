@@ -43,35 +43,30 @@ export default function SoDienThoaiKhac() {
     })();
   }, []);
 
-  async function them(e: React.FormEvent) {
-    e.preventDefault();
+  // THÊM SỐ = XÁC THỰC MÃ ZALO (chủ dự án 05/11/2026: "muốn thêm số chỉ một con đường — vào Cài đặt và xác thực"):
+  // nhập số → mã gửi qua Zalo của số đó → đúng mã mới thêm, đã xác minh (/api/xac-thuc/so-phu).
+  const [daGui, setDaGui] = useState(false);
+  const [ma, setMa] = useState("");
+  async function goi(buoc: "gui-ma" | "xac-nhan") {
     setLoi("");
     const so = chuanHoaSdt(moi);
     if (!laSdtVN(so)) { setLoi("Số điện thoại không hợp lệ. Nhập đủ 10 số, ví dụ 0905123456."); return; }
-
     setDangLam(true);
-    const supabase = createClient();
-    const user = await nguoiDungHienTai(supabase);
-    if (!user) { setDangLam(false); return; }
-
-    const { data, error } = await supabase
-      .from("sdt_nguoi_dung")
-      .insert({ user_id: user.id, sdt: so })
-      .select("id,sdt,da_xac_minh")
-      .single();
+    const token = (await createClient().auth.getSession()).data.session?.access_token ?? "";
+    const j = await fetch("/api/xac-thuc/so-phu", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ buoc, sdt: so, ma }),
+    }).then((x) => x.json()).catch(() => ({ ok: false, loi: "Không kết nối được hệ thống." }));
     setDangLam(false);
-
-    if (error) {
-      // unique(sdt): số này đã thuộc tài khoản khác — nói rõ chứ đừng báo lỗi kỹ thuật.
-      setLoi(
-        /duplicate|unique/i.test(error.message)
-          ? "Số này đã được gắn với một tài khoản khác. Nếu đây đúng là số của bạn, hãy liên hệ Coastal Land."
-          : error.message,
-      );
-      return;
-    }
-    setDs((cu) => [...(cu ?? []), data as So]);
-    setMoi("");
+    if (!j.ok) { setLoi(j.loi || "Chưa thêm được số."); return; }
+    if (buoc === "gui-ma") { setDaGui(true); return; }
+    setDs((cu) => [...(cu ?? []).filter((x) => x.sdt !== so), { id: String(j.id ?? so), sdt: so, da_xac_minh: true }]);
+    setMoi(""); setMa(""); setDaGui(false);
+  }
+  function them(e: React.FormEvent) {
+    e.preventDefault();
+    void goi(daGui ? "xac-nhan" : "gui-ma");
   }
 
   async function xoa(id: string) {
@@ -95,7 +90,7 @@ export default function SoDienThoaiKhac() {
                 {s.da_xac_minh ? (
                   <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Đã xác minh</span>
                 ) : (
-                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Chờ xác minh</span>
+                  <button type="button" onClick={() => { setMoi(s.sdt); setDaGui(false); setMa(""); }} className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 hover:underline">Chưa xác minh — xác minh</button>
                 )}
               </span>
               <button
@@ -115,7 +110,7 @@ export default function SoDienThoaiKhac() {
           type="tel"
           inputMode="tel"
           value={moi}
-          onChange={(e) => setMoi(e.target.value)}
+          onChange={(e) => { setMoi(e.target.value); setDaGui(false); setMa(""); }}
           placeholder="0905123456"
           className="h-11 min-w-0 flex-1 rounded-lg border border-cvr-line px-4 text-sm text-cvr-ink outline-none transition placeholder:text-cvr-faint focus:border-cvr-ink"
         />
@@ -124,8 +119,18 @@ export default function SoDienThoaiKhac() {
           disabled={dangLam}
           className="h-11 shrink-0 rounded-lg bg-cvr-ink px-5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
         >
-          {dangLam ? "Đang thêm…" : "Thêm số"}
+          {dangLam ? "Đang gửi…" : daGui ? "Xác nhận" : "Gửi mã"}
         </button>
+        {daGui && (
+          <input
+            value={ma}
+            onChange={(e) => setMa(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="Mã 6 số trong Zalo"
+            className="h-11 w-full rounded-lg border border-cvr-line px-4 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+          />
+        )}
       </form>
       {loi && <p className="mt-2 text-sm font-medium text-red-600">{loi}</p>}
     </section>

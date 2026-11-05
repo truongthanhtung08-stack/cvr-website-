@@ -58,6 +58,22 @@ export async function POST(req: Request) {
   }
 
   // Mã đơn: số nguyên tăng dần theo thời gian (yêu cầu của PayOS)
+  // SỐ ĐIỆN THOẠI LÀ BẮT BUỘC (chủ dự án 05/11/2026: "số điện thoại là cái để xác thực một tài khoản khi khách bấm đăng tin và nộp
+  // tiền"): tài khoản chưa xác minh số chính chủ thì không tạo đơn nạp — trang Nạp tiền mở hộp xác minh (gộp một lần) rồi nạp tiếp.
+  if (nguoiNap) {
+    const admin = createAdminClient();
+    if (admin) {
+      const [{ data: hs }, { data: u }] = await Promise.all([
+        admin.from("profiles").select("phone,role").eq("id", nguoiNap.id).maybeSingle(),
+        admin.auth.admin.getUserById(nguoiNap.id),
+      ]);
+      // Chỉ hỏi DUY NHẤT khi tài khoản KHÔNG CÓ số (chủ dự án 05/11/2026 chốt) — có số thì nạp luôn
+      const coSo = !!String(hs?.phone ?? "").trim() || hs?.role === "admin" || !!u?.user?.phone || !!(u?.user?.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he;
+      if (!coSo)
+        return NextResponse.json({ ok: false, code: "CAN_XAC_MINH_SDT", message: "Xác minh số điện thoại trước khi nạp tiền." }, { status: 403 });
+    }
+  }
+
   const orderCode = Number(String(Date.now()).slice(-10));
   // PayOS giới hạn mô tả 25 ký tự
   const description = (body.description || `Nap tien CL ${orderCode}`).slice(0, 25);

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { phatMa, kiemMa, guiMaQuaZalo, guiMaQuaEmail } from "@/lib/maXacThuc";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
+import { baoLoi } from "@/lib/baoLoi";
 
 // ============================================================================
 // POST /api/xac-thuc/xac-minh-sdt — TÀI KHOẢN ĐANG ĐĂNG NHẬP XÁC MINH SỐ CỦA MÌNH
@@ -18,6 +19,74 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const loi = (thongBao: string, status = 400) => NextResponse.json({ ok: false, loi: thongBao }, { status });
+
+// GỘP CHẠM TỚI TIỀN (chủ dự án 05/11/2026: "vì nó liên quan đến TIỀN"): tài khoản bị gộp mà có BẤT CỨ thứ gì dính tiền — số dư
+// ví, đã từng nạp (total_topup / payments đã trả), doanh thu, lượt đẩy còn lại, gói hội viên còn hạn, voucher còn lượt, tin chờ nạp
+// (up_cho) — thì KHÔNG tự gộp, báo khách liên hệ Coastal Land (admin gộp tay, đối chiếu tiền). Tiền = một nguồn Admin (CLAUDE.md 0.1).
+async function dinhTien(admin: NonNullable<ReturnType<typeof createAdminClient>>, ids: string[]): Promise<boolean> {
+  if (!ids.length) return false;
+  const bay = new Date().toISOString();
+  const [hs, pay, dt, hv, vc, uc] = await Promise.all([
+    admin.from("profiles").select("balance,total_topup,bump_credits").in("id", ids),
+    admin.from("payments").select("user_id").in("user_id", ids).eq("status", "paid").limit(1),
+    admin.from("doanh_thu").select("user_id").in("user_id", ids).limit(1),
+    admin.from("hoi_vien").select("user_id").in("user_id", ids).gt("het_han", bay).limit(1),
+    admin.from("hoi_vien_voucher").select("user_id").in("user_id", ids).gt("con_lai", 0).limit(1),
+    admin.from("up_cho").select("user_id").in("user_id", ids).eq("trang_thai", "cho").limit(1),
+  ]);
+  if ([hs, pay, dt, hv, vc, uc].some((x) => x.error)) return true; // đọc lỗi → coi như có tiền, không tự gộp
+  return (hs.data ?? []).some((p) => Number(p.balance ?? 0) > 0 || Number(p.total_topup ?? 0) > 0 || Number(p.bump_credits ?? 0) > 0)
+    || [pay, dt, hv, vc, uc].some((x) => (x.data ?? []).length > 0);
+}
+
+// GỘP LÀ VIỆC CỦA WEB, KHÔNG BẮT KHÁCH (chủ dự án 05/11/2026): tài khoản cần gộp mà dính tiền → web KHÔNG tự gộp nhưng cũng KHÔNG
+// chặn khách: số vừa xác minh ghi là số liên hệ đã xác minh của tài khoản đang dùng (sdt_lien_he_xac_minh — được đăng tin, nạp tiền),
+// tin đăng mang số đó; Coastal Land nhận email báo việc để gộp tay, đối chiếu tiền. Khách không phải liên hệ, không phải làm gì.
+async function choAdminGop(admin: NonNullable<ReturnType<typeof createAdminClient>>, uid: string, sdt: string, ids: string[]) {
+  await admin.from("profiles").update({ sdt_lien_he_xac_minh: true }).eq("id", uid);
+  // Nhớ số trên tài khoản đang dùng (user_metadata.sdt_lien_he) → đăng tin / nạp tiền lần sau không hỏi lại, tin mang số này
+  const { data: uu } = await admin.auth.admin.getUserById(uid);
+  await admin.auth.admin.updateUserById(uid, { user_metadata: { ...(uu?.user?.user_metadata ?? {}), sdt_lien_he: sdt } }).then(() => {}, () => {});
+  await baoLoi({
+    noi: "gop-tai-khoan",
+    mucDo: "nang",
+    tomTat: "Cần gộp tay tài khoản cùng số (dính tiền)",
+    chiTiet: `Số ${sdt} · tài khoản đang dùng ${uid} · tài khoản cần gộp ${ids.join(", ")}`,
+    hauQua: "Khách đang dùng 2 tài khoản cùng số; tiền / gói nằm ở tài khoản kia.",
+    canLam: "Vào Admin → Khách hàng, đối chiếu ví, gói, voucher rồi gộp tay về một tài khoản.",
+    khoa: `gop-tay:${sdt}`,
+  }).catch(() => {});
+  return NextResponse.json({ ok: true, sdt, soTinGop: 0, choAdminGop: true });
+}
+
+// Ngày thành viên của tài khoản giữ lại = ngày SỚM NHẤT trong các tài khoản gộp — gộp không làm khách thành "thành viên mới" lại
+// để hưởng ưu đãi lần nữa (ưu đãi = tiền).
+async function giuNgayThanhVienSomNhat(admin: NonNullable<ReturnType<typeof createAdminClient>>, giu: string, tu: string[]) {
+  const { data } = await admin.from("profiles").select("id,ngay_thanh_vien").in("id", [giu, ...tu]);
+  const ngay = (data ?? []).map((p) => p.ngay_thanh_vien as string | null).filter(Boolean).sort()[0];
+  const cua = (data ?? []).find((p) => p.id === giu)?.ngay_thanh_vien as string | null;
+  if (ngay && ngay !== cua) await admin.from("profiles").update({ ngay_thanh_vien: ngay }).eq("id", giu);
+}
+
+// GỘP TÊN + ẢNH (chủ dự án 05/11/2026: "tên, số, ảnh hai nguồn khác nhau thì gộp vào sẽ ra sao") — chuẩn: GIỮ của tài khoản
+// được giữ lại; ô nào TRỐNG (chưa có ảnh, tên chỉ là số điện thoại) thì lấy bù từ tài khoản bị gộp. Ghi cả hồ sơ lẫn phiên
+// (user_metadata) như datDaiDien để đầu trang hiện đúng. Khách đã tự đặt tên (cờ tu_dat) thì giữ nguyên.
+async function layBuTenAnh(admin: NonNullable<ReturnType<typeof createAdminClient>>, giu: string, tu: string[]) {
+  if (!tu.length) return;
+  const { data: ds } = await admin.from("profiles").select("id,full_name,avatar_url").in("id", [giu, ...tu]);
+  const hsGiu = (ds ?? []).find((p) => p.id === giu);
+  const khac = (ds ?? []).filter((p) => p.id !== giu);
+  const { data: uGiu } = await admin.auth.admin.getUserById(giu);
+  const meta = (uGiu?.user?.user_metadata ?? {}) as Record<string, unknown>;
+  const laSo = (t: string) => /^[\d\s+.]+$/.test(t);
+  const tenCo = String(hsGiu?.full_name ?? "").trim();
+  const tenBu = khac.map((p) => String(p.full_name ?? "").trim()).find((t) => t && !laSo(t));
+  const ten = (!tenCo || (!meta.tu_dat && laSo(tenCo))) && tenBu ? tenBu : tenCo || null;
+  const anh = (hsGiu?.avatar_url as string | null) || khac.map((p) => p.avatar_url as string | null).find(Boolean) || null;
+  if (ten === (hsGiu?.full_name ?? null) && anh === (hsGiu?.avatar_url ?? null)) return;
+  await admin.from("profiles").update({ full_name: ten, avatar_url: anh }).eq("id", giu);
+  await admin.auth.admin.updateUserById(giu, { user_metadata: { ...meta, full_name: ten, avatar_url: anh, picture: anh } }).then(() => {}, () => {});
+}
 
 export async function POST(req: Request) {
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
@@ -73,8 +142,8 @@ export async function POST(req: Request) {
       admin.from("profiles").select("balance,zalo_id").eq("id", uid).maybeSingle(),
       admin.from("hoi_vien").select("user_id").eq("user_id", uid).gt("het_han", new Date().toISOString()).limit(1),
     ]);
-    if (Number(hsMoi?.balance ?? 0) > 0 || (hvMoi ?? []).length)
-      return loi("Tài khoản Zalo này còn số dư ví hoặc gói hội viên. Vui lòng liên hệ Coastal Land để gộp tài khoản.", 409);
+    if (Number(hsMoi?.balance ?? 0) > 0 || (hvMoi ?? []).length || (await dinhTien(admin, [uid])))
+      return await choAdminGop(admin, uid, sdt, [idCu]);
     const { data: hsCu } = await admin.from("profiles").select("zalo_id").eq("id", idCu).maybeSingle();
     const zaloId = hsMoi?.zalo_id ?? u.user!.email!.replace(/^zalo_|@users\.coastalland\.vn$/g, "");
     if (hsCu?.zalo_id && hsCu.zalo_id !== zaloId)
@@ -85,8 +154,11 @@ export async function POST(req: Request) {
     // Nhả zalo_id ở tài khoản Zalo trước (cột duy nhất) rồi gắn sang tài khoản cũ.
     await admin.from("profiles").update({ zalo_id: null }).eq("id", uid);
     await admin.from("profiles").update({ zalo_id: zaloId, phone: sdt, phone_verified: true }).eq("id", idCu);
-    await admin.auth.admin.updateUserById(uid, { ban_duration: "876000h" }).then(() => {}, () => {});
+    // gop_vao: tài khoản bị gộp nhớ đã gộp vào đâu — Quên mật khẩu / đăng nhập bằng cửa cũ dẫn về đúng tài khoản (05/11/2026)
+    await admin.auth.admin.updateUserById(uid, { ban_duration: "876000h", user_metadata: { gop_vao: idCu } }).then(() => {}, () => {});
 
+    await giuNgayThanhVienSomNhat(admin, idCu, [uid]);
+    await layBuTenAnh(admin, idCu, [uid]); // tên + ảnh: giữ của tài khoản cũ, ô trống lấy bù từ Zalo
     // Mở phiên cho tài khoản cũ (chưa có email thì gắn email kỹ thuật theo số).
     const { data: uCu } = await admin.auth.admin.getUserById(idCu);
     let emailCu = uCu?.user?.email ?? null;
@@ -131,8 +203,8 @@ export async function POST(req: Request) {
   if (gopTu.length) {
     const ids = gopTu.map((p) => p.id as string);
     const { data: hv } = await admin.from("hoi_vien").select("user_id").in("user_id", ids).gt("het_han", new Date().toISOString()).limit(1);
-    if (gopTu.some((p) => Number(p.balance ?? 0) > 0) || (hv ?? []).length)
-      return loi("Số này thuộc một tài khoản còn số dư ví hoặc gói hội viên. Vui lòng liên hệ Coastal Land để gộp tài khoản.", 409);
+    if (gopTu.some((p) => Number(p.balance ?? 0) > 0) || (hv ?? []).length || (await dinhTien(admin, ids)))
+      return await choAdminGop(admin, uid, sdt, ids);
 
     const { data: chuyen } = await admin.from("listings").update({ owner_id: uid }).in("owner_id", ids).select("id");
     soTinGop = (chuyen ?? []).length;
@@ -147,7 +219,9 @@ export async function POST(req: Request) {
     if (error) return loi("Chưa lưu được số. Vui lòng thử lại.", 500);
     // Số thành cửa đăng nhập của tài khoản đang dùng (hỏng thì bỏ qua — vẫn đăng nhập được bằng email/Google).
     await admin.auth.admin.updateUserById(uid, { phone: so84g, phone_confirm: true }).then(() => {}, () => {});
-    for (const id of ids) await admin.auth.admin.updateUserById(id, { ban_duration: "876000h" }).then(() => {}, () => {});
+    for (const id of ids) await admin.auth.admin.updateUserById(id, { ban_duration: "876000h", user_metadata: { gop_vao: uid } }).then(() => {}, () => {});
+    await giuNgayThanhVienSomNhat(admin, uid, ids);
+    await layBuTenAnh(admin, uid, ids); // tên + ảnh: giữ của tài khoản đang dùng, ô trống lấy bù từ tài khoản bị gộp
     return NextResponse.json({ ok: true, sdt, soTinGop });
   }
 

@@ -309,9 +309,24 @@ export default function MapPickerMo({
 
         // Bấm vào đâu là ghim vào đó — thao tác chính, ai cũng đoán được.
         // Chạm ghim lúc đang nhìn xa (cả nước, cả tỉnh) → phóng sát vào ghim để khách thấy rõ, kéo ghim cho đúng nhà (23/10/2026).
+        // MÁY TÍNH (chủ dự án 03/11/2026: "xem, di chuyển, ghim, bỏ ghim không bị vướng"; đo 05/11): bấm lên chính dấu ghim
+        // làm ghim nhích đi, bấm đúp để phóng to làm ghim nhảy sang chỗ bấm. Nay: bấm lên dấu ghim không ghim lại; máy tính chờ
+        // một nhịp (250 ms) — bấm đúp là phóng to, không ghim. Điện thoại giữ nguyên chạm là ghim ngay.
+        const mayTinh = window.matchMedia("(pointer: fine)").matches;
+        let choGhim: ReturnType<typeof setTimeout> | null = null;
         map.on("click", (e) => {
-          void datGhim({ lat: e.lngLat.lat, lng: e.lngLat.lng });
-          if (map.getZoom() < 15) map.easeTo({ center: e.lngLat, zoom: 16, duration: 500 });
+          const dich = e.originalEvent.target as Node | null;
+          if (dich && ghimRef.current?.getElement().contains(dich)) return;
+          const ghim = () => {
+            void datGhim({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+            if (map.getZoom() < 15) map.easeTo({ center: e.lngLat, zoom: 16, duration: 500 });
+          };
+          if (!mayTinh) return ghim();
+          if (choGhim) clearTimeout(choGhim);
+          choGhim = setTimeout(() => { choGhim = null; ghim(); }, 250);
+        });
+        map.on("dblclick", () => {
+          if (choGhim) { clearTimeout(choGhim); choGhim = null; }
         });
 
         map.on("load", () => {

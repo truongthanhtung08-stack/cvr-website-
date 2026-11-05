@@ -110,6 +110,11 @@ export default function LoginForm() {
         }
       }
       if (error) {
+        // Tài khoản cũ đã GỘP vào tài khoản cùng số (bị khoá) → báo rõ đường vào, không hiện lỗi tiếng Anh (05/11/2026)
+        if (/banned/i.test(error.message)) {
+          setNotice("Tài khoản này đã gộp vào tài khoản cùng số điện thoại của bạn. Đăng nhập bằng Gmail, Zalo hoặc số điện thoại của tài khoản đó; quên mật khẩu thì bấm Quên mật khẩu.");
+          return;
+        }
         setNotice(viError(error.message));
         setSaiMatKhau(/invalid login credentials/i.test(error.message));
         return;
