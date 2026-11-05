@@ -1394,6 +1394,8 @@ export default function PostListingForm() {
           onDang={() => { setXemTruoc(false); save(false); }}
           dangLuu={saving === "publish"}
           chuaCoAnh={!images.some((x) => !isVideoUrl(x))}
+          soNgay={planTier ? soNgayThat : undefined}
+          batDau={batDau}
         />
       )}
       {moXacMinh && (

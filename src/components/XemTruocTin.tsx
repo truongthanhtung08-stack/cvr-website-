@@ -25,6 +25,8 @@ export default function XemTruocTin({
   onDang,
   dangLuu,
   chuaCoAnh,
+  soNgay,
+  batDau,
 }: {
   du: ListingFull;
   tier: TierId | "";
@@ -33,6 +35,9 @@ export default function XemTruocTin({
   dangLuu: boolean;
   /** Khách chưa up ảnh nào → hiện ảnh mẫu đẹp nhất hợp loại hình, ghi "Ảnh mẫu" (chủ dự án 23/10/2026). */
   chuaCoAnh?: boolean;
+  /** Gói + ngày khách đã chọn (chủ dự án 06/11/2026: "khách đã chọn gói, chọn ngày rồi") → dòng Hiệu lực · Hết hạn như trang tin thật */
+  soNgay?: number;
+  batDau?: string; // "YYYY-MM-DD" (hẹn ngày) · "" = ngay khi được duyệt
 }) {
   useNutQuayLai(true, onDong); // nút Quay lại điện thoại đóng lớp này, không rời trang (hàm chung, 22/10/2026)
   const l = du.listing;
@@ -89,6 +94,20 @@ export default function XemTruocTin({
               </span>
             )}
           </div>
+          {/* HIỆU LỰC · HẾT HẠN theo gói + ngày khách đã chọn — cùng chỗ, cùng kiểu trang tin thật (bat-dong-san/[id]). Hẹn ngày
+              thì ra đúng ngày; "Ngay khi được duyệt" thì hạn tính từ ngày duyệt (máy chủ ghi lúc duyệt). */}
+          {soNgay ? (
+            <p className="mt-2 text-[12px] font-medium leading-relaxed text-cvr-faint">
+              {batDau
+                ? (() => {
+                    const [y, m, dd] = batDau.split("-").map(Number);
+                    const het = new Date(Date.UTC(y, m - 1, dd + soNgay));
+                    const f = (x: Date) => x.toLocaleDateString("vi-VN", { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric" });
+                    return <>Hiệu lực: {f(new Date(Date.UTC(y, m - 1, dd)))} · Hết hạn: {f(het)}</>;
+                  })()
+                : <>Hiệu lực: ngày được duyệt · Hết hạn: {soNgay} ngày sau ngày duyệt</>}
+            </p>
+          ) : null}
 
           <h1 className="mt-3 whitespace-pre-line break-words text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
 
