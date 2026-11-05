@@ -113,7 +113,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
         setMuaCho({ r: tinDay, conDay: soNgayConDay(tinDay.tier_expires_at, tinDay.bump_lich, false), cap: thongTinGoi(tinDay).cap, coLe: true });
         setLuotChon(Math.max(1, Number(q.get("luot")) || 1));
       }
-      if (maDay) { q.delete("day"); q.delete("luot"); window.history.replaceState(window.history.state, "", `${window.location.pathname}${q.toString() ? `?${q}` : ""}`); }
+      if (maDay || maNang) { q.delete("day"); q.delete("luot"); q.delete("nang"); q.delete("tier"); q.delete("days"); window.history.replaceState(window.history.state, "", `${window.location.pathname}${q.toString() ? `?${q}` : ""}`); }
 
       // Lead cho MỌI tin của mình trong một lần gọi (RLS chỉ cho chủ tin đọc).
       const ids = list.map((r) => r.id);
