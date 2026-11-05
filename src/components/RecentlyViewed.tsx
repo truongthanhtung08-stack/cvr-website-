@@ -38,7 +38,7 @@ export default function RecentlyViewed({ boQua, boCac, trangChu = false, boTinDa
 
   if (!khoa || items.length === 0 || (trangChu && hidden)) return null;
   // Trang chủ, đã bấm "Xem thêm": ĐÚNG danh sách của "Xem thêm" khối Bất động sản nổi bật (cùng khung, cùng khoảng cách)
-  if (trangChu && expanded) return <section className="section-edge bg-white"><ListingBrowser heading="Mua bán, cho thuê nhà đất" trangChu purpose="ban" nguon="ban" /></section>;
+  if (trangChu && expanded) return <section className="section-edge bg-white"><ListingBrowser heading="Mua bán, cho thuê nhà đất" trangChu purpose="ban" nguon="tat-ca" /></section>;
   const khoi = (
     <ListingShowcase
       items={items}

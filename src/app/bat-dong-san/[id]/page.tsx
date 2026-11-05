@@ -23,20 +23,20 @@ import {
   soNhapHopLe,
 } from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
-import { nhanDienTich as nhanDienTichTheoLoai, laTinThue, mauSoCuaLoaiHinh, fieldsFor, O_LOAI_CON } from "@/lib/listingSpec";
+import { nhanDienTich as nhanDienTichTheoLoai, laTinThue, mauSoCuaLoaiHinh } from "@/lib/listingSpec";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { giuCum } from "@/lib/chuThuong";
-import { getListing, getListings, getListingsHetHan, getListingDetail, tinDaHetHan, idTuDuongDan } from "@/lib/listingsDb";
+import { getListing, getListings, getListingsHetHan, getListingDetail, tinDaHetHan, idTuDuongDan, laTinTim } from "@/lib/listingsDb";
 import { duongDanTin } from "@/lib/duongDanTin";
 import { banGocCua, lienKetCho, tinDatChuan, tinhCuaTin, phuongCuaTin, duongDanPhanCap, THANH_PHO } from "@/lib/pseo";
 import { rentCategories, saleCategories } from "@/lib/categories";
 import { khuVucList } from "@/lib/khuVuc";
 import LienKetPseo from "@/components/LienKetPseo";
 import { getProject, getProjects } from "@/lib/contentDb";
-import { normalizeVi, cungDuAn, tenLoaiHinh, nhomCuaLoaiHinh, lapCha } from "@/lib/filters";
+import { normalizeVi, cungDuAn } from "@/lib/filters";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { chuanHoaSdt } from "@/lib/phone";
 import MoTaThuGon from "@/components/MoTaThuGon";
@@ -204,7 +204,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     alternates: { canonical: duongDanTin(banGoc ?? l) },
     // CHƯA ĐẠT CHUẨN THÌ KHÔNG CHO GOOGLE LẬP CHỈ MỤC (chủ dự án 15/10/2026: "không đủ chất lượng
     // không hiển thị"): dưới 3 ảnh thật hoặc mô tả quá sơ sài. Khách vẫn xem tin bình thường.
-    ...(tinDatChuan(l) ? {} : { robots: { index: false, follow: true } }),
+    // Tin người mua / người thuê (05/11/2026): không lập chỉ mục — trang đích Google vẫn là tin bán, tin thuê
+    ...(tinDatChuan(l) && !laTinTim(l.purpose) ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
       title: tieuDe,
       description: desc,
@@ -407,7 +408,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {/* Tin hết hạn không đếm lượt xem — tin không còn đăng nữa. */}
       {!hetHan && <RecordView id={l.id} />}
       {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {/* Tin người mua / người thuê không phải hàng đang bán → không khai RealEstateListing / Offer (05/11/2026) */}
+      {!laTinTim(l.purpose) && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
       {/* Đường dẫn cấp: CHỈ dữ liệu cho Google (JSON-LD), không hiện dòng chữ trên trang — chủ dự án 18/10/2026 */}
       <BreadcrumbJsonLd items={[...duongDanCap, { name: tieuDe1Dong, href: duongDanTin(l) }]} />
       <main className="flex-1 bg-white">
@@ -685,14 +687,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     (giá · diện tích · phòng ngủ · phòng tắm · hướng · nội thất và
                     bộ mục chính của loại hình). Ở đây chỉ còn phần đặc điểm. */}
                 <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
-                  {(() => {
-                    const oCon = fieldsFor(l.type, l.purpose).find((f) => O_LOAI_CON.includes(f.key));
-                    const coCon = oCon && [...d.specs, ...d.specsChinh].some((s) => s.label === oCon.label);
-                    return (<>
-                      <Row label="Loại hình" value={nhomCuaLoaiHinh(l.type, l.purpose)} />
-                      {oCon && !coCon && !lapCha(tenLoaiHinh(l.type), l.type, l.purpose) && <Row label={oCon.label} value={tenLoaiHinh(l.type)} />}
-                    </>);
-                  })()}
+                  {/* Loại hình đủ CHA · CON, đúng chữ ô chọn trong form (05/11/2026) — vd "Đất · Đất nền"; loại con cụ thể ở dòng riêng */}
+                  <Row label="Loại hình" value={d.loaiHinh} />
                   {/* Dòng "Dự án" đã chuyển lên ngay dưới địa chỉ đầu tin (22/10/2026 — dự án là vị trí, không phải đặc điểm). */}
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   {/* Trống thì ẩn — không phơi "Chưa cập nhật" lên trang công khai (20/10/2026); thiếu thì VIỆC Cowork bổ sung */}

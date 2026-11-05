@@ -18,6 +18,7 @@ import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { fieldsSplit, amenityGroups, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, O_LOAI_CON, type Field } from "@/lib/listingSpec";
 import { lapCha } from "@/lib/filters";
+import { tenLoaiHinhDayDu, loaiConDaTrongTen } from "@/lib/categories";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
 import { chuoiDiaChiBanDo } from "@/lib/diaChiBanDo";
@@ -426,7 +427,19 @@ export async function getListings(): Promise<Listing[]> {
   // được đẩy lên trước; tin đẩy từ lâu không đứng mãi trên tin mới đăng. Hạng do sortListings / chonTinTrangChu xếp sau
   // (sắp ổn định nên giữ thứ tự này trong từng hạng). Ngày đăng hiển thị vẫn giữ nguyên ("Làm mới …" là chữ riêng).
   const moc = (r: Row) => Math.max(Date.parse(r.bumped_at ?? "") || 0, Date.parse(r.published_at ?? r.created_at) || 0);
-  return rows.filter((r) => !isSeedRow(r) && conHan(r) && daToiNgay(r)).sort((a, b) => moc(b) - moc(a)).map(rowToListing);
+  return rows.filter((r) => !isSeedRow(r) && conHan(r) && daToiNgay(r) && !laTinTim(r.purpose)).sort((a, b) => moc(b) - moc(a)).map(rowToListing);
+}
+
+// TIN NGƯỜI MUA, NGƯỜI THUÊ (purpose "mua" / "can-thue" — chủ dự án 05/11/2026: mục riêng trong Mua bán / Cho thuê). Chặn Ở GỐC: getListings,
+// getListingsHetHan không trả loại tin này → danh sách bán / thuê, ô tìm, trang chủ, trang Google (pSEO), sitemap, bảng giá GIỮ NGUYÊN như trước
+// (nhiều chỗ gộp mọi mục khác "thue" vào "ban"). Chỉ mục riêng /mua-ban/can-mua, /cho-thue/can-thue đọc qua getListingsTim.
+export function laTinTim(purpose?: string | null): boolean {
+  return purpose === "mua" || purpose === "can-thue";
+}
+export async function getListingsTim(muc: "mua" | "can-thue"): Promise<Listing[]> {
+  const rows = await rest(`select=${COLS}&status=eq.approved&purpose=eq.${muc}&order=bumped_at.desc.nullslast,published_at.desc.nullslast,created_at.desc&limit=200`);
+  if (!rows) return [];
+  return rows.filter((r) => !isSeedRow(r) && conHan(r) && daToiNgay(r)).map(rowToListing);
 }
 
 // TIN ĐÃ HẾT HẠN — chủ dự án chốt 03/10/2026: tin hết hạn VẪN HIỆN trên web, xếp SAU
@@ -443,7 +456,7 @@ export async function getListingsHetHan(): Promise<Listing[]> {
   const rows = await rest(`select=${COLS}&status=in.(approved,expired)&tier_expires_at=gte.${tu}&order=tier_expires_at.desc.nullslast&limit=300`);
   if (!rows) return [];
   return rows
-    .filter((r) => !isSeedRow(r) && !conHan(r))
+    .filter((r) => !isSeedRow(r) && !conHan(r) && !laTinTim(r.purpose))
     .map((r) => ({ ...rowToListing(r), hetHan: true }));
 }
 
@@ -526,6 +539,7 @@ export type ListingFull = {
   videos: string[];            // video (tệp mp4 tải lên / link YouTube-Vimeo)
   builtArea: string | null;    // diện tích xây dựng
   descriptionParas: string[];  // mô tả (tách theo dòng)
+  loaiHinh: string;            // tên loại hình đủ cha · con, đúng chữ ô chọn trong form (tenLoaiHinhDayDu, 05/11/2026)
   specsChinh: ListingSpecRow[]; // THÔNG TIN CHÍNH của loại hình (bỏ mục trống)
   // TIỀN VÀ THANH TOÁN của tin thuê (chủ dự án 21/10/2026: tiền cọc nằm ở "Đặc điểm" là sai) → hàng giá, đầu trang:
   // tienDau ngay sau giá thuê (đặt cọc, kỳ thanh toán) · tienSau cuối hàng (điện, nước, phí dịch vụ)
@@ -586,7 +600,7 @@ function rowToDetail(r: Row): ListingFull {
         return { label: f.label.replace(/\s*\((chiều ngang|chiều sâu)\)$/, ""), value: v && f.unit && /^[\d.,\s]+$/.test(v) ? `${v} ${f.unit}` : v };
       })
       // Loại con lặp tên cha thì bỏ (lapCha, 30/10/2026)
-      .filter((s, i) => s.value && !(O_LOAI_CON.includes(fs[i].key) && lapCha(s.value, r.type, r.purpose)));
+      .filter((s, i) => s.value && !(O_LOAI_CON.includes(fs[i].key) && lapCha(s.value, r.type, r.purpose)) && !loaiConDaTrongTen(r.type, fs[i].key, s.value));
   const { chinh, dacDiem } = fieldsSplit(r.type, r.purpose);
   // Tin thuê: mục TIỀN lên hàng giá, mục điều kiện thuê (vào ở, thời hạn) lên thông tin chính — "Đặc điểm" chỉ còn
   // đặc điểm của bất động sản. Chỉ đổi chỗ hiện trên trang tin; form đăng tin giữ nguyên (fieldsSplit dùng chung).
@@ -632,6 +646,7 @@ function rowToDetail(r: Row): ListingFull {
     builtArea: r.built_area_m2 != null ? `${fmtNum(r.built_area_m2, 0)} m²`
       : coDienTichXayDung(r.type) && d.specs?.usableArea ? `${String(d.specs.usableArea).trim()} m²` : null,
     descriptionParas: dongMoTa(r.description),
+    loaiHinh: tenLoaiHinhDayDu(r.type, r.purpose, d.specs?.landType),
     specsChinh,
     tienDau,
     tienSau,
@@ -684,6 +699,7 @@ function mockToDetail(m: Listing): ListingFull {
     videos: [],
     builtArea: null,
     descriptionParas: [],
+    loaiHinh: tenLoaiHinhDayDu(m.type, m.purpose),
     specsChinh: [],
     tienDau: [],
     tienSau: [],

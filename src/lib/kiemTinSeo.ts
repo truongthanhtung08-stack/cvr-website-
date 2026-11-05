@@ -86,7 +86,8 @@ export function loiTinSeo(r: TinKiem, soTinTrung = 0): LoiTin[] {
   const anh = (r.images ?? []).filter((s) => !laVideo(s)).length;
   const loi: LoiTin[] = [];
   // Mỗi cảnh báo ghi đủ: lỗi gì · sửa thế nào · bấm vào nhảy đúng ô (chủ dự án 25/10/2026)
-  if (anh < 3) loi.push({ ma: "anh", ten: `Có ${anh} ảnh thật, cần ít nhất 3 — thêm ${3 - anh} ảnh`, cho: "phần Ảnh tin đăng", o: "o-anh" });
+  // Tin người mua / người thuê thường không có ảnh — không cảnh báo ảnh (05/11/2026)
+  if (anh < 3 && r.purpose !== "mua" && r.purpose !== "can-thue") loi.push({ ma: "anh", ten: `Có ${anh} ảnh thật, cần ít nhất 3 — thêm ${3 - anh} ảnh`, cho: "phần Ảnh tin đăng", o: "o-anh" });
   if (moTa.length < 100) loi.push({ ma: "mota", ten: `Mô tả có ${moTa.length} ký tự, cần ít nhất 100 — viết thêm ${100 - moTa.length} ký tự`, cho: "phần Nội dung · ô Mô tả", o: "o-mota" });
   if (soTinTrung > 0) loi.push({ ma: "trung", ten: "Trùng tin khác (cùng người · loại · giá · diện tích)", cho: "xem tin trùng ghi bên dưới", o: "o-trung" });
   // Giá để trống = "Thỏa thuận" — chuẩn cho phép (N3), không phải lỗi; diện tích thì bắt buộc

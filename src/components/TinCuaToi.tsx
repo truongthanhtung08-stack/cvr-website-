@@ -94,6 +94,16 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
       const q = new URLSearchParams(window.location.search), maNang = q.get("nang");
       const tinNang = maNang ? list.find((x) => x.id === maNang) : undefined;
       if (tinNang) setNangCho({ r: tinNang, chon: q.get("tier") ? { tier: q.get("tier") as TierId, days: Number(q.get("days")) } : null });
+      // ĐẨY TIN SAU KHI NẠP (chủ dự án 05/11/2026: nạp xong máy tự làm, khách không phải bấm lại): ví thiếu lúc đẩy → nạp →
+      // về đây kèm ?day=<tin>&luot=<số lượt khách đã chọn> → máy tự đẩy / mua đúng gói đó (vẫn trừ đúng giá bảng giá ở máy chủ).
+      const maDay = q.get("day");
+      const tinDay = maDay ? list.find((x) => x.id === maDay && x.status === "approved") : undefined;
+      if (tinDay) {
+        tuDay.current = true;
+        setMuaCho({ r: tinDay, conDay: soNgayConDay(tinDay.tier_expires_at, tinDay.bump_lich, false), cap: thongTinGoi(tinDay).cap, coLe: true });
+        setLuotChon(Math.max(1, Number(q.get("luot")) || 1));
+      }
+      if (maDay) { q.delete("day"); q.delete("luot"); window.history.replaceState(window.history.state, "", `${window.location.pathname}${q.toString() ? `?${q}` : ""}`); }
 
       // Lead cho MỌI tin của mình trong một lần gọi (RLS chỉ cho chủ tin đọc).
       const ids = list.map((r) => r.id);
@@ -180,7 +190,16 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
   // coLe: mở từ nút Đẩy tin → bảng có cả dòng 1 lượt (đẩy lẻ); mở từ Mua gói đẩy → chỉ gói nhiều lượt như cũ.
   const [muaCho, setMuaCho] = useState<{ r: ListingRow; conDay: number; cap: TierId; coLe?: boolean } | null>(null);
   const [luotChon, setLuotChon] = useState<number | null>(null);
+  const tuDay = useRef(false); // về từ trang nạp với ?day= → tự xác nhận đúng gói khách đã chọn
   const viDay = useViKhaDung(demo?.vi);
+  // Về từ trang nạp (?day=) → tự xác nhận đúng gói đẩy khách đã chọn, một lần.
+  useEffect(() => {
+    if (!tuDay.current || !muaCho || !luotChon) return;
+    tuDay.current = false;
+    void xacNhanMuaGoi();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [muaCho, luotChon]);
+
   async function xacNhanMuaGoi() {
     if (!muaCho || !luotChon) return;
     const r = muaCho.r;
@@ -556,7 +575,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
                   moTa={`${getTier(muaCho.cap).name} · ${luotChon} lượt`}
                   tongTra={t.tongTra}
                   vi={viDay}
-                  napHref={`/tai-khoan/nap-tien?can=${Math.max(0, t.tongTra - (viDay?.khaDung ?? 0))}&ve=${encodeURIComponent("/tai-khoan/tin-dang")}`}
+                  napHref={`/tai-khoan/nap-tien?can=${Math.max(0, t.tongTra - (viDay?.khaDung ?? 0))}&ve=${encodeURIComponent(`/tai-khoan/tin-dang?day=${muaCho.r.id}&luot=${luotChon}`)}`}
                   dong={[{ nhan: "Phí đẩy tin", giaTri: vnd(t.tienHang) }, { nhan: "VAT 8%", giaTri: vnd(t.tienThue) }]}
                 />
               );

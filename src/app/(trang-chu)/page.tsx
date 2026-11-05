@@ -27,9 +27,9 @@ import { normalizeVi } from "@/lib/filters";
 export const metadata: Metadata = {
   // absolute: trang chủ nằm trong nhóm (trang-chu) nên mẫu "%s | COASTAL LAND" của layout áp thêm → lặp tên (20/10/2026)
   // Tên thương hiệu đứng trước (chủ dự án 24/10/2026: tìm trên Google phải ra "COASTAL LAND" kèm câu, như Batdongsan.com)
-  title: { absolute: "COASTAL LAND — Cổng thông tin mua bán, cho thuê nhà đất" },
+  title: { absolute: "COASTAL LAND – Cổng thông tin bất động sản trực tuyến" },
   description:
-    "Cổng thông tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Tin hình thật, liên hệ trực tiếp người bán, người cho thuê, lọc theo khu vực, loại hình, mức giá.",
+    "Cổng đăng tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Tin hình thật, liên hệ trực tiếp người bán, người cho thuê, lọc theo khu vực, loại hình, mức giá.",
   alternates: { canonical: "/" },
 };
 
@@ -66,7 +66,7 @@ export default async function Home() {
           {/* ĐIỆN THOẠI: hai khung bọc "trong suốt về bố cục" (contents) để ô tìm DÍNH suốt trang khi cuộn (chủ dự án 02/11/2026: "bộ lọc
               trang chủ cố định khi cuộn vuốt lên xuống") — giao diện không đổi; máy tính giữ nguyên */}
           <HomeCollapsible className="max-sm:contents">
-            <h1 className="sr-only">Cổng thông tin mua bán, cho thuê nhà đất</h1>
+            <h1 className="sr-only">Cổng đăng tin mua bán, cho thuê nhà đất</h1>
             <div className="relative max-sm:contents">
               {/* NỀN BỘ LỌC trên điện thoại (chủ dự án 01/11/2026: "cần cái nền, kiểu đơn giản để nhìn là biết ngay bộ lọc, cả 4 phần"): dải nền xám nhạt tràn hết bề ngang bao ô tìm + hàng trường lọc; ô tìm, nút trường lọc trắng nổi trên nền — kiểu Google. Máy tính giữ nguyên. */}
               <div className="khoi-loc-dinh bg-cvr-surface pb-0 pt-1 max-sm:sticky max-sm:top-[calc(60px+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90] sm:absolute sm:inset-x-0 sm:top-0 sm:z-20 sm:bg-transparent sm:pb-0 sm:pt-8">

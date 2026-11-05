@@ -16,7 +16,7 @@
 // rentTypeGroups) để trang danh mục lọc được bằng bộ lọc sẵn có.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { typeGroupsFor } from "./filters";
+import { typeGroupsFor, tenLoaiHinh } from "./filters";
 
 export type Category = {
   slug: string;
@@ -257,6 +257,55 @@ export function cayLoaiHinh(muc: "ban" | "thue"): NhanhMenu[] {
     if (!cha) return [];
     return [{ label: g.label === "Khác" ? cha.label : g.label, cha, con: cats.filter((c) => c !== cha) }];
   });
+}
+
+// CÂY LOẠI HÌNH CHO Ô CHỌN (form khách + admin đăng tin) — KHỚP A–Z VỚI MENU WEB (chủ dự án 05/11/2026: "từ admin, khách chọn đến
+// hiển thị trên web theo loại hình này; loại cha phải có mục chọn là Đất"). Cha = tên nhóm menu (cayLoaiHinh) · con = loại hình
+// lưu trong tin (giá trị KHÔNG đổi — tin cũ, tệp nạp, trang lọc vẫn khớp) · chữ hiện của con = tên trang menu khi trang đó chỉ
+// gồm đúng loại hình này ("Đất khác" → "Các loại đất khác"), không thì tên loại hình (tenLoaiHinh).
+// Nhóm Đất (chủ dự án 05/11/2026: "Đất = các loại đất khác" · "Loại hình: Đất - đất nền - đất nền dự án" · "3 cái này là loại
+// hình, đặc điểm thuộc loại hình này bố trí mục con"): ba con Đất · Đất nền · Đất nền dự án. Giá trị LƯU không đổi: "Đất" = "Đất khác"
+// (trang /mua-ban/dat-nong-nghiep); "Đất nền" và "Đất nền dự án" cùng loại hình "Đất nền / Đất nền dự án", phân biệt bằng ô Loại đất
+// (mã chọn "<loại hình>::<loại đất>" — tachChonLoaiHinh tách ra). Đặc điểm của loại nằm ở mục Đặc điểm ngay dưới.
+export const TACH_CHON = "::";
+const DAT_NEN = "Đất nền / Đất nền dự án";
+const TEN_CHON: Record<string, string> = { "Đất khác": "Đất", [DAT_NEN]: "Đất nền", [`${DAT_NEN}${TACH_CHON}Đất nền dự án`]: "Đất nền dự án" };
+const THU_TU_CHON: Record<string, string[]> = { "Đất": ["Đất khác", DAT_NEN, `${DAT_NEN}${TACH_CHON}Đất nền dự án`] };
+export function tachChonLoaiHinh(v: string): { type: string; loaiCon: string } {
+  const [type, loaiCon = ""] = v.split(TACH_CHON);
+  return { type, loaiCon };
+}
+/** Tên loại hình hiện cho khách — ĐÚNG TÊN MỤC ĐÃ CHỌN trong ô chọn (Căn hộ · Đất nền · Nhà riêng…), dùng chung form khách, form admin,
+ *  trang tin. KHÔNG ghép tên nhóm cha vào trước (chủ dự án 05/11/2026 bác "Căn hộ, chung cư · Căn hộ" — lặp chữ). */
+export function tenLoaiHinhDayDu(type: string, purpose: string | null | undefined, landType?: string): string {
+  return tenLoaiHinhMenu(giaTriChonLoaiHinh(type, landType), purpose === "thue" || purpose === "can-thue" ? "thue" : "ban");
+}
+/** Loại đất đã nằm trong tên loại hình (Đất nền dự án) → trang tin không lặp dòng "Loại đất". */
+export function loaiConDaTrongTen(type: string, key: string, value: string): boolean {
+  return key === "landType" && giaTriChonLoaiHinh(type, value) !== type;
+}
+/** Ô Đặc điểm theo đúng mục đã chọn trong nhóm Đất: "Đất nền" — ô Loại đất bỏ "Đất nền dự án" (đã là loại hình riêng);
+ *  "Đất nền dự án" — ẩn ô Loại đất (đã xác định khi chọn loại hình) và Diện tích đất ở. Loại khác: giữ nguyên. */
+export function oTheoMucChon<F extends { key: string; options?: string[] }>(fields: F[], type: string, landType: string | undefined): F[] {
+  if (type !== DAT_NEN) return fields;
+  if (landType === "Đất nền dự án") return fields.filter((f) => f.key !== "landType" && f.key !== "resiArea"); // đất nền dự án đã là đất ở
+  return fields.map((f) => (f.key === "landType" ? { ...f, options: (f.options ?? []).filter((o) => o !== "Đất nền dự án") } : f));
+}
+/** Giá trị đang chọn cho ô chọn loại hình (gộp loại đất khi là "Đất nền dự án"). */
+export function giaTriChonLoaiHinh(type: string, loaiCon: string | undefined): string {
+  const ma = `${type}${TACH_CHON}${loaiCon ?? ""}`;
+  return TEN_CHON[ma] ? ma : type;
+}
+export function nhomChonLoaiHinh(muc: "ban" | "thue"): { label: string; items: string[] }[] {
+  return typeGroupsFor(muc).map((g) => ({
+    label: g.label === "Khác" ? "Bất động sản khác" : g.label,
+    items: THU_TU_CHON[g.label] && g.items.every((t) => THU_TU_CHON[g.label].includes(t)) ? THU_TU_CHON[g.label] : g.items,
+  }));
+}
+export function tenLoaiHinhMenu(type: string, muc: "ban" | "thue"): string {
+  if (TEN_CHON[type]) return TEN_CHON[type];
+  const c = (muc === "thue" ? rentCategories : saleCategories).find((x) => x.types.length === 1 && x.types[0] === type);
+  return c ? c.label : tenLoaiHinh(type);
 }
 
 export function findCategory(list: Category[], slug: string): Category | undefined {

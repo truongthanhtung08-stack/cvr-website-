@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
   const sdt = chuanHoaSdt(b.sdt ?? "");
   if (!laSdtVN(sdt)) return NextResponse.json({ ok: true, coTaiKhoan: false });
-  const tim = await timTaiKhoan(admin, sdt);
+  const tim = await timTaiKhoan(admin, sdt, { boQuaAdmin: true });
   if (tim) return NextResponse.json({ ok: true, coTaiKhoan: true });
   return NextResponse.json({ ok: true, coTaiKhoan: false, soTin: await demTinDangHo(admin, sdt) });
 }

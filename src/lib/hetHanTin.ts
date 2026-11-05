@@ -227,7 +227,13 @@ export async function quetTinHetHan(
       .gte("tier_expires_at", bayGio.toISOString())
       .lte("tier_expires_at", moc.toISOString())
       .limit(500);
-    daNhac = await nhanTheoKhach(admin, (sapHet ?? []) as Tin[], "nhac_het_han", moc24h, (ds, chu) => {
+    // Tin VIP của chương trình còn kỳ Basic dài hơn (han_basic) → hết VIP tự về Basic, VẪN HIỆN — không nhắn "sắp hết hạn"
+    // (cùng điều kiện hạ VIP ở bước 1; 05/11/2026). Tới lúc kỳ Basic sắp hết thì nhắc như thường.
+    const canNhac = ((sapHet ?? []) as Tin[]).filter((t) => {
+      const hb = Date.parse(String((t.details as { han_basic?: string } | null)?.han_basic ?? ""));
+      return !(t.tier !== "basic" && chonKhuyenMai(t.details) && Number.isFinite(hb) && hb > Date.parse(t.tier_expires_at));
+    });
+    daNhac = await nhanTheoKhach(admin, canNhac, "nhac_het_han", moc24h, (ds, chu) => {
       const t = ds[0];
       const conLai = Math.max(0, Math.ceil((new Date(t.tier_expires_at).getTime() - bayGio.getTime()) / 86_400_000));
       return {

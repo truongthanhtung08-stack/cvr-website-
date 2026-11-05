@@ -49,7 +49,7 @@ export default function AdminListingsPage() {
   const [purpose, setPurpose] = useState<"all" | ListingPurpose>("all");
   const [tier, setTier] = useState<"all" | ListingTier>("all");
   // Mở từ ô "Chờ duyệt" trang chủ admin (?trang-thai=pending) → vào thẳng danh sách chờ duyệt (chủ dự án 29/10/2026)
-  const [status, setStatus] = useState<"all" | "da_sua" | ListingStatus>("all");
+  const [status, setStatus] = useState<"all" | ListingStatus>("all");
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("trang-thai") === "pending") setStatus("pending");
   }, []);
@@ -83,10 +83,9 @@ export default function AdminListingsPage() {
     const ds = rows.filter((r) => {
       if (purpose !== "all" && r.purpose !== purpose) return false;
       if (tier !== "all" && r.tier !== tier) return false;
-      // "Đã sửa — chờ kiểm" (0054): tin đang hiển thị khách vừa sửa, bản sửa đã hiện ngay.
-      if (status === "da_sua") { if (!(r.status === "approved" && r.details?.da_sua_luc)) return false; }
       // Tin đã xoá chỉ hiện ở mục "Đã xoá" (0066), không lẫn vào "Tất cả trạng thái"
-      else if (status === "pending") { if (!choDuyet(r)) return false; }
+      // Khách sửa tin đang hiển thị: bản sửa lên ngay, Admin KHÔNG kiểm — Admin chỉ duyệt tin mới (chủ dự án 05/11/2026)
+      if (status === "pending") { if (!choDuyet(r)) return false; }
       else if (status === "hidden") { if (r.status !== "hidden" || choDuyet(r)) return false; }
       else if (status === "all" ? r.status === "deleted" : r.status !== status) return false;
       if (!kw) return true;
@@ -109,16 +108,6 @@ export default function AdminListingsPage() {
 
   const pendingCount = rows.filter(choDuyet).length;
   const draftCount = rows.filter((r) => r.status === "draft").length;
-  const daSuaCount = rows.filter((r) => r.status === "approved" && r.details?.da_sua_luc).length;
-
-  // KIỂM SAU: xem bản sửa ổn → bấm "Đã kiểm" xoá dấu. Vi phạm → Ẩn / Từ chối như thường.
-  async function daKiem(r: ListingRow) {
-    const { da_sua_luc: _bo, ...conLai } = r.details ?? {};
-    void _bo;
-    const { error } = await createClient().from("listings").update({ details: conLai }).eq("id", r.id);
-    if (error) { window.alert(HOP_BAO.chuaLuu(error.message)); return; }
-    setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, details: conLai } : x)));
-  }
 
   // Thao tác nhanh: đổi trạng thái 1 tin (Duyệt / Ẩn / Hiện lại)
   // KHÔNG nuốt lỗi: thất bại phải báo ngay để admin biết tin CHƯA đổi trạng thái.
@@ -302,7 +291,7 @@ export default function AdminListingsPage() {
           <p className="mt-1 text-sm text-cvr-muted">
             {loading
               ? "Đang tải…"
-              : `${filtered.length} / ${rows.length} tin${pendingCount ? ` · ${pendingCount} chờ duyệt` : ""}${draftCount ? ` · ${draftCount} nháp` : ""}${daSuaCount ? ` · ${daSuaCount} đã sửa chờ kiểm` : ""}`}
+              : `${filtered.length} / ${rows.length} tin${pendingCount ? ` · ${pendingCount} chờ duyệt` : ""}${draftCount ? ` · ${draftCount} nháp` : ""}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -365,7 +354,6 @@ export default function AdminListingsPage() {
           <option value="all">Tất cả trạng thái</option>
           <option value="draft">Nháp</option>
           <option value="pending">Chờ duyệt</option>
-          <option value="da_sua">Đã sửa — chờ kiểm</option>
           <option value="approved">Đang đăng</option>
           <option value="hidden">Đã ẩn</option>
           <option value="rejected">Từ chối</option>
@@ -444,12 +432,6 @@ export default function AdminListingsPage() {
                       cắt cụt thì hai tin cùng khu vực nhìn y hệt nhau. */}
                   <div className="line-clamp-2 font-medium text-cvr-ink">{r.title}</div>
                   <LoiSeo r={r} />
-                  {r.status === "approved" && r.details?.da_sua_luc && (
-                    <div className="mt-1 flex items-center gap-2 text-xs">
-                      <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800">Đã sửa {fmtDate(r.details.da_sua_luc)} · chờ kiểm</span>
-                      <button type="button" onClick={() => daKiem(r)} className="font-semibold text-cvr-blue-ink hover:underline">Đã kiểm</button>
-                    </div>
-                  )}
                   <div className="line-clamp-2 text-xs text-cvr-muted">
                     {purposeLabel(r.purpose)} · {tenLoaiHinh(r.type)} · {[r.district, r.province].filter(Boolean).join(", ")}
                   </div>
@@ -495,12 +477,6 @@ export default function AdminListingsPage() {
               </div>
             </Link>
             <LoiSeo r={r} />
-            {r.status === "approved" && r.details?.da_sua_luc && (
-              <div className="mt-2 flex items-center gap-2 text-xs">
-                <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800">Đã sửa · chờ kiểm</span>
-                <button type="button" onClick={() => daKiem(r)} className="font-semibold text-cvr-blue-ink hover:underline">Đã kiểm</button>
-              </div>
-            )}
             <div className="mt-3 border-t border-cvr-line pt-2 text-right">
               <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} onXoa={xoaTin} onKhoiPhuc={(id) => khoiPhuc([id])} />
             </div>

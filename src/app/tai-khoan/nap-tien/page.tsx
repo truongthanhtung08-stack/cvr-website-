@@ -41,13 +41,15 @@ function TopUpForm() {
   // huỷ trên PayOS → về lại đúng chỗ đến (tin còn nguyên nội dung + gói); nộp xong → Tin của tôi (tin tự gửi duyệt).
   const veRaw = params.get("ve");
   const ve = veRaw && /^\/(dang-tin|tai-khoan)(\/|\?|$)/.test(veRaw) ? veRaw : null;
+  // Tin nháp còn thiếu ô (máy chưa tự gửi duyệt được) → nạp xong về lại tin để điền tiếp (05/11/2026)
+  const dienTiep = params.get("dien-tiep") === "1" && !!ve?.startsWith("/dang-tin");
   const router = useRouter();
   useEffect(() => {
     if (!ve) return;
     // Huỷ / tin mới chưa lưu nháp nộp xong → về mục Gói tin của tin (veHuy); tin nháp nộp xong → Tin của tôi
-    if (ketQua === "huy" || (ketQua === "thanh-cong" && ve === "/dang-tin")) router.replace(veHuy(ve));
-    else if (ketQua === "thanh-cong") router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
-  }, [ketQua, ve, router]);
+    if (ketQua === "huy" || (ketQua === "thanh-cong" && (ve === "/dang-tin" || dienTiep))) router.replace(veHuy(ve));
+    else if (ketQua === "thanh-cong") router.replace(veTinDang(ve));
+  }, [ketQua, ve, dienTiep, router]);
 
   // Mệnh giá nạp & tỷ lệ tích điểm lấy từ bản admin đã lưu
   const { billing } = useBilling();
@@ -201,8 +203,8 @@ function TopUpForm() {
             boDon();
             try { localStorage.removeItem("veGoiTin"); } catch {} // đã trả xong: không còn quay về tin nháp
             // Tin mới chưa lưu được nháp (ve = /dang-tin): Tin của tôi không có tin nào → về lại form, mục Gói tin, bấm Đăng (29/10/2026)
-            if (ve === "/dang-tin") router.replace(veHuy(ve));
-            else if (ve) router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
+            if (ve && (ve === "/dang-tin" || dienTiep)) router.replace(veHuy(ve));
+            else if (ve) router.replace(veTinDang(ve));
             else { setDon(null); router.replace("/tai-khoan/nap-tien?ket-qua=thanh-cong"); }
           }}
         />
@@ -277,4 +279,10 @@ function TopUpForm() {
       )}
     </div>
   );
+}
+
+// Nạp xong từ Tin của tôi: về đúng địa chỉ đã mang theo (vd ?day=<tin>&luot=… để tự đẩy tin) + báo thanh toán thành công (05/11/2026).
+function veTinDang(ve: string | null): string {
+  const goc = ve && ve.startsWith("/tai-khoan/tin-dang") ? ve : "/tai-khoan/tin-dang";
+  return `${goc}${goc.includes("?") ? "&" : "?"}nap=thanh-cong`;
 }

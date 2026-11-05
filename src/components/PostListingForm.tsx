@@ -22,12 +22,13 @@ import OGoTuGian from "@/components/OGoTuGian";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
 import { doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import {
-  demandTypes,
+  demandTypes, DEMAND_DU_AN,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
   phapLyCho, legalOptions, fieldsFor, furnishLevels, amenityGroups, tienIchCho, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
-import { typeGroupsFor, normalizeVi, tenLoaiHinh } from "@/lib/filters";
+import { typeGroupsFor, normalizeVi } from "@/lib/filters";
+import { nhomChonLoaiHinh, tenLoaiHinhMenu, tenLoaiHinhDayDu, tachChonLoaiHinh, giaTriChonLoaiHinh, oTheoMucChon } from "@/lib/categories";
 import { khoaDuAn } from "@/lib/duAnTen";
 import { slugify } from "@/lib/contentAdmin";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
@@ -103,6 +104,8 @@ export default function PostListingForm() {
 
   // Ai đang đăng nhập (cần để gắn owner_id + prefill liên hệ)
   const [userId, setUserId] = useState<string | null>(null);
+  // Tài khoản đã được duyệt yêu cầu đăng dự án → ô Nhu cầu có thêm "Dự án" (05/11/2026)
+  const [duocDangDuAn, setDuocDangDuAn] = useState(false);
   // Tài khoản Zalo vừa GỘP vào tài khoản cũ của số (XacMinhSdt) → lưu tin vào tài khoản cũ
   // ngay trong lần bấm Đăng tin này (state userId chưa kịp đổi trong lần save đang chạy).
   const uidGop = useRef<string | null>(null);
@@ -191,6 +194,8 @@ export default function PostListingForm() {
   const [moLich, setMoLich] = useState(false); // bảng lịch chọn ngày (máy tính)
   // Tin ĐANG HIỂN THỊ / ĐÃ HẾT HẠN đang sửa → gói cố định, chỉ hiện thông tin gói (không chọn lại).
   const [goiDangDung, setGoiDangDung] = useState<{ tier: TierId; het: string | null } | null>(null);
+  // Số ảnh / video của tin đã đăng lúc mở form sửa — sửa tin không bị đòi xoá bớt ảnh đã được duyệt (05/11/2026)
+  const [soAnhDaLuu, setSoAnhDaLuu] = useState({ anh: 0, video: 0 });
   // Thông tin ví/hồ sơ dùng để tính ưu đãi (null = chưa đăng nhập hoặc chưa tải xong)
   const [hoSoVi, setHoSoVi] = useState<{
     created_at: string | null;
@@ -209,7 +214,7 @@ export default function PostListingForm() {
   // Đang lưu nút nào — để 2 nút hiện trạng thái riêng, không lẫn nhau
   const [saving, setSaving] = useState<"" | "draft" | "publish">("");
   // Ví không đủ tiền để đăng gói đã chọn — tin đã được lưu nháp, còn thiếu bao nhiêu.
-  const [thieuTien, setThieuTien] = useState<{ can: number; du: number; id?: string | null } | null>(null);
+  const [thieuTien, setThieuTien] = useState<{ can: number; du: number; id?: string | null; dienTiep?: boolean } | null>(null);
   // Nạp tiền ngay từ tin mới: mốc trang đã đổi sang /dang-tin?id=<tin nháp> thì mới sang trang nạp (hai lệnh liền nhau Next huỷ một)
   const diNapSau = useRef<string | null>(null);
   useEffect(() => {
@@ -500,7 +505,7 @@ export default function PostListingForm() {
 
   // Danh mục loại hình đổi theo mục đích: bán và cho thuê KHÔNG giống nhau
   const nhomLoaiHinh = useMemo(
-    () => typeGroupsFor(purposeOfDemand(demand) === "thue" ? "thue" : "ban"),
+    () => typeGroupsFor(["thue", "can-thue"].includes(purposeOfDemand(demand)) ? "thue" : "ban"),
     [demand],
   );
   // Đổi mục đích thì danh mục loại hình đổi theo (bán và thuê khác nhau). Loại
@@ -538,7 +543,9 @@ export default function PostListingForm() {
   // BÁN tính trọn giá trị bất động sản; CHO THUÊ luôn tính THEO THÁNG. Trước đây
   // dùng chung một bộ đơn vị nên tin cho thuê vẫn hiện "tỷ" — sai hoàn toàn.
   // Văn phòng / mặt bằng / kho thường báo giá theo nghìn đồng mỗi m² mỗi tháng.
-  const laThue = purposeOfDemand(demand) === "thue";
+  const laThue = purposeOfDemand(demand) === "thue" || purposeOfDemand(demand) === "can-thue";
+  // Tin TÌM (người mua, người thuê) — không bắt ảnh
+  const laTinTim = purposeOfDemand(demand) === "mua" || purposeOfDemand(demand) === "can-thue";
   // Nhà xưởng · kho bãi · văn phòng · mặt bằng KHÔNG báo tổng tiền tháng mà báo
   // NGHÌN ĐỒNG / M² / THÁNG (35.000đ/m²). Thiếu đơn vị này thì người đăng phải tự
   // nhân với diện tích — chỗ sai nhiều nhất khi nhập tin kho xưởng.
@@ -552,10 +559,11 @@ export default function PostListingForm() {
   //   · chinh    → nằm ngay trong "Thông tin chính" (bắt buộc, hiện đầu trang tin)
   //   · dacDiem  → xuống khối "Đặc điểm", để trống thì web không hiện
   // Tin CHO THUÊ có thêm 3 mục: thời gian vào ở · giá điện · giá nước.
-  const { chinh: specChinh, dacDiem: specDacDiem } = useMemo(
-    () => fieldsSplit(loaiHinh, purposeOfDemand(demand)),
-    [loaiHinh, demand],
-  );
+  // Nhóm Đất: ô theo đúng loại đã chọn (Đất nền / Đất nền dự án) — oTheoMucChon
+  const { chinh: specChinh, dacDiem: specDacDiem } = useMemo(() => {
+    const s = fieldsSplit(loaiHinh, purposeOfDemand(demand));
+    return { chinh: oTheoMucChon(s.chinh, loaiHinh, specValues.landType), dacDiem: oTheoMucChon(s.dacDiem, loaiHinh, specValues.landType) };
+  }, [loaiHinh, demand, specValues.landType]);
 
   // SỐ THỨ TỰ BƯỚC TỰ CHẠY — ẩn một khối (vd Nội thất với đất nền) thì các bước
   // sau tự dồn lên, không bao giờ nhảy số hay trùng số như trước.
@@ -704,10 +712,14 @@ export default function PostListingForm() {
           // Số khách đăng ký bằng số (Supabase đã nhận mã) cũng coi là đã xác minh; nhóm Email đã
           // nhận mã cho số liên hệ (0050) cũng được đăng tin.
           setSoDaXacMinh(!!pv.phone_verified || !!pv.sdt_lien_he_xac_minh || pv.role === "admin" || !!user.phone_confirmed_at);
+          // "Dự án" ở ô Nhu cầu: admin, hoặc khách đã được duyệt yêu cầu đăng dự án (Admin → Yêu cầu: dang_du_an · xong)
+          if (pv.role === "admin") setDuocDangDuAn(true);
+          else void supabase.from("customer_requests").select("id").eq("user_id", user.id).eq("loai", "dang_du_an").eq("status", "xong").limit(1)
+            .then(({ data }) => setDuocDangDuAn(!!data?.length), () => {});
           setSoTaiKhoan(chuanHoaSdt(p.phone ?? ""));
           setContactName((v) => v || p.full_name || "");
           setTenTaiKhoan((p.full_name ?? "").trim() || chuanHoaSdt(p.phone ?? ""));
-          setContactPhone((v) => v || p.phone || "");
+          setContactPhone((v) => v || p.phone || ""); // MỘT NGUỒN: số trong hồ sơ tài khoản (05/11/2026)
           // Email kỹ thuật (zalo_… / sdt_…@users.coastalland.vn) không bao giờ điền vào tin (26/10/2026)
           setContactEmail((v) => v || emailThat(p.email));
           // Ảnh đại diện mặc định = ảnh tài khoản (tự đặt / Google / Zalo) — chuẩn: tên + avatar theo tài khoản
@@ -740,7 +752,9 @@ export default function PostListingForm() {
       const { data, error } = await supabase.from("listings").select("*").eq("id", editId).single();
       if (error || !data) { setEditLoad("notfound"); return; }
       const r = data as ListingRow;
-      if (r.status === "approved" || r.status === "expired") setGoiDangDung({ tier: r.tier as TierId, het: r.tier_expires_at });
+      // Tin đã lên web (đang hiện · hết hạn · khách tự hạ): sửa nội dung giữ nguyên gói, KHÔNG bắt chọn gói (chủ dự án 05/11/2026)
+      const khachHa = r.status === "hidden" && (r.details as { ha_boi?: string } | null)?.ha_boi === "khach";
+      if (r.status === "approved" || r.status === "expired" || khachHa) setGoiDangDung({ tier: r.tier as TierId, het: r.tier_expires_at });
       // Tin NHÁP / CHỜ DUYỆT: nạp lại gói khách đã chọn (details.plan) — trước đây form mở ra trống gói, khách lưu
       // là gói của tin bị ghi thành trống (26/10/2026)
       if (r.status === "draft" || r.status === "pending") {
@@ -760,9 +774,9 @@ export default function PostListingForm() {
       const giaGhi = ((r.details ?? {}) as { giaTuGhi?: string }).giaTuGhi?.trim();
       if (r.price_vnd == null && giaGhi) { setPriceUnit(KHAC_GIA); setGiaTuGhi(giaGhi); setPriceValue(""); }
       else if (r.price_vnd == null) { setPriceUnit("Thoả thuận"); setPriceValue(""); }
-      else if (r.purpose === "thue") { setPriceUnit("triệu/tháng"); setPriceValue(String(Math.round((r.price_vnd / 1e6) * 10) / 10)); }
-      else if (r.price_vnd >= 1e9) { setPriceUnit("tỷ"); setPriceValue(String(Math.round((r.price_vnd / 1e9) * 100) / 100)); }
-      else { setPriceUnit("triệu"); setPriceValue(String(Math.round(r.price_vnd / 1e6))); }
+      else if (r.purpose === "thue") { setPriceUnit("triệu/tháng"); setPriceValue(String(Number((r.price_vnd / 1e6).toFixed(3)))); } // không làm tròn (05/11/2026)
+      else if (r.price_vnd >= 1e9) { setPriceUnit("tỷ"); setPriceValue(String(Number((r.price_vnd / 1e9).toFixed(6)))); }
+      else { setPriceUnit("triệu"); setPriceValue(String(Number((r.price_vnd / 1e6).toFixed(3)))); }
       setArea(r.area_m2 != null ? String(r.area_m2) : "");
       // Ô "Diện tích sử dụng" cũ ở Đặc điểm đã gộp vào ô chính (15/10/2026) — tin cũ chỉ ghi ở đó thì hiện sẵn.
       const dtSuDungCu = coDienTichXayDung(r.type ?? "") ? ((r.details ?? {}) as { specs?: Record<string, string> }).specs?.usableArea : undefined;
@@ -770,6 +784,7 @@ export default function PostListingForm() {
       setBeds(r.beds != null ? String(r.beds) : "");
       setBaths(r.baths != null ? String(r.baths) : "");
       setImages(r.images ?? []);
+      { const v = (r.images ?? []).filter((x) => isVideoUrl(x)).length; setSoAnhDaLuu({ anh: (r.images ?? []).length - v, video: v }); }
       const d = r.details ?? {};
       chiTietGoc.current = d as Record<string, unknown>;
       { const bd = (d as { plan?: { batDau?: string } }).plan?.batDau; if (bd && bd > new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10)) setBatDau(bd); }
@@ -865,7 +880,8 @@ export default function PostListingForm() {
       // Khách TỰ ghi đơn giá thuê (nghìn/m²/tháng) → được hiện trên tin; tự chia từ tổng giá thì không (20/10/2026)
       ...(donVi === "nghìn/m²/tháng" && Number(priceValue.replace(",", ".")) > 0
         ? { donGiaThue: Number(priceValue.replace(",", ".")), donGiaThueNhap: true }
-        : {}),
+        // Không ghi đơn giá → xoá khoá cũ khi sửa tin (không để đơn giá cũ lệch giá mới — 05/11/2026)
+        : { donGiaThue: undefined, donGiaThueNhap: undefined }),
       furnish: furnish || undefined,
       direction: direction || undefined,
       addressDetail: addressDetail.trim() || undefined,
@@ -986,15 +1002,20 @@ export default function PostListingForm() {
     if (!title.trim()) return ["Chưa nhập tiêu đề tin.", "4", "o-tieude"];
     // Bước 5 — GÓI TIN: bắt buộc chọn, kể cả gói đang được miễn phí. Không mặc định sẵn,
     // không tự đoán hộ — đây là thứ quyết định số tiền phải trả.
-    if (!planTier) return ["Chưa chọn gói tin.", "5"];
+    // TIN ĐÃ ĐĂNG (đã duyệt / hết hạn) đang SỬA: gói đã trả giữ nguyên, KHÔNG bắt chọn gói lại (chủ dự án 05/11/2026).
+    if (!planTier && !goiDangDung) return ["Chưa chọn gói tin.", "5"];
+    const goiTinh = (planTier || goiDangDung!.tier) as TierId;
     // Bước 6 — đổi sang gói thấp hơn sau khi đã up ảnh → số ảnh / video không được vượt mức của gói.
-    const toiDaAnh = duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId);
-    const toiDaVideo = duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId);
+    // Tin đã đăng: số ảnh đã có lúc duyệt luôn được giữ (gói chương trình có thể cho nhiều ảnh hơn gói thường).
+    const goc = goiDangDung ? soAnhDaLuu : { anh: 0, video: 0 };
+    const toiDaAnh = Math.max(goc.anh, duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, goiTinh));
+    const toiDaVideo = Math.max(goc.video, duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, goiTinh));
     const soVideo = images.filter((x) => isVideoUrl(x)).length;
     const soAnh = images.length - soVideo;
     // BẮT BUỘC ÍT NHẤT 1 ẢNH khi đăng (chủ dự án 26/10/2026); lưu nháp thì không đòi.
-    if (soAnh < 1) return ["Chưa thêm ảnh — tin cần ít nhất 1 ảnh.", "6", "b-anh"];
-    if (soAnh > toiDaAnh) return [`Tin ${getTier(planTier as TierId).name} chỉ đăng tối đa ${toiDaAnh} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`, "6"];
+    // Tin người mua, người thuê (Cần mua · Cần thuê) thường không có ảnh — thẻ hiện logo xám (05/11/2026)
+    if (soAnh < 1 && !laTinTim) return ["Chưa thêm ảnh — tin cần ít nhất 1 ảnh.", "6", "b-anh"];
+    if (soAnh > toiDaAnh) return [`Tin ${getTier(goiTinh).name} chỉ đăng tối đa ${toiDaAnh} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`, "6"];
     if (soVideo > toiDaVideo) return [`Mỗi tin chỉ đăng tối đa ${toiDaVideo} video — xoá video cũ rồi thêm lại.`, "6"];
     // Bước 7 — Liên hệ. Số điện thoại BẮT BUỘC ở mọi tin (27/09/2026) — phải là số gọi được.
     // Báo ĐÚNG Ô THIẾU (26/10/2026: đã đăng nhập, tên đã tự điền mà vẫn bị đòi "họ tên và số điện thoại")
@@ -1034,10 +1055,10 @@ export default function PostListingForm() {
     // SỐ CỦA TÀI KHOẢN (người đăng) — TÁCH HẲN khỏi số liên hệ trong tin (số liên hệ là quyền
     // của khách, ghi số ai cũng được). Chủ dự án chốt 28/09/2026, tài khoản email/Google:
     //   · chưa có số tài khoản → hộp nhỏ hỏi "Số điện thoại của bạn"
-    //   · số MỚI → không hỏi mã, lưu làm số tài khoản, đăng luôn
+    //   · (05/11/2026) số nào cũng gửi mã Zalo xác thực, nhập đúng mã mới lưu — xem dưới
     //   · số ĐANG CÓ tài khoản / tin cũ → mã Zalo 1 lần → gộp ngầm, đăng luôn
     // KHÁCH CHỈ GÕ SỐ MỘT LẦN (chuẩn các sàn lớn, chủ dự án 26/10/2026): tài khoản chưa có số → lấy chính số liên hệ
-    // khách vừa gõ trong form làm số tài khoản — không bật hộp bắt gõ lại. Số mới: lưu luôn. Số đã có tài khoản / tin cũ:
+    // khách vừa gõ trong form làm số tài khoản — không bắt gõ lại, chỉ nhập mã xác thực. Số đã có tài khoản / tin cũ:
     // hộp xác nhận điền sẵn số đó, tự gửi mã Zalo một lần để gộp.
     if (!asDraft && !diNap && soDaXacMinh === false && !daXacMinhXong) {
       const soDung = soTaiKhoan || chuanHoaSdt(contactPhone);
@@ -1045,21 +1066,11 @@ export default function PostListingForm() {
         setMoXacMinh(true);
         return;
       }
-      const kq = await fetch("/api/xac-thuc/kiem-tai-khoan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sdt: soDung }),
-      }).then((r) => r.json()).catch(() => null);
-      if (kq?.coTaiKhoan || Number(kq?.soTin) > 0) {
-        setSoXacMinh(soDung);
-        setMoXacMinh(true);
-        return;
-      }
-      if (!soTaiKhoan) {
-        if (userId) await createClient().from("profiles").update({ phone: soDung }).eq("id", userId);
-        setSoTaiKhoan(soDung);
-        setSoDaXacMinh(true);
-      }
+      // NHẬP SỐ PHẢI XÁC THỰC (chủ dự án 05/11/2026: "nhập số phải xác thực"): số nào cũng gửi mã qua Zalo của chính số đó,
+      // nhập đúng mã mới lưu làm số tài khoản và gửi tin — không còn "số mới lưu luôn, không hỏi mã".
+      setSoXacMinh(soDung);
+      setMoXacMinh(true);
+      return;
     }
 
     // VÍ KHÔNG ĐỦ TIỀN CHO GÓI ĐÃ CHỌN.
@@ -1076,11 +1087,23 @@ export default function PostListingForm() {
     // Batdongsan, chốt 01/10/2026): gói, ngày đăng, hạn giữ nguyên, không tính tiền, không
     // đổi trạng thái. Đang hiển thị → bản sửa hiện NGAY, admin kiểm sau (CSDL tự đánh dấu
     // "đã sửa", 0054). Đã hết hạn → lưu nội dung, bấm Đăng lại để gửi duyệt.
-    const daDang = Boolean(editId) && (editStatus === "approved" || editStatus === "expired");
+    const daDang = Boolean(editId) && !!goiDangDung;
     // Sửa CHÍNH tin đang chờ duyệt: tiền giữ của tin này đã nằm trong tạm giữ → cộng lại
     // phần đó vào khả dụng, chỉ so phần TĂNG thêm (đổi lên gói đắt hơn).
     const giaCu = editStatus === "pending" ? Number((chiTietGoc.current.plan as { giaBao?: number } | undefined)?.giaBao ?? 0) : 0;
-    const khaDung = (hoSoVi?.balance ?? 0) + (giaCu > 0 ? tachThue(giaCu).tongTra : 0);
+    // VÍ KHẢ DỤNG ĐỌC LẠI NGAY LÚC BẤM ĐĂNG (05/11/2026): trước đây chỉ đọc một lần lúc mở trang → vừa đăng tin khác (tạm giữ
+    // tăng) hoặc vừa nạp ở tab khác là form so sai: CSDL chặn VI_KHONG_DU mà không ra màn Nạp thêm, hoặc bắt nạp thừa.
+    let soDuKhaDung = hoSoVi?.balance ?? 0;
+    if (!asDraft && !daDang && phaiTra > 0) {
+      const { data: viMoi } = await createClient().rpc("so_du_kha_dung");
+      const v = (viMoi as { kha_dung: number; tam_giu: number }[] | null)?.[0];
+      if (v) {
+        soDuKhaDung = Number(v.kha_dung);
+        setHoSoVi((h) => (h ? { ...h, balance: soDuKhaDung } : h));
+        setTamGiu(Number(v.tam_giu));
+      }
+    }
+    const khaDung = soDuKhaDung + (giaCu > 0 ? tachThue(giaCu).tongTra : 0);
     const viThieu = diNap || (!asDraft && !daDang && phaiTra > 0 && khaDung < phaiTra);
     const luuNhap = asDraft || viThieu;
 
@@ -1120,8 +1143,13 @@ export default function PostListingForm() {
       // SỬA tin (nháp→nháp, chờ duyệt, đã duyệt…)
       const { status: _giu, ...noiDung } = values;
       void _giu;
+      // Tin đã đăng: đọc lại details MỚI NHẤT ngay trước khi lưu — trong lúc khách mở form, Admin có thể vừa duyệt nâng gói,
+      // máy vừa hạ VIP… gộp vào bản cũ đọc lúc mở form là ghi đè mất những thay đổi đó (05/11/2026).
+      const gocMoi = daDang
+        ? ((await supabase.from("listings").select("details").eq("id", maSua).single()).data?.details as Record<string, unknown> | null) ?? chiTietGoc.current
+        : chiTietGoc.current;
       const capNhat = daDang
-        ? { ...noiDung, details: { ...chiTietGoc.current, ...values.details, plan: chiTietGoc.current.plan } }
+        ? { ...noiDung, details: { ...gocMoi, ...values.details, plan: gocMoi.plan } }
         : values;
       ({ error: err } = await supabase.from("listings").update(capNhat).eq("id", maSua));
       if (err && /đặc quyền|dac quyen|privileged/i.test(err.message)) {
@@ -1162,7 +1190,7 @@ export default function PostListingForm() {
         }).catch(() => {});
       }
       try { if (userId) localStorage.removeItem(khoaNhap(userId)); } catch {}
-      setThieuTien({ can: phaiTra, du: khaDung, id: maTinNhap });
+      setThieuTien({ can: phaiTra, du: khaDung, id: maTinNhap, dienTiep: !duDeGui });
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -1219,7 +1247,8 @@ export default function PostListingForm() {
         {/* CTA cùng chuẩn cả vòng đăng tin + nạp tiền (26/10/2026): nút chính đen h-12 rộng hết khung, nút phụ viền cùng cỡ */}
         <div className="mx-auto mt-6 grid max-w-sm gap-2.5">
           <Link
-            href={`/tai-khoan/nap-tien?can=${conThieu}&luu=1${thieuTien.id ? `&ve=${encodeURIComponent(`/dang-tin?id=${thieuTien.id}`)}` : ""}`}
+            // Tin còn thiếu ô (chưa tự gửi duyệt được) → nạp xong VỀ LẠI TIN để điền tiếp, không sang Tin của tôi (05/11/2026)
+            href={`/tai-khoan/nap-tien?can=${conThieu}&luu=1${thieuTien.id ? `&ve=${encodeURIComponent(`/dang-tin?id=${thieuTien.id}`)}` : ""}${thieuTien.dienTiep ? "&dien-tiep=1" : ""}`}
             onClick={(e) => {
               // Nút Back của điện thoại từ trang nạp tiền phải về lại ĐÚNG TIN NHÁP (còn nội dung + gói), không về form trống
               // (chủ dự án 26/10/2026): đổi mốc trang này thành /dang-tin?id=<tin nháp> bằng router (Next tự ghi đè
@@ -1298,7 +1327,10 @@ export default function PostListingForm() {
       <div className="mt-6 min-w-0 space-y-6 lg:mt-0">
       {nhapCho && (() => {
         const chu = (k: string) => (typeof nhapCho[k] === "string" ? (nhapCho[k] as string).trim() : "");
-        const ten = chu("title") || [chu("category"), chu("province")].filter(Boolean).join(" · ");
+        // Loại hình ghi đúng tên như ô chọn (tenLoaiHinhDayDu, 05/11/2026) — không hiện tên nội bộ "Đất khác"
+        const sv = (nhapCho.specValues ?? {}) as Record<string, string>;
+        const loai = chu("category") && tenLoaiHinhDayDu(chu("category"), purposeOfDemand(chu("demand")), sv.landType);
+        const ten = chu("title") || [loai, chu("province")].filter(Boolean).join(" · ");
         return (
           <div className="rounded-2xl border border-cvr-blue/30 bg-cvr-blue/[0.06] p-4">
             <p className="text-[15px] leading-snug text-cvr-ink">
@@ -1342,14 +1374,6 @@ export default function PostListingForm() {
               tuGui={!!(soTaiKhoan || soXacMinh)}
               tieuDe={soTaiKhoan || soXacMinh ? "Xác nhận số điện thoại của bạn" : "Số điện thoại của bạn"}
               soGoiY={soTaiKhoan || soXacMinh}
-              onSoMoi={async (so) => {
-                const s = chuanHoaSdt(so);
-                if (userId) await createClient().from("profiles").update({ phone: s }).eq("id", userId);
-                setSoTaiKhoan(s);
-                setSoDaXacMinh(true);
-                setMoXacMinh(false);
-                save(false, true);
-              }}
               onXong={(_so, _gop, idMoi) => {
                 if (idMoi) { uidGop.current = idMoi; setUserId(idMoi); }
                 setSoDaXacMinh(true);
@@ -1365,7 +1389,7 @@ export default function PostListingForm() {
       {editId && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3">
           <p className="text-sm font-medium text-cvr-blue-ink">
-            Đang chỉnh sửa tin{editStatus === "draft" ? " nháp" : editStatus === "approved" ? " (đang hiển thị — lưu xong cập nhật ngay; gói và ngày đăng giữ nguyên)" : editStatus === "expired" ? " (đã hết hạn — sửa xong bấm Đăng lại)" : ""}
+            Đang chỉnh sửa tin{editStatus === "draft" ? " nháp" : editStatus === "approved" ? " (đang hiển thị — lưu xong cập nhật ngay; gói và ngày đăng giữ nguyên)" : editStatus === "expired" ? " (đã hết hạn — sửa xong bấm Đăng lại)" : goiDangDung && editStatus === "hidden" ? " (đã hạ — sửa xong bấm Đăng lại)" : ""}
             {/* Quy tắc 0045: tin đã đăng chỉ sửa nội dung của chính căn đó */}
             {editStatus && editStatus !== "draft" && (
               <span className="mt-0.5 block text-[13px] font-normal text-cvr-body">
@@ -1384,18 +1408,19 @@ export default function PostListingForm() {
       <Card id="b-loai" step={buoc()} title="Loại hình & địa chỉ" khoa={editStatus === "approved"}>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Tin cũ có nhu cầu đã tạm ẩn (Cần mua / Cần thuê) vẫn hiện đúng giá trị của nó khi sửa */}
-          <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={demandTypes.includes(demand) ? demandTypes : [...demandTypes, demand]} />
+          <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={[...new Set([...demandTypes, ...(duocDangDuAn ? [DEMAND_DU_AN] : []), demand])]} />
           {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
           <div id="o-loaihinh">
             <Label>Loại hình bất động sản *</Label>
             {/* CÙNG MỘT KIỂU BẢNG CHỌN với Tỉnh / Phường (chủ dự án 22/10/2026: ô chọn gốc của điện thoại hiện to,
                 khó nhìn, không rõ cách chọn / thoát) — bảng riêng, nút quay lại, kính lúp để tìm. Thứ tự theo nhóm. */}
             <ChonCoTim
-              value={loaiHinh}
-              onChange={(v) => { setCategory(v); setSpecValues({}); }}
-              options={nhomLoaiHinh.flatMap((g) => g.items)}
-              nhom={nhomLoaiHinh}
-              nhanHien={tenLoaiHinh}
+              // LOẠI HÌNH CHUẨN (chủ dự án 05/11/2026: "Đất - Đất nền - Đất nền dự án là CHA" · "Loại hình CHA là mục bắt buộc"): danh sách
+              // theo nhóm menu web; loại con (Loại đất, Loại căn hộ…) nằm trong Đặc điểm như cũ.
+              value={loaiHinh && giaTriChonLoaiHinh(loaiHinh, specValues.landType)}
+              onChange={(v) => { const { type, loaiCon } = tachChonLoaiHinh(v); setCategory(type); setSpecValues(loaiCon ? { landType: loaiCon } : {}); }}
+              options={nhomChonLoaiHinh(laThue ? "thue" : "ban").flatMap((g) => g.items)}
+              nhanHien={(v) => tenLoaiHinhMenu(v, laThue ? "thue" : "ban")}
               placeholder="Chọn loại hình"
               timPlaceholder=""
               khongTim
@@ -1549,9 +1574,7 @@ export default function PostListingForm() {
               {donVi === KHAC_GIA
                 ? <OGoTuGian value={giaTuGhi} onChange={setGiaTuGhi} className={inputCls} />
                 : <input type="text" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={donVi === "Thoả thuận"} placeholder={goiYGia(donVi)} className={inputCls + " disabled:opacity-50"} />}
-              <select value={donVi} onChange={(e) => setPriceUnit(e.target.value)} className={inputCls}>
-                {donViGia.map((u) => <option key={u} value={u}>{u}</option>)}
-              </select>
+              <ChonCoTim value={donVi} onChange={setPriceUnit} options={donViGia} placeholder="Đơn vị" timPlaceholder="" khongTim className={inputCls} />
             </div>
             {laThue && (donVi === "triệu/6 tháng" || donVi === "triệu/năm") && priceValue.trim() && (
               <p className="mt-1.5 text-xs text-cvr-muted">
@@ -1649,7 +1672,7 @@ export default function PostListingForm() {
         )}
         <div className="space-y-3">
         <MucAnHien
-          ten={`Đặc điểm — ${loaiHinh}`}
+          ten={`Đặc điểm — ${tenLoaiHinhMenu(giaTriChonLoaiHinh(loaiHinh, specValues.landType), laThue ? "thue" : "ban")}`}
           goiY={goiYDanhSach([...specDacDiem.filter((f) => !f.batBuoc).map((f) => f.label), "Hướng nhà / đất", "Tình trạng pháp lý"])}
           soChon={specDacDiem.filter((f) => !f.batBuoc && String(specValues[f.key] ?? "").trim()).length + [direction, legal].filter((x) => String(x ?? "").trim()).length}
         >
@@ -1748,11 +1771,11 @@ export default function PostListingForm() {
           <div className="rounded-2xl border border-cvr-line bg-cvr-surface px-5 py-4 text-sm text-cvr-body">
             <Dong nhan="Loại tin" giaTri={getTier(goiDangDung.tier).name} />
             <Dong
-              nhan={editStatus === "expired" ? "Đã hết hạn" : "Hiển thị đến"}
+              nhan={editStatus === "expired" ? "Đã hết hạn" : editStatus === "hidden" ? "Đã hạ, hạn gói đến" : "Hiển thị đến"}
               giaTri={goiDangDung.het ? new Date(goiDangDung.het).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—"}
             />
             <p className="mt-3 text-xs text-cvr-muted">
-              {editStatus === "expired" ? "Chọn gói mới khi bấm Đăng lại trong Tin đăng của tôi." : "Sửa thông tin không đổi gói, ngày đăng và thời hạn."}
+              {editStatus === "expired" || editStatus === "hidden" ? "Chọn gói mới khi bấm Đăng lại trong Tin đăng của tôi." : "Sửa thông tin không đổi gói, ngày đăng và thời hạn."}
             </p>
           </div>
         ) : (
@@ -2004,16 +2027,18 @@ export default function PostListingForm() {
       {/* Hình ảnh — SAU khi chọn gói (chủ dự án 10/10/2026, nhắc lại 22/10/2026: "không đưa gói tin lên trước thì
           không thể biết giới hạn ảnh"): số ảnh / video tối đa theo gói đã chọn, số từ admin.
           Tải từ máy / dán link, ảnh đầu là ảnh đại diện. */}
-      <Card id="b-anh" step={buoc()} title="Hình ảnh & video *">
+      {/* Tin người mua, người thuê thường không có ảnh → mục không bắt buộc, bỏ dấu * (05/11/2026) */}
+      <Card id="b-anh" step={buoc()} title={laTinTim ? "Hình ảnh & video" : "Hình ảnh & video *"}>
         <ImagePicker
           value={images}
           onChange={setImages}
           // CHƯA CHỌN GÓI (chủ dự án chốt 22/10/2026): tối đa ANH_CHUA_CHON_GOI ảnh, chưa nhận video; nhắc chọn gói để
           // up tiếp theo quy định của gói (số từ admin). Trước đây lấy gói đầu bảng giá (Diamond) làm mặc định — sai.
-          maxImages={!planTier ? ANH_CHUA_CHON_GOI : duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId)}
-          maxVideos={!planTier ? 0 : duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId)}
-          tierName={planTier ? getTier(planTier as TierId).name : undefined}
-          chuaChonGoi={!planTier}
+          // Tin ĐÃ ĐĂNG đang sửa: theo gói đang dùng (không bắt chọn gói lại), giữ đủ số ảnh / video đã duyệt (05/11/2026)
+          maxImages={goiDangDung ? Math.max(soAnhDaLuu.anh, soAnhToiDa(billing, goiDangDung.tier)) : !planTier ? ANH_CHUA_CHON_GOI : duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId)}
+          maxVideos={goiDangDung ? Math.max(soAnhDaLuu.video, soVideoToiDa(billing, goiDangDung.tier)) : !planTier ? 0 : duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId)}
+          tierName={goiDangDung ? getTier(goiDangDung.tier).name : planTier ? getTier(planTier as TierId).name : undefined}
+          chuaChonGoi={!planTier && !goiDangDung}
         />
       </Card>
 
@@ -2095,7 +2120,8 @@ export default function PostListingForm() {
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
           </svg>
-          {saving === "publish" ? "Đang gửi duyệt…" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : "Đăng tin ngay"}
+          {/* Tin đã lên web: sửa xong chỉ lưu nội dung, không gửi duyệt (đang hiện → lên ngay; hết hạn / đã hạ → bấm Đăng lại) — 05/11/2026 */}
+          {goiDangDung && editId ? (saving === "publish" ? "Đang cập nhật…" : "Cập nhật") : saving === "publish" ? "Đang gửi duyệt…" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : "Đăng tin ngay"}
         </button>
         <button
           type="button"
@@ -2326,14 +2352,18 @@ function Pick({ label, value, onChange, options, placeholder, disabled }: { labe
   return (
     <div>
       <Label>{label}</Label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} className={inputCls + " disabled:cursor-not-allowed disabled:opacity-45"}>
-        {placeholder && <option value="">{placeholder}</option>}
-        {/* Giá trị máy tự điền từ bản đồ có thể không nằm trong danh mục của web
-            (tên mới sau sáp nhập, tỉnh chưa nhập đủ danh mục). Không thêm vào thì
-            thẻ select hiện TRỐNG TRƠN dù dữ liệu đã có — người đăng tưởng hỏng. */}
-        {value && !options.includes(value) && <option value={value}>{value}</option>}
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
+      {/* CÙNG MỘT KIỂU BẢNG CHỌN với các ô khác (chủ dự án 05/11/2026 "chuẩn cả PC và ĐT"). Giá trị máy tự điền không nằm
+          trong danh mục vẫn hiện đúng chữ (không để ô trống trơn). */}
+      <ChonCoTim
+        value={value}
+        onChange={onChange}
+        options={value && !options.includes(value) ? [value, ...options] : options}
+        placeholder={placeholder || label.replace(/\s*\*$/, "")}
+        timPlaceholder=""
+        khongTim
+        disabled={disabled}
+        className={inputCls}
+      />
     </div>
   );
 }

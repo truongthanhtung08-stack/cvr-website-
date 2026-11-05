@@ -36,11 +36,11 @@ const data = {
       // Câu giới thiệu = đúng câu chân trang chủ dự án duyệt 29/10/2026 (một câu cho web, Google, AI)
       description:
         "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản trực tuyến ưu việt, chuyên cung cấp dịch vụ đăng tin mua bán, cho thuê nhà đất, căn hộ và các dự án Bất động sản.",
-      slogan: "Cổng thông tin mua bán, cho thuê nhà đất",
+      slogan: "Cổng thông tin bất động sản trực tuyến",
       // Câu phân biệt (28/10/2026): gõ "coastal land" thì khung AI của Google trả nghĩa từ điển "đất ven biển" — nói rõ đây là TÊN
       // THƯƠNG HIỆU của cổng thông tin bất động sản (schema.org disambiguatingDescription).
       disambiguatingDescription:
-        "COASTAL LAND: Cổng thông tin bất động sản — mua bán, cho thuê nhà đất", // 29/10/2026 chủ dự án: "để Google hiểu Coastal Land là cổng thông tin bất động sản"
+        "COASTAL LAND – Cổng thông tin bất động sản trực tuyến · Cổng đăng tin mua bán, cho thuê nhà đất", // 05/11/2026 Branding SEO 2 câu (anh chốt); 29/10/2026 chủ dự án: "để Google hiểu Coastal Land là cổng thông tin bất động sản"
       areaServed: [
         { "@type": "Country", name: "Việt Nam" },
       ],

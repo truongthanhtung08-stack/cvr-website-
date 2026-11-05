@@ -13,7 +13,10 @@ import { tachNhieuSdt } from "@/lib/phone";
 
 export type TimThay = { id: string; tu: "ho-so" | "so-phu" } | null | "trung";
 
-export async function timTaiKhoan(admin: SupabaseClient, sdt: string): Promise<TimThay> {
+// boQuaAdmin (chủ dự án 05/11/2026: "liên quan gì đến admin"): tài khoản QUẢN TRỊ không phải khách → khi xét "số này đã
+// thuộc khách nào chưa" (đăng ký, đăng tin, thêm số) thì BỎ QUA tài khoản admin. Đăng nhập / đổi mật khẩu bằng số thì vẫn
+// tìm cả admin (không truyền cờ) — admin vẫn đăng nhập bằng số của mình như cũ.
+export async function timTaiKhoan(admin: SupabaseClient, sdt: string, tuyChon?: { boQuaAdmin?: boolean }): Promise<TimThay> {
   const so84 = `84${sdt.slice(1)}`;
   const [{ data: hs }, { data: phu }] = await Promise.all([
     admin.from("profiles").select("id,phone_verified").or(`phone.eq.${sdt},phone.eq.${so84},phone.eq.+${so84}`),
@@ -33,6 +36,10 @@ export async function timTaiKhoan(admin: SupabaseClient, sdt: string): Promise<T
     if (hopLe) ung.set(h.id, { tu: "ho-so", xacMinh: true });
   }
   for (const p of phu ?? []) if (!ung.has(p.user_id)) ung.set(p.user_id, { tu: "so-phu", xacMinh: !!p.da_xac_minh });
+  if (tuyChon?.boQuaAdmin && ung.size) {
+    const { data: qt } = await admin.from("profiles").select("id").in("id", [...ung.keys()]).eq("role", "admin");
+    for (const q of qt ?? []) ung.delete(q.id as string);
+  }
 
   if (ung.size === 0) return null;
   if (ung.size === 1) {

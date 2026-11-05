@@ -8,7 +8,7 @@ import OGoTuGian from "@/components/OGoTuGian";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
-import { saleTypeGroups, rentTypeGroups, tenLoaiHinh } from "@/lib/filters";
+import { nhomChonLoaiHinh, tenLoaiHinhMenu, tachChonLoaiHinh, giaTriChonLoaiHinh, oTheoMucChon } from "@/lib/categories";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
 import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, phuongCuTheoGhim, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
@@ -173,9 +173,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     if (avatarRef.current) avatarRef.current.value = "";
   }
 
-  const typeGroups = purpose === "thue" ? rentTypeGroups : saleTypeGroups;
   // Tin CHO THUÊ có thêm 3 mục: thời gian vào ở · giá điện · giá nước
-  const specFields = type ? fieldsFor(type, purpose) : [];
+  // Ô theo đúng loại đã chọn (Đất nền / Đất nền dự án) — loại con nằm trong Đặc điểm như cũ
+  const specFields = type ? oTheoMucChon(fieldsFor(type, purpose), type, specValues.landType) : [];
 
   // ĐỔI LOẠI HÌNH / MỤC ĐÍCH → MỌI MỤC ĐI THEO — cùng luật form đăng tin của khách (chủ dự án 22/10/2026).
   const khoaLoai = `${type}|${purpose}`;
@@ -451,49 +451,70 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       <Panel title="Phân loại">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Mục đích">
-            <select value={purpose} onChange={(e) => { setPurpose(e.target.value as ListingPurpose); setType(""); }} className={inputCls}>
-              <option value="ban">Mua bán</option>
-              <option value="thue">Cho thuê</option>
-              <option value="mua">Cần mua</option>
-              <option value="can-thue">Cần thuê</option>
-            </select>
+            {/* MỌI Ô CHỌN CÙNG MỘT KIỂU BẢNG CHỌN (chủ dự án 05/11/2026 "chuẩn cả PC và ĐT") — không lẫn ô chọn gốc của máy */}
+            <ChonCoTim
+              value={purpose}
+              onChange={(v) => { setPurpose(v as ListingPurpose); setType(""); }}
+              options={["ban", "thue", "mua", "can-thue"]}
+              nhanHien={(v) => ({ ban: "Mua bán", thue: "Cho thuê", mua: "Cần mua", "can-thue": "Cần thuê" } as Record<string, string>)[v] ?? v}
+              placeholder="Mục đích"
+              timPlaceholder=""
+              khongTim
+              className={inputCls}
+            />
           </Field>
-          <Field label="Loại hình">
-            <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
-              <option value="">— Chọn loại hình —</option>
-              {typeGroups.map((g) => (
-                <optgroup key={g.label} label={g.label}>
-                  {g.items.map((t) => <option key={t} value={t}>{tenLoaiHinh(t)}</option>)}
-                </optgroup>
-              ))}
-            </select>
+          {/* LOẠI HÌNH CHUẨN — cùng danh sách, cùng tên với form đăng tin của khách (chủ dự án 05/11/2026: "Đất - Đất nền - Đất nền dự án
+              là CHA" · "Loại hình CHA là mục bắt buộc"). Loại con nằm trong Đặc điểm như cũ. */}
+          <Field label="Loại hình (bắt buộc)">
+            <ChonCoTim
+              value={type && giaTriChonLoaiHinh(type, specValues.landType)}
+              onChange={(v) => { const { type: t, loaiCon } = tachChonLoaiHinh(v); setType(t); setSpecValues((s) => (loaiCon ? { ...s, landType: loaiCon } : Object.fromEntries(Object.entries(s).filter(([k]) => k !== "landType")))); }}
+              options={nhomChonLoaiHinh(purpose === "thue" ? "thue" : "ban").flatMap((g) => g.items)}
+              nhanHien={(v) => tenLoaiHinhMenu(v, purpose === "thue" ? "thue" : "ban")}
+              placeholder="— Chọn loại hình —"
+              timPlaceholder=""
+              khongTim
+              className={inputCls}
+            />
           </Field>
           <Field label="Hạng tin (CVR)">
-            <select value={tier} onChange={(e) => setTier(e.target.value as ListingTier)} className={inputCls}>
-              <option value="diamond">Diamond — rất lớn, trang chủ</option>
-              <option value="gold">Gold — nổi bật</option>
-              <option value="silver">Silver — ưu tiên</option>
-              <option value="basic">Thường</option>
-            </select>
+            <ChonCoTim
+              value={tier}
+              onChange={(v) => setTier(v as ListingTier)}
+              options={["diamond", "gold", "silver", "basic"]}
+              nhanHien={(v) => ({ diamond: "Diamond — rất lớn, trang chủ", gold: "Gold — nổi bật", silver: "Silver — ưu tiên", basic: "Thường" } as Record<string, string>)[v] ?? v}
+              placeholder="Hạng tin"
+              timPlaceholder=""
+              khongTim
+              className={inputCls}
+            />
           </Field>
           <Field label="Thời hạn">
-            <select value={soNgayGoi} onChange={(e) => setSoNgayGoi(Number(e.target.value))} className={inputCls}>
-              {(() => {
-                const bang = bangTheoMucDich(billing, purpose);
-                // Tin admin đăng hộ tính như thành viên mới: chương trình đang chạy thì đúng số ngày của chương trình.
-                if (huongKhuyenMai(bang.free, { goi: tier, homNay: homNayVn(), coChu: Boolean(initial?.owner_id), soNgayMoTk: 0 })) {
-                  return <option value={0}>{bang.free.hienThi ?? bang.free.days} ngày · khuyến mãi thành viên mới</option>;
-                }
-                const ds = [...(bang.plans.find((p) => p.tierId === tier)?.terms ?? [])].sort((a, b) => a.days - b.days);
-                // Giá gói theo bảng giá ĐÃ DUYỆT (chưa VAT) — để admin nâng hạng thấy ngay giá từng gói.
-                const gia = (n: number) => (n > 0 ? `${n.toLocaleString("vi-VN")}đ` : "0đ");
-                if (!ds.length) return <option value={0}>Chưa có bảng giá đã duyệt</option>;
-                return <>
-                  <option value={0}>{`${ds[0].days} ngày · ${gia(ds[0].price)} (gói ngắn nhất)`}</option>
-                  {ds.map((t) => <option key={t.days} value={t.days}>{`${t.days} ngày · ${gia(t.price)}`}</option>)}
-                </>;
-              })()}
-            </select>
+            {(() => {
+              const bang = bangTheoMucDich(billing, purpose);
+              const gia = (n: number) => (n > 0 ? `${n.toLocaleString("vi-VN")}đ` : "0đ");
+              // Tin admin đăng hộ tính như thành viên mới: chương trình đang chạy thì đúng số ngày của chương trình.
+              const mp = huongKhuyenMai(bang.free, { goi: tier, homNay: homNayVn(), coChu: Boolean(initial?.owner_id), soNgayMoTk: 0 });
+              const ds = [...(bang.plans.find((p) => p.tierId === tier)?.terms ?? [])].sort((a, b) => a.days - b.days);
+              // Giá gói theo bảng giá ĐÃ DUYỆT (chưa VAT) — để admin nâng hạng thấy ngay giá từng gói.
+              const ten: Record<string, string> = mp
+                ? { "0": `${bang.free.hienThi ?? bang.free.days} ngày · khuyến mãi thành viên mới` }
+                : !ds.length
+                  ? { "0": "Chưa có bảng giá đã duyệt" }
+                  : { "0": `${ds[0].days} ngày · ${gia(ds[0].price)} (gói ngắn nhất)`, ...Object.fromEntries(ds.map((t) => [String(t.days), `${t.days} ngày · ${gia(t.price)}`])) };
+              return (
+                <ChonCoTim
+                  value={ten[String(soNgayGoi)] ? String(soNgayGoi) : "0"}
+                  onChange={(v) => setSoNgayGoi(Number(v))}
+                  options={Object.keys(ten)}
+                  nhanHien={(v) => ten[v] ?? v}
+                  placeholder="Thời hạn"
+                  timPlaceholder=""
+                  khongTim
+                  className={inputCls}
+                />
+              );
+            })()}
           </Field>
         </div>
       </Panel>
@@ -662,15 +683,16 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             if (!uv.length) return null;
             return (
               <Field label="Phường/Xã trước sáp nhập">
-                <select
+                <ChonCoTim
                   // Lựa chọn lạc (đổi tỉnh, ghim lại bản đồ…) coi như chưa chọn.
                   value={uv.some((x) => x.nhan === phuongCu) ? phuongCu : ""}
-                  onChange={(e) => setPhuongCu(e.target.value)}
+                  onChange={setPhuongCu}
+                  options={uv.map((x) => x.nhan)}
+                  placeholder={`— ${ward} gộp ${uv.length} phường/xã cũ —`}
+                  timPlaceholder="Tìm phường/xã cũ"
+                  xoaDuoc
                   className={inputCls}
-                >
-                  <option value="">— {ward} gộp {uv.length} phường/xã cũ —</option>
-                  {uv.map((x) => <option key={x.nhan} value={x.nhan}>{x.nhan}</option>)}
-                </select>
+                />
               </Field>
             );
           })()}
@@ -830,14 +852,26 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       <Panel title="Thông tin người đăng / liên hệ">
         {/* Đăng GIÙM khách: chọn khách hàng → tự điền tên/SĐT của họ */}
         <Field label="Tin này của khách hàng nào (đăng giùm)">
-          <select value={ownerId} onChange={(e) => pickOwner(e.target.value)} className={inputCls}>
-            <option value="">— Chọn khách hàng / đăng dưới tên admin —</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {(c.full_name || c.email || "(chưa đặt tên)")}{c.phone ? ` · ${c.phone}` : ""}{c.role === "admin" ? " · (admin)" : ""}
-              </option>
-            ))}
-          </select>
+          {(() => {
+            // Bảng chọn tìm theo CHỮ hiện ra (tên · số) → giá trị trong bảng là nhãn, đổi lại id khi chọn. Trùng nhãn thêm 6 ký tự mã.
+            const nhan = (c: Cust) => `${c.full_name || c.email || "(chưa đặt tên)"}${c.phone ? ` · ${c.phone}` : ""}${c.role === "admin" ? " · (admin)" : ""}`;
+            const dem = new Map<string, number>();
+            customers.forEach((c) => dem.set(nhan(c), (dem.get(nhan(c)) ?? 0) + 1));
+            const tenCua = (c: Cust) => ((dem.get(nhan(c)) ?? 0) > 1 ? `${nhan(c)} · ${c.id.slice(0, 6)}` : nhan(c));
+            const theoTen = new Map(customers.map((c) => [tenCua(c), c.id]));
+            const dang = customers.find((c) => c.id === ownerId);
+            return (
+              <ChonCoTim
+                value={dang ? tenCua(dang) : ""}
+                onChange={(v) => pickOwner(theoTen.get(v) ?? "")}
+                options={[...theoTen.keys()]}
+                placeholder="— Chọn khách hàng / đăng dưới tên admin —"
+                timPlaceholder="Tìm tên hoặc số điện thoại"
+                xoaDuoc
+                className={inputCls}
+              />
+            );
+          })()}
         </Field>
         <p className="mt-1.5 mb-3 text-xs text-cvr-faint">
           Chọn khách → tự điền tên &amp; SĐT của khách vào ô dưới. Tin sẽ thuộc về tài khoản khách đó (họ thấy trong &quot;Tin đăng của tôi&quot;).

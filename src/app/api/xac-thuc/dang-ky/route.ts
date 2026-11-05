@@ -82,7 +82,7 @@ export async function POST(req: Request) {
   if (!db) return NextResponse.json({ ok: false, loi: "Hệ thống chưa sẵn sàng." }, { status: 503 });
 
   // 1 SỐ = 1 TÀI KHOẢN: số đã xác minh ở tài khoản khác (kể cả tài khoản email) thì không tạo thêm.
-  if (sdt && kenh === "zalo" && (await timTaiKhoan(db, sdt)))
+  if (sdt && kenh === "zalo" && (await timTaiKhoan(db, sdt, { boQuaAdmin: true })))
     return NextResponse.json(
       { ok: false, loi: "Số điện thoại này đã có tài khoản. Bạn đăng nhập hoặc dùng 'Quên mật khẩu'.", daCo: true },
       { status: 409 },

@@ -85,6 +85,8 @@ export async function thucHienUpTin(
   const { nhac_het_han: _nhac, nhac_het_han_luc: _nhacLuc, bao_het_han: _bhh, bao_het_han_luc: _bhhLuc, bao_da_nhan: _bao, ly_do_tu_choi: _lyDo, ha_boi: _haBoi, ha_luc: _haLuc, ...chiTiet } =
     (tin.details as Record<string, unknown> | null) ?? {};
   void _nhac; void _nhacLuc; void _bhh; void _bhhLuc; void _bao; void _lyDo; void _haBoi; void _haLuc;
+  // Tin nháp chờ nạp: giữ NGÀY HẸN ĐĂNG khách đã chọn ở form (trước đây ghi lại plan làm mất batDau → tin lên ngay lúc duyệt — 05/11/2026)
+  const batDauCu = laNhap ? (tin.details as { plan?: { batDau?: string } } | null)?.plan?.batDau : undefined;
   const { data: daGui, error } = await admin
     .from("listings")
     .update({
@@ -96,7 +98,7 @@ export async function thucHienUpTin(
       tier_expires_at: null,
       da_tru_vi: false,
       details: laNhap
-        ? { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao, ...(chonKhuyenMai(tin.details) ? {} : { khuyenMai: false }) }, bao_da_nhan: true, gui_luc: new Date().toISOString() }
+        ? { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao, ...(chonKhuyenMai(tin.details) ? {} : { khuyenMai: false }), ...(batDauCu ? { batDau: batDauCu } : {}) }, bao_da_nhan: true, gui_luc: new Date().toISOString() }
         : { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, dang_lai: true, gui_luc: new Date().toISOString() },
     })
     .eq("id", id)
@@ -152,7 +154,7 @@ export async function xuLyUpCho(admin: SupabaseClient, userId: string): Promise<
 
     for (const y of (ds ?? []) as { id: number; listing_id: string; tier: TierId; so_ngay: number }[]) {
       const kq = await thucHienUpTin(admin, userId, y.listing_id, y.tier, y.so_ngay);
-      if (!kq.ok && kq.viThieu) break; // vẫn chưa đủ tiền → giữ nguyên chờ, dừng
+      if (!kq.ok && kq.viThieu) continue; // tin này vẫn chưa đủ tiền → giữ nguyên chờ, xét tiếp tin sau (tin rẻ hơn vẫn được gửi — 05/11/2026)
       await admin.from("up_cho").update({
         trang_thai: kq.ok ? "xong" : "loi",
         ghi_chu: kq.ok ? "Đã gửi đăng lại, chờ duyệt" : kq.loi,

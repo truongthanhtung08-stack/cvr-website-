@@ -72,9 +72,9 @@ const SITE_TITLE = "COASTAL LAND";
 // CÂU ĐỊNH VỊ CHUẨN — dùng thống nhất ở MỌI nơi: tiêu đề mặc định, thẻ chia sẻ
 // (Zalo/Facebook/Messenger), manifest, và tên trên Google Business Profile.
 // Google đối chiếu các nguồn này với nhau: gọi mỗi nơi một kiểu thì thương hiệu bị loãng.
-const SITE_TAGLINE = "COASTAL LAND — Cổng thông tin mua bán, cho thuê nhà đất";
+const SITE_TAGLINE = "COASTAL LAND – Cổng thông tin bất động sản trực tuyến"; // Branding SEO, anh chốt 05/11/2026 (câu 2: "Cổng đăng tin mua bán, cho thuê nhà đất")
 const SITE_DESC =
-  "Cổng thông tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Tin hình thật, liên hệ trực tiếp người bán, người cho thuê.";
+  "Cổng đăng tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Tin hình thật, liên hệ trực tiếp người bán, người cho thuê.";
 // ── ẢNH XEM TRƯỚC KHI CHIA SẺ LINK (Zalo · Facebook · Messenger) ────────────
 // LẤY ĐÚNG ẢNH HERO CỦA TRANG CHỦ mà chủ dự án đặt trong /admin/noi-dung.
 //
@@ -150,7 +150,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: SITE_DESC,
       // KHÔNG khai cứng width/height nữa: ảnh Hero do chủ dự án đổi trong admin, mỗi
         // tấm một kích thước. Khai sai số đo thì Zalo/Facebook cắt ảnh lệch.
-        images: [{ url: OG_IMAGE_URL, alt: "COASTAL LAND — Cổng thông tin mua bán, cho thuê nhà đất" }],
+        images: [{ url: OG_IMAGE_URL, alt: SITE_TAGLINE }],
     },
     twitter: {
       card: "summary_large_image",

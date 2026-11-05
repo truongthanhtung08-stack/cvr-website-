@@ -64,6 +64,9 @@ function O({ src, alt, className = "", sizes, onMo, children, dau, duPhong, vide
     <button type="button" onClick={onMo} className={`relative block overflow-hidden bg-cvr-surface ${className}`}>
       {nguon && <Image src={nguon} alt={alt} fill sizes={sizes} loading={dau ? "eager" : "lazy"} fetchPriority={dau ? "high" : undefined} unoptimized={nguon.startsWith("https://i.ytimg.com")} className="object-cover" onError={() => setLoi(true)} onLoad={(e) => { if (duPhong && e.currentTarget.naturalWidth <= 120) setLoi(true); }} />}
       {!nguon && videoTep && <video src={`${videoTep}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 h-full w-full object-cover" />}
+      {/* Không ảnh, không video (tin cần mua, cần thuê…) → logo Coastal Land xám, cùng khung với thẻ máy tính (AnhChay) — 05/11/2026 */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {!nguon && !videoTep && <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />}
       {children}
     </button>
   );

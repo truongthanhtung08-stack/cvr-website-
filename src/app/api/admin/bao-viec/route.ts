@@ -35,9 +35,8 @@ export async function GET(request: Request) {
   const khoi: KhoiBao[] = [];
 
   try {
-    const [tinCho, tinSua, duAn, hoSo, yeuCau, tongCho] = await Promise.all([
+    const [tinCho, duAn, hoSo, yeuCau, tongCho] = await Promise.all([
       admin.from("listings").select("id,title").eq("status", "pending").gte("updated_at", tu).lt("updated_at", den),
-      admin.from("listings").select("id,title").eq("status", "approved").gte("details->>da_sua_luc", tu).lt("details->>da_sua_luc", den),
       // Dự án nạp hàng loạt (details.dangThe) là việc nội bộ → không email, chỉ hiện ở Admin → Tổng quan
       admin.from("projects").select("id,name").eq("status", "pending").is("details->>dangThe", null).gte("updated_at", tu).lt("updated_at", den),
       admin.from("project_poster_requests").select("id,company_name,project_name").gte("created_at", tu).lt("created_at", den),
@@ -54,14 +53,7 @@ export async function GET(request: Request) {
         link: "/admin/tin-dang",
         nhanLink: EMAIL.moiDeDuyet,
       });
-    const sua = (tinSua.data ?? []) as { id: string; title: string | null }[];
-    if (sua.length)
-      khoi.push({
-        tieuDe: kemSo(VIEC.tinSua, sua.length),
-        dong: sua.map((t) => `${t.id.slice(0, 8).toUpperCase()} · ${ten(t.title)}`),
-        link: "/admin/tin-dang",
-        nhanLink: EMAIL.moiDeKiem,
-      });
+    // Khách sửa tin đang hiển thị: Admin không kiểm, không báo (chủ dự án 05/11/2026 — Admin chỉ duyệt tin mới)
     const da = (duAn.data ?? []) as { name: string | null }[];
     if (da.length) khoi.push({ tieuDe: kemSo(VIEC.duAnKhach, da.length), dong: da.map((d) => ten(d.name)), link: "/admin/du-an" });
     const hs = (hoSo.data ?? []) as { company_name: string | null; project_name: string | null }[];

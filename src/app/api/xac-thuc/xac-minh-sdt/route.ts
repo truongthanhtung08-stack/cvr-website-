@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient as taoClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { phatMa, kiemMa, guiMaQuaZalo } from "@/lib/maXacThuc";
+import { phatMa, kiemMa, guiMaQuaZalo, guiMaQuaEmail } from "@/lib/maXacThuc";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
 
@@ -36,10 +36,9 @@ export async function POST(req: Request) {
   // PHÂN TÀI KHOẢN THEO CÁCH ĐĂNG NHẬP (chủ dự án chốt 01/10/2026):
   //   · Nhóm SĐT (Zalo + Số điện thoại): định danh = số. Tài khoản sinh từ Zalo (web không
   //     lấy được số) khai số ĐÃ CÓ tài khoản → GỘP vào tài khoản của số, Zalo gắn sang đó.
-  //   · Nhóm Email (Email + Google): định danh = email, GIỮ RIÊNG. Khai số đã thuộc tài khoản
-  //     khác → nhận mã = số của mình → ghi là SỐ LIÊN HỆ ĐÃ XÁC MINH (0050), không gộp, không
-  //     khoá ai, không giành số của tài khoản SĐT.
-  const tim = await timTaiKhoan(admin, sdt);
+  //   · Nhóm Email (Email + Google): (05/11/2026, thay chốt cũ "giữ riêng") xác thực số đã có tài khoản → GỘP mọi
+  //     tài khoản của số đó (tài khoản SĐT + tài khoản Zalo ghi số đó) về tài khoản email đang dùng — xem khối gộp bên dưới.
+  const tim = await timTaiKhoan(admin, sdt, { boQuaAdmin: true });
   if (tim === "trung") return loi("Số này đang gắn với nhiều tài khoản. Vui lòng liên hệ Coastal Land.", 409);
   const idCu = tim && tim.id !== uid ? tim.id : null;
   const laTkZalo = /^zalo_.+@users\.coastalland\.vn$/.test(u.user?.email ?? "");
@@ -47,9 +46,16 @@ export async function POST(req: Request) {
   if (b.buoc === "gui-ma") {
     const phat = await phatMa(sdt, "zalo", "xac-minh-sdt");
     if (!phat.ok) return loi(phat.loi, 429);
-    const gui = await guiMaQuaZalo(sdt, phat.ma);
-    if (!gui.ok) return loi("Chưa gửi được mã qua Zalo. Vui lòng thử lại sau ít phút.", 503);
-    return NextResponse.json({ ok: true });
+    // MÃ GỬI CẢ ZALO LẪN EMAIL (chủ dự án 05/11/2026: "khách nhập số đt, có mã qua cả email và Zalo để xác thực và gộp tài
+    // khoản" · "có cả 2 nếu khách có email"): Zalo về đúng số đó + email thật của tài khoản đang dùng (email kỹ thuật
+    // …@users.coastalland.vn không tính). Một mã, nhận ở kênh nào cũng nhập được. Một kênh tới là đủ.
+    const emailTk = u.user?.email && !/@users\.coastalland\.vn$/i.test(u.user.email) ? u.user.email : null;
+    const [gui, guiEmail] = await Promise.all([
+      guiMaQuaZalo(sdt, phat.ma),
+      emailTk ? guiMaQuaEmail(emailTk, phat.ma, "xac-minh-sdt") : Promise.resolve({ ok: false }),
+    ]);
+    if (!gui.ok && !guiEmail.ok) return loi("Chưa gửi được mã. Vui lòng thử lại sau ít phút.", 503);
+    return NextResponse.json({ ok: true, quaZalo: gui.ok, quaEmail: guiEmail.ok ? emailTk : null });
   }
 
   if (b.buoc !== "xac-nhan") return loi("Bước không hợp lệ.");
@@ -107,13 +113,42 @@ export async function POST(req: Request) {
     });
   }
 
-  if (idCu) {
-    // Nhóm Email: số đã thuộc tài khoản khác → chỉ là SỐ LIÊN HỆ ĐÃ XÁC MINH của tài khoản
-    // email này (được đăng tin). Không gộp, không khoá, không đụng tài khoản của số đó.
+  // TÀI KHOẢN EMAIL / GOOGLE xác thực số → GỘP MỌI TÀI KHOẢN CỦA CÙNG SỐ về MỘT (chủ dự án 05/11/2026: "gộp đồng bộ về
+  // một nơi" · "khách nhập đúng số trước khi đăng tin — số này là số của Zalo"; thay chốt 01/10 "nhóm Email giữ riêng").
+  // Mã đã đi qua Zalo tới đúng số đó = chính chủ số. Gộp về TÀI KHOẢN ĐANG DÙNG (email/Google) để khách không đổi phiên,
+  // không mất đăng nhập email/Google. Gộp: tài khoản đang giữ số (đã xác thực) + tài khoản Zalo đang ghi số đó (Zalo web
+  // không đưa số, khách tự ghi) — chuyển tin, số đăng nhập, Zalo sang; khoá các tài khoản thừa. Không gộp tài khoản quản trị.
+  // Tài khoản thừa còn tiền ví / gói hội viên → DỪNG, không tự chuyển tiền (giống luật gộp Zalo ở trên).
+  const so84g = `84${sdt.slice(1)}`;
+  const { data: cungSo } = await admin.from("profiles").select("id,email,role,balance,zalo_id")
+    .or(`phone.eq.${sdt},phone.eq.${so84g},phone.eq.+${so84g}`).neq("id", uid);
+  const gopTu = (cungSo ?? []).filter((p) => p.role !== "admin"
+    && (p.id === idCu || /^zalo_.+@users\.coastalland\.vn$/.test(String(p.email ?? ""))));
+  if (idCu && !gopTu.some((p) => p.id === idCu)) {
+    const { data: pCu } = await admin.from("profiles").select("id,email,role,balance,zalo_id").eq("id", idCu).maybeSingle();
+    if (pCu) gopTu.push(pCu);
+  }
+  if (gopTu.length) {
+    const ids = gopTu.map((p) => p.id as string);
+    const { data: hv } = await admin.from("hoi_vien").select("user_id").in("user_id", ids).gt("het_han", new Date().toISOString()).limit(1);
+    if (gopTu.some((p) => Number(p.balance ?? 0) > 0) || (hv ?? []).length)
+      return loi("Số này thuộc một tài khoản còn số dư ví hoặc gói hội viên. Vui lòng liên hệ Coastal Land để gộp tài khoản.", 409);
+
+    const { data: chuyen } = await admin.from("listings").update({ owner_id: uid }).in("owner_id", ids).select("id");
+    soTinGop = (chuyen ?? []).length;
+    // Zalo đăng nhập web: ưu tiên mã Zalo của tài khoản sinh từ Zalo (đúng cửa "Tiếp tục với Zalo"), không có thì lấy mã đã gắn.
+    const zaloGiu = (gopTu.find((p) => /^zalo_/.test(String(p.email ?? "")) && p.zalo_id) ?? gopTu.find((p) => p.zalo_id))?.zalo_id ?? null;
+    // Nhả số + Zalo ở các tài khoản thừa trước (cột duy nhất), rồi gắn sang tài khoản đang dùng.
+    await admin.from("profiles").update({ phone: null, phone_verified: false, zalo_id: null }).in("id", ids);
+    await admin.from("sdt_nguoi_dung").update({ user_id: uid }).in("user_id", ids).eq("sdt", sdt).then(() => {}, () => {});
+    for (const id of ids) await admin.auth.admin.updateUserById(id, { phone: "" }).then(() => {}, () => {});
     const { error } = await admin.from("profiles")
-      .update({ phone: sdt, phone_verified: false, sdt_lien_he_xac_minh: true }).eq("id", uid);
+      .update({ phone: sdt, phone_verified: true, ...(zaloGiu ? { zalo_id: zaloGiu } : {}) }).eq("id", uid);
     if (error) return loi("Chưa lưu được số. Vui lòng thử lại.", 500);
-    return NextResponse.json({ ok: true, sdt, soTinGop: 0 });
+    // Số thành cửa đăng nhập của tài khoản đang dùng (hỏng thì bỏ qua — vẫn đăng nhập được bằng email/Google).
+    await admin.auth.admin.updateUserById(uid, { phone: so84g, phone_confirm: true }).then(() => {}, () => {});
+    for (const id of ids) await admin.auth.admin.updateUserById(id, { ban_duration: "876000h" }).then(() => {}, () => {});
+    return NextResponse.json({ ok: true, sdt, soTinGop });
   }
 
   const { error } = await admin.from("profiles").update({ phone: sdt, phone_verified: true }).eq("id", uid);

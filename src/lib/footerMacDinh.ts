@@ -18,7 +18,7 @@ export type FooterData = {
 export const FOOTER_DEFAULT: FooterData = {
   // Dòng đậm dưới logo — mặc định = ĐÚNG câu admin đang lưu (25/10/2026): trước để tên cũ CVR nên lúc mới tải
   // footer loé tên cũ rồi mới đổi, và Google đọc được tên cũ trong HTML.
-  tagline: "Cổng thông tin mua bán, cho thuê nhà đất",
+  tagline: "Cổng thông tin bất động sản trực tuyến",
   description:
     "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam.",
   hotline: "+84 377 985 036",

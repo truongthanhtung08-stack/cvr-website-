@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   if (!db) return loi("Máy chủ chưa cấu hình đủ.", 500);
 
   // Một số một tài khoản: số đã có tài khoản (đã xác nhận, hoặc đang ghi ở hồ sơ khác) thì không tạo thêm.
-  if (await timTaiKhoan(db, sdt)) return loi("Số này đã có tài khoản.");
+  if (await timTaiKhoan(db, sdt, { boQuaAdmin: true })) return loi("Số này đã có tài khoản.");
   const so84 = `84${sdt.slice(1)}`;
   const { data: trung } = await db.from("profiles").select("id").or(`phone.eq.${sdt},phone.eq.${so84},phone.eq.+${so84}`).limit(1);
   if (trung?.length) return loi("Số này đang ghi ở một tài khoản khác.");

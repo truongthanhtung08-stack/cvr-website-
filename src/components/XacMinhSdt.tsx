@@ -16,6 +16,7 @@ export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, tieuDe = "X
   const [daGui, setDaGui] = useState(false);
   const [dang, setDang] = useState(false);
   const [loi, setLoi] = useState("");
+  const [noiGui, setNoiGui] = useState(""); // mã đã gửi tới đâu: Zalo của số · email tài khoản
   const daTuGui = useRef(false);
   useEffect(() => {
     if (tuGui && !daTuGui.current && sdt.replace(/\D/g, "").length >= 10) {
@@ -37,7 +38,10 @@ export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, tieuDe = "X
       });
       const j = await r.json();
       if (!j.ok) return setLoi(j.loi || "Chưa xác minh được. Vui lòng thử lại.");
-      if (buoc === "gui-ma") setDaGui(true);
+      if (buoc === "gui-ma") {
+        setDaGui(true);
+        setNoiGui([j.quaZalo ? "Zalo của số này" : "", j.quaEmail ? `email ${j.quaEmail}` : ""].filter(Boolean).join(" và "));
+      }
       else {
         // Tài khoản Zalo vừa gộp vào tài khoản cũ của số này → chuyển sang phiên tài khoản cũ.
         if (j.doiTaiKhoan) {
@@ -74,7 +78,7 @@ export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, tieuDe = "X
   return (
     <div className="rounded-xl border border-cvr-line bg-cvr-surface p-4 sm:p-5">
       <p className="text-[15px] font-semibold text-cvr-ink">{tieuDe}</p>
-      {daGui && <p className="mt-1 text-sm text-cvr-muted">Mã 6 số vừa gửi tới Zalo của số này.</p>}
+      {daGui && <p className="mt-1 text-sm text-cvr-muted">Mã 6 số vừa gửi tới {noiGui || "Zalo của số này"}.</p>}
       <div className="mt-3 flex gap-2">
         <input
           value={sdt}

@@ -76,7 +76,7 @@ export default function FilterDropdown({
   );
   const btnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top?: number; bottom?: number; left?: number; right?: number; maxH?: number }>({ top: 0 });
+  const [pos, setPos] = useState<{ top?: number; left?: number; right?: number; w?: number; maxH?: number; len?: boolean }>({ top: 0 });
 
   // ĐIỆN THOẠI (< 640px): panel neo theo nút quá chật → đổi sang SHEET trượt từ đáy
   // đúng chuẩn iOS (nền mờ, thanh kéo, bo góc trên, né thanh Home). Desktop giữ nguyên.
@@ -95,8 +95,10 @@ export default function FilterDropdown({
   // giuCo (bảng Khu vực, 02/11/2026: "chọn nhảy xuống nhảy lên rất khó chịu"): gõ tìm cũng KHÔNG bung toàn màn hình — bảng đứng yên một chỗ
   const toanMan = dangGo && !giuCo;
   useEffect(() => {
+    // ĐIỆN THOẠI GIỐNG MÁY TÍNH (chủ dự án 05/11/2026: "mobile cũng vậy thôi, không khác gì — chỉ khác là chạm tay cuộn"):
+    // không còn bảng trượt từ đáy; mọi máy đều xổ ngay dưới trường lọc, vuốt trong bảng cuộn bảng, vuốt ngoài cuộn trang.
     const mq = window.matchMedia("(max-width: 639px)");
-    const sync = () => setSheet(mq.matches);
+    const sync = () => setSheet(false);
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
@@ -144,22 +146,25 @@ export default function FilterDropdown({
     return () => { document.removeEventListener("touchstart", batDau); document.removeEventListener("touchmove", chan); };
   }, [open, sheet]);
 
-  // Mở XUỐNG nếu đủ chỗ phía dưới, ngược lại mở LÊN — linh hoạt theo không gian trang.
+  // BẢNG LỌC NẰM TRONG TRANG (chủ dự án 05/11/2026: "bấm chọn, list xuống, không giật — sửa từ mã gốc"): đặt theo TOẠ ĐỘ TRANG
+  // ngay dưới trường lọc, cuộn CÙNG trang, nằm DƯỚI thanh menu (z thấp hơn header). Trước đây bảng dán cố định lên màn hình
+  // rồi đuổi theo trường lọc → cuộn là đè lên menu, lệch khỏi trường lọc. Mở LÊN chỉ khi sát cuối trang (không còn chỗ cuộn).
   const reposition = useCallback(() => {
     const el = btnRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     const m = 8;
-    const spaceBelow = window.innerHeight - r.bottom;
-    const spaceAbove = r.top;
-    const openUp = spaceBelow < 240 && spaceAbove > spaceBelow; // chỉ khi trang không cuộn được nữa (cuối trang)
-    const avail = (openUp ? spaceAbove : spaceBelow) - m * 2;
-    const maxH = Math.max(200, Math.min(avail, Math.round(window.innerHeight * 0.7)));
-    const vert = openUp ? { bottom: Math.max(m, window.innerHeight - r.top + m) } : { top: r.bottom + m };
-    const horiz =
-      align === "right"
-        ? { right: Math.max(8, window.innerWidth - r.right) }
-        : { left: Math.max(8, Math.min(r.left, window.innerWidth - 8)) };
+    const conDuoi = document.documentElement.scrollHeight - (r.bottom + window.scrollY) - m;
+    const openUp = conDuoi < 260 && r.top - 72 > conDuoi;
+    const maxH = Math.round(window.innerHeight * 0.7);
+    const vert = openUp ? { top: r.top + window.scrollY - m, len: true } : { top: r.bottom + window.scrollY + m };
+    // Màn hẹp (điện thoại): bảng rộng gần hết màn, chừa 8px hai bên — không tràn ra ngoài
+    const hep = window.innerWidth < 640;
+    const horiz = hep
+      ? { left: 8 + window.scrollX, w: window.innerWidth - 16 }
+      : align === "right"
+        ? { right: Math.max(8, document.documentElement.clientWidth - r.right - window.scrollX) }
+        : { left: Math.max(8, Math.min(r.left, window.innerWidth - 8)) + window.scrollX };
     setPos({ ...vert, ...horiz, maxH });
   }, [align]);
 
@@ -167,8 +172,8 @@ export default function FilterDropdown({
   // không đủ chỗ thì cuộn trang đưa hàng lọc lên gần đầu màn hình trước, rồi mới đặt bảng — khuôn chung mọi trang.
   useLayoutEffect(() => {
     if (!open || sheet) return;
-    const r = btnRef.current?.getBoundingClientRect();
-    if (r && window.innerHeight - r.bottom < Math.round(window.innerHeight * 0.7) + 16) window.scrollBy({ top: r.top - 96, behavior: "instant" as ScrollBehavior });
+    // KHÔNG TỰ CUỘN TRANG khi mở (chủ dự án 05/11/2026: "bấm chọn, list xuống — không giật"): bảng xổ tại chỗ; khách cuộn
+    // trang thì bảng bám theo trường lọc và tự cao thêm khi có thêm chỗ (reposition theo cuộn bên dưới).
     reposition();
   }, [open, sheet, reposition]);
 
@@ -185,12 +190,12 @@ export default function FilterDropdown({
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
     window.addEventListener("resize", reposition);
-    window.addEventListener("scroll", reposition, true);
+
     return () => {
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", reposition);
-      window.removeEventListener("scroll", reposition, true);
+
     };
   }, [open, sheet, reposition, setOpen]);
 
@@ -348,8 +353,8 @@ export default function FilterDropdown({
           createPortal(
             <div
               ref={panelRef}
-              style={{ top: pos.top, bottom: pos.bottom, left: pos.left, right: pos.right, maxHeight: pos.maxH }}
-              className={`cvr-pop fixed z-[100] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-none border border-cvr-line bg-white p-3 shadow-2xl shadow-black/15 ring-1 ring-inset ring-black/5 backdrop-blur-xl ${panelClassName}`}
+              style={{ top: pos.top, left: pos.left, right: pos.right, width: pos.w, maxWidth: pos.w, maxHeight: pos.maxH, transform: pos.len ? "translateY(-100%)" : undefined }}
+              className={`${pos.len ? "" : "cvr-pop "}absolute z-[44] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-none border border-cvr-line bg-white p-3 shadow-2xl shadow-black/15 ring-1 ring-inset ring-black/5 backdrop-blur-xl ${panelClassName}`}
             >
               {children({ close: () => setOpen(false) })}
             </div>,

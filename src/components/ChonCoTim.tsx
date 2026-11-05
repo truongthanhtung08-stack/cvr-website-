@@ -2,8 +2,9 @@
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { timDiaDanh, type BietDanh } from "@/lib/timDiaDanh";
-import { useKhoaCuon } from "@/lib/khoaCuon";
+import { useKhoaCuon, useNutQuayLai } from "@/lib/khoaCuon";
 import { diTiepSauOChon } from "@/lib/oTiepTheo";
 
 // Ô CHỌN CÓ Ô TÌM — Tỉnh/Thành · Quận/Huyện · Phường/Xã (chủ dự án 14–15/10/2026: danh sách
@@ -55,7 +56,29 @@ export default function ChonCoTim({
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [mo, setMo] = useState(false);
-  useKhoaCuon(mo, () => dong());
+  // MÁY TÍNH = XỔ NGAY DƯỚI Ô (chủ dự án 05/11/2026: "chuẩn PC"): danh sách bám đúng ô vừa bấm, rộng bằng ô. Danh sách là MỘT
+  // PHẦN CỦA TRANG (đặt theo toạ độ trang, nằm DƯỚI thanh menu): khách lăn chuột thì trang cuộn, danh sách cuộn cùng ô; cuộn hết
+  // danh sách lăn tiếp thì trang chạy tiếp; bấm ra ngoài là đóng. Không khoá cuộn, không giật.
+  // Điện thoại (< 640px) giữ nguyên bảng trượt từ đáy, khoá trang nền — đã đúng chuẩn, không đổi.
+  const [xo, setXo] = useState<{ top: number; left: number; width: number; maxH: number; len: boolean } | null>(null);
+  useKhoaCuon(mo && !xo, () => dong());
+  useNutQuayLai(mo && !!xo, () => dong());
+  const bangRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!mo || !xo) return;
+    const ngoai = (e: Event) => {
+      const t = e.target as Node;
+      if (!bangRef.current?.contains(t) && !nutRef.current?.contains(t)) dong();
+    };
+    const dongNgay = () => dong();
+    document.addEventListener("mousedown", ngoai, true);
+    window.addEventListener("resize", dongNgay);
+    return () => {
+      document.removeEventListener("mousedown", ngoai, true);
+      window.removeEventListener("resize", dongNgay);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mo, xo]);
   const [q, setQ] = useState("");
   // Ô tìm ẨN mặc định (chủ dự án 15/10/2026): mở ra là danh sách để KÉO chọn — không bật bàn
   // phím che màn hình điện thoại. Muốn tìm thì bấm biểu tượng kính lúp mới hiện ô gõ.
@@ -88,6 +111,17 @@ export default function ChonCoTim({
   // Batdongsan), không có gợi ý nào thì đứng ĐẦU.
   const coTuGhi = !!tuGhi && !!q.trim() && !options.some((o) => o.toLowerCase() === q.trim().toLowerCase());
   const moBang = () => {
+    if (mo && xo) return dong(); // bấm lại vào ô đang mở → đóng (như ô chọn chuẩn)
+    const r = nutRef.current?.getBoundingClientRect();
+    // ĐIỆN THOẠI CŨNG VẬY (chủ dự án 05/11/2026: "mobile cũng vậy thôi, không khác gì — chỉ khác là chạm tay cuộn lên xuống")
+    if (r) {
+      const width = Math.min(Math.max(r.width, 280), window.innerWidth - 16);
+      const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8)) + window.scrollX;
+      // Xổ XUỐNG (khách cuộn trang để xem hết); chỉ xổ LÊN khi sát cuối trang, phía dưới không còn chỗ để cuộn tới.
+      const conDuoi = document.documentElement.scrollHeight - (r.bottom + window.scrollY) - 8;
+      const len = conDuoi < 260 && r.top - 72 > conDuoi;
+      setXo({ top: (len ? r.top - 4 : r.bottom + 4) + window.scrollY, left, width, maxH: 440, len }); // tới ~9 dòng hiện khít; dài hơn cuộn bên trong
+    } else setXo(null);
     setMo(true);
     if (timNgay) { setDangTim(true); setQ(value && !options.includes(value) ? value : ""); }
   };
@@ -114,23 +148,34 @@ export default function ChonCoTim({
           </button>
         )}
       </div>
-      {mo && (
+      {/* BẢNG VẼ RA NGOÀI CÙNG TRANG (portal, chủ dự án 05/11/2026 "bấm chọn, nó nhảy"): ô chọn nằm trong <label> (Field của
+          form Admin) thì bảng vẽ bên trong label → bấm vào bảng, trình duyệt coi là bấm label, tự bấm lại nút mở bảng → bảng
+          bật lại / nhảy. Vẽ thẳng vào <body> thì không còn nằm trong thẻ nào. */}
+      {mo && createPortal(
         // ĐANG GÕ TÌM trên điện thoại → bảng thành TOÀN MÀN HÌNH, ô gõ nằm trên cùng: bàn phím bật lên
         // không che ô gõ, kết quả hiện ngay dưới (trước đây bảng nằm đáy, bàn phím đẩy lệch — rất rối).
-        <div className={`fixed inset-0 z-[90] flex justify-center bg-black/40 sm:items-center ${dangTim ? "items-stretch" : "items-end"}`} onClick={dong}>
-          <div className={`flex w-full flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-lux sm:h-auto sm:max-h-[80vh] sm:max-w-md sm:rounded-2xl ${dangTim ? "h-[100dvh] pt-[env(safe-area-inset-top)]" : "max-h-[80vh] rounded-t-2xl"}`} onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-2 border-b border-cvr-line p-3">
+        <div className={xo ? "absolute left-0 top-0 z-[44]" : `fixed inset-0 z-[90] flex justify-center bg-black/40 sm:items-center ${dangTim ? "items-stretch" : "items-end"}`} onClick={xo ? undefined : dong}>
+          <div
+            ref={bangRef}
+            style={xo ? { position: "absolute", top: xo.top, left: xo.left, width: xo.width, maxHeight: xo.maxH, transform: xo.len ? "translateY(-100%)" : undefined } : undefined}
+            className={xo ? "flex flex-col overflow-hidden rounded-xl border border-cvr-line bg-white shadow-lux" : `flex w-full flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-lux sm:h-auto sm:max-h-[80vh] sm:max-w-md sm:rounded-2xl ${dangTim ? "h-[100dvh] pt-[env(safe-area-inset-top)]" : "max-h-[80vh] rounded-t-2xl"}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* MÁY TÍNH (danh sách xổ dưới ô): GỌN như ô chọn chuẩn — không dòng tiêu đề "‹ Chọn…", không nút Đóng (đó là kiểu bảng
+                điện thoại); bảng ngắn khít số dòng, bảng dài cuộn bên trong; danh sách cần tìm thì có ô tìm ở đầu (05/11/2026). */}
+            {!(xo && anTim) && (
+            <div className={xo ? "border-b border-cvr-line p-2" : "flex items-center gap-2 border-b border-cvr-line p-3"}>
               {/* THOÁT KHÔNG ĐỔI GÌ (chủ dự án 15/10/2026: "không chọn, không tự ghi thì thoát thế nào") —
                   nút quay lại luôn ở góc trên, bàn phím không che được như nút "Đóng" dưới đáy. */}
-              <button type="button" aria-label="Quay lại" onClick={dong} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cvr-ink transition hover:bg-cvr-surface">
+              {!xo && <button type="button" aria-label="Quay lại" onClick={dong} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cvr-ink transition hover:bg-cvr-surface">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-              </button>
-              {dangTim ? (
+              </button>}
+              {dangTim || xo ? (
                 <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); xongGo(); } }} placeholder={timPlaceholder} className={className} enterKeyHint={tuGhi ? "done" : "search"} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               ) : (
                 <span className="min-w-0 flex-1 truncate px-1 text-[15px] font-semibold text-cvr-ink">{placeholder}</span>
               )}
-              {!anTim && <button
+              {!anTim && !xo && <button
                 type="button"
                 aria-label={dangTim ? "Đóng ô tìm" : timPlaceholder}
                 onClick={() => { if (timNgay) { dong(); return; } if (dangTim) setQ(""); setDangTim(!dangTim); }}
@@ -143,6 +188,7 @@ export default function ChonCoTim({
                 )}
               </button>}
             </div>
+            )}
             {/* MỤC KHÔNG BẮT BUỘC (16/10/2026): đã chọn mà muốn bỏ → dòng "Bỏ chọn" ngay đầu bảng */}
             {xoaDuoc && value && (
               <button type="button" onClick={() => chon("")} className="flex w-full items-center gap-2 border-b border-cvr-line px-4 py-3 text-left text-[15px] font-medium text-cvr-body transition hover:bg-cvr-surface">
@@ -156,7 +202,8 @@ export default function ChonCoTim({
                 <svg className="h-5 w-5 shrink-0 text-cvr-blue-ink" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               </button>
             )}
-            <div className="flex-1 overflow-y-auto overscroll-contain py-1">
+            {/* Máy tính: cuộn hết danh sách thì lăn tiếp là trang chạy tiếp (không chặn). Điện thoại: giữ trong bảng (trang nền đang khoá). */}
+            <div className={`flex-1 overflow-y-auto py-1 ${xo ? "" : "overscroll-contain"}`}>
               {ds.length === 0 && coTuGhi && (
                 <button type="button" onClick={() => { tuGhi?.(q.trim()); dong(); }} className="block w-full px-4 py-3 text-left text-[15px] font-medium text-cvr-blue-ink transition hover:bg-cvr-surface">
                   Khác — tự ghi: «{q.trim()}»
@@ -183,9 +230,10 @@ export default function ChonCoTim({
                   Khác — tự ghi: «{q.trim()}»
                 </button>
               )}            </div>
-            <button type="button" onClick={dong} className="border-t border-cvr-line py-3 text-sm font-semibold text-cvr-body">Đóng</button>
+            {!xo && <button type="button" onClick={dong} className="border-t border-cvr-line py-3 text-sm font-semibold text-cvr-body">Đóng</button>}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

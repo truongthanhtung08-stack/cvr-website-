@@ -97,7 +97,8 @@ export default function LoginForm() {
         : await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
       // Số không khớp trực tiếp → có thể là SỐ THỨ HAI, hoặc số khai trong tài khoản email.
       // Máy chủ dò đúng tài khoản giữ số này rồi đăng nhập bằng mật khẩu của nó.
-      if (error && dungSdt && /invalid login credentials/i.test(error.message)) {
+      // Số đã GỘP về tài khoản email (05/11/2026): tài khoản cũ giữ số đăng nhập đã bị khoá → lỗi "banned" cũng dò theo hồ sơ
+      if (error && dungSdt && /invalid login credentials|banned/i.test(error.message)) {
         const r = await fetch("/api/xac-thuc/dang-nhap-sdt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

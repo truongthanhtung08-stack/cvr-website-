@@ -97,9 +97,9 @@ export function soDienThoaiZalo(phone: string | null | undefined): string | null
 }
 
 /**
- * Gửi thông báo — MỖI SỰ KIỆN MỘT KÊNH, không gửi trùng (chủ dự án chốt 25/09/2026):
- *   · Khách có email thật → CHỈ email (miễn phí).
- *   · Không có email (đăng nhập bằng SĐT / Zalo) hoặc email gửi hỏng → Zalo ZBS.
+ * Gửi thông báo — CẢ EMAIL LẪN ZALO (chủ dự án 05/11/2026, thay chốt 25/09 "mỗi sự kiện một kênh"):
+ *   · Khách có email thật → gửi email.
+ *   · Khách có số điện thoại + sự kiện có mẫu ZBS → gửi Zalo. Có cả hai thì nhận cả hai.
  * Email kỹ thuật của khách đăng nhập Zalo (…@users.coastalland.vn) không tính là email.
  * Mã OTP không đi qua hàm này. Không bao giờ ném lỗi.
  */
@@ -112,13 +112,12 @@ export async function guiThongBao(t: NoiDungThongBao): Promise<KetQuaKenh[]> {
     const lyDo = "tài khoản đăng hộ, khách chưa tự vào đăng nhập — không nhắn";
     return [{ kenh: "email", daGui: false, lyDo, dangHo: true }, { kenh: "zalo", daGui: false, lyDo, dangHo: true }];
   }
+  // GỬI CẢ HAI KÊNH (chủ dự án 05/11/2026, thay chốt 25/09 "mỗi sự kiện một kênh"): khách có email → email; có số
+  // điện thoại → Zalo ZBS. Có cả hai thì nhận cả hai. Chi phí: mỗi tin ZBS ~300–500đ theo số tin thật gửi đi.
   const emailThat = t.email && !/@users\.coastalland\.vn$/i.test(t.email) ? t.email : null;
-  const quaEmail = await guiEmail({ ...t, email: emailThat });
-  const ketQua = quaEmail.daGui
-    ? [quaEmail, { kenh: "zalo" as const, daGui: false, lyDo: "đã báo qua email — không gửi trùng" }]
-    : [quaEmail, await guiZalo(t)];
+  const ketQua = await Promise.all([guiEmail({ ...t, email: emailThat }), guiZalo(t)]);
   for (const k of ketQua) {
-    if (!k.daGui && k.lyDo && !quaEmail.daGui) console.warn(`[thong-bao] ${k.kenh}: ${k.lyDo}`);
+    if (!k.daGui && k.lyDo) console.warn(`[thong-bao] ${k.kenh}: ${k.lyDo}`);
   }
   return ketQua;
 }

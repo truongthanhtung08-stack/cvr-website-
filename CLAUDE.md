@@ -5,10 +5,76 @@
 
 ---
 
+## ⏳ BÀN GIAO PHIÊN 05/11/2026 (anh dừng phiên: "bàn giao lại") — CHƯA COMMIT, CHƯA PUSH, tất cả nằm trên máy
+
+**Đang dở:** tệp `C:\Users\X1 GEN 8\OneDrive\Desktop\YÊU CẦU CHỈNH SỮA 03112026.docx` — 19 mục, mới làm mục 1–2 (loại hình), mục 3–19 chưa làm.
+**Câu hỏi treo (anh chưa trả lời):** gộp "Căn hộ" + "Chung cư" thành MỘT mục "Căn hộ chung cư" trong ô Loại hình (chuẩn Batdongsan, web chỉ có
+một trang can-ho-chung-cu)? Tin cũ lưu "Chung cư" giữ nguyên; loại con gộp hai danh sách. Anh hỏi "chuẩn nó là gì · sao hai như vậy" → Claude
+hiểu là chỗ này, CHƯA được xác nhận.
+
+**Đã sửa trên máy (localhost:3000 đang chạy bản này):**
+| Việc | Tệp | Anh |
+|---|---|---|
+| Branding 2 câu (tiêu đề, H1 trang chủ, footer, SiteJsonLd, llms.txt, manifest, /gioi-thieu) | layout, (trang-chu)/page, footerMacDinh, SiteJsonLd, public/llms.txt… | đã bảo |
+| Ô Loại hình: danh sách PHẲNG (không dòng nhóm xám), có Đất · Đất nền · Đất nền dự án, bắt buộc; form khách + form Admin | PostListingForm, admin/ListingForm, categories (`nhomChonLoaiHinh`, `tenLoaiHinhMenu`, `tachChonLoaiHinh`, `giaTriChonLoaiHinh`, `oTheoMucChon`) | đã bảo |
+| Loại con (Loại đất / căn hộ / nhà…) để TRONG ĐẶC ĐIỂM như cũ | — | anh chốt "như cũ" |
+| Đặc điểm theo loại: Đất bỏ Vị trí lô, Số lô · Đất nền bỏ "Đất nền dự án" ở Loại đất · Đất nền dự án ẩn Loại đất + DT đất ở · Đất công nghiệp bộ ô đất riêng · Cửa hàng ki ốt bỏ 2 ô toà nhà (đã kiểm CSDL: không tin nào mất dữ liệu) | listingSpec, categories | anh bảo "sửa cho chuẩn" |
+| Nhu cầu: Cần bán · Cần mua · Cho thuê · Cần thuê; "Dự án" chỉ tài khoản được duyệt (customer_requests dang_du_an · xong) | listingSpec `demandTypes`, PostListingForm | đã bảo |
+| Tin cần mua / cần thuê: không bắt ảnh · chặn ở gốc getListings / getListingsHetHan · mục riêng /mua-ban/can-mua, /cho-thue/can-thue (noindex, CHƯA có lối vào — anh chưa chọn chỗ) · trang tin noindex, không khai Offer · bỏ cảnh báo thiếu ảnh | listingsDb, DanhSachTinTim, 2 trang mới, bat-dong-san/[id], kiemTinSeo | đã bảo |
+| Thẻ điện thoại không ảnh: logo xám như thẻ máy tính | TheTinMobile | đã bảo |
+| Dòng "Loại hình" trang tin chi tiết = tên loại khách chọn (Đất nền, Căn hộ…) thay vì tên nhóm — ĐỔI CÁI ĐANG CHẠY trên mọi tin | listingsDb `loaiHinh`, bat-dong-san/[id], XemTruocTin | Claude tự suy; anh chưa xác nhận |
+
+**Đã trả về như cũ (anh bác):** ô "Bạn là" · tách mục Địa chỉ riêng / đổi tên mục 1 · ô Nhu cầu kiểu bảng chọn · cây 2 cấp xổ cha – con ·
+ghép tên "cha · con" · lối vào "Người cần mua" trên /mua-ban (trang top) · đổi chia mục form Admin.
+**Bài học phiên này:** sửa đúng chỗ anh bảo, không tự đổi cấu trúc; không sửa khi anh đang bấm thử (dùng bản ổn định cổng 3002 `cvr-ban-that`,
+`NEXT_DIST_DIR=.next-kiem`); chưa hiểu thì hỏi MỘT câu kèm hình mẫu trước khi code; máy 3000 có bộ nhớ đệm ngoại tuyến (sw.js) giữ JS cũ —
+kiểm bằng mắt phải xoá đệm tab. 4 lỗi eslint ở PostListingForm / TheTinMobile là lỗi có sẵn.
+
+---
+
+## 🌳 GỐC CỦA MỌI VIỆC — CÂY QUY TRÌNH SEO TỔNG THỂ (anh chốt 05/11/2026: "mọi thứ đều xuất phát từ đây, từ bất kỳ phần nào")
+
+**Tệp gốc: `D:\Coastal Land\SEO\CÂY QUY TRÌNH SEO TỔNG THỂ COASTAL LAND.docx`** — 21 bước, 5 phần. Bản đã bổ sung 05/11 (phần "Cách 3 bên dùng cây"
++ dòng ▸ COASTAL LAND dưới mỗi bước: ai làm · ở đâu · luật đã chốt) cất ở `SEO\_cu\cay-quy-trinh\CAY-QUY-TRINH-ban-bo-sung-05-11-2026.docx`,
+bản gốc của anh ở `…ban-goc-04-11-2026.docx` cùng thư mục (tệp chính đang mở trong Word nên chưa ghi đè — đóng Word rồi chép đè).
+- **Mọi việc** (tin Mua bán, Cho thuê, dự án, bài Tin tức, Zalo, Facebook, sửa mã web) phải gắn được vào một bước của cây; không gắn được thì không làm.
+  Ghi việc ở `RA\VIEC.md`, `CAN-ANH-DUYET.md`, nhật ký kèm số bước, vd `[B13] xin index /mua-ban/dat/da-nang`.
+- **Cây = CÁI GÌ, mục 11.00 = LÀM THẾ NÀO MỖI NGÀY.** Vòng ngày 11.00 chạy lại các bước: ĐO (21, 02) → nhu cầu SEO hôm nay (03, 04) → giao
+  Cowork (06, 09) → KIỂM (07, 20) → anh đưa lên web → xin index (11–13) → đo lại thứ Hai (21). Đổi quy trình → sửa cây + 11.00, không tạo tệp mới.
+
+| Phần | Bước | Ai làm chính (Claude chia theo phiên: SEO · MÃ WEB · KIỂM; Điều phối chỉ giao + nhận) |
+|---|---|---|
+| I. Chiến lược & nghiên cứu | 01 Mục tiêu · 02 Audit, đối thủ · 03 Từ khoá · 04 Chiến lược | Anh quyết · phiên SEO đo, dựng từ khoá · Điều phối lập kế hoạch (`KE-HOACH-SEO.md`, `HE-THONG-TU-KHOA.xlsx`) |
+| II. Xây dựng & tối ưu web | 05 Kiến trúc, URL · 06 Nội dung · 07 On-page · 08 Technical · 09 Dữ liệu BĐS | Phiên MÃ WEB (05, 07, 08) · Cowork làm nội dung + lọc tin, phiên KIỂM kiểm, anh duyệt (06, 09) |
+| III. Kết nối Google | 10 Công cụ đo · 11 Discovery · 12 Crawling · 13 Indexing | Phiên SEO trên Chrome của anh (Search Console) · máy: sitemap, IndexNow (`src/lib/indexNow.ts`) |
+| IV. Mở rộng | 14 pSEO · 15 Structured data · 16 Local, Entity · 17 Off-page · 18 GEO, AI Search | Phiên MÃ WEB (14, 15, 18) · phiên SEO soạn, anh / Cowork đăng ngoài web (16, 17) |
+| V. Tăng trưởng | 19 UX, CRO · 20 Bảo mật, kiểm soát · 21 Đo, báo cáo | Phiên MÃ WEB (19) · phiên KIỂM + Điều phối trước push (20) · phiên SEO đo thứ Hai, máy báo cáo 21h (21) |
+
+**Thị trường SEO = Duyên hải miền Trung** (anh 05/11): từ khoá, trang đích nhắm 7 tỉnh/thành Đà Nẵng, Huế, Khánh Hòa, Lâm Đồng, Gia Lai,
+Quảng Ngãi, Quảng Trị. **Branding SEO** (tên, câu giới thiệu, hồ sơ doanh nghiệp, mạng xã hội) KHÔNG ghi chữ "Miền Trung" và hướng đến
+**2 câu** (anh chốt 05/11): **"COASTAL LAND – Cổng thông tin bất động sản trực tuyến"** · **"COASTAL LAND – Cổng đăng tin mua bán, cho thuê nhà đất"**.
+Cách dùng trên web (đổi 05/11, đã build, CHƯA PUSH): câu 1 = tên thương hiệu (`layout.tsx` SITE_TAGLINE → tiêu đề mặc định, OG; tiêu đề trang chủ;
+`manifest` name; chân trang `footerMacDinh.ts` + `SiteJsonLd` slogan bỏ chữ "COASTAL LAND" vì đứng cạnh logo) · câu 2 = H1 trang chủ + đầu mô tả
+(trang chủ, `layout`, `manifest`) · cả 2 câu: `SiteJsonLd` disambiguatingDescription, dòng 3 `public/llms.txt`, mô tả `/gioi-thieu`.
+**Đã sửa 1 chỗ trong cây:** địa lý = hệ mới 2 cấp tỉnh → phường/xã kèm tên cũ (không còn quận/huyện). **Còn trống, chờ anh quyết:** Bing Webmaster Tools (bước 10,
+kế hoạch chưa ghi đã thiết lập) · backlink, báo chí (bước 17, chưa có mục riêng) · log máy chủ (bước 12, công cụ Vercel của Claude chưa thấy dự án).
+
+---
+
 ## ⭐ QUY TRÌNH HẰNG NGÀY — MỘT NGUỒN DUY NHẤT (anh chốt 31/10/2026: "gom về một mối, một nguồn, xuyên suốt")
 
 **Nguồn duy nhất: `D:\Coastal Land\SEO\Plan SEO - pSEO\chi-tiet\quy-trinh-3-ben.md` mục 11.00.** Mọi phiên ĐỌC mục đó trước khi làm bất cứ việc gì trong ngày. Không chép quy trình sang chỗ khác (CLAUDE.md, memory, KE-HOACH-SEO.md, VIEC.md chỉ trỏ về đây); đổi quy trình → sửa thẳng mục 11.00.
 Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phiên nào cũng được → Điều phối làm tiếp chỗ đang dở; "Bắt đầu từ đầu" mới làm lại) · **"Kiểm"** (Điều phối giao phiên con KIỂM kiểm theo chuẩn SEO, nhận kết quả, báo "Xong — up được") · **"Push"** (Điều phối gom việc các phiên, push khi cần và anh đồng ý). Chỉ anh đưa lên web. Việc cần anh: `CAN-ANH-DUYET.md`.
+**⛔ MỘT THỰC THỂ (anh 05/11/2026):** "Website là 1 thực thể (entity), các phân mục là thực thể con — tất cả phải thống nhất, liên kết
+thống nhất, logic." Một cây loại hình cha – con, một tên cho mỗi mục, dùng Ở MỌI NƠI: Admin → form khách → trang tin → menu → bộ lọc →
+breadcrumb → trang Google (pSEO) → JSON-LD. Nguồn: `src/lib/filters.ts` (nhóm) + `src/lib/categories.ts` (`cayLoaiHinh`,
+`nhomChonLoaiHinh`, `tenLoaiHinhMenu`, `tenLoaiHinhDayDu`). Sửa tên / cây ở một chỗ thì kiểm hết các nơi trên.
+**Sửa, chỉnh, tạo mới một mục → rà hết phần liên quan; CẤM làm ảnh hưởng mục khác** (anh 05/11). Thêm mới = THÊM, không đổi cái đang có.
+Nhu cầu: **một ô** Cần bán · Cần mua · Cho thuê · Cần thuê (KHÔNG có ô "Bạn là" — anh bác 05/11: "phức tạp"); "Dự án" chỉ cho tài khoản
+được duyệt yêu cầu. Tin cần mua / cần thuê: không bắt ảnh, thẻ dùng chung (không ảnh → logo xám), chặn ở gốc `getListings` →
+không vào danh sách, ô tìm, trang Google, sitemap, bảng giá; chỉ ở mục riêng `/mua-ban/can-mua`, `/cho-thue/can-thue` (noindex).
+**Push (anh 05/11/2026):** làm đúng quy trình, xong HẾT việc mới push MỘT lần — trừ khi việc khác phụ thuộc phải có mã đó trên web thì báo
+một dòng "cần Push vì …". Sửa xong từng việc: build, ghi "chưa push", không hỏi Push, làm tiếp.
 
 ---
 
@@ -28,6 +94,40 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
 | 6 | Hàng trường lọc ở màn tìm trang chủ điện thoại **không bao giờ hiện** (màn tìm luôn ở chế độ gõ, không nút thoát) — mã có sẵn, không dùng tới | `TimTrangChu.tsx` hangLoc, dòng ~864 | Quyết: bỏ mã thừa hay làm cho hiện |
 | 7 | Chữ mẫu "1.240 tin" trong nhãn ô nhập admin | `src/app/admin/noi-dung/page.tsx:208` | Chỉ là chữ gợi ý ô nhập, không ra web — quyết có đổi không |
 | 8 | Công cụ Vercel của Claude không thấy dự án (khác tài khoản) → không đọc được trạng thái dựng; đã kiểm web thật bằng mã trang thay thế | — | Không gấp |
+
+---
+
+## ⏳ BÀN GIAO PHIÊN 02/11/2026 TỐI (bộ lọc · ô tìm · nạp dự án) — ANH XEM XÉT RỒI DỒN VÀO PUSH PHIÊN SAU
+
+**Đã lên web (đã kiểm mã trang thật trên coastalland.vn):**
+- `c2b1af3` — một vòng tìm chuẩn: đọc mục đích DÙNG CHUNG (`docMucDich` trong `src/lib/smartSearch.ts`, câu dự án / mở bán / bàn giao /
+  chủ đầu tư / khu đô thị / trọn tên dự án xét TRƯỚC chữ "bán") ở mọi ô tìm (trang chủ, Mua bán, Cho thuê, Dự án, Tìm kiếm, HomeSearch);
+  câu khác mục đích tab đang đứng → sang đúng tab (Enter lẫn bấm gợi ý; gợi ý theo mục đích câu); chờ nạp tên dự án khi gõ nhanh · sửa / Đặt
+  lại trường: câu cũ không điền lại (đã gỡ `truongVuaBo`/`boTruongCau`) → **dòng 3 bảng việc tồn trên đã xử lý** · đổi trường (chọn một bấm là
+  tìm, chọn nhiều Áp dụng là tìm) → mở đúng trang của bộ trường mới · Quay lại: chỗ gõ là điểm xuất phát, trang kết quả thay nhau (dấu
+  `history.state.cvrKq`), Quay lại về chỗ gõ; Enter điện thoại không còn chạy tìm hai lần.
+- `24b6616` — nút ‹ cạnh ô tìm, chỉ hiện ở trang kết quả của một vòng tìm, về chỗ đang gõ.
+- `9e246d2` — Admin → Nạp dự án hàng loạt: chọn ảnh xong không nhận ảnh nào (FileList sống bị xoá trước khi đọc) → đã sửa; anh đã nạp xong tệp 01/11.
+
+**CHƯA PUSH — nằm trên máy, anh xem rồi quyết:**
+1. `src/lib/napDuAn.ts`: nạp ảnh vào hồ sơ đang ở Tra cứu thì đóng dấu `details.dangThe` → nạp hàng loạt không bao giờ đưa dự án lên Nổi bật
+   (xem luật 12 dòng "02/11 tối"). Đã `tsc` qua, chưa `next build`, chưa commit.
+2. `CLAUDE.md` (luật 12 + khối bàn giao này) — chưa commit.
+
+**CẦN ANH DUYỆT (chưa làm, máy chặn ghi CSDL):**
+3. Gắn `details.dangThe = true` cho 3 hồ sơ đang nhảy nhầm lên Nổi bật: `nha-o-xa-hoi-aranya-hue`, `nha-o-xa-hoi-vicoland-hue`, `the-monarchy`
+   (không đổi gì khác) → về Tra cứu, xếp theo tên A-B-C. Admin không có nút đổi việc này. Làm xong mở /du-an kiểm thứ tự: Nổi bật (theo cấp)
+   trước → Tra cứu (A-B-C) sau.
+4. Tệp dự án 01/11 đã nạp: chủ đầu tư A La Carte → "Bất động sản Taseco", Altara Suites → "Địa ốc Alphanam" (báo cáo Cowork ghi chưa chắc) —
+   hồ sơ đã có chỉ điền ô trống nên web giữ tên cũ; anh quyết có sửa trong Admin không. 3 ảnh dính chữ/dấu (Nera Garden "Nhân Dân", Sơn Trà Ocean
+   View logo, Regal Complex ảnh quảng cáo) + 7 ảnh dưới 800 px: thay khi có ảnh tốt hơn. Tệp `DA-DUYET\01112026\du-an\du-an-01112026.csv` đã
+   đổi "Fhome Đà Nẵng" → "Fhome" (cho khớp dự án `fhome` trên web).
+5. Chưa thử trên điện thoại thật (iPhone Safari, Samsung Internet, trình duyệt trong Zalo) toàn bộ luồng tìm: kết quả → đổi trường → gõ mới
+   (đổi tab) → xem tin → Quay lại / nút ‹ về chỗ gõ. Chưa thử bản máy tính.
+6. Lệch nhỏ đã biết: ở trang lọc sẵn (vd `/cho-thue/can-ho-chung-cu/da-nang`) bấm Đặt lại Khu vực khi bảng đang mở rồi tải lại trang → khu
+   vực của trang hiện lại (đường dẫn trang mang sẵn khu vực). Đổi trường bằng Áp dụng thì đã sang trang đúng, không dính lỗi này.
+
+Link xem thử: http://192.168.1.76:3000 (IP máy đổi 02/11 tối).
 
 ---
 
@@ -95,6 +195,15 @@ Lỗi của phiên này ngày 01–02/11 (số lần chủ dự án phải nhắ
       (bỏ hàng trường ngoài trang, chọn/Áp dụng không tự tìm, thêm nút Tìm kiếm, đổi chữ nút khu vực) → anh phải đòi trả lại nhiều lần.
       **Cơ chế đã chốt, cấm đổi: dưới ô search có hàng trường; trường chọn một bấm là TỰ TÌM; trường chọn nhiều bấm Áp dụng là TỰ TÌM; ra
       trang kết quả.** Anh báo lỗi gì chỉ sửa đúng lỗi đó; thử bằng cú chạm thật (không bấm bằng mã) rồi mới báo.
+    - ⛔ 02/11 tối — **ANH ĐÃ NÓI NHIỀU LẦN MÀ VẪN LÀM SAI:** thứ tự trang Dự án là **Dự án nổi bật xếp trước (theo cấp VIP) → Tra cứu
+      xếp sau, theo tên A-B-C**. Claude kiểm tệp dự án 01/11 rồi báo "đủ để up" mà KHÔNG kiểm việc nạp làm đổi phần Nổi bật / Tra cứu →
+      anh nạp xong, 3 hồ sơ (Nhà ở xã hội Aranya Huế, Nhà ở xã hội Vicoland Huế, The Monarchy) nhảy lên Nổi bật. Gốc: web xếp Nổi bật =
+      có ảnh + không có dấu `details.dangThe` (`src/lib/contentDb.ts`); 3 hồ sơ cũ thiếu dấu, trước nằm ở Tra cứu chỉ vì chưa có ảnh.
+      → **Nạp hàng loạt KHÔNG BAO GIỜ được đưa dự án lên Nổi bật; Nổi bật chỉ do anh đưa lên trong Admin. Trước khi báo "đủ để up":
+      kiểm cả hồ sơ sẽ nằm ở phần nào và thứ tự trang Dự án sau khi nạp.** Còn tồn (anh dừng, cấm push 02/11): 3 hồ sơ trên vẫn ở Nổi
+      bật trên web; bản sửa `src/lib/napDuAn.ts` (nạp ảnh vào hồ sơ đang ở Tra cứu thì đóng dấu `dangThe`) chỉ nằm trên máy, chưa commit.
+    - ⛔ 03/11 (anh): **CHỈNH SỬA ĐÚNG THEO YÊU CẦU — CẤM ĐỤNG VÀO CÁI ĐÃ SỬA XONG (đã fix).** Anh bảo sửa gì chỉ sửa đúng chỗ đó; phần đã
+      sửa, đã chạy đúng thì không tự đổi, không "tiện tay" chỉnh thêm, kể cả khi sửa mã dùng chung (thử lại các chỗ đã fix trước khi báo).
     - Ghi tệp ổ D: chèn nhầm chỗ (tệp xuống dòng kiểu Windows) · viết câu chưa kiểm vào trả lời Cowork rồi phải sửa → **ghi xong đọc lại đúng chỗ; câu nào cũng phải có căn cứ đã xem.**
 
 ---

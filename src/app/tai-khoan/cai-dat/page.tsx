@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { PageHeader } from "@/components/Ui";
 import SoDienThoaiKhac from "@/components/SoDienThoaiKhac";
+import XacMinhSdt from "@/components/XacMinhSdt";
 import { loiEmail } from "@/lib/kiemNhap";
 import DoiAnhDaiDien from "@/components/DoiAnhDaiDien";
 import { useAuth, anhDaiDien, emailThat } from "@/lib/useAuth";
@@ -38,7 +39,6 @@ export default function AccountSettingsPage() {
       .from("profiles")
       .update({
         full_name: fullName.trim() || null,
-        phone: phone.trim() || null,
         city: city.trim() || null,
       })
       .eq("id", profile.id);
@@ -75,8 +75,10 @@ export default function AccountSettingsPage() {
           <Field label="Họ và tên">
             <input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inp} />
           </Field>
+          {/* SỐ ĐIỆN THOẠI CHỈ ĐỔI QUA XÁC THỰC MÃ (chủ dự án 05/11/2026: "nhập số phải xác thực") — ô chỉ để xem; thêm / đổi số ở
+              khung bên dưới: nhận mã qua Zalo của chính số đó, nhập đúng mã mới lưu. */}
           <Field label="Số điện thoại">
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} />
+            <input value={phone || "Chưa có"} disabled className={inp + " opacity-60"} />
           </Field>
           <Field label="Email (không thể đổi)">
             <input value={emailThat(profile.email)} disabled className={inp + " opacity-60"} />
@@ -84,6 +86,10 @@ export default function AccountSettingsPage() {
           <Field label="Khu vực">
             <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Đà Nẵng / Huế…" className={inp} />
           </Field>
+        </div>
+
+        <div className="mt-4">
+          <XacMinhSdt tieuDe={phone ? "Đổi số điện thoại" : "Thêm số điện thoại"} onXong={() => window.location.reload()} />
         </div>
 
         <button
