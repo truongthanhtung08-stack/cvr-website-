@@ -455,7 +455,14 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
               <p className="mt-1.5 text-[13px] leading-relaxed text-cvr-body">
                 <span className="font-semibold text-cvr-ink">{goi.tenGoi}</span>
                 {goi.soNgay != null && ` · ${goi.soNgay} ngày`}
-                {!goi.daDuyet && " · chờ duyệt mới bắt đầu tính"}
+                {!goi.daDuyet && (() => {
+                  // HẸN NGÀY ĐĂNG (plan.batDau) → ngày giờ cụ thể như khung Xem trước (06/11/2026): 00:00 giờ VN ngày hẹn → + số ngày gói
+                  const hen = (r.details as { plan?: { batDau?: string } } | null)?.plan?.batDau;
+                  if (!hen || goi.soNgay == null) return " · chờ duyệt mới bắt đầu tính";
+                  const tu = Date.parse(`${hen}T00:00:00+07:00`);
+                  const f = (t: number) => new Date(t).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+                  return ` · Hiệu lực: ${f(tu)} · Hết hạn: ${f(tu + goi.soNgay * 86_400_000)}`;
+                })()}
                 {goi.daDuyet && r.published_at && ` · Đăng ${ngayGon(r.published_at)}`}
                 {goi.daDuyet && goi.hetHan && (
                   goi.conLai != null && goi.conLai <= 0
