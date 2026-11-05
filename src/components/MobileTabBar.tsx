@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth } from "@/lib/useAuth";
-import { useSoViecKhach } from "@/lib/useSoTinCanXem";
+import { useSoViecKhach, tongSoViec } from "@/lib/useSoTinCanXem";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 
 // ── Thanh tab DƯỚI CÙNG — chỉ hiện trên điện thoại/tablet (< lg). Desktop KHÔNG đổi gì.
@@ -180,7 +180,8 @@ export default function MobileTabBar() {
   const { count } = useSaved();
   const { user } = useAuth();
   // Chấm đỏ "Tin đăng" (chế độ người bán): chờ duyệt · bị từ chối · sắp hết hạn — chỉ đếm khi đang ở khu tài khoản (06/11/2026)
-  const soViec = useSoViecKhach(pathname.startsWith("/tai-khoan") ? user?.id : null, pathname);
+  // Đăng nhập rồi thì Ở MỌI TRANG đều đếm (chủ dự án 06/11/2026: "đăng nhập vào một tài khoản thì tất cả giống nhau")
+  const soViec = useSoViecKhach(user?.id, pathname);
 
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
@@ -217,7 +218,7 @@ export default function MobileTabBar() {
     },
   ];
 
-  return <ThanhTab tabs={tabs} count={count} />;
+  return <ThanhTab tabs={tabs} count={count} soViec={{ "/tai-khoan": tongSoViec(soViec) }} />;
 }
 
 // Khung thanh tab — dùng chung cho chế độ người mua và chế độ người bán.

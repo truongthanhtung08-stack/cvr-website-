@@ -10,6 +10,8 @@ import BieuTuong, { type TenBieuTuong } from "@/components/BieuTuong";
 import { cayLoaiHinh } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth, displayName, anhDaiDien, signOut, lienHeTaiKhoan } from "@/lib/useAuth";
+import { usePathname } from "next/navigation";
+import { useSoViecKhach, tongSoViec, nhanSoDo } from "@/lib/useSoTinCanXem";
 import AnhDaiDien from "@/components/AnhDaiDien";
 
 // href KHÔNG bắt buộc: mục chỉ có `children` là NHÃN NHÓM (không bấm được),
@@ -109,15 +111,16 @@ function DropdownPanel({
 
 // Một dòng trong dropdown desktop — ô bo tròn, sáng nền khi rê chuột (kiểu Apple),
 // KHÔNG dùng đường kẻ phân chia.
-function DropdownItem({ href, label, strong = false }: { href: string; label: string; strong?: boolean }) {
+function DropdownItem({ href, label, strong = false, so = 0 }: { href: string; label: string; strong?: boolean; so?: number }) {
   return (
     <Link
       href={href}
-      className={`block rounded-xl px-3.5 py-2.5 text-sm transition-colors hover:bg-cvr-surface ${
+      className={`flex items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-sm transition-colors hover:bg-cvr-surface ${
         strong ? "font-semibold text-cvr-ink" : "font-medium text-cvr-body hover:text-cvr-ink"
       }`}
     >
       {label}
+      {so > 0 && <span className="min-w-[20px] rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white">{nhanSoDo(so)}</span>}
     </Link>
   );
 }
@@ -242,8 +245,11 @@ const TAI_KHOAN_PHU: { label: string; href: string; icon: TenBieuTuong }[] = [
   { label: "Tài khoản", href: "/tai-khoan/ca-nhan", icon: "taiKhoan" },
 ];
 
-function AccountMenu({ name, anh, phu, onLogout }: { name: string; anh: string; phu: string[]; onLogout: () => void }) {
+function AccountMenu({ name, anh, phu, onLogout, soViec = {} }: { name: string; anh: string; phu: string[]; onLogout: () => void; soViec?: Record<string, number> }) {
   const links = TAI_KHOAN_LINKS;
+  // Chấm đỏ đúng mục (useSoViecKhach) — mục "Tài khoản" gom Ví & nạp tiền + Gói hội viên
+  const soCua = (href: string) => href === "/tai-khoan/ca-nhan" ? (soViec["/tai-khoan/nap-tien"] ?? 0) + (soViec["/tai-khoan/hoi-vien"] ?? 0) : soViec[href] ?? 0;
+  const tong = tongSoViec(soViec);
 
   return (
     <div className="group relative">
@@ -251,7 +257,10 @@ function AccountMenu({ name, anh, phu, onLogout }: { name: string; anh: string; 
         type="button"
         className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1.5 transition-colors"
       >
-        <AnhDaiDien url={anh} ten={name} className="h-8 w-8 bg-white/10 text-sm text-white ring-1 ring-white/15" />
+        <span className="relative">
+          <AnhDaiDien url={anh} ten={name} className="h-8 w-8 bg-white/10 text-sm text-white ring-1 ring-white/15" />
+          {tong > 0 && <span className="absolute -right-1.5 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-[#060606]">{nhanSoDo(tong)}</span>}
+        </span>
         {chevronDown}
       </button>
 
@@ -261,7 +270,7 @@ function AccountMenu({ name, anh, phu, onLogout }: { name: string; anh: string; 
           {phu.length ? phu.map((x) => <p key={x} className="break-all text-xs text-cvr-muted">{x}</p>) : <p className="text-xs text-cvr-muted">Thành viên</p>}
         </div>
         {links.map((child) => (
-          <DropdownItem key={child.href} href={child.href} label={child.label} />
+          <DropdownItem key={child.href} href={child.href} label={child.label} so={soCua(child.href)} />
         ))}
         <button
           type="button"
@@ -497,6 +506,8 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
+  // Chấm đỏ thông báo của tài khoản — mọi trang, mọi máy như nhau (06/11/2026)
+  const soViec = useSoViecKhach(user?.id, usePathname() || "/");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -540,7 +551,7 @@ export default function Header() {
               drawer menu (kiểu Batdongsan) → thanh header mobile chỉ Logo · ♡ · ☰. */}
           <div className="hidden items-center xl:flex">
             {user ? (
-              <AccountMenu name={displayName(user)} anh={anhDaiDien(user)} phu={lienHeTaiKhoan(user)} onLogout={signOut} />
+              <AccountMenu name={displayName(user)} anh={anhDaiDien(user)} phu={lienHeTaiKhoan(user)} onLogout={signOut} soViec={soViec} />
             ) : (
               // Chưa đăng nhập: CHỈ "Đăng nhập" — trang đăng nhập tự lo cả tài khoản mới, không cần nút Đăng ký (chủ dự án 25/10/2026)
               <Link
