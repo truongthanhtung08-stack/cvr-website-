@@ -98,14 +98,13 @@ export default function XemTruocTin({
               thì ra đúng ngày; "Ngay khi được duyệt" thì hạn tính từ ngày duyệt (máy chủ ghi lúc duyệt). */}
           {soNgay ? (
             <p className="mt-2 text-[12px] font-medium leading-relaxed text-cvr-faint">
-              {batDau
-                ? (() => {
-                    const [y, m, dd] = batDau.split("-").map(Number);
-                    const het = new Date(Date.UTC(y, m - 1, dd + soNgay));
-                    const f = (x: Date) => x.toLocaleDateString("vi-VN", { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric" });
-                    return <>Hiệu lực: {f(new Date(Date.UTC(y, m - 1, dd)))} · Hết hạn: {f(het)}</>;
-                  })()
-                : <>Hiệu lực: ngày được duyệt · Hết hạn: {soNgay} ngày sau ngày duyệt</>}
+              {(() => {
+                // NGÀY GIỜ CỤ THỂ (chủ dự án 06/11/2026): hẹn ngày → 00:00 giờ VN ngày đó (như api/tin-dang/duyet); ngay khi duyệt →
+                // tính như duyệt ngay lúc xem. Hết hạn = bắt đầu + số ngày gói (soNgayHienThi — cùng số máy chủ dùng lúc duyệt).
+                const batDauLuc = batDau ? Date.parse(`${batDau}T00:00:00+07:00`) : Date.now();
+                const f = (t: number) => new Date(t).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+                return <>Hiệu lực: {f(batDauLuc)} · Hết hạn: {f(batDauLuc + soNgay * 86_400_000)}</>;
+              })()}
             </p>
           ) : null}
 
