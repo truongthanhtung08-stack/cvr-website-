@@ -1,5 +1,5 @@
 import type { TierId } from "@/lib/packages";
-import { bangNangGoi, bangTheoMucDich, COT_NANG_GOI, type BillingData } from "@/lib/billing";
+import { bangTheoMucDich, giaOUpTin, type BillingData } from "@/lib/billing";
 
 // ============================================================================
 // UP TIN – NÂNG GÓI PHÍA KHÁCH (chủ dự án chốt 01/11/2026)
@@ -74,9 +74,7 @@ export function giaGoiDangChay(r: TinNang & { tier_days?: number | null; purpose
 /** UP TIN = CHỌN LẠI GÓI (chủ dự án 06/11/2026): mọi lựa chọn hạng × số ngày trong bảng Up tin có GIÁ CAO HƠN gói đang chạy
  *  (so giá bảng Admin, chưa VAT, trước khấu trừ / ưu đãi). Cùng hạng nhiều ngày hơn, hạng khác giá cao hơn đều được. */
 export function oNangDuoc(r: TinNang & { tier_days?: number | null; purpose?: string | null }, data: BillingData, tier: TierId, days: number): boolean {
-  if (!COT_NANG_GOI.includes(tier)) return false;
-  const bang = bangNangGoi(data, r.purpose).length ? bangNangGoi(data, r.purpose) : bangTheoMucDich(data, r.purpose).plans;
-  const gia = bang.find((p) => p.tierId === tier)?.terms.find((t) => t.days === days)?.price;
+  const gia = giaOUpTin(data, r.purpose, tier, days)?.price;
   return gia != null && gia > giaGoiDangChay(r, data);
 }
 

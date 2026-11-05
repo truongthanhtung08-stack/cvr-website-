@@ -252,6 +252,12 @@ export const daDuyetDayTin = (d: BillingData): boolean => (d.congBo?.ban?.up?.le
 //   giá gói mới (đã gồm chương trình + chiết khấu ưu đãi gói) − khấu trừ gói đang chạy − chiết khấu ưu đãi hội viên − voucher + VAT.
 // Khấu trừ: máy luôn tính sẵn (`khauTruCo`); chỉ trừ khi KHÁCH chọn (apKhauTru) — chủ dự án 01/11/2026. Gói cũ 0 ₫ → không có gì trừ.
 // Không có gói · mốc ngày đó → null. goiHienTai.daTra = tiền gói đang chạy CHƯA VAT; tu / den = lúc bắt đầu / hết hạn gói đó (ISO).
+/** Ô giá Up tin (hạng × số ngày): bảng Nâng gói đã duyệt, hạng không có trong đó thì bảng gói tin. Không có → undefined. */
+export function giaOUpTin(d: BillingData, purpose: string | null | undefined, tier: TierId, days: number) {
+  const tim = (bang: Plan[]) => bang.find((p) => p.tierId === tier)?.terms.find((t) => t.days === days);
+  return tim(bangNangGoi(d, purpose)) ?? tim(bangTheoMucDich(d, purpose).plans);
+}
+
 export function giaNangGoi(args: {
   data: BillingData;
   purpose?: string | null;
@@ -263,12 +269,10 @@ export function giaNangGoi(args: {
   apKhauTru?: boolean;         // khách chọn trừ phần gói đang chạy còn lại
   luc?: number;                // thời điểm nâng (ms) — mặc định bây giờ
 }): GiaNangGoi | null {
-  if (!COT_NANG_GOI.includes(args.tierMoi)) return null;
   const ng = args.data.nangGoi;
-  // Giá Up tin = bảng Nâng gói ĐÃ DUYỆT trong Admin (06/11/2026: "up tin có gói up tin — là gói đã duyệt"); trước đòi thêm ô "Bật"
-  const daCongBo = bangNangGoi(args.data, args.purpose).length > 0;
-  const bang = daCongBo ? bangNangGoi(args.data, args.purpose) : bangTheoMucDich(args.data, args.purpose).plans;
-  const term = bang.find((p) => p.tierId === args.tierMoi)?.terms.find((t) => t.days === args.soNgay);
+  // Giá Up tin = bảng Nâng gói ĐÃ DUYỆT trong Admin (06/11/2026: "up tin có gói up tin — là gói đã duyệt"); trước đòi thêm ô "Bật".
+  // Hạng không có trong bảng Nâng gói (Basic) → giá bảng gói tin Admin (06/11/2026: "Up tin là up một gói cao tiền hơn" — kể cả Basic).
+  const term = giaOUpTin(args.data, args.purpose, args.tierMoi, args.soNgay);
   if (!term) return null;
   const giaGoi = term.price;
   const g = args.goiHienTai;
