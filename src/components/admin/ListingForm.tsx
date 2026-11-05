@@ -436,19 +436,6 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       // bỏ trống là tin chìm dưới mọi tin cũ (bẫy 20/09; nhập hàng loạt đã ghi từ trước).
       : await supabase.from("listings").insert({ ...payload, bumped_at: payload.published_at }).select("id").single();
 
-    // BẬT LẠI TIN CÒN HẠN, KHÔNG ĐỔI GÓI (Ẩn / chờ duyệt → Cập nhật và đăng): GIỮ NGUYÊN MỐC LÚC DUYỆT (chủ dự án 06/11/2026).
-    // Trigger CSDL tin_luon_co_han coi bật lại là kỳ mới (ngày đăng / hạn / lần đẩy = bây giờ) → ghi trả mốc cũ; hạn khác giá trị
-    // trigger vừa đặt nên không mở kỳ mới lần nữa. Cùng cách api/tin-dang/duyet (Hiện lại).
-    if (!err && editing && initial && initial.status !== "approved" && payload.status === "approved"
-        && initial.tier_expires_at && new Date(initial.tier_expires_at).getTime() > Date.now() && initial.published_at
-        && payload.tier === initial.tier && (payload.tier_days ?? null) === (initial.tier_days ?? null)) {
-      await supabase.from("listings").update({
-        published_at: initial.published_at,
-        tier_expires_at: initial.tier_expires_at,
-        ...(initial.bumped_at ? { bumped_at: initial.bumped_at } : {}),
-      }).eq("id", initial.id);
-    }
-
     // Lưu xong → web bỏ cache, hiện ngay (xem src/lib/lamMoiWeb.ts)
     if (!err) await lamMoiWeb("listings");
     setSaving(false);
