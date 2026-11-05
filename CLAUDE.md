@@ -23,8 +23,18 @@ chạy lệnh push. Sửa xong chỉ báo link xem thử + "chưa push". Chỉ k
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
 
-## ⏳ 06/11/2026 SÁNG (phiên 69797164) — TRÊN MÁY, CHƯA PUSH (gồm cả 268d6b8 bên dưới)
-- `16990c5` Admin "Cập nhật và đăng" tin đang ẩn còn hạn: giữ mốc lúc duyệt.
+## ⏳ 06/11/2026 SÁNG (phiên 69797164) — TRÊN MÁY, CHƯA PUSH (gồm cả 268d6b8 bên dưới) — BUILD QUA 388/388
+**BẢN BUILD (anh hỏi nhiều lần — trả lời ĐÚNG danh sách này, theo AI làm gì):**
+1. Khách sửa tin của mình: bấm "Xem trước" thấy Hiệu lực · Hết hạn thật (268d6b8).
+2. Admin ẩn tin của khách: khách không còn nút Sửa · chấm đỏ mục Tin đăng · không email / Zalo (268d6b8).
+3. Admin ẩn rồi hiện lại: giữ nguyên ngày đăng, lần đẩy, hạn — SỬA TỪ GỐC bằng trigger SQL 0071 (anh đã chạy), mọi tin, mọi đường.
+   **Đã GỠ 2 bản vá trong mã** (`api/tin-dang/duyet` Hiện lại · `admin/ListingForm` "Cập nhật & đăng") — anh: "sửa từ GỐC", "chỉ ẩn và hiện".
+4. Khách Up tin: chọn được mọi gói giá cao hơn gói đang chạy, kể cả Basic 15/30 ngày.
+5. Trang chủ, ô khu vực: đếm cả tỉnh + cả tin hết hạn.
+**Không đổi (web đúng sẵn):** khách sửa tin lên ngay, giữ mốc · Đẩy tin trả tiền là lên đầu ngay lúc đẩy · khách KHÔNG có nút tự Hạ / Hiện
+(bỏ từ 01/11; tin khách đã hạ chỉ có "Đăng lại" = gói mới, Admin duyệt).
+**Lỗi build "next/font/google queries have exactly one entry"** = đệm `.next-kiem` hỏng do 2 lần build chạy chồng → xoá `.next-kiem` build lại là qua.
+- ~~`16990c5` Admin "Cập nhật và đăng" giữ mốc~~ — đã gỡ (`08595e9`), cùng bản vá Hiện lại (`f964fc4`).
 - `4dfcfee` + `e32fb6b` **UP TIN = CHỌN LẠI GÓI (anh chốt 06/11): ô nào (hạng × số ngày) GIÁ CAO HƠN gói đang chạy là Up được — kể cả
   Basic nhiều ngày hơn.** So giá bảng Admin chưa VAT (`oNangDuoc`, `giaGoiDangChay` ở `src/lib/nangGoi.ts`; giá ô `giaOUpTin` ở
   `billing.ts`: bảng Nâng gói đã duyệt, hạng không có trong đó → bảng gói tin). Bảng khách khoá từng ô (`BangGiaGoiTin` `khoaO`),
