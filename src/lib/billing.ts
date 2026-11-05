@@ -243,6 +243,10 @@ export type GiaNangGoi = {
 
 // Bảng giá nâng ĐÃ CÔNG BỐ theo mục đích của tin (Bán / Thuê). Chưa công bố → rỗng.
 export const bangNangGoi = (d: BillingData, purpose?: string | null): Plan[] => d.congBo?.[mucDichGia(purpose)]?.nangGoi ?? [];
+// ĐÃ DUYỆT = CÓ GIÁ ĐÃ DUYỆT (chủ dự án 06/11/2026: "tao đã duyệt gói đẩy và nâng tin rồi" — duyệt giá trong Admin LÀ duyệt, không bắt
+// tích thêm ô nào). Up tin (nâng gói) hiện khi bảng giá Nâng gói đã duyệt; Đẩy tin hiện khi bảng giá Đẩy tin đã duyệt. Một đường: Admin.
+export const daDuyetNangGoi = (d: BillingData): boolean => bangNangGoi(d, "ban").length > 0 || bangNangGoi(d, "thue").length > 0;
+export const daDuyetDayTin = (d: BillingData): boolean => (d.congBo?.ban?.up?.length ?? 0) > 0 || (d.congBo?.thue?.up?.length ?? 0) > 0;
 
 // MỘT HÀM TÍNH TIỀN NÂNG GÓI — thứ tự cố định, CỘNG DỒN, không âm (đổi sang "lấy mức cao hơn" chỉ sửa ở đây):
 //   giá gói mới (đã gồm chương trình + chiết khấu ưu đãi gói) − khấu trừ gói đang chạy − chiết khấu ưu đãi hội viên − voucher + VAT.

@@ -150,7 +150,7 @@ export default async function BaoGiaPage() {
           {/* Điện thoại: thanh tiêu đề trên cùng đã ghi "Báo giá dịch vụ" → tiêu đề này chỉ để Google đọc (không hiện lặp); máy tính hiện */}
           <h1 className="sr-only lg:not-sr-only lg:text-[34px] lg:font-semibold lg:leading-tight lg:tracking-tight lg:text-cvr-ink">Báo giá dịch vụ</h1>
           <div className="grid grid-cols-1 gap-6 lg:mt-8 lg:grid-cols-[220px_1fr] lg:gap-12">
-            <PricingSidebar groups={nhomDichVu(coHv, daDuyet, !!billing.nangGoi?.bat && (bangNangGoi(billing, "ban").length > 0 || bangNangGoi(billing, "thue").length > 0))} />
+            <PricingSidebar groups={nhomDichVu(coHv, daDuyet, (bangNangGoi(billing, "ban").length > 0 || bangNangGoi(billing, "thue").length > 0))} />
 
             <div className="min-w-0 space-y-14 sm:space-y-16">
               {/* Nút gạt Tin bán | Tin cho thuê (ngay cạnh chữ "Bảng giá" của từng gói) đổi `data-md` của khung này → mọi con số
@@ -217,7 +217,7 @@ export default async function BaoGiaPage() {
                   {/* Khách muốn đẩy tin vào đâu (chủ dự án 09/10/2026): Tin đăng của tôi → nút Đẩy tin ở từng tin */}
                   {/* Up tin của tôi (chủ dự án 01/11/2026) cạnh Đẩy tin của tôi — cùng về Tin của tôi; hiện khi chữ Up tin đã Duyệt trong Admin */}
                   <div className="mt-8 flex flex-wrap justify-center gap-3">
-                    {billing.nangGoi?.bat === true && (
+                    {bangNangGoi(billing, "ban").length + bangNangGoi(billing, "thue").length > 0 && (
                       <a href="/tai-khoan/tin-dang" className={NUT_CHINH}>
                         Up tin của tôi
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
@@ -233,7 +233,7 @@ export default async function BaoGiaPage() {
 
               {/* UP TIN – NÂNG GÓI (chủ dự án 01/11/2026): chỉ hiện khi Admin đã Duyệt (giá nâng công bố) và đang Bật — giá nâng gồm VAT,
                   cách khấu trừ gói đang chạy, quy định Admin ghi */}
-              {billing.nangGoi?.bat && <BangNangGoiBaoGia billing={billing} quyDinhUpTin={quyDinh.quyDinhUpTin ?? []} />}
+              {bangNangGoi(billing, "ban").length + bangNangGoi(billing, "thue").length > 0 && <BangNangGoiBaoGia billing={billing} quyDinhUpTin={quyDinh.quyDinhUpTin ?? []} />}
 
               {/* 4. GÓI HỘI VIÊN — mua theo tháng, voucher mỗi 30 ngày (cơ chế Batdongsan) */}
               {coHv && (

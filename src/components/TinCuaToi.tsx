@@ -16,7 +16,7 @@ import {
   thongTinGoi,
   ngayGon,
 } from "@/lib/listingAdmin";
-import { bangTheoMucDich, bangUp, chuNangGoi, COT_UP, giaDayTin, laChuThat, soLuotTuNhan, vnd } from "@/lib/billing";
+import { bangTheoMucDich, bangUp, chuNangGoi, COT_UP, giaDayTin, laChuThat, soLuotTuNhan, vnd, daDuyetNangGoi, daDuyetDayTin } from "@/lib/billing";
 import NangGoiTin, { DanhSachGoi, KhoiTongTien, LienKetQuyDinh, useViKhaDung } from "@/components/NangGoiTin";
 import { tinNangDuoc, yeuCauNangCuaTin } from "@/lib/nangGoi";
 import { getTier } from "@/lib/packages";
@@ -67,7 +67,8 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
   // (máy xem thử chạy với chữ mẫu). Từ trang nạp tiền quay về (?nang=<id>&tier=&days=) → mở lại đúng tin, đúng gói đã chọn.
   const [laChu, setLaChu] = useState(false);
   const [nangCho, setNangCho] = useState<{ r: ListingRow; chon: { tier: TierId; days: number } | null } | null>(null);
-  const moNangGoi = billing.nangGoi?.bat === true; // CHỈ khi anh đã tích "Bật trên web" + Duyệt trong Admin (06/11/2026) — trước xét nhầm "có chữ sửa tay"
+  const moNangGoi = daDuyetNangGoi(billing); // Up tin: giá Nâng gói đã Duyệt trong Admin (06/11/2026)
+  const moDay = daDuyetDayTin(billing); // Đẩy tin: giá Đẩy tin đã Duyệt trong Admin
   const chuNang = chuNangGoi(billing);
   const [tuKhoa, setTuKhoa] = useState("");
   const [trang, setTrang] = useState(1);
@@ -520,7 +521,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
                 </span>
               )}
               {/* Up tin + Đẩy tin CHỈ hiện khi anh đã Duyệt "Cài đặt Up tin – Nâng gói" trong Admin (moNangGoi — 06/11/2026) */}
-              {moNangGoi && r.status === "approved" && !(r.published_at && Date.parse(r.published_at) > Date.now()) && (
+              {(moNangGoi || moDay) && r.status === "approved" && !(r.published_at && Date.parse(r.published_at) > Date.now()) && (
                 <div className={`grid w-full gap-2 sm:flex sm:w-auto ${yeuCauNangCuaTin(r) ? "" : "sm:ml-auto"} ${moNangGoi && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) ? "grid-cols-2" : "grid-cols-1"}`}>
                   {moNangGoi && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) && (
                     <button type="button" onClick={() => setNangCho({ r, chon: null })} className={`btn-dangtin ${NUT_CHINH_TIN}`}>
@@ -528,10 +529,10 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
                       {chuNang.nutNang}
                     </button>
                   )}
-                  <button type="button" disabled={dangDay === r.id} onClick={() => handleDay(r)} className={`btn-dangtin ${NUT_CHINH_TIN}`}>
+                  {moDay && <button type="button" disabled={dangDay === r.id} onClick={() => handleDay(r)} className={`btn-dangtin ${NUT_CHINH_TIN}`}>
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
                     {dangDay === r.id ? "Đang đẩy…" : Number(r.bump_credits ?? 0) > 0 ? `${chuNang.nutDay} · còn ${r.bump_credits} lượt` : chuNang.nutDay}
-                  </button>
+                  </button>}
                 </div>
               )}
             </div>

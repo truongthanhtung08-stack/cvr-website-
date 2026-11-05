@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const bang = ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined);
   // Chữ phía khách chưa Duyệt trong Admin = chức năng chưa mở trên web (máy xem thử vẫn chạy với chữ mẫu).
-  if (bang.nangGoi?.bat !== true) return loi("Chức năng nâng gói chưa mở."); // chỉ khi anh đã tích "Bật trên web" + Duyệt (06/11/2026)
+  if (!((bang.congBo?.ban?.nangGoi?.length ?? 0) || (bang.congBo?.thue?.nangGoi?.length ?? 0))) return loi("Chức năng nâng gói chưa mở."); // giá Nâng gói đã Duyệt trong Admin (06/11/2026)
 
   const { data: hv } = await admin.from("hoi_vien").select("goi").eq("user_id", user.id).gt("het_han", new Date().toISOString()).limit(1);
   const luc = Date.now();
