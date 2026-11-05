@@ -253,6 +253,49 @@ const THAM_SO_SO = new Set(["so_tien", "so_du", "so_luot", "so_ngay", "so_tin", 
  *   ký hiệu "₫" (U+20AB) — KHÁC ký tự. Không đổi vnd() vì nó dùng cho web và
  *   email vốn đã duyệt giao diện; chỉ nắn lại đúng tại cửa gửi ZNS.
  */
+// ── CẤU HÌNH 13 MẪU ZBS — ĐỌC THẲNG TỪ ZALO 06/11/2026 (template/info/v2) ─────────────────────────────────────────────
+// SỬA TẬN GỐC (chủ dự án 06/11/2026): web gửi ĐÚNG Y mẫu Zalo cho mọi tin, không phụ thuộc từng chỗ gọi — ô thiếu tự điền giá trị
+// hợp lệ, ô thừa bỏ, ô kiểu số chỉ chữ số, cắt đúng giới hạn. Một ô sai là Zalo bỏ CẢ TIN (khách không nhận gì).
+// Đổi / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng này (tên ô : kiểu : dài tối đa).
+const MAU_ZBS: Record<string, string> = {
+  "630637": "so_tien:NUMBER:20 so_du:NUMBER:20 ten_khach_hang:STRING:30 ma_giao_dich:STRING:30",
+  "630636": "ten_tin:STRING:200 so_tien:NUMBER:20 so_du:NUMBER:20 ten_khach_hang:STRING:30 ma_giao_dich:STRING:30",
+  "641611": "ten_khach_hang:STRING:30 ma_tin:STRING:30 ten_tin:STRING:200 thoi_gian:DATE:20",
+  "641610": "ten_khach_hang:STRING:30 ma_tin:STRING:30 ten_tin:STRING:200 ly_do:STRING:200",
+  "641609": "ten_khach_hang:STRING:30 ten_tin:STRING:200 thoi_gian:DATE:20 so_luot:NUMBER:20 so_dien_thoai:STRING:15",
+  "641608": "ten_khach_hang:STRING:30 so_ngay:NUMBER:20 ma_tin:STRING:30 ten_tin:STRING:200 goi_tin:STRING:30 ngay_het_han:DATE:20",
+  "641607": "ten_khach_hang:STRING:30 ngay_het_han:DATE:20 ma_tin:STRING:30 ten_tin:STRING:200",
+  "641606": "ten_khach_hang:STRING:30 ma_giao_dich:STRING:30 ten_dich_vu:STRING:200 so_tien:NUMBER:20 so_du:NUMBER:20 thoi_gian:DATE:20",
+  "641605": "ten_khach_hang:STRING:30 so_ngay:NUMBER:20 ten_goi:STRING:200 ngay_het_han:DATE:20 so_dien_thoai:STRING:15",
+  "641604": "ten_khach_hang:STRING:30 tu_ngay:DATE:20 den_ngay:DATE:20 so_tin:NUMBER:20 luot_hien_thi:NUMBER:20 luot_xem:NUMBER:20 luot_xem_so:NUMBER:20 so_dien_thoai:STRING:15",
+  "644528": "ten_khach_hang:STRING:30 han_uu_dai:DATE:20",
+  "644895": "ten_khach_hang:STRING:30 so_dien_thoai:STRING:15 so_tin:NUMBER:20 ten_tim_kiem:STRING:200",
+  "644885": "ten_khach_hang:STRING:30 so_dien_thoai:STRING:15 ten_tin:STRING:200",
+};
+
+/** Khớp dữ liệu với ĐÚNG mẫu Zalo: đủ ô bắt buộc, bỏ ô thừa, đúng kiểu, đúng độ dài. Mẫu lạ (vd OTP) để nguyên. */
+function khopMauZbs(templateId: string, data: Record<string, string>, phone?: string | null): Record<string, string> {
+  const mau = MAU_ZBS[templateId];
+  if (!mau) return chuanHoaThamSo(data);
+  const ra: Record<string, string> = {};
+  const homNay = new Date().toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
+  for (const o of mau.split(" ")) {
+    const [ten, kieu, dai] = o.split(":");
+    let v = String(data[ten] ?? "").trim();
+    if (kieu === "NUMBER") { const so = v.replace(/[^\d]/g, ""); v = so ? String(Number(so)) : "0"; }
+    else if (!v) v = ten === "ten_khach_hang" ? "Quý khách" : ten === "so_dien_thoai" ? (soDienThoaiHien(phone) || "—") : kieu === "DATE" ? homNay : "—";
+    const max = Number(dai);
+    ra[ten] = max && v.length > max ? v.slice(0, max).trimEnd() : v;
+  }
+  return ra;
+}
+
+/** Số hiện cho khách đọc (0905…) — dùng điền ô so_dien_thoai khi nơi gọi không truyền */
+function soDienThoaiHien(phone?: string | null): string {
+  const d = String(phone ?? "").replace(/\D/g, "");
+  return d.startsWith("84") ? `0${d.slice(2)}` : d;
+}
+
 function chuanHoaThamSo(data: Record<string, string>): Record<string, string> {
   const ra: Record<string, string> = {};
   for (const [khoa, giaTri] of Object.entries(data)) {
@@ -297,7 +340,7 @@ export async function guiZns(
       body: JSON.stringify({
         phone: so,
         template_id: templateId,
-        template_data: chuanHoaThamSo(data),
+        template_data: khopMauZbs(templateId, data, phone),
       }),
     });
     // Zalo trả HTTP 200 kèm error !== 0 khi hỏng → phải xem thân trả về, không xem status.
