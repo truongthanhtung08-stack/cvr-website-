@@ -217,7 +217,7 @@ export default async function BaoGiaPage() {
                   {/* Khách muốn đẩy tin vào đâu (chủ dự án 09/10/2026): Tin đăng của tôi → nút Đẩy tin ở từng tin */}
                   {/* Up tin của tôi (chủ dự án 01/11/2026) cạnh Đẩy tin của tôi — cùng về Tin của tôi; hiện khi chữ Up tin đã Duyệt trong Admin */}
                   <div className="mt-8 flex flex-wrap justify-center gap-3">
-                    {(billing.nangGoi?.chu || process.env.NODE_ENV !== "production") && (
+                    {billing.nangGoi?.chu && (
                       <a href="/tai-khoan/tin-dang" className={NUT_CHINH}>
                         Up tin của tôi
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>

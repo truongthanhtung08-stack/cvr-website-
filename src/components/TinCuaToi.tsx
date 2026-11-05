@@ -67,7 +67,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
   // (máy xem thử chạy với chữ mẫu). Từ trang nạp tiền quay về (?nang=<id>&tier=&days=) → mở lại đúng tin, đúng gói đã chọn.
   const [laChu, setLaChu] = useState(false);
   const [nangCho, setNangCho] = useState<{ r: ListingRow; chon: { tier: TierId; days: number } | null } | null>(null);
-  const moNangGoi = !!billing.nangGoi?.chu || process.env.NODE_ENV !== "production";
+  const moNangGoi = !!billing.nangGoi?.chu; // CHỈ khi anh đã Duyệt trong Admin — máy thử cũng vậy (06/11/2026: "cái nào không qua admin gỡ xuống hết")
   const chuNang = chuNangGoi(billing);
   const [tuKhoa, setTuKhoa] = useState("");
   const [trang, setTrang] = useState(1);
@@ -519,7 +519,8 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
                   <button type="button" onClick={() => huyNang(r)} className="h-7 rounded-md px-2.5 text-[13px] font-semibold text-cvr-ink hover:bg-white">Huỷ yêu cầu</button>
                 </span>
               )}
-              {r.status === "approved" && !(r.published_at && Date.parse(r.published_at) > Date.now()) && (
+              {/* Up tin + Đẩy tin CHỈ hiện khi anh đã Duyệt "Cài đặt Up tin – Nâng gói" trong Admin (moNangGoi — 06/11/2026) */}
+              {moNangGoi && r.status === "approved" && !(r.published_at && Date.parse(r.published_at) > Date.now()) && (
                 <div className={`grid w-full gap-2 sm:flex sm:w-auto ${yeuCauNangCuaTin(r) ? "" : "sm:ml-auto"} ${moNangGoi && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) ? "grid-cols-2" : "grid-cols-1"}`}>
                   {moNangGoi && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) && (
                     <button type="button" onClick={() => setNangCho({ r, chon: null })} className={`btn-dangtin ${NUT_CHINH_TIN}`}>

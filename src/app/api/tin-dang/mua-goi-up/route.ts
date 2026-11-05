@@ -52,6 +52,8 @@ export async function POST(request: Request) {
   const cap = (conHan ? tin.tier : "basic") as TierId;
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
+  // CHỈ MỘT ĐƯỜNG: "Cài đặt Up tin – Nâng gói" phải được chủ dự án Duyệt trong Admin mới mua gói đẩy được (06/11/2026)
+  if (!((sc?.[0]?.data as { nangGoi?: { chu?: unknown } } | undefined)?.nangGoi?.chu)) return loi("Đẩy tin chưa mở.");
   const bang: BillingData = bangTheoMucDich(ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
 
   // Gói khách chọn phải CÓ THẬT trong bảng giá — không cho gửi số lượt tuỳ ý.
