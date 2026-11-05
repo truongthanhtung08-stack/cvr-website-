@@ -30,6 +30,7 @@ export default function BangGiaGoiTin({
   kieuBaoGia,
   canhVat,
   khoaCap,
+  khoaO,
   giaKhach,
   anQuyDinh,
   capDangChay,
@@ -49,6 +50,8 @@ export default function BangGiaGoiTin({
   canhVat?: React.ReactNode;
   /** NÂNG GÓI (01/11/2026): cấp đang chạy + cấp thấp hơn — hiện mờ, không chọn được. */
   khoaCap?: TierId[];
+  /** UP TIN (06/11/2026): khoá từng ô (hạng × số ngày) — ô giá không cao hơn gói đang chạy mờ, không chọn. */
+  khoaO?: (tier: TierId, days: number) => boolean;
   /** NÂNG GÓI: số khách trả cuối cùng (đã gồm VAT) của ô — thay giá gói; null = giữ giá gói. */
   giaKhach?: (tier: TierId, days: number) => number | null;
   /** Màn đã có dòng liên kết quy định riêng (Nâng gói) → không lặp chữ "Quy định gói tin" dưới bảng. */
@@ -193,7 +196,7 @@ export default function BangGiaGoiTin({
                   );
                   return (
                     <td key={p.tierId} className="border-l border-cvr-line/70 p-1.5 text-center">
-                      {onChon && !khoa(p.tierId) ? (
+                      {onChon && !khoa(p.tierId) && !khoaO?.(p.tierId, ngay) ? (
                         <button
                           type="button"
                           onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, ngay))}
@@ -208,7 +211,7 @@ export default function BangGiaGoiTin({
                           </span>
                         </button>
                       ) : (
-                        <div className={`px-2 py-2.5 ${khoa(p.tierId) ? "opacity-40" : ""}`}>{noiDung}</div>
+                        <div className={`px-2 py-2.5 ${khoa(p.tierId) || khoaO?.(p.tierId, ngay) ? "opacity-40" : ""}`}>{noiDung}</div>
                       )}
                     </td>
                   );

@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, giaNangGoi, laChuThat, type BillingData } from "@/lib/billing";
-import { goiHienTai, goiNangDuoc, tinNangDuoc, type YeuCauNang } from "@/lib/nangGoi";
+import { goiHienTai, oNangDuoc, tinNangDuoc, type YeuCauNang } from "@/lib/nangGoi";
 import { getTier, type TierId } from "@/lib/packages";
 import { guiThongBao, maTin, MAU_DA_NHAN_TIN } from "@/lib/thongBao";
 import { vnd } from "@/lib/billing";
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
   const { data: tin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,purpose,tier,published_at,tier_expires_at,details")
+    .select("id,title,owner_id,status,purpose,tier,tier_days,published_at,tier_expires_at,details")
     .eq("id", body.id)
     .single();
   if (!tin) return loi("Không tìm thấy tin.", 404);
@@ -54,12 +54,13 @@ export async function POST(request: Request) {
   const { data: hsArr } = await admin.from("profiles").select("tao_ho,vao_chinh_thuc_luc").eq("id", user.id).limit(1);
   if (!laChuThat(hsArr?.[0])) return loi("Tài khoản chưa kích hoạt — chưa nâng gói được.", 403);
   if (details.nang_cho) return loi("Tin này đang có yêu cầu nâng gói chờ duyệt.");
-  if (!tinNangDuoc(tin)) return loi("Tin này không nâng gói được (tin chưa hiện, đã hết hạn hoặc đang ở gói cao nhất).");
-  if (!body.tier || !goiNangDuoc(tin).includes(body.tier)) return loi("Chỉ nâng lên gói cao hơn gói đang chạy.");
+  if (!tinNangDuoc(tin)) return loi("Tin này không Up được (tin chưa hiện hoặc đã hết hạn).");
   const days = Number(body.days);
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const bang = ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined);
+  // UP TIN = CHỌN LẠI GÓI (06/11/2026): gói mới phải có giá cao hơn gói đang chạy (cùng luật bảng phía khách).
+  if (!body.tier || !oNangDuoc(tin, bang, body.tier, days)) return loi("Chỉ chọn gói có giá cao hơn gói đang chạy.");
   // Chữ phía khách chưa Duyệt trong Admin = chức năng chưa mở trên web (máy xem thử vẫn chạy với chữ mẫu).
   if (!((bang.congBo?.ban?.nangGoi?.length ?? 0) || (bang.congBo?.thue?.nangGoi?.length ?? 0))) return loi("Chức năng nâng gói chưa mở."); // giá Nâng gói đã Duyệt trong Admin (06/11/2026)
 

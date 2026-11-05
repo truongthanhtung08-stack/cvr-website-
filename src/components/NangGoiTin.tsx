@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import { bangNangGoi, bangTheoMucDich, chuNangGoi, giaNangGoi, vnd, type BillingData, type Plan } from "@/lib/billing";
-import { goiHienTai, goiNangDuoc, hangDangChay, soNgayCon, THU_HANG } from "@/lib/nangGoi";
+import { goiHienTai, hangDangChay, oNangDuoc, soNgayCon } from "@/lib/nangGoi";
 import { getTier, type TierId } from "@/lib/packages";
 import { THUE_SUAT_GTGT, tachThue } from "@/lib/thue";
 import { createClient } from "@/lib/supabase/client";
@@ -62,8 +62,8 @@ export default function NangGoiTin({ r, billing, demoVi, chonDau, onDong, onDaGu
     const nang = bangNangGoi(billing, r.purpose); // giá Nâng gói ĐÃ DUYỆT trong Admin (06/11/2026 — trước đòi thêm ô "Bật", hiện nhầm giá gói thường)
     return goc.map((p) => nang.find((n) => n.tierId === p.tierId) ?? p);
   }, [billing, r.purpose]);
-  const nangDuoc = goiNangDuoc(tin);
-  const khoaCap = (["basic", "silver", "gold", "diamond"] as TierId[]).filter((t) => THU_HANG[t] <= THU_HANG[hang]);
+  // UP TIN = CHỌN LẠI GÓI (06/11/2026): ô nào giá cao hơn gói đang chạy thì chọn được (oNangDuoc); còn lại mờ.
+  const duocChon = (t: TierId, d: number) => oNangDuoc(r as Parameters<typeof oNangDuoc>[0], billing, t, d);
   const tinh = (tier: TierId, days: number, ap = apKhauTru, voucher = 0) =>
     giaNangGoi({ data: billing, purpose: r.purpose, tierMoi: tier, soNgay: days, goiHienTai: goiCu, hoiVienId: hoiVien, apKhauTru: ap, voucher });
   const truocVoucher = chon.tier ? tinh(chon.tier, chon.days) : null; // số tạm giữ lúc gửi
@@ -108,9 +108,9 @@ export default function NangGoiTin({ r, billing, demoVi, chonDau, onDong, onDaGu
         <div className="mt-4">
           <BangGiaGoiTin
             plans={plans}
-            khoaCap={khoaCap}
+            khoaO={(t, d) => !duocChon(t, d)}
             capDangChay={hang}
-            giaKhach={(t, d) => (nangDuoc.includes(t) ? (tinh(t, d)?.tongTra ?? null) : null)}
+            giaKhach={(t, d) => (duocChon(t, d) ?(tinh(t, d)?.tongTra ?? null) : null)}
             chon={chon}
             onChon={(t, d) => setChon({ tier: t, days: d })}
             onBoChon={() => setChon({ tier: "", days: 0 })}

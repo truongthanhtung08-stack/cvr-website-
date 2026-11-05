@@ -1,5 +1,5 @@
 import type { TierId } from "@/lib/packages";
-import { COT_NANG_GOI } from "@/lib/billing";
+import { bangNangGoi, bangTheoMucDich, COT_NANG_GOI, type BillingData } from "@/lib/billing";
 
 // ============================================================================
 // UP TIN – NÂNG GÓI PHÍA KHÁCH (chủ dự án chốt 01/11/2026)
@@ -62,15 +62,28 @@ export function soNgayCon(r: TinNang, luc = Date.now()): number {
   return han ? Math.max(0, Math.ceil((Date.parse(han) - luc) / 86_400_000)) : 0;
 }
 
-/** Các gói được nâng lên từ tin này (cao hơn gói đang chạy). */
-export function goiNangDuoc(r: TinNang): TierId[] {
-  return COT_NANG_GOI.filter((t) => THU_HANG[t] > THU_HANG[hangDangChay(r)]);
+/** Giá gói đang chạy (chưa VAT) theo bảng giá gói tin Admin: hạng đang chạy × số ngày của tin.
+ *  Không rõ số ngày → số tiền gói đó đã trả. */
+export function giaGoiDangChay(r: TinNang & { tier_days?: number | null; purpose?: string | null }, data: BillingData): number {
+  const hang = hangDangChay(r), plan = ds(r).plan as { tier?: TierId; days?: number } | undefined;
+  const ngay = r.tier_days ?? (plan?.tier === hang ? plan?.days : undefined);
+  const gia = bangTheoMucDich(data, r.purpose).plans.find((p) => p.tierId === hang)?.terms.find((t) => t.days === ngay)?.price;
+  return gia ?? goiHienTai(r)?.daTra ?? 0;
 }
 
-/** Tin còn hiện, còn hạn, chưa có yêu cầu đang chờ, còn gói cao hơn để nâng. */
+/** UP TIN = CHỌN LẠI GÓI (chủ dự án 06/11/2026): mọi lựa chọn hạng × số ngày trong bảng Up tin có GIÁ CAO HƠN gói đang chạy
+ *  (so giá bảng Admin, chưa VAT, trước khấu trừ / ưu đãi). Cùng hạng nhiều ngày hơn, hạng khác giá cao hơn đều được. */
+export function oNangDuoc(r: TinNang & { tier_days?: number | null; purpose?: string | null }, data: BillingData, tier: TierId, days: number): boolean {
+  if (!COT_NANG_GOI.includes(tier)) return false;
+  const bang = bangNangGoi(data, r.purpose).length ? bangNangGoi(data, r.purpose) : bangTheoMucDich(data, r.purpose).plans;
+  const gia = bang.find((p) => p.tierId === tier)?.terms.find((t) => t.days === days)?.price;
+  return gia != null && gia > giaGoiDangChay(r, data);
+}
+
+/** Tin còn hiện, còn hạn, chưa có yêu cầu đang chờ (lựa chọn nào giá cao hơn thì bảng Up tin tự mở — oNangDuoc). */
 export function tinNangDuoc(r: TinNang, luc = Date.now()): boolean {
   const han = hanTin(r);
-  return r.status === "approved" && !!han && Date.parse(han) > luc && !ds(r).nang_cho && goiNangDuoc(r).length > 0;
+  return r.status === "approved" && !!han && Date.parse(han) > luc && !ds(r).nang_cho;
 }
 
 export const yeuCauNangCuaTin = (r: Pick<TinNang, "details">): YeuCauNang | null =>
