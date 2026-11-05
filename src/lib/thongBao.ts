@@ -121,6 +121,20 @@ export async function guiThongBao(t: NoiDungThongBao): Promise<KetQuaKenh[]> {
   }
   // ZALO GỬI HỎNG (khách có số, sự kiện có mẫu) → GHI SỰ CỐ, hiện Admin → Tổng quan, KHÔNG email (06/11/2026: duyệt tin xong khách
   // không nhận Zalo mà không ai biết lý do — trước đây chỉ ghi khi CẢ HAI kênh hỏng). Cùng một lỗi gộp một dòng mỗi giờ (khoá).
+  // EMAIL GỬI HỎNG (khách có email thật, Resend trả lỗi) → cũng ghi sự cố, cùng cách Zalo bên dưới — không để lỗi chìm
+  const mail = ketQua.find((k) => k.kenh === "email");
+  if (mail && !mail.daGui && emailThat && mail.lyDo) {
+    const { baoLoi } = await import("@/lib/baoLoi");
+    await baoLoi({
+      noi: "thong-bao-email",
+      mucDo: "nhe",
+      tomTat: `Gửi email cho khách không được: ${t.tieuDe}`,
+      chiTiet: mail.lyDo.slice(0, 300),
+      hauQua: "Khách không nhận email (Zalo vẫn gửi nếu khách có số).",
+      canLam: "Xem lỗi Resend ở dòng chi tiết (hết hạn mức, khoá sai, địa chỉ gửi chưa xác minh…).",
+      khoa: `email:${mail.lyDo.slice(0, 40)}`,
+    }).catch(() => {});
+  }
   const zalo = ketQua.find((k) => k.kenh === "zalo");
   if (zalo && !zalo.daGui && t.phone && t.znsTemplateId && zalo.lyDo && !/đang tắt/.test(zalo.lyDo)) {
     const { baoLoi } = await import("@/lib/baoLoi");

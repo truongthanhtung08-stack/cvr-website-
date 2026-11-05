@@ -18,6 +18,10 @@ chạy lệnh push. Sửa xong chỉ báo link xem thử + "chưa push". Chỉ k
 - **Tên / ảnh khi gộp:** khách tự đặt trong Cài đặt (tên, ảnh riêng) thì giữ; không thì tên của tài khoản tạo đầu tiên, ảnh Zalo/Google
   cái nào có trước — giữ tới khi khách tự đổi. Số điện thoại, email không có ảnh.
 - Đăng ký bằng email có điền số có Zalo → cùng mã gửi cả email lẫn Zalo.
+- **Thông báo tự động (06/11, "lần cuối cùng FIXED"):** mọi tin Zalo đi qua `khopMauZbs` (`src/lib/thongBao.ts`) — bảng 13 mẫu đọc thẳng
+  từ Zalo (template/info/v2): ô kiểu SỐ chỉ chữ số ("0đ"/"64.800đ" → Zalo -1124, bỏ cả tin — gốc lỗi duyệt/nạp/thanh toán không có Zalo
+  từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
+  Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
 
 ## ⏳ CHƯA PUSH (06/11 khuya) — commit c2dac97 + commit kế tiếp trên máy; anh: "push sau, mỗi lần push là mỗi lần lỗi — tao kiểm"
 - Tài khoản bị cấm từ bản gộp cũ: khách đăng nhập (Zalo · email/số + mật khẩu · trang số · Quên mật khẩu) → web tự gỡ cấm,
