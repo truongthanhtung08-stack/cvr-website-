@@ -236,7 +236,10 @@ const GIOI_HAN_THAM_SO: Record<string, number> = {
 };
 
 /** Tham số Zalo đánh dấu "Loại dữ liệu: number" — phải giữ đúng dạng đã duyệt. */
-const THAM_SO_TIEN = new Set(["so_tien", "so_du"]);
+// Ô KIỂU SỐ (NUMBER) trong mẫu ZBS — đọc thẳng cấu hình mẫu trên Zalo 06/11/2026 (template/info): Zalo CHỈ NHẬN CHỮ SỐ.
+// Gửi "64.800đ" / "0đ" → -1124 "so_tien has invalid format" (gửi thử thật 06/11/2026: "0đ" lỗi, "64.800đ" lỗi, "0" nhận) → khách
+// nạp tiền, được duyệt tin, thanh toán đều KHÔNG nhận Zalo. Đổi kiểu ô bên ZBS thì sửa bảng này.
+const THAM_SO_SO = new Set(["so_tien", "so_du", "so_luot", "so_ngay", "so_tin", "luot_hien_thi", "luot_xem", "luot_xem_so"]);
 
 /**
  * Cắt cho vừa giới hạn, giữ đúng dạng tiền đã duyệt, và KHÔNG để tham số rỗng.
@@ -256,10 +259,9 @@ function chuanHoaThamSo(data: Record<string, string>): Record<string, string> {
     let s = (giaTri ?? "").toString().trim();
     // Tiền gửi ĐÚNG dạng mẫu khai trên ZBS: "64.800đ" — số có dấu chấm nghìn, "đ" liền sau, không khoảng trắng
     // (docs/MAU-ZBS-MOI.md). 26/10/2026 Zalo trả -1124 "so_tien has invalid format" với "0 đ" (tin miễn phí).
-    if (THAM_SO_TIEN.has(khoa)) {
-      const so = s.replace(/[^\d]/g, "");
-      // 0 ĐỒNG (tin miễn phí) GỬI "0" — Zalo trả -1124 với "0đ" (gửi thử thật 06/11/2026: "0đ" lỗi, "0" thành công)
-      s = so ? (Number(so) === 0 ? "0" : `${Number(so).toLocaleString("vi-VN")}đ`) : s.replace(/₫/g, "đ");
+    if (THAM_SO_SO.has(khoa)) {
+      const so = s.replace(/[^\d]/g, ""); // chỉ chữ số: "64.800 ₫" → "64800", "0 ₫" → "0"
+      s = so ? String(Number(so)) : "0";
     }
     const max = GIOI_HAN_THAM_SO[khoa];
     // Cắt ở ranh giới ký tự, thêm "…" để người đọc biết là còn nữa.
