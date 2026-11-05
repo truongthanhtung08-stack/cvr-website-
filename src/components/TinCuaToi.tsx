@@ -17,10 +17,10 @@ import {
   ngayGon,
 } from "@/lib/listingAdmin";
 import { bangTheoMucDich, bangUp, chuNangGoi, COT_UP, giaDayTin, laChuThat, soLuotTuNhan, vnd, daDuyetNangGoi, daDuyetDayTin } from "@/lib/billing";
-import NangGoiTin, { DanhSachGoi, KhoiTongTien, LienKetQuyDinh, useViKhaDung } from "@/components/NangGoiTin";
+import NangGoiTin, { DongSoDu, KhoiTongTien, LienKetQuyDinh, NutDong, NutThanhToan, useViKhaDung } from "@/components/NangGoiTin";
 import { tinNangDuoc, yeuCauNangCuaTin } from "@/lib/nangGoi";
 import { getTier } from "@/lib/packages";
-import NhanGoi from "@/components/NhanGoi";
+import BangGiaDayTin from "@/components/BangGiaDayTin";
 import { soNgayConDay } from "@/lib/luotUp";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import type { TierId } from "@/lib/packages";
@@ -346,7 +346,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
     return (
       <div className="rounded-2xl border border-cvr-line bg-white p-8 text-center shadow-sm">
         <h2 className="text-lg font-semibold tracking-tight text-cvr-ink">Chưa có tin đăng</h2>
-        <Link href="/dang-tin" className="mt-4 inline-block rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+        <Link href="/dang-tin" className="mt-4 inline-block rounded-lg bg-cvr-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-blue/90">
           + Đăng tin mới
         </Link>
       </div>
@@ -367,7 +367,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
   return (
     <div className="space-y-4">
       <PageHeader title="Tin đã đăng">
-        <Link href="/dang-tin" className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+        <Link href="/dang-tin" className="rounded-lg bg-cvr-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-blue/90">
           + Đăng tin mới
         </Link>
       </PageHeader>
@@ -504,7 +504,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
                 <Link href={`/bat-dong-san/${r.id}`} target="_blank" className={NUT_PHU}>Xem ↗</Link>
               )}
               {(r.status === "expired" || (r.status === "hidden" && r.details?.ha_boi === "khach")) && (
-                <button type="button" onClick={() => { setUpCho(r); setUpChon(goiLanTruoc(r)); }} className={`btn-dangtin ${NUT_CHINH_TIN}`}>
+                <button type="button" onClick={() => { setUpCho(r); setUpChon(goiLanTruoc(r)); }} className={`bg-cvr-blue hover:bg-cvr-blue/90 ${NUT_CHINH_TIN}`}>
                   Đăng lại
                 </button>
               )}
@@ -524,12 +524,12 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
               {(moNangGoi || moDay) && r.status === "approved" && !(r.published_at && Date.parse(r.published_at) > Date.now()) && (
                 <div className={`grid w-full gap-2 sm:flex sm:w-auto ${yeuCauNangCuaTin(r) ? "" : "sm:ml-auto"} ${moNangGoi && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) ? "grid-cols-2" : "grid-cols-1"}`}>
                   {moNangGoi && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) && (
-                    <button type="button" onClick={() => setNangCho({ r, chon: null })} className={`btn-dangtin ${NUT_CHINH_TIN}`}>
+                    <button type="button" onClick={() => setNangCho({ r, chon: null })} className={`bg-cvr-blue hover:bg-cvr-blue/90 ${NUT_CHINH_TIN}`}>
                       <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M7 11l5-5 5 5M7 17l5-5 5 5" /></svg>
                       {chuNang.nutNang}
                     </button>
                   )}
-                  {moDay && <button type="button" disabled={dangDay === r.id} onClick={() => handleDay(r)} className={`btn-dangtin ${NUT_CHINH_TIN}`}>
+                  {moDay && <button type="button" disabled={dangDay === r.id} onClick={() => handleDay(r)} className={`bg-cvr-blue hover:bg-cvr-blue/90 ${NUT_CHINH_TIN}`}>
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
                     {dangDay === r.id ? "Đang đẩy…" : Number(r.bump_credits ?? 0) > 0 ? `${chuNang.nutDay} · còn ${r.bump_credits} lượt` : chuNang.nutDay}
                   </button>}
@@ -552,27 +552,27 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
         <PhanTrang hienTai={trangHienTai} tong={tongTrang} doiTrang={doiTrang} ghiChu={`${filtered.length} tin`} className="pt-1" />
       )}
       {muaCho && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => setMuaCho(null)}>
-          <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-sm text-cvr-muted">{muaCho.coLe ? chuNang.nutDay : "Mua gói đẩy tin"}</p>
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-start sm:p-4 sm:pt-[8vh]" onClick={() => setMuaCho(null)}>
+          <div className="h-[85dvh] max-h-[85dvh] w-full max-w-lg overflow-y-auto overscroll-contain sm:h-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-cvr-muted">{muaCho.coLe ? chuNang.nutDay : "Mua gói đẩy tin"}</p>
+              <NutDong onClick={() => setMuaCho(null)} />
+            </div>
             <h3 className="mt-0.5 line-clamp-2 text-base font-semibold text-cvr-ink">{muaCho.r.title || "(chưa có tiêu đề)"}</h3>
-            {/* DANH SÁCH GÓI ĐẨY (chủ dự án 01/11/2026): mỗi gói một dòng — tên loại tin · số lượt · giá khách trả (gồm VAT); gói vượt
-                số lượt còn đẩy được trong thời hạn tin thì mờ. Giá + luật như cũ (bảng Đẩy tin đã công bố). */}
-            <DanhSachGoi
-              muc={bangUp(bangTheoMucDich(billing, muaCho.r.purpose)).map((x) => {
-                const n = soLuotTuNhan(x.label), g = x.values[COT_UP.indexOf(muaCho.cap)]?.gia ?? 0;
-                return {
-                  khoa: String(n),
-                  ten: <NhanGoi id={muaCho.cap} heSo={false} />,
-                  phu: `${n} lượt`,
-                  gia: tachThue(g).tongTra,
-                  mo: g <= 0 || n > muaCho.conDay,
-                  dangChon: luotChon === n,
-                  onChon: () => setLuotChon(luotChon === n ? null : n),
-                };
-              })}
-            />
-            <p className="mt-2 text-[12.5px] text-cvr-muted">Giá đã gồm 8% VAT</p>
+            <DongSoDu vi={viDay} can={luotChon ? tachThue(bangUp(bangTheoMucDich(billing, muaCho.r.purpose)).find((x) => soLuotTuNhan(x.label) === luotChon)?.values[COT_UP.indexOf(muaCho.cap)]?.gia ?? 0).tongTra : 0} />
+            {/* BẢNG GIÁ ĐẨY TIN CHUẨN (chủ dự án 06/11/2026: "tất cả đã có rồi, chỉnh lại cho chuẩn") — đúng bảng của trang Báo giá
+                (BangGiaDayTin), chỉ cột loại tin này; gói vượt số lượt còn đẩy được trong thời hạn tin thì mờ. */}
+            <div className="mt-4">
+              <BangGiaDayTin
+                rows={bangUp(bangTheoMucDich(billing, muaCho.r.purpose))}
+                chiCap={muaCho.cap}
+                chonLuot={luotChon ?? undefined}
+                onChon={(n) => setLuotChon(n)}
+                onBoChon={() => setLuotChon(null)}
+                toiDaLuot={muaCho.conDay}
+                trangBaoGia
+              />
+            </div>
             {muaCho.coLe && (
               <LienKetQuyDinh chu={chuNang.lienKetQuyDinh} className="mt-2" />
             )}
@@ -584,18 +584,24 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
                   moTa={`${getTier(muaCho.cap).name} · ${luotChon} lượt`}
                   tongTra={t.tongTra}
                   vi={viDay}
-                  napHref={`/tai-khoan/nap-tien?can=${Math.max(0, t.tongTra - (viDay?.khaDung ?? 0))}&ve=${encodeURIComponent(`/tai-khoan/tin-dang?day=${muaCho.r.id}&luot=${luotChon}`)}`}
                   dong={[{ nhan: "Phí đẩy tin", giaTri: vnd(t.tienHang) }, { nhan: "VAT 8%", giaTri: vnd(t.tienThue) }]}
                 />
               );
             })()}
-            <div className="mt-5 flex gap-2">
-              <button type="button" onClick={() => setMuaCho(null)} className="h-11 flex-1 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">Huỷ</button>
-              <button type="button" onClick={xacNhanMuaGoi} disabled={!luotChon}
-                className="btn-dangtin h-11 flex-[2] rounded-lg text-sm font-semibold text-white disabled:opacity-50">
-                {luotChon === 1 && muaCho.coLe ? `${chuNang.nutDay} — trừ vào ví` : luotChon ? `Mua gói ${luotChon} lượt — trừ vào ví` : "Chọn gói đẩy"}
-              </button>
-            </div>
+            {/* MỘT NÚT (chủ dự án 06/11/2026): ví đủ → Đẩy tin · ví thiếu → Nạp thêm */}
+            {(() => {
+              const tong = luotChon ? tachThue(bangUp(bangTheoMucDich(billing, muaCho.r.purpose)).find((x) => soLuotTuNhan(x.label) === luotChon)?.values[COT_UP.indexOf(muaCho.cap)]?.gia ?? 0).tongTra : 0;
+              const thieu = viDay ? Math.max(0, tong - viDay.khaDung) : 0;
+              return (
+                <NutThanhToan
+                  ten={chuNang.nutDay}
+                  chuaChon={!luotChon}
+                  thieu={thieu}
+                  napHref={`/tai-khoan/nap-tien?can=${thieu}&ve=${encodeURIComponent(`/tai-khoan/tin-dang?day=${muaCho.r.id}&luot=${luotChon}`)}`}
+                  onClick={xacNhanMuaGoi}
+                />
+              );
+            })()}
           </div>
         </div>
       )}
@@ -614,9 +620,12 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
         />
       )}
       {upCho && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => !dangUp && setUpCho(null)}>
-          <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-sm text-cvr-muted">Đăng lại tin</p>
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-start sm:p-4 sm:pt-[8vh]" onClick={() => !dangUp && setUpCho(null)}>
+          <div className="h-[85dvh] max-h-[85dvh] w-full max-w-2xl overflow-y-auto overscroll-contain sm:h-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-cvr-muted">Đăng lại tin</p>
+              <NutDong onClick={() => !dangUp && setUpCho(null)} />
+            </div>
             <h3 className="mt-0.5 line-clamp-2 text-base font-semibold text-cvr-ink">{upCho.title || "(chưa có tiêu đề)"}</h3>
             {/* CÙNG MỘT bảng giá kiểu Batdongsan với form đăng tin + trang Báo giá — bấm ô là chọn gói */}
             <div className="mt-4">
@@ -627,9 +636,8 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
               />
             </div>
             <div className="mt-5 flex gap-2">
-              <button type="button" onClick={() => setUpCho(null)} disabled={dangUp} className="h-11 flex-1 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">Huỷ</button>
               <button type="button" onClick={xacNhanUp} disabled={!upChon || dangUp}
-                className="btn-dangtin h-11 flex-[2] rounded-lg text-sm font-semibold text-white disabled:opacity-50">
+                className="bg-cvr-blue hover:bg-cvr-blue/90 h-11 flex-1 rounded-lg text-sm font-semibold text-white disabled:opacity-50">
                 {dangUp ? "Đang đăng lại…" : upChon ? "Xác nhận đăng lại" : "Chọn hạng và thời hạn"}
               </button>
             </div>

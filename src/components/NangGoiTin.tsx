@@ -91,13 +91,17 @@ export default function NangGoiTin({ r, billing, demoVi, chonDau, onDong, onDaGu
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => !dang && onDong()}>
-      <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-        <p className="text-sm text-cvr-muted">{chu.nutNang}</p>
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-start sm:p-4 sm:pt-[8vh]" onClick={() => !dang && onDong()}>
+      <div className="h-[85dvh] max-h-[85dvh] w-full max-w-2xl overflow-y-auto overscroll-contain sm:h-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm text-cvr-muted">{chu.nutNang}</p>
+          <NutDong onClick={() => !dang && onDong()} />
+        </div>
         <h3 className="mt-0.5 line-clamp-2 text-base font-semibold text-cvr-ink">{r.title || "(chưa có tiêu đề)"}</h3>
         <p className="mt-2 text-[13px] text-cvr-body">
           {chu.goiDangChay.replace("{goi}", getTier(hang).name).replace("{ngay}", String(soNgayCon(tin)))}
         </p>
+        <DongSoDu vi={vi} can={truocVoucher?.tongTra ?? 0} />
         {/* BẢNG GIÁ KIỂU MA TRẬN như trang Báo giá (chủ dự án 01/11/2026: "bấm Up tin bố trí ra danh sách gói kiểu ma trận, ra bảng giá
             thì cấu trúc khách đang ở gói nào"): cột gói đang chạy ghi "Gói đang chạy"; gói đang chạy + thấp hơn mờ, không chọn; gói cao
             hơn hiện số khách trả cuối cùng. Chọn xong mới hiện Tổng tiền. */}
@@ -121,7 +125,6 @@ export default function NangGoiTin({ r, billing, demoVi, chonDau, onDong, onDaGu
             tongTra={gia.tongTra}
             canGiu={truocVoucher?.tongTra}
             vi={vi}
-            napHref={`/tai-khoan/nap-tien?can=${thieu}&ve=${encodeURIComponent(ve(r.id, chon.tier, chon.days))}`}
             dong={[
               { nhan: "Phí gói", giaTri: vnd(gia.giaGoi) },
               ...(gia.khauTru > 0 ? [{ nhan: "Khấu trừ gói đang chạy", giaTri: `− ${vnd(gia.khauTru)}`, nhan2: true }] : []),
@@ -141,48 +144,45 @@ export default function NangGoiTin({ r, billing, demoVi, chonDau, onDong, onDaGu
         )}
         {loi && <p className="mt-3 text-sm text-red-600">{loi}</p>}
 
-        <div className="mt-5 flex gap-2">
-          <button type="button" onClick={onDong} disabled={dang} className="h-11 flex-1 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">Huỷ</button>
-          <button type="button" onClick={gui} disabled={!gia || thieu > 0 || dang}
-            className="btn-dangtin h-11 flex-[2] rounded-lg text-sm font-semibold text-white disabled:opacity-50">
-            {dang ? "Đang gửi…" : gia ? `${chu.nutNang} — ${vnd(gia.tongTra)}` : "Chọn gói và thời hạn"}
-          </button>
-        </div>
+        {/* MỘT NÚT (chủ dự án 06/11/2026): ví đủ → Up tin · ví thiếu → Nạp thêm */}
+        <NutThanhToan
+          ten={chu.nutNang}
+          chuaChon={!gia}
+          thieu={thieu}
+          napHref={`/tai-khoan/nap-tien?can=${thieu}&ve=${encodeURIComponent(ve(r.id, chon.tier, chon.days))}`}
+          dang={dang}
+          onClick={gui}
+        />
       </div>
     </div>
   );
 }
 
-// ── Danh sách gói (Up tin · Đẩy tin): mỗi gói một dòng, bấm dòng là chọn, bấm lại là bỏ ──
-export type MucGoi = { khoa: string; ten: React.ReactNode; phu: string; gia: number; mo?: boolean; dangChon: boolean; onChon: () => void };
-export function DanhSachGoi({ muc }: { muc: MucGoi[] }) {
+// Nút cuối bảng Up tin · Đẩy tin: chưa chọn gói → mờ · ví đủ → Up tin / Đẩy tin · ví thiếu → Nạp thêm (số còn thiếu)
+export function NutThanhToan({ ten, chuaChon, thieu, napHref, dang, onClick }: {
+  ten: string; chuaChon: boolean; thieu: number; napHref: string; dang?: boolean; onClick: () => void;
+}) {
+  const lop = "bg-cvr-blue hover:bg-cvr-blue/90 transition flex h-12 w-full items-center justify-center rounded-lg text-[15px] font-semibold text-white disabled:opacity-50";
   return (
-    <ul className="mt-4 space-y-2">
-      {muc.map((m) => (
-        <li key={m.khoa}>
-          <button
-            type="button"
-            disabled={m.mo}
-            aria-pressed={m.dangChon}
-            onClick={m.onChon}
-            className={`flex min-h-[52px] w-full items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left transition disabled:cursor-not-allowed disabled:opacity-40 ${
-              m.dangChon ? "border-cvr-ink bg-cvr-surface ring-1 ring-cvr-ink" : "border-cvr-line bg-white hover:border-cvr-ink/40"
-            }`}
-          >
-            <span className="flex min-w-0 flex-1 items-center gap-2.5">
-              {m.ten}
-              <span className="whitespace-nowrap text-[14px] text-cvr-body">{m.phu}</span>
-            </span>
-            <span className="whitespace-nowrap text-[15px] font-semibold tabular-nums text-cvr-ink">{m.gia > 0 ? vnd(m.gia) : "0 ₫"}</span>
-            {!m.mo && (
-              <span className={`inline-flex h-7 shrink-0 items-center rounded-md px-3 text-[12px] font-semibold ${m.dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
-                {m.dangChon ? "Bỏ chọn" : "Chọn"}
-              </span>
-            )}
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div className="mt-5">
+      {!chuaChon && thieu > 0 ? (
+        <a href={napHref} className={lop}>Nạp thêm {vnd(thieu)}</a>
+      ) : (
+        <button type="button" onClick={onClick} disabled={chuaChon || dang} className={lop}>
+          {dang ? "Đang gửi…" : chuaChon ? "Chọn gói" : ten}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Nút X đóng bảng (góc trên phải) — Up tin · Đẩy tin
+export function NutDong({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} aria-label="Đóng"
+      className="-mr-2 -mt-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cvr-muted transition hover:bg-cvr-surface hover:text-cvr-ink">
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" /></svg>
+    </button>
   );
 }
 
@@ -202,18 +202,17 @@ export function useViKhaDung(mau?: ViKhach): ViKhach {
   return vi;
 }
 
-export function KhoiTongTien({ moTa, tongTra, canGiu, dong, vi, napHref, children }: {
+export function KhoiTongTien({ moTa, tongTra, canGiu, dong, vi, children }: {
   moTa: string;
   tongTra: number;
   /** Số ví phải đủ lúc gửi (tạm giữ = giá trước voucher, như form đăng tin); mặc định = tongTra */
   canGiu?: number;
   dong: { nhan: string; giaTri: string; nhan2?: boolean }[];
   vi: ViKhach;
-  napHref: string;
   children?: React.ReactNode;
 }) {
   const [chiTiet, setChiTiet] = useState(false);
-  const thieu = vi ? Math.max(0, (canGiu ?? tongTra) - vi.khaDung) : 0;
+  void canGiu; void vi; // số dư nay hiện ở đầu bảng (DongSoDu)
   return (
     <div className="mt-4 rounded-2xl border border-cvr-line bg-cvr-surface px-4 py-3.5 text-sm text-cvr-body">
       <div className="flex items-start justify-between gap-3">
@@ -240,22 +239,20 @@ export function KhoiTongTien({ moTa, tongTra, canGiu, dong, vi, napHref, childre
           ))}
         </div>
       )}
-      {vi && tongTra > 0 && (
-        <div className="mt-3 rounded-xl bg-white px-3.5 py-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-cvr-muted">
-              {vi.tamGiu > 0 ? "Số dư khả dụng" : "Số dư ví"}
-              {vi.tamGiu > 0 && <span className="block text-xs text-cvr-faint">Đang tạm giữ {vnd(vi.tamGiu)}</span>}
-            </span>
-            <span className={thieu > 0 ? "font-semibold tabular-nums text-red-600" : "font-semibold tabular-nums text-cvr-ink"}>{vnd(vi.khaDung)}</span>
-          </div>
-          {thieu > 0 && (
-            <a href={napHref} className="mt-2.5 flex h-12 w-full items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90">
-              Nạp thêm {vnd(thieu)}
-            </a>
-          )}
-        </div>
-      )}
+    </div>
+  );
+}
+
+// SỐ DƯ VÍ HIỆN NGAY ĐẦU BẢNG (chủ dự án 06/11/2026: "số dư ví là cái hiện luôn ra trước mặt") — đỏ khi không đủ gói đang chọn
+export function DongSoDu({ vi, can }: { vi: ViKhach; can: number }) {
+  if (!vi) return null;
+  return (
+    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-cvr-surface px-3.5 py-2.5 text-sm">
+      <span className="text-cvr-muted">
+        {vi.tamGiu > 0 ? "Số dư khả dụng" : "Số dư ví"}
+        {vi.tamGiu > 0 && <span className="block text-xs text-cvr-faint">Đang tạm giữ {vnd(vi.tamGiu)}</span>}
+      </span>
+      <span className={`font-semibold tabular-nums ${can > vi.khaDung ? "text-red-600" : "text-cvr-ink"}`}>{vnd(vi.khaDung)}</span>
     </div>
   );
 }

@@ -193,7 +193,7 @@ export async function POST(request: Request) {
       { nhan: "Hiển thị đến", giaTri: new Date(hetHan).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) },
     ],
     znsTemplateId: MAU_DUYET_TIN,
-    znsData: { ten_khach_hang: hs?.full_name || "Quý khách", ma_giao_dich: String(tin.id), ten_tin: tin.title, so_tien: vnd(tien.tongTra), so_du: vnd(soDuConLai) },
+    znsData: { ten_khach_hang: hs?.full_name || "Quý khách", ma_giao_dich: maTin(String(tin.id)), ten_tin: tin.title, so_tien: vnd(tien.tongTra), so_du: vnd(soDuConLai) },
   });
   return NextResponse.json({ ok: true, daTru: tien.tongTra, hetHan });
 }

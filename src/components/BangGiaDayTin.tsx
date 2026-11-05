@@ -22,6 +22,7 @@ export default function BangGiaDayTin({
   chiCap,
   chonLuot,
   onChon,
+  onBoChon,
   toiDaLuot,
   trangBaoGia,
 }: {
@@ -29,6 +30,7 @@ export default function BangGiaDayTin({
   chiCap?: TierId;                       // chỉ hiện cột của một loại tin
   chonLuot?: number;
   onChon?: (soLuot: number) => void;
+  onBoChon?: () => void;                 // bấm lại ô đang chọn = bỏ chọn
   toiDaLuot?: number;                    // gói vượt số lượt này thì khoá (quá thời hạn tin)
   trangBaoGia?: boolean;                 // trang Báo giá: quy định gom ở mục Quy định chung, không lặp dưới bảng (22/10/2026)
 }) {
@@ -76,12 +78,18 @@ export default function BangGiaDayTin({
                           <button
                             type="button"
                             disabled={khoa}
-                            onClick={() => onChon(soLuot)}
+                            onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(soLuot))}
                             aria-pressed={dangChon}
                             title={khoa ? "Vượt số ngày tin còn hiển thị" : undefined}
+                            // Y NHƯ Ô GIÁ của bảng gói tin (BangGiaGoiTin, bản đang chạy): ô đang chọn nền xám viền đen · nút Chọn xanh · Bỏ chọn viền đen (06/11/2026)
                             className={`w-full rounded-xl px-2 py-2.5 transition disabled:cursor-not-allowed disabled:opacity-40 ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
                           >
-                            {noiDung}
+                            <span className="flex flex-col items-center">{noiDung}</span>
+                            {!khoa && (
+                              <span className={`mt-1.5 inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
+                                {dangChon ? "Bỏ chọn" : "Chọn"}
+                              </span>
+                            )}
                           </button>
                         ) : (
                           <div className="px-2 py-2.5">{noiDung}</div>
