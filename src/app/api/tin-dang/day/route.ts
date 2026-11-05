@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   // ── 0. CHỈ MỘT ĐƯỜNG: chủ dự án đã DUYỆT "Cài đặt Up tin – Nâng gói" trong Admin (06/11/2026: "cái gì chưa qua admin như đẩy tin
   //    — gỡ"). Chưa duyệt thì không đẩy được, kể cả gọi thẳng địa chỉ này.
   const { data: scDay } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
-  if (!((scDay?.[0]?.data as { nangGoi?: { chu?: unknown } } | undefined)?.nangGoi?.chu)) return loi("Đẩy tin chưa mở.", 403);
+  if (!((scDay?.[0]?.data as { nangGoi?: { bat?: boolean } } | undefined)?.nangGoi?.bat === true)) return loi("Đẩy tin chưa mở.", 403);
 
   // ── 1. Tin phải là của chính người bấm, và đang đăng ──────────────────────
   const { data: tin, error: loiTin } = await admin

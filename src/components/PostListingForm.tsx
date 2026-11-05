@@ -1898,7 +1898,7 @@ export default function PostListingForm() {
               }
             />
             {/* Dòng liên kết quy định (chủ dự án 01/11/2026) — chữ từ Admin; mở tab mới, không rời form */}
-            {billing.nangGoi?.chu && <LienKetQuyDinh chu={chuNangGoi(billing).lienKetQuyDinh} className="mt-2" />}
+            {billing.nangGoi?.bat === true && <LienKetQuyDinh chu={chuNangGoi(billing).lienKetQuyDinh} className="mt-2" />}
             {/* TIN HIỂN THỊ (chủ dự án 23/10/2026: "phần dưới báo giá chỉ đưa mục Tin hiển thị vào thôi"; "làm cái bảng xem — bấm vào xem,
                 bấm X tắt"; "để nút này ở đâu cho hợp lý"): chữ bấm cùng hàng dòng VAT, ngay dưới bảng giá (canhVat), bấm mở BẢNG NỔI thẻ tin mẫu (tới đúng gói đang chọn). Đóng: X · chạm ra ngoài · nút
                 Quay lại điện thoại (useKhoaCuon ở trên). */}

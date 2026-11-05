@@ -67,7 +67,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
   // (máy xem thử chạy với chữ mẫu). Từ trang nạp tiền quay về (?nang=<id>&tier=&days=) → mở lại đúng tin, đúng gói đã chọn.
   const [laChu, setLaChu] = useState(false);
   const [nangCho, setNangCho] = useState<{ r: ListingRow; chon: { tier: TierId; days: number } | null } | null>(null);
-  const moNangGoi = !!billing.nangGoi?.chu; // CHỈ khi anh đã Duyệt trong Admin — máy thử cũng vậy (06/11/2026: "cái nào không qua admin gỡ xuống hết")
+  const moNangGoi = billing.nangGoi?.bat === true; // CHỈ khi anh đã tích "Bật trên web" + Duyệt trong Admin (06/11/2026) — trước xét nhầm "có chữ sửa tay"
   const chuNang = chuNangGoi(billing);
   const [tuKhoa, setTuKhoa] = useState("");
   const [trang, setTrang] = useState(1);
