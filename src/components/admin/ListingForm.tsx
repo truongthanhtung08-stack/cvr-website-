@@ -73,6 +73,15 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // THỜI HẠN GÓI — admin cũng chọn đúng gói trong Giá & quy định, không ngoại lệ (01/10/2026).
   // Đổi hạng / thời hạn của tin đang hiển thị = bắt đầu kỳ mới, CSDL tự tính hạn (0053).
   const [soNgayGoi, setSoNgayGoi] = useState<number>(initial?.tier_days ?? 0);
+  // TIN CỦA KHÁCH TỰ ĐĂNG (chủ dự án 06/11/2026: "admin có quyền chỉnh sửa mọi thông tin của khách TRỪ GÓI TIN"): chủ tin là
+  // khách thật (không phải tài khoản Coastal Land đăng hộ — tao_ho, không phải admin) → khoá Hạng tin + Thời hạn (giữ gói khách
+  // chọn), lưu chỉ cập nhật NỘI DUNG, giữ nguyên trạng thái — muốn lên web thì bấm Duyệt (tính tiền, ghi hạn, báo khách).
+  const [laTinKhach, setLaTinKhach] = useState(false);
+  useEffect(() => {
+    if (!initial?.owner_id) return;
+    void createClient().from("profiles").select("tao_ho,role").eq("id", initial.owner_id).maybeSingle()
+      .then(({ data }) => setLaTinKhach(!!data && !data.tao_ho && data.role !== "admin"));
+  }, [initial?.owner_id]);
 
   // Thuộc tính chi tiết (lưu vào cột details JSONB) — nhập gì web hiện nấy
   const [addressDetail, setAddressDetail] = useState(initial?.details?.addressDetail ?? "");
@@ -416,6 +425,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       status: newStatus,
       // Ghi thời điểm đăng lần đầu khi công khai (giữ nguyên nếu tin đã có)
       published_at: newStatus === "approved" ? (initial?.published_at ?? new Date().toISOString()) : initial?.published_at ?? null,
+      // Tin của khách: KHÔNG đổi gói, hạn, trạng thái, ngày đăng — chỉ nội dung (xem laTinKhach)
+      ...(laTinKhach && initial ? { tier: initial.tier, tier_days: initial.tier_days ?? null, status: initial.status, published_at: initial.published_at ?? null } : {}),
     };
 
     const supabase = createClient();
@@ -477,8 +488,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               className={inputCls}
             />
           </Field>
-          <Field label="Hạng tin (CVR)">
+          <Field label={laTinKhach ? "Hạng tin (CVR) — gói khách đã chọn, không đổi" : "Hạng tin (CVR)"}>
             <ChonCoTim
+              disabled={laTinKhach}
               value={tier}
               onChange={(v) => setTier(v as ListingTier)}
               options={["diamond", "gold", "silver", "basic"]}
@@ -504,6 +516,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                   : { "0": `${ds[0].days} ngày · ${gia(ds[0].price)} (gói ngắn nhất)`, ...Object.fromEntries(ds.map((t) => [String(t.days), `${t.days} ngày · ${gia(t.price)}`])) };
               return (
                 <ChonCoTim
+                  disabled={laTinKhach}
                   value={ten[String(soNgayGoi)] ? String(soNgayGoi) : "0"}
                   onChange={(v) => setSoNgayGoi(Number(v))}
                   options={Object.keys(ten)}
