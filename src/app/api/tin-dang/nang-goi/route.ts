@@ -4,7 +4,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, giaNangGoi, laChuThat, type BillingData } from "@/lib/billing";
 import { goiHienTai, goiNangDuoc, tinNangDuoc, type YeuCauNang } from "@/lib/nangGoi";
-import type { TierId } from "@/lib/packages";
+import { getTier, type TierId } from "@/lib/packages";
+import { guiThongBao, maTin, MAU_DA_NHAN_TIN } from "@/lib/thongBao";
+import { vnd } from "@/lib/billing";
 
 // ============================================================================
 // KHÁCH GỬI / HUỶ YÊU CẦU NÂNG GÓI (chủ dự án chốt 01/11/2026)
@@ -88,5 +90,27 @@ export async function POST(request: Request) {
     .select("id");
   if (error) return loi(error.message, 500);
   if (!ghi?.length) return loi("Tin này đang có yêu cầu nâng gói chờ duyệt.");
+
+  // BÁO KHÁCH "ĐÃ NHẬN YÊU CẦU UP TIN" (chủ dự án 06/11/2026: "làm thì làm cho triệt để") — email + Zalo. Zalo dùng mẫu 641611
+  // "Đã nhận tin đăng chờ duyệt" (đúng nghĩa, không ô tiền); chưa có mẫu ZBS riêng cho nâng gói. Gửi hỏng không làm hỏng yêu cầu.
+  try {
+    const { data: hsBao } = await admin.from("profiles").select("email,phone,full_name").eq("id", user.id).limit(1);
+    const ho = hsBao?.[0] as { email: string | null; phone: string | null; full_name: string | null } | undefined;
+    const luc = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+    await guiThongBao({
+      email: ho?.email,
+      phone: ho?.phone,
+      tieuDe: "Coastal Land đã nhận yêu cầu Up tin của bạn",
+      loiNhan: "Yêu cầu nâng gói đang chờ kiểm duyệt. Phí đang được tạm giữ trong ví, trừ khi duyệt; nếu không duyệt, tiền tạm giữ được trả lại. Theo dõi tại coastalland.vn/tai-khoan/tin-dang.",
+      cacDong: [
+        { nhan: "Mã tin", giaTri: maTin(String(tin.id)) },
+        { nhan: "Tin đăng", giaTri: tin.title },
+        { nhan: "Gói mới", giaTri: `${getTier(body.tier).name} · ${days} ngày` },
+        { nhan: "Phí (gồm VAT)", giaTri: vnd(gia.tongTra) },
+      ],
+      znsTemplateId: MAU_DA_NHAN_TIN,
+      znsData: { ten_khach_hang: ho?.full_name || "Quý khách", ma_tin: maTin(String(tin.id)), ten_tin: tin.title, thoi_gian: luc },
+    });
+  } catch { /* không chặn yêu cầu đã ghi */ }
   return NextResponse.json({ ok: true, yeuCau });
 }
