@@ -46,7 +46,8 @@ export default function TrangChu() {
       <div className="dau-app">
         <div className="hang-app">
           {/* LOGO CHUẨN (06/11/2026 "lấy logo CHUẨN, không làm kiểu dối"): đúng file logo ngang của thương hiệu (cùng chân trang), không tự ghép chữ */}
-          <img className="logo-chuan" src={logoNgang} alt="COASTAL LAND" />
+          {/* Bấm logo = về đầu Trang chủ, như web (06/11/2026) — logo chỉ có ở Trang chủ nên chỉ cần cuộn lên đầu */}
+          <img className="logo-chuan" src={logoNgang} alt="COASTAL LAND" onClick={(e) => { (e.currentTarget.closest(".zaui-page") as HTMLElement | null)?.scrollTo({ top: 0, behavior: "smooth" }); }} />
         </div>
         <div onClick={() => dieuHuong("/tim-kiem")}>
           <Input.Search placeholder="Tìm nhà đất, khu vực, dự án…" readOnly />

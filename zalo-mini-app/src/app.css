@@ -822,3 +822,6 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Khung thông số: ô lẻ cuối kéo hết hàng (không để ô xám trống). */
 .luoi-tt > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .khoi-ct .hang-xem-them { margin-top: 12px; }
+/* Bấm logo: nhún nhẹ khi chạm + cuộn mượt về đầu trang (06/11/2026 "hiệu ứng, chuyển động"). */
+.logo-chuan, .ct-logo { cursor: pointer; transition: transform .15s ease, opacity .15s ease; -webkit-tap-highlight-color: transparent; }
+.logo-chuan:active, .ct-logo:active { transform: scale(.94); opacity: .75; }

@@ -37,7 +37,7 @@ export default function ChanTrang() {
   return (
     <footer className="chan-trang">
       {/* Logo ngang có slogan — ĐÚNG tệp chân trang web dùng (public/logo/logo-horizontal-dark.svg, BrandLogo size lg). */}
-      <img className="ct-logo" src={logoNgang} alt="COASTAL LAND" />
+      <img className="ct-logo" src={logoNgang} alt="COASTAL LAND" onClick={(e) => (e.currentTarget.closest(".zaui-page") as HTMLElement | null)?.scrollTo({ top: 0, behavior: "smooth" })} />
       <p className="ct-tagline">{f.tagline}</p>
       <ul className="ct-lien-he">
         {/* Như chân trang web bản điện thoại: mỗi dòng có biểu tượng (vị trí · điện thoại · thư). Địa chỉ lấy từ phapLy.ts (Admin không đè). */}
