@@ -68,10 +68,10 @@ function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: string[]; ti
           <img key={i} src={anh(u)} alt={`${tieuDe} ${i + 1}`} onClick={() => setXemLon(i)} />
         ))}
       </div>
-      {!laVideoDang && (
+      {/* Gọn (06/11/2026): số ảnh đã có ở "n/N" dưới đáy — góc trên chỉ còn báo có video. */}
+      {!laVideoDang && videos.length > 0 && (
         <span className="anh-tin-dem">
-          {videos.length > 0 && <><Icon icon="zi-video" size={14} /> {videos.length}&nbsp;&nbsp;</>}
-          <Icon icon="zi-camera" size={14} /> {anhs.length}
+          <Icon icon="zi-video" size={14} /> {videos.length}
         </span>
       )}
       {tong > 1 && dang > 0 && (
@@ -187,7 +187,7 @@ export default function ChiTietTin() {
               <Icon icon="zi-share-external-1" size={20} />
             </button>
           </div>
-          <span className="meta-chu">Mã {tin.id.slice(0, 8).toUpperCase()}{tin.published_at ? ` · ${ngay(tin.published_at)}` : ""}</span>
+          {/* Mã tin + ngày đăng đã có ở bảng Ngày đăng · Mã tin bên dưới — bỏ dòng trùng (06/11/2026). */}
         </div>
       </section>
 

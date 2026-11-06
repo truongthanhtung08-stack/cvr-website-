@@ -11,9 +11,9 @@ export const DS_TRANG = trangTinh as Record<string, { ten: string; html: string 
 // Chính sách kiểm duyệt Zalo 4.8: tiêu đề chính sách, điều khoản phải ghi rõ của Mini App nào → thêm "Coastal Land".
 const PHAP_LY = new Set(["quy-che", "dieu-khoan", "bao-mat"]);
 
-// NÚT CUỐI TRANG như web (06/11/2026): Giới thiệu có "Xem dự án" và CTA "Đăng tin" · "Xem Bất động sản" — mở thẳng màn trong app.
+// NÚT CUỐI TRANG = CTA cuối trang web (06/11/2026): "Đăng tin" (nền xanh) · "Xem Bất động sản" (viền) — mở thẳng màn trong app.
 const CTA: Record<string, { nhan: string; di: string; phu?: boolean }[]> = {
-  "gioi-thieu": [{ nhan: "Đăng tin", di: "/dang-tin" }, { nhan: "Xem Bất động sản", di: "/ds/ban", phu: true }, { nhan: "Xem dự án", di: "/du-an", phu: true }],
+  "gioi-thieu": [{ nhan: "Đăng tin", di: "/dang-tin" }, { nhan: "Xem Bất động sản", di: "/ds/ban", phu: true }],
 };
 
 export default function TrangTinh() {
@@ -29,7 +29,7 @@ export default function TrangTinh() {
           <div className="trang-tinh" dangerouslySetInnerHTML={{ __html: t.html }} />
           {CTA[duong] && (
             <Box px={4} pb={8} style={{ display: "grid", gap: 12 }}>
-              {CTA[duong].map((c) => <Button key={c.nhan} fullWidth variant={c.phu ? "secondary" : "primary"} onClick={() => dieuHuong(c.di)}>{c.nhan}</Button>)}
+              {CTA[duong].map((c) => <Button key={c.nhan} fullWidth className={c.phu ? "nut-vien" : undefined} variant={c.phu ? "tertiary" : "primary"} onClick={() => dieuHuong(c.di)}>{c.nhan}</Button>)}
             </Box>
           )}
         </>

@@ -47,7 +47,7 @@ export default function DuAnChiTiet() {
       <section className="khoi-ct">
         <h1 className="tieu-de-tin">{d.name}</h1>
         <p className="dong-dc">{diaChiDuAn(d)}</p>
-        {d.status_text && <span className="nhan-loai" style={{ color: "#fff", background: "var(--cl-blue)", borderColor: "var(--cl-blue)", borderRadius: 999 }}>{d.status_text}</span>}
+        {/* Tình trạng đã có ở bảng Thông tin dự án bên dưới — bỏ nhãn trùng dưới tên (06/11/2026). */}
       </section>
 
       <ThuGonTin>

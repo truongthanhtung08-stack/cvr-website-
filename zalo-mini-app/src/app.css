@@ -16,7 +16,7 @@ body { background: var(--cl-surface); color: var(--cl-ink); }
 .chu-phu { color: var(--cl-muted); font-size: 14px; }
 .cat-dong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tab-md { display: flex; gap: 8px; }
-.tab-md button { flex: 1; padding: 8px; border-radius: 999px; border: 1px solid var(--cl-line); background: #fff; color: var(--cl-body); font-weight: 600; }
+.tab-md button { flex: 1; padding: 8px; border-radius: 999px; border: 1px solid var(--cl-line); background: #fff; color: var(--cl-body); font-weight: 600; font-size: 14px; line-height: 20px; }
 .tab-md button.bat { background: var(--cl-ink); border-color: var(--cl-ink); color: #fff; }
 .khoi { background: #fff; margin-top: 8px; padding: 16px 0; }
 .khoi-dau { display: flex; justify-content: space-between; align-items: center; padding: 0 16px 12px; }
@@ -619,3 +619,16 @@ html.xem-thu .hang-app { padding-right: 0; }
 .trang-tinh details summary::after { content: "+"; font-weight: 400; color: #86868b; }
 .trang-tinh details[open] summary::after { content: "−"; }
 .trang-tinh details p { margin: 8px 0 0; }
+/* Thanh nút đáy (trang tin, dự án, đăng tin…): nút không tràn mép — co theo chỗ còn lại, chữ dài thì "…" (06/11/2026). */
+.nut-chinh > .zaui-btn { min-width: 0; flex: 1 1 auto; }
+.nut-chinh > .zaui-btn-secondary { flex: 0 0 auto; }
+.nut-chinh .zaui-btn-container { min-width: 0; overflow: hidden; }
+.nut-chinh .zaui-btn-container > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nut-chinh > .zaui-btn { font-size: 14px !important; padding-left: 14px !important; padding-right: 14px !important; }
+/* Mặc định cho mọi nút tự vẽ CHƯA đặt cỡ chữ (trước: trình duyệt cho 13,33px, lệch thang Zalo). :where → không ghi đè nút đã có cỡ riêng. */
+:where(button:not(.zaui-btn)) { font-family: inherit; font-size: 14px; }
+/* Nạp tiền: mệnh giá 2 cột, số tiền một dòng (3 cột làm "1.000.000 đ" xuống dòng ở khổ máy thật). */
+.luoi-muc-nap { grid-template-columns: 1fr 1fr !important; }
+.luoi-muc-nap button { white-space: nowrap; }
+/* Nút viền (như BTN_LINE của web): nền trắng, viền xám, chữ đen. */
+.zaui-btn.nut-vien { background: #fff !important; border: 1px solid var(--cl-line) !important; color: var(--cl-ink) !important; }

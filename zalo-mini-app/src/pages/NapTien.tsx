@@ -77,7 +77,7 @@ export default function NapTien() {
         />
         <Button fullWidth loading={dang} disabled={soTien < 10_000} onClick={nap}>Nạp {vnd(soTien)}</Button>
         {bao && <Text size="small" style={{ color: bao.loai === "loi" ? "#d70018" : "var(--cl-body)" }}>{bao.chu}</Text>}
-        <Text size="xSmall" className="chu-phu">Ví dùng chung với coastalland.vn — nạp ở đâu cũng đăng tin được ở cả hai nơi.</Text>
+        {/* Bỏ câu giải thích "Ví dùng chung với coastalland.vn…" (06/11/2026 — CLAUDE.md cấm chú thích). */}
       </Box>
     </Page>
   );
