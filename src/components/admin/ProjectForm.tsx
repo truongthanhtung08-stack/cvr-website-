@@ -95,7 +95,7 @@ export default function ProjectForm({
   const [mapPin, setMapPin] = useState(initial?.details?.mapPin ?? "");
   const [tier, setTier] = useState<ProjectTier>(initial?.details?.tier ?? "basic");
 
-  // Bảng giá gói dự án (admin đặt ở /admin/gia-chuan → tab "Gói dự án")
+  // Bảng giá gói dự án (admin đặt ở /admin/gia-khuyen-mai → tab "Gói dự án")
   const { billing } = useBilling();
   const [soNgay, setSoNgay] = useState<number>(7);
   useEffect(() => {
@@ -354,7 +354,7 @@ export default function ProjectForm({
         </p>
 
         {/* BẢNG TÍNH TIỀN — chỉ hiện cho khách hàng (admin đăng thì không tính phí).
-            Giá lấy từ /admin/gia-chuan → tab "Gói dự án". */}
+            Giá lấy từ /admin/gia-khuyen-mai → tab "Gói dự án". */}
         {khachHang && (
           <div className="mt-4 rounded-xl bg-cvr-surface px-4 py-3">
             <div className="mb-2 flex flex-wrap items-center gap-3">

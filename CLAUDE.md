@@ -15,10 +15,6 @@ bố cục, nhãn nút, ô nhập. Chữ còn lại chỉ là THÔNG TIN. Bài h
 đại diện Zalo…" → anh: "lấy cái gì mà lấy", "CẤM chú thích vớ vẩn" → đã bỏ, còn logo · tên · nút "Đăng nhập bằng Zalo" · lối phụ.
 Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm. Câu chữ bắt buộc phải có → đưa anh duyệt nguyên văn trước.
 
-## ⛔ ADMIN — CHỈ BỎ THỨ GÂY PHÁT SINH TIỀN (anh chốt 07/11/2026): "cái gì làm phát sinh thì chuyển". Trang Admin dựng sẵn,
-đọc Supabase từ trình duyệt → không tốn Vercel; giữ. Đã bỏ: Lịch sử giá (máy tự nộp), Giá đất Nhà nước (trống), mẫu thẻ tin (demo),
-giá khuyến mãi cũ (đã gộp Bảng giá). Đổi gì phải kiểm khớp quy trình (quy-trinh-3-ben.md, VIEC.md) để không đứt đoạn.
-
 ## ⛔ LUẬT TÀI KHOẢN — ANH CHỐT 06/11/2026, CẤM HỎI LẠI ("đừng để tao nói lại")
 - Khách **đăng nhập bằng bất cứ cách nào** (số, email, Google, Zalo). **Đăng ký bắt buộc họ tên.**
 - **Đăng tin: số điện thoại BẮT BUỘC, đã xác minh.** Chưa có số → xác minh bằng mã gửi **tới chính số đó** (Zalo; sau thêm SMS
@@ -570,7 +566,7 @@ Lỗi của phiên này ngày 01–02/11 (số lần chủ dự án phải nhắ
 >   mỗi sàn × tầng — sàn chỉ 75–80% đất, có lửng/áp mái); không có số chính xác thì không lấy — web bỏ qua mọi số đúng bằng đất × 1 · 1,5 · 2… (`dienTichSanThat`).
 >   Việc chia giá là của web; Cowork chỉ chép số, không tự chia.
 > - **Lịch sử giá:** chỉ dãy của đúng khu vực + loại hình + mua bán/cho thuê của tin, đủ so cùng kỳ
->   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `KE-HOACH-SEO.md` mục 11.0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 3 bậc dự án → đường → phường — ⛔ **bỏ hẳn cả tỉnh 16/10** (số một phường/loại hình không áp cho nơi khác); đơn vị theo loại hình: đất ÷ m² đất · căn hộ ÷ m² căn · nhà, văn phòng ÷ m² sàn; theo quý như Batdongsan, đủ 5 quý liền mới hiện; ⛔ **thống nhất GIÁ MỖI M² theo loại hình cả bán lẫn thuê (thuê = tiền/tháng ÷ m², chốt 21/10 — "lấy đơn vị tổng là sai")**; web tự tính, Cowork điền phần thiếu theo `SEO/RA/lich-su-gia-con-thieu.csv` máy xuất mỗi ngày — trang Admin Lịch sử giá đã bỏ 07/11/2026).
+>   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `KE-HOACH-SEO.md` mục 11.0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 3 bậc dự án → đường → phường — ⛔ **bỏ hẳn cả tỉnh 16/10** (số một phường/loại hình không áp cho nơi khác); đơn vị theo loại hình: đất ÷ m² đất · căn hộ ÷ m² căn · nhà, văn phòng ÷ m² sàn; theo quý như Batdongsan, đủ 5 quý liền mới hiện; ⛔ **thống nhất GIÁ MỖI M² theo loại hình cả bán lẫn thuê (thuê = tiền/tháng ÷ m², chốt 21/10 — "lấy đơn vị tổng là sai")**; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---

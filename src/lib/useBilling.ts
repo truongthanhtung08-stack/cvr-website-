@@ -8,7 +8,7 @@ import { BILLING_DEFAULT, chuanHoaCapHoiVien, type BillingData } from "@/lib/bil
 // ĐỌC GIÁ & KHUYẾN MÃI ĐANG ÁP DỤNG (bản admin đã lưu) — dùng cho TRANG KHÁCH.
 // Trang khách (/tai-khoan, /dang-tin) là client component nên không gọi được
 // getBilling() phía máy chủ; trước đây chúng lấy thẳng BILLING_DEFAULT trong code
-// → sửa giá/khuyến mãi ở /admin/gia-chuan KHÔNG hiện ra ngoài.
+// → sửa giá/khuyến mãi ở /admin/gia-khuyen-mai KHÔNG hiện ra ngoài.
 // Hook này đọc site_content key "billing" (đúng chỗ admin lưu) và gộp với giá
 // chuẩn trong code — y hệt getBilling() phía máy chủ. Chưa lưu/không kết nối
 // được → dùng giá chuẩn, trang không bao giờ trống.

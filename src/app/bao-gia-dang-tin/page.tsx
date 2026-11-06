@@ -103,7 +103,7 @@ const nhomDichVu = (coHoiVien: boolean, da: Set<string> = new Set(), coNangGoi =
 // (không còn tin/ảnh mẫu cứng). Đăng hoặc sửa tin trong admin → trang này tự đổi theo.
 export default async function BaoGiaPage() {
   const [allProjects, billing, quyDinh] = await Promise.all([getProjects(), getBilling(), getQuyDinhGia()]);
-  // MỌI GIÁ ĐỀU TỪ ADMIN (/admin/gia-chuan).
+  // MỌI GIÁ ĐỀU TỪ ADMIN (/admin/gia-khuyen-mai).
   // Trang này trước đây còn một bảng giá viết cứng chạy song song — Diamond 1 tuần
   // ghi 980.000đ trong khi bảng giá đang chạy là 1.050.000đ. Sửa giá trong admin mà
   // quên sửa code là hai nơi nói hai giá khác nhau. Nay không còn số nào viết riêng
@@ -113,7 +113,7 @@ export default async function BaoGiaPage() {
   // MỘT NGUỒN (01/10/2026): KHÔNG lùi về giá viết sẵn trong code khi admin thiếu một gói —
   // giá chỉ đến từ admin; gói admin chưa đặt giá thì không có dòng giá.
   const giaDuAn = (id: TierId): PriceLine[] => priceLinesDuAn(billing, id) ?? [];
-  // ĐẨY TIN · PR · BANNER: lấy đúng bản chủ dự án đặt ở /admin/gia-chuan.
+  // ĐẨY TIN · PR · BANNER: lấy đúng bản chủ dự án đặt ở /admin/gia-khuyen-mai.
   // Chưa lưu gì thì hàm tự trả mức chuẩn — trang không bao giờ trống.
   const upRows = bangUp(bangBan);
   // CHO THUÊ có bảng riêng CHỈ KHI đã công bố giá theo mục đích — trước đó giá
