@@ -63,6 +63,13 @@ export default function DangTin() {
   const [video, setVideo] = useState(""); // link YouTube — như web, video không lưu kho, chỉ gắn link
   const [ten, setTen] = useState("");
   const [sdt, setSdt] = useState("");
+  // XÁC MINH SỐ KHI ĐĂNG TIN (luật tài khoản 06/11/2026): liên hệ trong tin = tài khoản (tên · số), không gõ tay; tài khoản chưa có
+  // số đã xác minh → nhập số, mã gửi về Zalo của CHÍNH số đó, nhập mã — cùng đường web /api/xac-thuc/xac-minh-sdt (gộp tài khoản
+  // theo luật web, máy chủ tự làm). Đăng nhập bằng Zalo không đòi số; chỉ đăng tin mới cần.
+  const [buocXm, setBuocXm] = useState<"so" | "ma">("so");
+  const [maXm, setMaXm] = useState("");
+  const [dangXm, setDangXm] = useState(false);
+  const [daXmXong, setDaXmXong] = useState(false);
   const [hang, setHang] = useState("basic"); // hạng tin: diamond · gold · silver · basic (như web)
   const [soNgay, setSoNgay] = useState<number>();
   const [dangGui, setDangGui] = useState(false);
@@ -76,8 +83,10 @@ export default function DangTin() {
     null as Record<string, any> | null,
   );
 
+  const daXacMinh = daXmXong || !!(hoSo.data?.phone_verified || hoSo.data?.sdt_lien_he_xac_minh || hoSo.data?.role === "admin");
   useEffect(() => {
-    if (nguoiDung?.phone && !sdt) setSdt(soVN(nguoiDung.phone));
+    if (hoSo.data?.phone && !sdt) setSdt(soVN(hoSo.data.phone));
+    else if (nguoiDung?.phone && !sdt) setSdt(soVN(nguoiDung.phone));
     if (hoSo.data?.full_name && !ten) setTen(hoSo.data.full_name);
   }, [nguoiDung?.phone, hoSo.data]);
   // Chưa có tên trong hồ sơ → lấy tên Zalo của khách điền sẵn.
@@ -135,6 +144,32 @@ export default function DangTin() {
     return Math.round(md === "thue" ? g * 1e6 : g * (donVi === "ty" ? 1e9 : 1e6));
   };
 
+  const xacMinhSo = async (buoc: "gui-ma" | "xac-nhan") => {
+    setLoi(undefined);
+    setDangXm(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent("/dang-tin")}`);
+      const r = await fetch("https://coastalland.vn/api/xac-thuc/xac-minh-sdt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ buoc, sdt, ma: maXm, dangTin: true }),
+      });
+      const j = (await r.json().catch(() => ({}))) as { ok?: boolean; loi?: string; sdt?: string; doiTaiKhoan?: { access_token: string; refresh_token: string } };
+      if (!j.ok) return setLoi(j.loi || "Chưa xác minh được số. Vui lòng thử lại.");
+      if (buoc === "gui-ma") return setBuocXm("ma");
+      // Số đã thuộc tài khoản khác → máy chủ gộp về tài khoản đó và trả phiên mới (như web)
+      if (j.doiTaiKhoan) await supabase.auth.setSession({ access_token: j.doiTaiKhoan.access_token, refresh_token: j.doiTaiKhoan.refresh_token });
+      if (j.sdt) setSdt(soVN(j.sdt));
+      setDaXmXong(true);
+    } catch {
+      setLoi("Không kết nối được. Vui lòng thử lại.");
+    } finally {
+      setDangXm(false);
+    }
+  };
+
   const gui = async () => {
     setLoi(undefined);
     if (!nguoiDung) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent("/dang-tin")}`);
@@ -142,7 +177,8 @@ export default function DangTin() {
     if (!tinh) return setLoi("Chưa chọn Tỉnh/Thành.");
     if (!tieuDe.trim()) return setLoi("Chưa nhập tiêu đề tin.");
     if (Number.isNaN(so(dienTich))) return setLoi("Chưa nhập diện tích.");
-    if (!ten.trim() || !sdt.trim()) return setLoi("Nhập họ tên và số điện thoại liên hệ.");
+    if (!daXacMinh || !sdt.trim()) return setLoi("Xác minh số điện thoại trước khi đăng tin.");
+    if (!ten.trim()) return setLoi("Tài khoản chưa có họ tên — vào Cá nhân để đặt tên.");
     if (!soNgay) return setLoi("Chưa chọn thời hạn đăng tin.");
 
     // Ví không đủ → lưu nháp nguyên vẹn (như web), khách nạp tiền rồi đăng tiếp.
@@ -206,7 +242,7 @@ export default function DangTin() {
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
           <Text.Title size="large">Đăng nhập để đăng tin</Text.Title>
           <Text className="chu-phu">Tin gắn với tài khoản để bạn quản lý và theo dõi trạng thái duyệt — dùng chung tài khoản với coastalland.vn.</Text>
-          <Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent("/dang-tin")}`)}>Đăng nhập bằng số điện thoại</Button>
+          <Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent("/dang-tin")}`)}>Đăng nhập bằng Zalo</Button>
         </Box>
       </Page>
     );
@@ -304,8 +340,20 @@ export default function DangTin() {
       </Nhom>
 
       <Nhom tieuDe="Liên hệ">
-        <Input label="Họ tên" value={ten} onChange={(e) => setTen(e.target.value)} />
-        <Input label="Số điện thoại" inputMode="tel" value={sdt} onChange={(e) => setSdt(e.target.value)} />
+        {daXacMinh ? (
+          <Text size="small">{ten || "—"} · {sdt}</Text>
+        ) : buocXm === "so" ? (
+          <>
+            <Input label="Số điện thoại" inputMode="tel" value={sdt} onChange={(e) => setSdt(e.target.value)} />
+            <Button size="small" loading={dangXm} disabled={sdt.replace(/\D/g, "").length < 10} onClick={() => xacMinhSo("gui-ma")}>Nhận mã qua Zalo</Button>
+          </>
+        ) : (
+          <>
+            <Input label={`Mã đã gửi về Zalo của số ${sdt}`} inputMode="numeric" value={maXm} onChange={(e) => setMaXm(e.target.value.replace(/\D/g, "").slice(0, 6))} />
+            <Button size="small" loading={dangXm} disabled={maXm.length < 6} onClick={() => xacMinhSo("xac-nhan")}>Xác minh số</Button>
+            <Button size="small" variant="tertiary" onClick={() => { setBuocXm("so"); setMaXm(""); }}>Đổi số khác</Button>
+          </>
+        )}
       </Nhom>
 
       <Nhom tieuDe="Gói tin">

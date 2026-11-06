@@ -1,17 +1,16 @@
 import React, { useState } from "react";
 import { Box, Button, Input, Page, Text, useNavigate } from "zmp-ui";
-import { getAccessToken, getPhoneNumber } from "zmp-sdk";
+import { authorize, getAccessToken } from "zmp-sdk";
 import TieuDe from "../components/TieuDe";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { layNguoiZalo } from "../lib/zalo";
 
-// ĐĂNG NHẬP — chung tài khoản với coastalland.vn.
-//   1) CHÍNH: "Đăng nhập nhanh bằng Zalo" — Zalo hỏi khách có chia sẻ số điện thoại không,
-//      đồng ý là vào (máy chủ đổi mã ra số thật: /api/auth/zalo-mini-app). Chạy khi Zalo đã
-//      duyệt Mini App + có máy chủ Việt Nam; chưa đủ thì tự lùi về cách 2, khách không kẹt.
-//   2) DỰ PHÒNG: nhập số → mã OTP gửi về Zalo → nhập mã.
-// Zalo bắt nói rõ vì sao xin số trước khi hỏi quyền (chính sách 3.3.4) — dòng giải thích bên dưới.
+// ĐĂNG NHẬP — chung tài khoản với coastalland.vn (chủ dự án 06/11/2026: Mini App tận dụng nền tảng Zalo, đăng nhập bằng Zalo).
+//   1) CHÍNH: "Đăng nhập bằng Zalo" — Zalo hỏi khách cho phép chia sẻ TÊN + ẢNH (scope.userInfo, quyền mặc định của Mini App),
+//      đồng ý là vào: máy chủ hỏi Zalo id + tên + ảnh → cùng tài khoản với nút Zalo trên web (/api/auth/zalo-mini-app).
+//      KHÔNG xin số lúc đăng nhập — số chỉ bắt buộc khi đăng tin, xác minh bằng mã tới chính số đó (luật 06/11).
+//   2) DỰ PHÒNG: nhập số → mã gửi về Zalo của số đó → nhập mã (cùng đường web /api/xac-thuc/dang-nhap-sdt).
+// Chỉ hỏi quyền khi khách BẤM nút (luật Mini App: không xin quyền lúc mở app) và nói rõ lấy gì, để làm gì.
 const WEB = "https://coastalland.vn";
 
 export default function DangNhap() {
@@ -28,14 +27,14 @@ export default function DangNhap() {
     setDang(true);
     setLoi(undefined);
     try {
+      await authorize({ scopes: ["scope.userInfo"] }); // Zalo hiện hộp hỏi khách cho phép chia sẻ tên + ảnh
+      // Máy chủ tự hỏi Zalo id + tên + ảnh bằng mã này — không nhận tên / ảnh do máy khách gửi lên.
       const accessToken = await getAccessToken();
-      const { token: maSdt } = await getPhoneNumber();
-      if (!accessToken || !maSdt) throw new Error("khong_co_token");
-      const nguoi = await layNguoiZalo();
+      if (!accessToken) throw new Error("khong_co_token");
       const r = await fetch(`${WEB}/api/auth/zalo-mini-app`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken, maSdt, ten: nguoi?.name }),
+        body: JSON.stringify({ accessToken }),
       });
       const j = await r.json();
       if (!j.ok) throw new Error(j.loi);
@@ -43,9 +42,7 @@ export default function DangNhap() {
       if (error) throw error;
       dieuHuong(tiep, { replace: true });
     } catch {
-      // Khách từ chối chia sẻ số, hoặc Zalo chưa cấp quyền / chưa có máy chủ VN → dùng mã OTP.
-      setLoi("Chưa đăng nhập nhanh được — bạn nhập số điện thoại để nhận mã nhé.");
-      setBuoc("so");
+      setLoi("Chưa đăng nhập bằng Zalo được. Bạn có thể nhận mã qua số điện thoại.");
     } finally {
       setDang(false);
     }
@@ -98,9 +95,9 @@ export default function DangNhap() {
           <>
             <Text.Title size="large">Đăng nhập Coastal Land</Text.Title>
             <Text size="small" className="chu-phu">
-              Coastal Land dùng số điện thoại Zalo của bạn làm tài khoản — để đăng tin, lưu tin và nhận báo khi có người quan tâm. Số của bạn không hiện công khai.
+              Đăng nhập bằng tài khoản Zalo: Coastal Land chỉ lấy tên và ảnh đại diện Zalo của bạn để tạo tài khoản, lưu tin và theo dõi tin đăng. Số điện thoại chỉ hỏi khi bạn đăng tin.
             </Text>
-            <Button fullWidth loading={dang} onClick={nhanhBangZalo}>Đăng nhập nhanh bằng Zalo</Button>
+            <Button fullWidth loading={dang} onClick={nhanhBangZalo}>Đăng nhập bằng Zalo</Button>
             <Button fullWidth variant="tertiary" onClick={() => setBuoc("so")}>Nhận mã qua số điện thoại</Button>
           </>
         )}

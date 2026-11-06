@@ -105,7 +105,25 @@ async function layBuTenAnh(admin: NonNullable<ReturnType<typeof createAdminClien
   await admin.auth.admin.updateUserById(giu, { user_metadata: { ...meta, full_name: ten, avatar_url: anh, picture: anh } }).then(() => {}, () => {});
 }
 
+// ZALO MINI APP gọi thẳng đường này (xác minh số khi đăng tin, 06/11/2026) → mở CORS cho đúng tên miền của Zalo + máy thử;
+// trang web cùng tên miền không cần. Chỉ thêm tiêu đề, không đổi xử lý.
+function choPhep(req: Request): Record<string, string> {
+  const nguon = req.headers.get("origin") ?? "";
+  const hopLe = /^https:\/\/([a-z0-9-]+\.)*(zdn\.vn|zalo\.me|zaloapp\.com|zaloplatforms\.com)$/i.test(nguon) || /^http:\/\/(localhost|192\.168\.\d+\.\d+):\d+$/.test(nguon);
+  return hopLe
+    ? { "Access-Control-Allow-Origin": nguon, "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization", Vary: "Origin" }
+    : {};
+}
+export function OPTIONS(req: Request) {
+  return new NextResponse(null, { status: 204, headers: choPhep(req) });
+}
 export async function POST(req: Request) {
+  const res = await xuLy(req);
+  for (const [k, v] of Object.entries(choPhep(req))) res.headers.set(k, v);
+  return res;
+}
+
+async function xuLy(req: Request) {
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   const b = (await req.json().catch(() => ({}))) as { buoc?: string; sdt?: string; ma?: string; dangTin?: boolean };
   const sdt = chuanHoaSdt(b.sdt ?? "");
