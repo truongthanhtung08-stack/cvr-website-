@@ -26,10 +26,15 @@ const POS_KEY = "cl-chat-pos";
 const BTN = 48; // đường kính nút (h-12)
 const MARGIN = 8;
 
+// VÙNG ĐẦU TRANG CẤM ĐẶT NÚT (chủ dự án 06/11/2026, ảnh điện thoại: nút chat nằm đè thanh các bước "3 Đặc điểm…" ở form
+// đăng tin): đầu trang là thanh logo + thanh "‹ Quay lại" + thanh dính (các bước, bộ lọc…) — đo ảnh điện thoại thật: đáy
+// thanh các bước ≈ 290px. Kéo nút lên đó → dừng ngay dưới; vị trí cũ đã lưu ở đó cũng tự kéo xuống lúc mở trang.
+const DAU_TRANG = 300;
+
 function clampBtn(p: ChatPos): ChatPos {
   return {
     right: Math.min(Math.max(p.right, MARGIN), Math.max(MARGIN, window.innerWidth - BTN - MARGIN)),
-    bottom: Math.min(Math.max(p.bottom, MARGIN), Math.max(MARGIN, window.innerHeight - BTN - MARGIN)),
+    bottom: Math.min(Math.max(p.bottom, MARGIN), Math.max(MARGIN, window.innerHeight - BTN - DAU_TRANG)),
   };
 }
 
