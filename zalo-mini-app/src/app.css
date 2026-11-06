@@ -750,3 +750,7 @@ html.xem-thu .hang-app { padding-right: 0; }
 .the-bai .dong-bai { display: flex; justify-content: space-between; gap: 8px; }
 .the-bai .dong-bai span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .the-bai .dong-bai span:last-child { flex-shrink: 0; }
+
+/* Dòng dưới logo trang chủ = SLOGAN (06/11/2026) — như dòng "GATEWAY TO CENTRAL COAST PROPERTY" của logo: chữ hoa nhỏ, giãn chữ, đậm vừa. */
+.hang-app span { text-transform: uppercase; font-size: 10px !important; font-weight: 600; letter-spacing: 0.06em !important; color: #1d1d1f; margin-top: 3px; }
+.hang-app strong { letter-spacing: 0.02em !important; }
