@@ -1012,6 +1012,8 @@ export default function PostListingForm() {
   const [loiBuoc, setLoiBuoc] = useState("");
   // o = mã ô thiếu → cuộn tới ĐÚNG Ô và đặt con trỏ vào ô đó (chủ dự án 26/10/2026: báo lỗi mà không trỏ vào ô cần điền)
   function baoLoi(msg: string, buoc: string, o?: string) {
+    // Sửa tin đã duyệt không có mục Gói tin (bước 5) → các bước sau dồn lên một số
+    if (goiDangDung && editId && Number(buoc) > 5) buoc = String(Number(buoc) - 1);
     setError(msg);
     setLoiBuoc(buoc);
     moMuc(buoc);
@@ -1362,7 +1364,7 @@ export default function PostListingForm() {
       // mục dọc (đi theo chỗ đang xem, như cột menu trang Báo giá) · cột phải các mục. Điện thoại/máy tính bảng: thanh mục vuốt ngang.
       className="lg:grid lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:items-start lg:gap-8">
       <MucMoCtx.Provider value={{ moMuc, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
-      <ThanhBuoc />
+      <ThanhBuoc boQua={goiDangDung && editId ? ["b-goi"] : []} />
       <div className="mt-6 min-w-0 space-y-6 lg:mt-0">
       {nhapCho && (() => {
         const chu = (k: string) => (typeof nhapCho[k] === "string" ? (nhapCho[k] as string).trim() : "");
@@ -1437,13 +1439,6 @@ export default function PostListingForm() {
           <p className="text-sm font-medium text-cvr-blue-ink">
             Đang chỉnh sửa tin{editStatus === "draft" ? " nháp" : editStatus === "approved" ? " đang hiển thị — lưu xong tin cập nhật ngay." : editStatus === "expired" ? " (đã hết hạn — sửa xong bấm Đăng lại)" : goiDangDung && editStatus === "hidden" ? " (đã hạ — sửa xong bấm Đăng lại)" : ""}
             {/* Quy tắc 0045: tin đã đăng chỉ sửa nội dung của chính căn đó */}
-            {mucDichKhoa && (
-              <span className="mt-0.5 block text-[13px] font-normal text-cvr-body">
-                {mucDichKhoa === "thue"
-                  ? "Muốn bán, vui lòng đăng tin mới."
-                  : "Muốn cho thuê, vui lòng đăng tin mới."}
-              </span>
-            )}
           </p>
           <Link href="/tai-khoan/tin-dang" className="text-sm font-medium text-cvr-muted transition hover:text-cvr-ink">← Về danh sách tin</Link>
         </div>
@@ -1457,8 +1452,10 @@ export default function PostListingForm() {
       <Card id="b-loai" step={buoc()} title="Loại hình & địa chỉ">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Tin cũ có nhu cầu đã tạm ẩn (Cần mua / Cần thuê) vẫn hiện đúng giá trị của nó khi sửa */}
-          <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={[...new Set([...demandTypes, ...(duocDangDuAn ? [DEMAND_DU_AN] : []), demand])]
-            .filter((d) => !mucDichKhoa || d === demand || mucDichGia(purposeOfDemand(d)) === mucDichKhoa)} />
+          {/* Sửa tin ĐÃ DUYỆT: ẩn ô Nhu cầu — không sửa được (giá gói Mua bán / Cho thuê khác nhau, chủ dự án 06/11/2026; CSDL chặn 0072) */}
+          {!mucDichKhoa && (
+            <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={[...new Set([...demandTypes, ...(duocDangDuAn ? [DEMAND_DU_AN] : []), demand])]} />
+          )}
           {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
           <div id="o-loaihinh">
             <Label>Loại hình bất động sản *</Label>
@@ -1816,6 +1813,8 @@ export default function PostListingForm() {
       </Card>
 
       {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-khuyen-mai */}
+      {/* Sửa tin ĐÃ DUYỆT: ẩn hẳn mục Gói tin — không sửa được gói (chủ dự án 06/11/2026) */}
+      {!(goiDangDung && editId) && (
       <Card id="b-goi" step={buoc()} title="Gói tin — thanh toán *">
         {goiDangDung ? (
           // TIN ĐÃ ĐĂNG đang sửa: gói cố định (chuẩn Batdongsan) — chỉ hiện gói đang dùng.
@@ -2091,6 +2090,7 @@ export default function PostListingForm() {
           </div>
         )}
       </Card>
+      )}
 
       {/* Hình ảnh — SAU khi chọn gói (chủ dự án 10/10/2026, nhắc lại 22/10/2026: "không đưa gói tin lên trước thì
           không thể biết giới hạn ảnh"): số ảnh / video tối đa theo gói đã chọn, số từ admin.
@@ -2246,7 +2246,7 @@ const inputCls = "h-11 w-full rounded-lg border border-cvr-line bg-white px-3 te
 // nhảy thẳng tới phần cần sửa (chủ dự án chốt 11/9/2026).
 // ════════════════════════════════════════════════════════════════════════════
 // Tên trên thanh = ĐÚNG tên tiêu đề mục bên dưới (chủ dự án 22/10/2026: menu các bước phải tương ứng nội dung).
-const MOC_BUOC = [
+const MOC_BUOC_DU = [
   { id: "b-loai", ten: "Loại hình & địa chỉ" },
   { id: "b-thongtin", ten: "Thông tin chính" },
   { id: "b-dacdiem", ten: "Đặc điểm & tiện ích" },
@@ -2263,7 +2263,9 @@ function ngayVnSau(n: number): string {
   return new Date(Date.now() + 7 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
 }
 
-function ThanhBuoc() {
+function ThanhBuoc({ boQua = [] }: { boQua?: string[] }) {
+  // Mục không có trên trang (sửa tin đã duyệt: không có Gói tin) → bỏ khỏi thanh, số thứ tự dồn lên khớp số trên từng mục
+  const MOC_BUOC = MOC_BUOC_DU.filter((m) => !boQua.includes(m.id));
   const ctxBuoc = useContext(MucMoCtx);
   const [dangO, setDangO] = useState(MOC_BUOC[0].id);
   const bocRef = useRef<HTMLDivElement>(null);
