@@ -34,7 +34,8 @@ export default function XemSo({ id, sdt, soAn }: { id: string; sdt?: string | nu
       </button>
       {!hien ? (
         <button className="nut-goi" onClick={moSo}>
-          <Icon icon="zi-call" size={20} /> {soAn} · Hiện số
+          {/* Như web: số ẩn đuôi + CON MẮT (06/11/2026 "hiện số chỉ cần con mắt") */}
+          <Icon icon="zi-call" size={20} /> {soAn} <Icon icon="zi-unhide" size={20} aria-label="Hiện số" />
         </button>
       ) : (
         <button className="nut-goi" onClick={() => openPhone({ phoneNumber: sdt }).catch(() => {})}>
