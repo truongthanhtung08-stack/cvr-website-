@@ -791,3 +791,27 @@ html.xem-thu .hang-app { padding-right: 0; }
    vùng an toàn trên 58 → lùi 27px), logo cao 40 bắt đầu ở 31. Bên phải logo là cụm ⋯ ✕ (chừa 96px). */
 .trang-chu .dau-app { padding-top: calc(max(var(--zaui-safe-area-inset-top, 0px), env(safe-area-inset-top, 0px), 28px) - 27px) !important; }
 .trang-chu .hang-app { height: 40px !important; min-height: 40px !important; padding-right: 96px !important; }
+
+/* TRANG TIN THEO WEB ĐIỆN THOẠI (06/11/2026): ảnh 4:3 · nhãn hạng viền + Mã tin · Hiệu lực · Hết hạn · khung thông số 2 cột · mô tả 8 dòng có Xem thêm ngay dưới. */
+.anh-tin-khung img, .anh-tin-video { aspect-ratio: 4 / 3 !important; }
+.khoi-ct .meta-ct { margin-top: 0; }
+.meta-ct .nhan-loai { background: #fff !important; border-radius: 6px !important; font-size: 10px; padding: 3px 8px; }
+.hieu-luc { margin: 8px 0 0; font-size: 12px; color: var(--cl-muted); }
+.khoi-ct .luoi-tt dd.gia-o { color: #d70018; font-size: 16px; }
+.mo-ta-ct.gon { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 8; overflow: hidden; }
+.nut-mo-ta { margin-top: 8px; display: flex; align-items: center; gap: 4px; border: 0; background: none; padding: 4px 0; font-size: 14px; font-weight: 600; color: var(--cl-blue, #0071e3); }
+/* Hàng nhãn hạng · Mã tin · nút: luôn MỘT dòng (nút 30px, Mã tin co lại khi máy hẹp). */
+.khoi-ct .meta-ct { flex-wrap: nowrap !important; gap: 4px; }
+.khoi-ct .meta-ct > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.khoi-ct .meta-ct .nhan-loai { flex-shrink: 0; margin-right: 2px; }
+.khoi-ct .nut-ct { gap: 0; flex-shrink: 0; }
+.khoi-ct .nut-ct button { width: 30px; height: 30px; }
+
+/* Khung ảnh trang tin như web: đếm video · ảnh góc trái · "Xem ảnh & video" góc phải · danh sách dọc full bề ngang. */
+.anh-tin-dem { gap: 4px; }
+.anh-tin-dem .ngan { display: inline-block; width: 1px; height: 10px; margin: 0 4px; background: rgba(255,255,255,.5); }
+.anh-tin-xem-het { position: absolute; right: 10px; top: 10px; height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border: 0; border-radius: 999px; background: rgba(0,0,0,.55); color: #fff; font-size: 12px; font-weight: 600; }
+.anh-doc { display: grid; gap: 8px; padding: 0 0 24px; max-height: 80vh; overflow-y: auto; }
+.anh-doc img, .anh-doc iframe, .anh-doc video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border: 0; display: block; background: #000; }
+.doan-gon { max-height: 12em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+.doan-gon { max-height: 12em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
