@@ -490,7 +490,8 @@ html.xem-thu .hang-app { padding-right: 0; }
 .hang-app { height: auto !important; min-height: 44px; }
 .hang-app span { white-space: normal !important; overflow: visible !important; font-size: 12px !important; line-height: 1.3; }
 /* Ô tìm + bộ lọc GỌN (chủ dự án 06/11/2026): ô tìm thấp 40px, chữ 14px; hàng lọc nút nhỏ, sát nhau, lề hẹp. */
-.zaui-input-search, .zaui-input-search .zaui-input-affix-wrapper, .zaui-input-group, .zaui-input-wrapper { min-height: 40px !important; height: 40px !important; }
+/* Ô TÌM gọn 40px — CHỈ ô tìm (trước đây ép mọi .zaui-input-group / .zaui-input-wrapper → ô có nhãn ở Đăng tin, Sửa tin, Cài đặt bị chồng chữ; sửa 06/11/2026). */
+.zaui-input-search, .zaui-input-search .zaui-input-affix-wrapper { min-height: 40px !important; height: 40px !important; }
 .zaui-input-search input, .zaui-input-wrapper input { font-size: 14px !important; }
 .dau-app { padding-bottom: 8px !important; }
 .dau-app > div:last-child { margin-top: 6px !important; }
