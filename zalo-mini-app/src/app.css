@@ -754,3 +754,28 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Dòng dưới logo trang chủ = SLOGAN (06/11/2026) — như dòng "GATEWAY TO CENTRAL COAST PROPERTY" của logo: chữ hoa nhỏ, giãn chữ, đậm vừa. */
 .hang-app span { text-transform: uppercase; font-size: 10px !important; font-weight: 600; letter-spacing: 0.06em !important; color: #1d1d1f; margin-top: 3px; }
 .hang-app strong { letter-spacing: 0.02em !important; }
+
+/* MỘT THẺ Ở MỌI NƠI (06/11/2026 "xem lại thẻ khi mở tab, trang"): danh sách Mua bán / Cho thuê, Tin tương tự dùng đúng chữ của thẻ trang chủ —
+   tiêu đề theo cấp · thông số 1 dòng có dấu · · địa chỉ 1 dòng · gạch trên: người đăng + thời gian. */
+.ds-doc .the-tin .than-the, .truot-ngang .the-tin:not(.the-du-an) .than-the { display: flex; flex-direction: column; }
+.ds-doc .the-tin .mo-ta, .truot-ngang .the-tin .mo-ta { display: none !important; }
+.ds-doc .the-tin .tieu-de, .truot-ngang .the-tin:not(.the-du-an) .tieu-de { -webkit-line-clamp: 2 !important; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; min-height: 0 !important; line-height: 1.35 !important; }
+.ds-doc .hang-diamond .tieu-de, .ds-doc .hang-gold .tieu-de, .truot-ngang .hang-diamond .tieu-de, .truot-ngang .hang-gold .tieu-de { -webkit-line-clamp: 3 !important; text-transform: uppercase; font-weight: 700; }
+.ds-doc .hang-silver .tieu-de, .truot-ngang .hang-silver .tieu-de { font-weight: 700; }
+.ds-doc .hang-basic .tieu-de, .truot-ngang .hang-basic .tieu-de { font-weight: 500; }
+.ds-doc .the-tin .gia-dt, .truot-ngang .the-tin .gia-dt { margin-top: 4px !important; flex-wrap: nowrap !important; overflow: hidden; white-space: nowrap; column-gap: 0 !important; justify-content: flex-start; }
+.ds-doc .the-tin .gia-dt > * + *::before, .truot-ngang .the-tin .gia-dt > * + *::before { content: "·"; margin: 0 6px; color: var(--cl-muted); font-weight: 400; }
+.ds-doc .the-tin .gia-dt > span:not(.gia), .truot-ngang .the-tin .gia-dt > span:not(.gia) { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ds-doc .the-tin .day-the-moi, .truot-ngang .the-tin .day-the-moi { display: block; margin-top: 4px !important; padding-top: 0 !important; font-size: 12px; }
+.ds-doc .the-tin .day-the-moi span:first-child, .truot-ngang .the-tin .day-the-moi span:first-child { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ds-doc .the-tin .day-the-moi span:last-child, .truot-ngang .the-tin .day-the-moi span:last-child { display: none; }
+.ds-doc .the-tin .day-dang, .truot-ngang .the-tin .day-dang { display: flex; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 8px; border-top: 1px solid #d2d2d7; font-size: 12px; color: var(--cl-muted); }
+.ds-doc .the-tin .day-the-moi + .day-dang, .truot-ngang .the-tin .day-the-moi + .day-dang { margin-top: 10px; }
+.ds-doc .the-tin .day-dang span:first-child, .truot-ngang .the-tin .day-dang span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #424245; font-weight: 600; }
+.ds-doc .the-tin .day-dang span:last-child, .truot-ngang .the-tin .day-dang span:last-child { flex-shrink: 0; }
+/* Danh sách Tin tức: tiêu đề 2 dòng như dải trang chủ */
+.luoi-du-an .the-tin.the-bai .tieu-de { -webkit-line-clamp: 2 !important; }
+
+/* Chân trang chạy tới sát đáy màn (06/11/2026): nền xám nằm dưới thanh menu, không còn dải trắng giữa chân trang và menu. */
+.zaui-page.trang-chu { padding-bottom: 0 !important; }
+.trang-chu .chan-trang { padding-bottom: calc(14px + 70px + var(--zaui-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important; }

@@ -42,7 +42,7 @@ export default function TrangChu() {
   const baiViet = useTai(() => layBaiViet(6), [], []); // như web: khối Tin tức trên trang chủ, Xem thêm → danh sách bài
 
   return (
-    <Page style={{ paddingBottom: 72, paddingTop: 0 }}>
+    <Page className="trang-chu" style={{ paddingBottom: 0, paddingTop: 0 }}>
       <div className="dau-app">
         <div className="hang-app">
           <img src={logoTron} alt="" />
