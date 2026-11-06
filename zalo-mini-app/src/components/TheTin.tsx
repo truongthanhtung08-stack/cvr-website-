@@ -76,6 +76,11 @@ export default function TheTin({ tin }: { tin: Tin }) {
           <span>{diaChi(tin)}</span>
           <span>{luc(tin)}</span>
         </div>
+        {/* Luật cấp mục 7: dòng Người đăng — gạch trên như thẻ dự án (06/11/2026 "đồng nhất 1 khung") */}
+        <div className="day-dang">
+          <span>{tin.nguoi_dang || "Coastal Land"}</span>
+          <span>{luc(tin)}</span>
+        </div>
       </div>
     </article>
   );

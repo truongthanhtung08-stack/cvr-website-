@@ -716,3 +716,19 @@ html.xem-thu .hang-app { padding-right: 0; }
 .the-du-an .day-da { margin-top: 10px; }
 .the-du-an .day-da .dong-da { margin: 0; flex: 1; }
 .the-du-an .gia-da { flex-shrink: 0; white-space: nowrap; font-size: 14px; font-weight: 600; color: #8a6d2e; }
+
+/* MỘT KHUNG cho thẻ tin + thẻ dự án (06/11/2026): cùng 4 tầng — tên 2 dòng · dòng 1 · dòng 2 · gạch trên dòng cuối. */
+.the-tin .day-dang { display: none; }
+.o-noi-bat .the-tin .day-dang { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; padding-top: 8px; border-top: 1px solid #e8e8ed; font-size: 12px; color: var(--cl-muted); }
+.o-noi-bat .the-tin .day-dang span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #424245; font-weight: 600; }
+.o-noi-bat .the-tin .day-dang span:last-child { flex-shrink: 0; }
+.o-noi-bat .the-tin .day-the-moi { margin-top: 4px !important; padding-top: 0 !important; font-size: 12px; }
+.o-noi-bat .the-tin .gia-dt { margin-top: 4px !important; }
+/* Nhãn tình trạng dự án VIP như web NhanTinhTrang: viên thuốc cao 18, chữ 10 đậm hoa, sát góc 8px · dải 1px màu cấp đỉnh ảnh · kẻ #d2d2d7 */
+.the-du-an .dai-da { position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 2; }
+.the-du-an .nhan-da { position: absolute; left: 8px; top: 8px; z-index: 2; height: 20px; display: flex; align-items: center; padding: 0 8px; border-radius: 999px; color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; line-height: 1; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.the-du-an .day-da { border-top-color: #d2d2d7; }
+.o-noi-bat .the-tin .day-dang { border-top-color: #d2d2d7; }
+/* Dòng Chủ đầu tư + giá luôn sát đáy thẻ (thẻ VIP không có dòng Tiến độ vẫn thẳng hàng với thẻ thường cạnh bên) */
+.the-du-an .day-da { margin-top: auto !important; }
+.the-du-an .than-the > p:nth-last-child(2) { margin-bottom: 10px; }

@@ -137,8 +137,9 @@ export type DuAn = {
   images: string[];
   amenities: string[];
   overview: string | null;
+  tier?: string | null; // cấp VIP dự án (details.tier) — nhãn tình trạng trên ảnh chỉ cho Diamond · Gold · Silver như web (NhanTinhTrang)
 };
-const COT_DU_AN = "slug,name,ward,district,province,type,status_text,developer,price_from,images,amenities,overview";
+const COT_DU_AN = "slug,name,ward,district,province,type,status_text,developer,price_from,images,amenities,overview,tier:details->>tier";
 export const layDuAn = (soLuong = 50) =>
   doc<DuAn>("projects", `select=${COT_DU_AN}&status=eq.published&order=published_at.desc.nullslast&limit=${soLuong}`);
 export const layMotDuAn = async (slug: string) =>
