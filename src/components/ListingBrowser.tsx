@@ -350,11 +350,15 @@ export default function ListingBrowser({
     const goc = purpose === "thue" ? "/cho-thue" : "/mua-ban";
     const sach = duongDanSach(purpose, { ...f, keyword: "" });
     const dich = sach ?? goc;
-    if (dich === window.location.pathname.replace(/\/trang\/\d+$/, "")) return null;
     const kw = f.keyword.trim();
     const p = sach ? new URLSearchParams(kw ? { q: kw } : {}) : filtersToParams(f);
     if (!sach) p.set("mode", purpose === "thue" ? "Cho thuê" : "Mua bán");
-    return p.toString() ? `${dich}?${p.toString()}` : dich;
+    const url = p.toString() ? `${dich}?${p.toString()}` : dich;
+    // CÙNG TRANG nhưng bộ lọc khác → vẫn ghi địa chỉ mới (lỗi 16, 07/11/2026: đổi Khu vực "Huế +2" mà địa chỉ vẫn Nha Trang — tải lại,
+    // gửi link, Quay lại là mất bộ lọc). Chỉ bỏ qua khi địa chỉ đã đúng y hệt.
+    const dangO = window.location.pathname.replace(/\/trang\/\d+$/, "");
+    if (dich === dangO && new URLSearchParams(window.location.search).toString() === new URLSearchParams(url.split("?")[1] ?? "").toString()) return null;
+    return url;
   };
   const coBuocBang = () => Object.keys((history.state ?? {}) as Record<string, unknown>).some((k) => k === "cvrLoc" || k.startsWith("cvrBang"));
   const choDi = useRef<Filters | null>(null); // bộ trường chờ bảng chọn đóng để sang trang
@@ -380,9 +384,13 @@ export default function ListingBrowser({
     const doiTruong = nf.keyword === filtersSong.keyword || !nf.keyword.trim();
     if (doiTruong) {
       const f2 = hieu && nf.keyword === filtersSong.keyword ? { ...nf, keyword: hieu.keyword.trim() } : nf;
-      if (urlTheoTruong(f2)) {
+      const dich = urlTheoTruong(f2);
+      if (dich) {
         choDi.current = f2;
-        if (!coBuocBang()) { diTheoTruong(); return; }
+        // CÙNG TRANG (chỉ khác bộ lọc trên địa chỉ): trang không dựng lại → phải ÁP BỘ LỌC TẠI CHỖ rồi ghi địa chỉ (07/11/2026: ghi
+        // ?loai=Căn hộ mà nút trường, danh sách vẫn như cũ). Khác trang → sang trang đó như trước.
+        const cungTrang = dich.split("?")[0] === window.location.pathname.replace(/\/trang\/\d+$/, "");
+        if (!coBuocBang()) { diTheoTruong(); if (!cungTrang) return; }
       } else choDi.current = null;
     }
     if (hieu && nf.keyword === filtersSong.keyword) {

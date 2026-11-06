@@ -29,7 +29,7 @@ export default function TaiKhoanCaNhanPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Tài khoản" />
+      <PageHeader title="Hồ sơ" />
 
       {/* Thông tin người dùng — bấm vào avatar / tên là sang sửa TÊN + ẢNH ĐẠI DIỆN (chuẩn các web, chủ dự án 26/10/2026) */}
       <Link href="/tai-khoan/cai-dat" className="flex items-center justify-between gap-3 rounded-2xl border border-cvr-line bg-white p-4 shadow-sm transition hover:border-cvr-ink active:bg-cvr-surface">

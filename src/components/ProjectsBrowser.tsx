@@ -27,7 +27,7 @@ import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
 import { duAnThuocNhom, projectCategories } from "@/lib/categories";
 import { nhomChuDauTu, slugChuDauTu } from "@/lib/chuDauTu";
-import FilterBar, { LocationPanel, ProjectPanel, NutXem, DaChon, nhanNoi, loaiTheoCha, nhanLoai } from "@/components/FilterBar";
+import FilterBar, { LocationPanel, NutXem, DaChon, nhanNoi, loaiTheoCha, nhanLoai } from "@/components/FilterBar";
 import type { Suggestion } from "@/lib/suggest";
 import { PanelLoaiBdsDuAn, PanelLocThemDuAn, PanelChuDauTu, tomTatLoaiDuAn } from "@/components/TruongDuAn";
 import { emptyFilters, filtersFromParams, type Filters } from "@/lib/filters";
@@ -206,7 +206,6 @@ export default function ProjectsBrowser({
     diaChiTim: diaChiTraCuu.get(p.slug) ?? p.location, tinh: tinhTraCuu.get(p.slug) ?? tinhCua(p.location),
   }));
   const loc = thuHepDuAn(dsLoc, boLoc);
-  const tapDuAn = loc.tapDuAn.map((x) => x.p);
   const { dsChuDauTu, tinhTrangCo, coTruongKhac, demLoaiBds } = loc;
   const nhanLoaiDa = nhanLoai(boLoc.types, CAY_LOAI_DU_AN) || tomTatLoaiDuAn(boLoc.loaiDuAn);
   const goiYDuAnRieng = (kw: string): Suggestion[] =>
@@ -333,23 +332,27 @@ export default function ProjectsBrowser({
   // Chọn xong một trường = lọc NGAY tại chỗ, bảng đóng, KHÔNG cuộn đi, không đóng màn tìm điện thoại — khách chọn tiếp các trường
   // khác rồi mới bấm Tìm (chủ dự án 01/11/2026: "bấm vào 1 trường nó chạy rồi thì các trường khác có tác dụng gì")
   const apDung = (close: () => void) => { close(); batDauTim(); xongTim(); };
+  // TRƯỜNG CHỌN NHIỀU = NHÁP (cùng luật bộ lọc Mua bán / Cho thuê, 07/11/2026): tick chỉ ghi nháp, Áp dụng mới lọc; đóng không Áp dụng → bỏ
+  const [nhapDa, setNhapDa] = useState<Filters | null>(null);
+  const gD = nhapDa ?? boLoc;
+  const setND = (fn: (b: Filters) => Filters) => setNhapDa((n) => fn(n ?? boLoc));
+  const moNhapDa = (mo: boolean) => { if (!mo) setNhapDa(null); };
+  const apDungDa = (close: () => void) => { const n = nhapDa; close(); if (n) setBoLoc(n); chayTim(); };
   const chipLoc = (
     <FilterDropdownGroup>
-      <FilterDropdown label="Toàn quốc" tieuDe="Khu vực" giuCo summary={nhanNoi(boLoc.locations)} active={boLoc.locations.length > 0} panelClassName="w-96" className="shrink-0 sm:min-w-0 sm:flex-1">
-        {({ close }) => <><LocationPanel locations={boLoc.locations} onChange={(locations) => setBoLoc((b) => ({ ...b, locations, project: "" }))}  /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, locations: [], project: "" }))} /></>}
+      <FilterDropdown label="Toàn quốc" tieuDe="Khu vực" giuCo summary={nhanNoi(boLoc.locations)} active={boLoc.locations.length > 0} panelClassName="w-96" className="shrink-0 sm:min-w-0 sm:flex-1" onMo={moNhapDa}>
+        {({ close }) => <><LocationPanel locations={gD.locations} onChange={(locations) => setND((b) => ({ ...b, locations, project: "" }))} onClose={() => apDungDa(close)} /><NutXem nhan={nhanXemDuAn} onClick={() => apDungDa(close)} onReset={() => setND((b) => ({ ...b, locations: [], project: "" }))} /></>}
       </FilterDropdown>
       {/* LOẠI HÌNH = CÂY LOẠI HÌNH BẤT ĐỘNG SẢN cha – con (chủ dự án 01/11/2026), chỉ loại có dự án thật, kèm số */}
-      <FilterDropdown label="Loại hình" summary={nhanLoaiDa} active={boLoc.types.length > 0 || !!boLoc.loaiDuAn?.length} panelClassName="w-72" className="shrink-0 sm:min-w-0 sm:flex-1">
-        {({ close }) => <><DaChon muc={loaiTheoCha(boLoc.types, CAY_LOAI_DU_AN).map((g) => ({ nhan: g.nhan, bo: () => setBoLoc((b) => ({ ...b, types: b.types.filter((x) => !g.cac.includes(x)) })) }))} macDinh="Tất cả loại hình" /><PanelLoaiBdsDuAn value={boLoc.types} onChange={(types) => setBoLoc((b) => ({ ...b, types, loaiDuAn: [] }))} dem={demLoaiBds} /><NutXem nhan={nhanXemDuAn} onClick={() => { close(); chayTim(); }} onReset={() => setBoLoc((b) => ({ ...b, types: [], loaiDuAn: [] }))} /></>}
+      <FilterDropdown label="Loại hình" summary={nhanLoaiDa} active={boLoc.types.length > 0 || !!boLoc.loaiDuAn?.length} panelClassName="w-72" className="shrink-0 sm:min-w-0 sm:flex-1" onMo={moNhapDa}>
+        {({ close }) => <><DaChon muc={loaiTheoCha(gD.types, CAY_LOAI_DU_AN).map((g) => ({ nhan: g.nhan, bo: () => setND((b) => ({ ...b, types: b.types.filter((x) => !g.cac.includes(x)) })) }))} macDinh="Tất cả loại hình" /><PanelLoaiBdsDuAn value={gD.types} onChange={(types) => setND((b) => ({ ...b, types, loaiDuAn: [] }))} dem={demLoaiBds} /><NutXem nhan={nhanXemDuAn} onClick={() => apDungDa(close)} onReset={() => setND((b) => ({ ...b, types: [], loaiDuAn: [] }))} /></>}
       </FilterDropdown>
       <FilterDropdown label="Chủ đầu tư" summary={boLoc.chuDauTu ?? ""} active={!!boLoc.chuDauTu} panelClassName="w-80" className="shrink-0 sm:min-w-0 sm:flex-1">
         {({ close }) => <><DaChon muc={boLoc.chuDauTu ? [{ nhan: boLoc.chuDauTu, bo: () => setBoLoc((b) => ({ ...b, chuDauTu: "" })) }] : []} onBoHet={() => setBoLoc((b) => ({ ...b, chuDauTu: "" }))} /><PanelChuDauTu ds={dsChuDauTu} hienSan={boLoc.locations.length > 0 || !!boLoc.loaiDuAn?.length || !!boLoc.project || !!boLoc.tinhTrang} value={boLoc.chuDauTu} onChange={(chuDauTu) => setBoLoc((b) => ({ ...b, chuDauTu }))} onApply={() => { apDung(close); }} /></>}
       </FilterDropdown>
-      <FilterDropdown label="Dự án" summary={boLoc.project} active={!!boLoc.project} panelClassName="w-72" className="shrink-0 sm:min-w-0 sm:flex-1">
-        {({ close }) => <><DaChon muc={boLoc.project ? [{ nhan: boLoc.project, bo: () => setBoLoc((b) => ({ ...b, project: "" })) }] : []} onBoHet={() => setBoLoc((b) => ({ ...b, project: "" }))} /><ProjectPanel ds={tapDuAn} hienSan={boLoc.locations.length > 0 || !!boLoc.loaiDuAn?.length || !!boLoc.chuDauTu || !!boLoc.tinhTrang} locations={boLoc.locations} project={boLoc.project} onPick={(name) => { setBoLoc((b) => ({ ...b, project: b.project === name ? "" : name })); apDung(close); }} /></>}
-      </FilterDropdown>
-      <FilterDropdown label="Lọc thêm" summary={boLoc.tinhTrang ? `Lọc thêm (${dsTinhTrang(boLoc.tinhTrang).length})` : ""} active={!!boLoc.tinhTrang} panelClassName="w-80" className="shrink-0 sm:min-w-0 sm:flex-1">
-        {({ close }) => <><DaChon muc={dsTinhTrang(boLoc.tinhTrang).map((t) => ({ nhan: t, bo: () => setBoLoc((b) => ({ ...b, tinhTrang: dsTinhTrang(b.tinhTrang).filter((x) => x !== t).join("|") })) }))} onBoHet={() => setBoLoc((b) => ({ ...b, tinhTrang: "" }))} /><PanelLocThemDuAn tinhTrang={boLoc.tinhTrang} onChange={(tinhTrang) => setBoLoc((b) => ({ ...b, tinhTrang }))} onApply={() => apDung(close)} co={coTruongKhac("tt") ? tinhTrangCo : undefined} /><NutXem nhan={nhanXemDuAn} onClick={() => apDung(close)} onReset={() => setBoLoc((b) => ({ ...b, tinhTrang: "" }))} /></>}
+      {/* Trường "Dự án" BỎ khỏi bộ lọc trang Dự án (chủ dự án 07/11/2026) — tìm dự án theo tên bằng ô tìm */}
+      <FilterDropdown label="Lọc thêm" summary={boLoc.tinhTrang ? `Lọc thêm (${dsTinhTrang(boLoc.tinhTrang).length})` : ""} active={!!boLoc.tinhTrang} panelClassName="w-80" className="shrink-0 sm:min-w-0 sm:flex-1" onMo={moNhapDa}>
+        {({ close }) => <><DaChon muc={dsTinhTrang(gD.tinhTrang).map((t) => ({ nhan: t, bo: () => setND((b) => ({ ...b, tinhTrang: dsTinhTrang(b.tinhTrang).filter((x) => x !== t).join("|") })) }))} onBoHet={() => setND((b) => ({ ...b, tinhTrang: "" }))} /><PanelLocThemDuAn tinhTrang={gD.tinhTrang} onChange={(tinhTrang) => setND((b) => ({ ...b, tinhTrang }))} onApply={() => apDungDa(close)} co={coTruongKhac("tt") ? tinhTrangCo : undefined} /><NutXem nhan={nhanXemDuAn} onClick={() => apDungDa(close)} onReset={() => setND((b) => ({ ...b, tinhTrang: "" }))} /></>}
       </FilterDropdown>
     </FilterDropdownGroup>
   );

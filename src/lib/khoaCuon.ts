@@ -60,6 +60,20 @@ export function useKhoaCuon(mo: boolean, dong?: () => void) {
 // Bảng đóng ĐỂ CHUYỂN TRANG (ô tìm: chọn gợi ý → router.push) gọi hàm trả về (boQuaLui) TRƯỚC khi chuyển — tự lùi đúng
 // lúc trang mới đang đẩy vào lịch sử có thể đá khách về trang cũ.
 let demDau = 0;
+// TẢI LẠI TRANG (F5) KHI ĐANG MỞ BẢNG → trình duyệt giữ nguyên dấu cvrBang* / cvrLoc / cvrDu trong bước lịch sử, nhưng bảng đã mất.
+// Dấu mồ côi đó làm ô tìm tưởng còn bảng đang mở → lùi lịch sử → nhảy về trang trước (chủ dự án 07/11/2026: "F5 nhảy về trang chủ").
+// Dọn MỘT LẦN lúc trang vừa tải (tệp này nạp cùng đầu trang ở mọi trang): bảng nào mở sau sẽ tự gắn dấu mới.
+if (typeof window !== "undefined") {
+  try {
+    const s = (history.state ?? {}) as Record<string, unknown>;
+    const mo = Object.keys(s).filter((k) => k.startsWith("cvrBang") || k === "cvrLoc" || k === "cvrDu");
+    if (mo.length) {
+      const con = { ...s };
+      for (const k of mo) delete con[k];
+      history.replaceState(con, "");
+    }
+  } catch { /* bỏ qua */ }
+}
 export function useNutQuayLai(mo: boolean, dong?: () => void): () => void {
   const boQua = useRef(false);
   const dongRef = useRef(dong);

@@ -72,7 +72,8 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const { expanded, hidden, toggle } = useHomeSection("tin");
 
   // Lọc theo tab → xếp theo cấp tin (cao trước) → chia 2 slides nối tiếp, mỗi slide 8 tin
-  const activeMatch = typeTabs.find((t) => t.label === activeTab)?.match ?? (() => true);
+  // tab "Mua bán" chỉ có ở điện thoại (thay hàng tab loại hình, 07/11/2026) — tin bán; còn lại theo typeTabs
+  const activeMatch = activeTab === "Mua bán" ? (l: Listing) => (l.purpose ?? "ban") !== "thue" : typeTabs.find((t) => t.label === activeTab)?.match ?? (() => true);
   const sorted = items
     .filter((l) => activeMatch(l))
     .sort((a, b) => tierRank(a.badge) - tierRank(b.badge));
@@ -136,8 +137,25 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
           </p>
         </div>
 
-        {/* Tabs loại hình — MOBILE: cuộn ngang ĐÚNG 1 dòng (không xuống hàng, không bị cắt) */}
-        <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-5 sm:flex-wrap sm:overflow-visible sm:px-0">
+        {/* ĐIỆN THOẠI (chủ dự án 07/11/2026): hai nút Mua bán nhà đất · Cho thuê nhà đất THAY CẢ HÀNG nút loại hình bên dưới — cùng
+            đường dẫn, cùng chữ với hai link bên phải tiêu đề ở máy tính; thay ba nút Mua bán · Cho thuê · Dự án đã bỏ khỏi thanh dưới. */}
+        <div className="mt-3 flex gap-2 sm:hidden">
+          {/* TAB LỌC TẠI CHỖ như hàng tab cũ: bấm → khối nổi bật chỉ còn tin bán / tin thuê; bấm lại tab đang chọn → về Tất cả */}
+          {([["Mua bán", "Mua bán nhà đất"], ["Cho thuê", "Cho thuê nhà đất"]] as const).map(([ma, nhan]) => (
+            <button
+              key={ma}
+              type="button"
+              onClick={() => { setActiveTab(activeTab === ma ? "Tất cả" : ma); setSlideIdx(0); setLanXem(0); trackRef.current?.scrollTo({ left: 0 }); }}
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                activeTab === ma ? "bg-cvr-ink text-white shadow-lg shadow-black/10" : "border border-black/15 text-cvr-body"
+              }`}
+            >
+              {nhan}
+            </button>
+          ))}
+        </div>
+        {/* Tabs loại hình — chỉ MÁY TÍNH (điện thoại thay bằng hai nút trên, 07/11/2026) */}
+        <div className="no-scrollbar -mx-4 mt-3 hidden gap-2 sm:flex overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-5 sm:flex-wrap sm:overflow-visible sm:px-0">
           {typeTabs.map((t) => (
             <button
               key={t.label}

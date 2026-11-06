@@ -9,6 +9,12 @@ import { useSaved } from "@/lib/useSaved";
 import { useAuth } from "@/lib/useAuth";
 import { useSoViecKhach, tongSoViec } from "@/lib/useSoTinCanXem";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
+import { ZALO_OA_URL } from "@/lib/lienHe";
+
+// Trang có thanh dưới CHẾ ĐỘ NGƯỜI MUA (có nút Chat) — Chatbox ẩn nút chat nổi trên điện thoại ở các trang này (07/11/2026)
+export function coThanhChat(pathname: string) {
+  return !HIDDEN_PREFIXES.some((p) => pathname.startsWith(p)) && !pathname.startsWith("/tai-khoan");
+}
 
 // ── Thanh tab DƯỚI CÙNG — chỉ hiện trên điện thoại/tablet (< lg). Desktop KHÔNG đổi gì.
 //
@@ -120,7 +126,7 @@ export type TenIcon = keyof typeof ICONS;
 // Vẽ qua BỘ BIỂU TƯỢNG CHUNG (Phosphor, 25/10/2026): thường = nét, đang chọn = tô đặc. Giữ tên cũ để nơi gọi không đổi.
 const TEN_PHOSPHOR: Record<string, TenBieuTuong> = {
   home: "trangChu", tag: "baoGia", building: "duAn", muaBan: "muaBan", choThue: "choThue", duAnC: "duAn", duAn: "duAn",
-  grid: "tongQuan", doc: "tinDang", plus: "dangTin", users: "khachHang", user: "taiKhoan",
+  grid: "tongQuan", doc: "tinDang", plus: "dangTin", users: "khachHang", user: "taiKhoan", tim: "tim",
 };
 export function TabIcon({ name, active, className = "h-[25px] w-[25px]" }: { name: TenIcon; active: boolean; className?: string }) {
   return <BieuTuong ten={TEN_PHOSPHOR[name] ?? "trangChu"} dac={active} className={className} />;
@@ -146,12 +152,12 @@ function TabBody({
 
   return (
     <span
-      className={`press flex h-[49px] flex-col items-center justify-center gap-[2px] transition-colors duration-200 ${
+      className={`press flex h-[44px] flex-col items-center justify-center gap-[2px] transition-colors duration-200 ${
         active ? "text-cvr-blue" : "text-cvr-muted"
       }`}
     >
       <span className="relative">
-        <TabIcon name={icon} active={active} />
+        <TabIcon name={icon} active={active} className="h-[22px] w-[22px]" />
         {badge ? (
           <span className="absolute -right-1.5 -top-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white">
             {badge}
@@ -192,37 +198,42 @@ export default function MobileTabBar() {
     const tabsBan = [
       { href: "/tai-khoan", label: "Tổng quan", icon: "grid" as const, on: pathname === "/tai-khoan" },
       { href: "/tai-khoan/tin-dang", label: "Tin đăng", icon: "doc" as const, on: pathname.startsWith("/tai-khoan/tin-dang") },
-      { href: "/dang-tin", label: "Đăng tin", icon: "plus" as const, on: false },
-      { href: "/tai-khoan/khach-hang", label: "Khách hàng", icon: "users" as const, on: pathname.startsWith("/tai-khoan/khach-hang") },
+        { href: "/tai-khoan/khach-hang", label: "Khách hàng", icon: "users" as const, on: pathname.startsWith("/tai-khoan/khach-hang") },
       {
         href: "/tai-khoan/ca-nhan",
-        label: "Tài khoản",
+        label: "Hồ sơ", // MỘT TÊN với thanh trang công khai + menu ≡ (07/11/2026)
         icon: "user" as const,
         on: pathname !== "/tai-khoan" && !pathname.startsWith("/tai-khoan/tin-dang") && !pathname.startsWith("/tai-khoan/khach-hang"),
       },
     ];
     // Nút ‹ trong khu quản lý đi theo tầng, Tổng quan là trang chủ (BackBar.tsx).
-    return <ThanhTab tabs={tabsBan} count={0} soViec={soViec} nutDangTinNoi />;
+    return <ThanhTab tabs={tabsBan} count={0} soViec={soViec} nutDangTinNoi dangTinBang />; // nút bằng nhau như thanh trang công khai (07/11/2026)
   }
 
+  // THANH DƯỚI GỌN (chủ dự án 07/11/2026): bỏ Mua bán · Cho thuê · Dự án — ô tìm tự đọc mục đích sang đúng mục, menu ≡ có đủ
+  // ba mục; chỗ trống dành cho Chat (thay nút chat nổi đè nội dung) và Đăng tin. Chỉ điện thoại; máy tính không có thanh này.
   const tabs = [
-    { href: "/", label: "Trang chủ", icon: "home" as const, on: pathname === "/" },
-    { href: "/mua-ban", label: "Mua bán", icon: "muaBan" as const, on: pathname.startsWith("/mua-ban") },
-    { href: "/cho-thue", label: "Cho thuê", icon: "choThue" as const, on: pathname.startsWith("/cho-thue") },
-    { href: "/du-an", label: "Dự án", icon: "duAnC" as const, on: pathname.startsWith("/du-an") },
+    // THỨ TỰ (chủ dự án 07/11/2026): Trang chủ · ♡ Lưu · + Đăng tin (giữa) · Tin nhắn · Tài khoản
+    { href: "/", label: "Home", icon: "home" as const, on: pathname === "/" }, // chủ dự án 07/11/2026: "Trang chủ = Home"
+    // ♡ TIN ĐÃ LƯU chuyển từ đầu trang xuống đây (chủ dự án 07/11/2026) — cùng chữ "Lưu", cùng chấm đỏ đếm số tin như nút đầu trang
+    { href: "/tin-luu", label: "Lưu", icon: "tim" as const, on: pathname.startsWith("/tin-luu") },
+    { href: "/dang-tin", label: "Đăng tin", icon: "plus" as const, on: false },
+    // TIN NHẮN = nút chat chuẩn của web (cùng hình bong bóng, cùng đường Zalo OA với nút chat nổi) — chủ dự án 07/11/2026
+    { href: ZALO_OA_URL, label: "Tin nhắn", icon: "home" as const, on: false, ngoai: true },
     {
       href: user ? "/tai-khoan" : "/dang-nhap",
-      label: "Tài khoản",
+      label: "Hồ sơ", // chủ dự án 07/11/2026: "Tài khoản = Hồ sơ"
       icon: "user" as const,
       on: pathname.startsWith("/tai-khoan"),
     },
   ];
 
-  return <ThanhTab tabs={tabs} count={count} soViec={{ "/tai-khoan": tongSoViec(soViec) }} />;
+  // Đăng tin = ĐÚNG NÚT CHUẨN của thanh khu Tài khoản (vòng tròn xanh dấu + trắng) — chủ dự án 07/11/2026, ảnh điện thoại
+  return <ThanhTab tabs={tabs} count={count} soViec={{ "/tai-khoan": tongSoViec(soViec) }} nutDangTinNoi dangTinBang />;
 }
 
 // Khung thanh tab — dùng chung cho chế độ người mua và chế độ người bán.
-function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false }: { tabs: { href: string; label: string; icon: keyof typeof ICONS; on: boolean }[]; count: number; soViec?: Record<string, number>; nutDangTinNoi?: boolean }) {
+function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang = false }: { dangTinBang?: boolean; tabs: { href: string; label: string; icon: keyof typeof ICONS; on: boolean; ngoai?: boolean }[]; count: number; soViec?: Record<string, number>; nutDangTinNoi?: boolean }) {
   // ĐANG CUỘN thì trượt thanh xuống khuất, DỪNG CUỘN 0,35 s thì hiện lại (chủ dự án 02/11/2026: "cần không gian hiển thị trên mobile, ẩn
   // luôn menu ở footer khi cuộn"). Thanh nằm cố định đè lên trang nên ẩn / hiện không làm nội dung xê dịch.
   const [anKhiCuon, setAnKhiCuon] = useState(false);
@@ -254,14 +265,25 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false }: { tabs: {
         <ul className="flex items-stretch">
           {tabs.map((t) => (
             <li key={t.href} className="flex-1">
-              {nutDangTinNoi && t.href === "/dang-tin" ? (
+              {t.ngoai ? (
+                // CHAT = mở Zalo OA của Coastal Land (cùng đường dẫn nút chat nổi cũ). Đường dẫn thật, không window.open: iPhone và trình
+                // duyệt trong Zalo / Facebook chặn cửa sổ mở bằng mã.
+                <a href={t.href} target="_blank" rel="noopener noreferrer" aria-label="Nhắn tin cho Coastal Land qua Zalo" className="press flex h-[44px] flex-col items-center justify-center gap-[2px] text-cvr-muted">
+                  {/* đúng hình bong bóng "Tin nhắn" của nút chat nổi (Chatbox.tsx) */}
+                  <svg className="-my-px h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path d="M12 2.25c-5.385 0-9.75 3.24-9.75 7.5 0 2.68 1.72 5.03 4.32 6.4-.14.86-.5 1.9-1.2 2.86a.375.375 0 0 0 .35.6c1.7-.2 3.06-.78 4.02-1.35.73.16 1.5.24 2.26.24 5.385 0 9.75-3.24 9.75-7.5S17.385 2.25 12 2.25Z" />
+                  </svg>
+                  <span className="text-[10px] font-medium leading-none tracking-[-0.01em]">{t.label}</span>
+                </a>
+              ) : nutDangTinNoi && t.href === "/dang-tin" ? (
                 // ĐĂNG TIN = NÚT CHÍNH của khu quản lý (25/09): vòng tròn xanh. 22/10/2026 chủ dự án: "cân đối, không phải
                 // cứ to là nổi bật mà cản trở giao diện" → bỏ nhô lên, cùng cỡ + cùng hàng với các tab khác, không che nội dung.
-                <Link href={t.href} aria-label="Đăng tin" className="press relative -top-[6px] flex h-[49px] flex-col items-center justify-center gap-px">
+                <Link href={t.href} aria-label="Đăng tin" className={`press relative flex h-[44px] flex-col items-center justify-center ${dangTinBang ? "gap-[2px]" : "-top-[6px] gap-px"}`}>
                   {/* 22/10/2026 chủ dự án: giữ kiểu cũ, to hơn một chút — 35px. 29/10/2026: to thêm chút nữa + nhô lên một chút → 38px,
                       cả nút dời lên 6px để chữ "Đăng tin" thẳng hàng chữ các nút khác (vòng tròn nhô khỏi thanh ~5px). Các nút khác giữ nguyên. */}
-                  <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-cvr-blue text-white">
-                    <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
+                  {/* dangTinBang (thanh trang công khai, chủ dự án 07/11/2026: "các menu bằng nhau hết"): cùng kiểu vòng tròn xanh, cỡ BẰNG biểu tượng các nút khác, không nhô */}
+                  <span className={`flex items-center justify-center rounded-full bg-cvr-blue text-white ${dangTinBang ? "-my-[5px] h-8 w-8" : "h-[38px] w-[38px]"}`}>
+                    <svg className={dangTinBang ? "h-[18px] w-[18px]" : "h-[22px] w-[22px]"} fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" d="M12 5v14M5 12h14" />
                     </svg>
                   </span>

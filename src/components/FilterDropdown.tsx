@@ -36,8 +36,11 @@ export default function FilterDropdown({
   pill = false,
   seg = false,
   the = false,
+  onMo,
   children,
 }: {
+  /** Báo mở / đóng bảng — trường CHỌN NHIỀU giữ bản nháp lựa chọn trong bảng, đóng mà không Áp dụng thì bỏ (07/11/2026) */
+  onMo?: (mo: boolean) => void;
   label: string;
   /** Tiêu đề bảng chọn trên điện thoại khi khác chữ nút (nút "Toàn quốc" → bảng "Khu vực", 02/11/2026) */
   tieuDe?: string;
@@ -76,7 +79,7 @@ export default function FilterDropdown({
   );
   const btnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top?: number; left?: number; right?: number; w?: number; maxH?: number; len?: boolean }>({ top: 0 });
+  const [pos, setPos] = useState<{ top?: number; left?: number; right?: number; w?: number; maxH?: number; len?: boolean; manTim?: boolean }>({ top: 0 });
 
   // ĐIỆN THOẠI (< 640px): panel neo theo nút quá chật → đổi sang SHEET trượt từ đáy
   // đúng chuẩn iOS (nền mờ, thanh kéo, bo góc trên, né thanh Home). Desktop giữ nguyên.
@@ -85,6 +88,8 @@ export default function FilterDropdown({
   // lên trên cùng: bàn phím không đè lên bảng (chủ dự án 15/10/2026 — chuẩn chung mọi ô tìm).
   const [dangGo, setDangGo] = useState(false);
   const [chanBang, setChanBang] = useState<HTMLDivElement | null>(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ báo khi đổi mở / đóng
+  useEffect(() => { onMo?.(open); }, [open]);
   // Đóng bảng khi ô gõ còn đang giữ con trỏ thì onBlur không kịp chạy → trả về dạng bảng trượt.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -130,7 +135,9 @@ export default function FilterDropdown({
   // xê dịch lúc mở và lúc đóng bảng. Thay bằng: chặn kéo ở ngoài vùng cuộn của bảng (và trong vùng đó khi không có gì để cuộn), trang
   // phía sau không bị kéo theo mà màn hình không đổi cỡ.
   useEffect(() => {
-    if (!open || !sheet) return;
+    // Áp cả bảng XỔ DƯỚI TRƯỜNG trên máy cảm ứng (07/11/2026: từ 05/11 bảng đổi kiểu xổ, khối này chỉ còn gắn bảng trượt → vuốt trong bảng
+    // là trang chạy theo). Máy tính (chuột) không cần.
+    if (!open || (!sheet && !window.matchMedia("(pointer: coarse)").matches)) return;
     // Kéo QUÁ ĐẦU / QUÁ CUỐI danh sách cũng chặn (02/11/2026: "màn hình không được dịch khi kéo lên xuống") — trình duyệt không
     // hiểu overscroll-contain thì cú kéo dư chuyền ra trang phía sau
     let y0 = 0;
@@ -165,7 +172,8 @@ export default function FilterDropdown({
       : align === "right"
         ? { right: Math.max(8, document.documentElement.clientWidth - r.right - window.scrollX) }
         : { left: Math.max(8, Math.min(r.left, window.innerWidth - 8)) + window.scrollX };
-    setPos({ ...vert, ...horiz, maxH });
+    // trường nằm trong MÀN TÌM điện thoại (lớp z-80, trong khối lọc z-90) → bảng phải nằm TRÊN màn tìm, không thì mở mà không thấy (lỗi 22, 07/11/2026)
+    setPos({ ...vert, ...horiz, maxH, manTim: !!el.closest("[data-man-tim]") });
   }, [align]);
 
   // MÁY TÍNH: bảng LUÔN mở XUỐNG (chủ dự án 01/11/2026: bảng bật ngược lên che đầu trang, chật không chọn được). Dưới trường lọc
@@ -353,8 +361,9 @@ export default function FilterDropdown({
           createPortal(
             <div
               ref={panelRef}
-              style={{ top: pos.top, left: pos.left, right: pos.right, width: pos.w, maxWidth: pos.w, maxHeight: pos.maxH, transform: pos.len ? "translateY(-100%)" : undefined }}
-              className={`${pos.len ? "" : "cvr-pop "}absolute z-[44] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-none border border-cvr-line bg-white p-3 shadow-2xl shadow-black/15 ring-1 ring-inset ring-black/5 backdrop-blur-xl ${panelClassName}`}
+              data-cuon-bang
+              style={{ top: pos.top, left: pos.left, right: pos.right, width: pos.w, maxWidth: pos.w, maxHeight: pos.maxH, transform: pos.len ? "translateY(-100%)" : undefined, zIndex: pos.manTim ? 95 : undefined }}
+              className={`${pos.len ? "" : "cvr-pop "}absolute z-[44] max-w-[calc(100vw-1rem)] overflow-y-auto overscroll-contain rounded-none border border-cvr-line bg-white p-3 shadow-2xl shadow-black/15 ring-1 ring-inset ring-black/5 backdrop-blur-xl ${panelClassName}`}
             >
               {children({ close: () => setOpen(false) })}
             </div>,
@@ -375,18 +384,18 @@ export function PanelActions({
   return (
     <div className="mt-3 grid grid-cols-2 gap-3 border-t border-cvr-line pt-3">
       {/* MỘT KIỂU cho mọi bảng lọc (khu vực, loại hình, giá, diện tích, lọc thêm): HAI NÚT BẰNG NHAU chia đôi hàng —
-          Đặt lại (viền) · Áp dụng (xanh), cao 44 dễ bấm trên điện thoại (chủ dự án 20/10/2026) */}
+          Đặt lại (viền) · Áp dụng (xanh), cao 36 như máy tính (chủ dự án 07/11/2026: "nút có cần phải to như vậy không") */}
       <button
         type="button"
         onClick={onReset}
-        className="h-11 rounded-xl border border-cvr-line bg-white text-[14px] font-semibold text-cvr-ink transition hover:bg-black/[0.03] active:scale-[0.98] sm:h-9 sm:text-[13px]"
+        className="h-9 rounded-xl border border-cvr-line bg-white text-[13px] font-semibold text-cvr-ink transition hover:bg-black/[0.03] active:scale-[0.98]"
       >
         Đặt lại
       </button>
       <button
         type="button"
         onClick={onApply}
-        className="h-11 rounded-xl bg-cvr-blue text-[14px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-[0.98] sm:h-9 sm:text-[13px]"
+        className="h-9 rounded-xl bg-cvr-blue text-[13px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-[0.98]"
       >
         Áp dụng
       </button>

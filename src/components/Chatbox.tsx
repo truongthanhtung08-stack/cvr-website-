@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCompare } from "@/lib/useCompare";
 // Nút Zalo trỏ về OA (có tick), không phải nick cá nhân — lý do xem lib/lienHe.ts
 import { ZALO_OA_URL as ZALO_URL } from "@/lib/lienHe";
+import { coThanhChat } from "@/components/MobileTabBar";
 
 // ════════════════════════════════════════════════════════════════════════════
 // NÚT CHAT NỔI — BẤM LÀ SANG THẲNG ZALO
@@ -46,7 +47,8 @@ export default function Chatbox() {
   // (a) Ẩn nút khi màn hình đã có thanh bám đáy khác: thanh Gọi·Zalo ở trang chi
   //     tiết, hoặc thanh So sánh đang bật. Máy tính KHÔNG đổi (các thanh đó
   //     hoặc ẩn, hoặc nằm giữa màn hình nên không tranh chỗ với nút).
-  const vuongMobile = TRANG_CO_THANH_DAY.some((p) => pathname.startsWith(p)) || soSanh > 0;
+  // (07/11/2026) trang có thanh dưới chế độ người mua: Chat đã là một nút của thanh → điện thoại không vẽ nút nổi nữa (hết đè nội dung)
+  const vuongMobile = TRANG_CO_THANH_DAY.some((p) => pathname.startsWith(p)) || soSanh > 0 || coThanhChat(pathname);
 
   // (b) Cuộn XUỐNG (đang đọc nội dung) → thu nút lại; cuộn LÊN → hiện lại.
   //     Chỉ áp cho mobile qua biến thể max-lg: bên dưới.

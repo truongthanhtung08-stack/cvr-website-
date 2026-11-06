@@ -645,15 +645,16 @@ export function sortListings<T extends FilterableListing>(items: T[], sort: Sort
 // Văn bản hiển thị khoảng giá / diện tích (cho nút & chip)
 export function priceRangeText(min: number | null, max: number | null): string {
   const f = (n: number) => (n >= 1 ? `${(+n.toFixed(2))} tỷ` : `${Math.round(n * 1000)} triệu`);
-  if (min != null && max != null) return `${f(min)} - ${f(max)}`;
-  if (min != null) return `Trên ${f(min)}`;
+  // mốc "Dưới X" lưu min = 0 → ghi "Dưới X", không "0 triệu - X" (07/11/2026)
+  if (min != null && min > 0 && max != null) return `${f(min)} - ${f(max)}`;
+  if (min != null && min > 0) return `Trên ${f(min)}`;
   if (max != null) return `Dưới ${f(max)}`;
   return "";
 }
 
 export function areaRangeText(min: number | null, max: number | null): string {
-  if (min != null && max != null) return `${min} - ${max} m²`;
-  if (min != null) return `Trên ${min} m²`;
+  if (min != null && min > 0 && max != null) return `${min} - ${max} m²`;
+  if (min != null && min > 0) return `Trên ${min} m²`;
   if (max != null) return `Dưới ${max} m²`;
   return "";
 }

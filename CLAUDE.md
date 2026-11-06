@@ -49,6 +49,25 @@ theo giờ (chỉ revalidateTag khi dữ liệu đổi + 0h mỗi ngày) · tran
 **Việc khác chờ anh "làm":** sửa gốc ảnh rác khi nạp tin hàng loạt (`taiAnhHangLoat` tải ảnh lúc chọn → chỉ tải khi bấm Đăng) · dọn ảnh `nho/`
 của 196 tệp rác đã xoá · khối đánh giá tin ("Tin này có đúng như mô tả không?") trong Mini App · ZaloPay / Checkout (chờ Zalo).
 
+## ⏳ 07/11/2026 CHIỀU (phiên e7f4594c) — BỘ LỌC + MENU ĐIỆN THOẠI — CHƯA BUILD, CHƯA COMMIT, CHƯA PUSH
+**Danh sách lỗi bộ lọc (anh báo, có trạng thái):** `.claude/LOI-BO-LOC-07-11.md`. **Giả lập điện thoại:** `http://localhost:3000/khung-web.html`
+(tệp `public/khung-web.html`, đã .gitignore) — mở ở cột phải; Chrome của anh đăng nhập sẵn localhost (xem bản đăng nhập trong khung).
+**Đã sửa trên máy (chưa commit):** bộ lọc chọn nhiều = nháp, Áp dụng mới tìm (`FilterBar` `nhap/apDungNhap`, `FilterDropdown` `onMo`,
+`ProjectsBrowser` `nhapDa`) · trang Dự án bỏ trường "Dự án" · bấm câu gợi ý / tìm gần đây đọc lại câu (`chayTim(…, cauMoi)`) · đổi trường
+xong `setDaTim("")` · trang chủ gõ câu mới không dính khu vực câu cũ (`TimTrangChu` `khachChon`) · địa chỉ trang ghi theo bộ lọc cả khi cùng
+trang (`ListingBrowser urlTheoTruong`) · bảng chọn nằm trên màn tìm (`FilterDropdown` zIndex 95 khi trong `[data-man-tim]`) · hàng "đã chọn"
+dính phủ kín mép trên bảng (`DaChon` -top-3) · nút Đặt lại / Áp dụng cao 36 · bảng Khu vực luôn mở hệ MỚI, hệ cũ phẳng A–Z, không nhớ hệ cũ ·
+thanh dưới công khai: Home · Lưu · Đăng tin (vòng xanh 32) · Tin nhắn · Hồ sơ (`MobileTabBar`, nền trắng đặc, không kẻ) + thanh khu Tài khoản
+cùng kiểu · nút chat nổi ẩn trên điện thoại ở trang có thanh · trang chủ điện thoại: tab Mua bán nhà đất · Cho thuê nhà đất lọc tại chỗ thay
+hàng tab loại hình (`FeaturedListings`) · menu ≡: Báo cáo thị trường tách riêng cuối menu (cả PC), "Tài khoản"→"Hồ sơ" mọi nơi, ẩn "Tin đã
+lưu" trên điện thoại, nút Đăng nhập/Đăng tin nhỏ sát hai mép, dòng cách đều, khoá trang khi mở (`useKhoaCuon`) · `khoaCuon.ts` dọn dấu
+cvrBang/cvrLoc/cvrDu mồ côi khi F5 (gốc lỗi "F5 rồi tìm thì nhảy về trang chủ") · tin chi tiết PC khung ảnh cách Header 20px.
+**Đang làm dở:** anh bảo rà lại toàn bộ cách chọn địa chỉ (chọn, bỏ chọn, chọn nhiều, tìm trong bảng, Áp dụng, huỷ) — "RẤT lỗi".
+**Còn trong danh sách:** lỗi 1–3 (giật, Enter lấy gợi ý đầu), 5, 7, 8, 9, 14, 18, 19, 20, 21, 23.
+**Anh mắng phiên này:** nói nhiều; tự vẽ kiểu mới thay vì dùng mẫu web đang có; chặn cuộn kiểu "lấp liếm" (đã gỡ, dùng hàm chung); hiểu sai
+nút nào cần to. Máy chủ thử cổng 3000 do phiên này chạy (preview `cvr-web`); bị lệch bản SSR thì khởi động lại; trình duyệt giữ mã cũ thì
+gỡ service worker + xoá cache.
+
 ## ⏳ BÀN GIAO 07/11/2026 (phiên 4a3174b0, anh: "bàn giao lại") — CHƯA BUILD, CHƯA COMMIT, CHƯA PUSH
 **Việc anh giao:** tệp `C:\Users\X1 GEN 8\OneDrive\Desktop\YÊU CẦU CHÍNH SỮA 03112026.docx` — **làm mục 2 → 6, dứt điểm từng phần.**
 ⛔ **Số mục = số CẤP NGOÀI của tệp** (Claude phiên này đếm theo dòng con → làm nhầm). Đúng là:

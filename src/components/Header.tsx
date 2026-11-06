@@ -13,6 +13,7 @@ import { useAuth, displayName, anhDaiDien, signOut, lienHeTaiKhoan } from "@/lib
 import { usePathname } from "next/navigation";
 import { useSoViecKhach, tongSoViec, nhanSoDo } from "@/lib/useSoTinCanXem";
 import AnhDaiDien from "@/components/AnhDaiDien";
+import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // href KHÔNG bắt buộc: mục chỉ có `children` là NHÃN NHÓM (không bấm được),
 // dùng để gom danh mục — tránh link cha trỏ trùng một mục con.
@@ -61,7 +62,8 @@ const danhMucDuAn: NavChild[] = [
   { label: "Tra cứu dự án", href: "/du-an#tra-cuu" },
 ];
 // MENU TIỆN ÍCH (chủ dự án duyệt 25/10/2026): một cột, chỉ công cụ dùng được ngay — danh sách ở packages.ts (TIEN_ICH)
-const danhMucTienIch: NavChild[] = TIEN_ICH.map((t) => ({ label: t.label, href: t.href }));
+// Báo cáo thị trường TÁCH RA thành mục riêng của menu chính (chủ dự án 07/11/2026) — giữ nguyên đường dẫn trang
+const danhMucTienIch: NavChild[] = TIEN_ICH.filter((t) => t.slug !== "bao-cao-thi-truong-bds").map((t) => ({ label: t.label, href: t.href }));
 
 // Thứ tự menu (chủ dự án duyệt 22/10/2026 — PC trái → phải, điện thoại trên → dưới): người tìm nhà dùng nhiều nhất
 // trước, phần cho người bán cuối (sát nút Đăng tin): Mua bán · Cho thuê · Dự án · Tin tức · Tiện ích · Báo giá
@@ -73,6 +75,8 @@ const navItems: NavItem[] = [
   { label: "Tin tức", href: "/tin-tuc", icon: "tinTuc" as const },
   { label: "Tiện ích", href: "/tien-ich/gia-nha-dat", children: danhMucTienIch, icon: "tienIch" as const },
   { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: "baoGia" as const },
+  // cuối cùng (chủ dự án 07/11/2026)
+  { label: "Báo cáo thị trường", href: "/tien-ich/bao-cao-thi-truong-bds", icon: "baoCao" as const },
 ];
 
 const chevronDown = (
@@ -214,7 +218,8 @@ function SaveButton() {
     <Link
       href="/tin-luu"
       aria-label={count > 0 ? `Tin đã lưu (${count})` : "Tin đã lưu"}
-      className="relative flex h-11 w-9 items-center justify-center text-cvr-line transition-colors hover:text-white xl:h-auto xl:w-auto xl:gap-1.5"
+      /* điện thoại / máy tính bảng (< lg): trái tim nằm ở thanh dưới (MobileTabBar) — chủ dự án 07/11/2026 */
+      className="relative flex h-11 w-9 items-center justify-center text-cvr-line transition-colors hover:text-white max-lg:hidden xl:h-auto xl:w-auto xl:gap-1.5"
     >
       {/* Chấm đỏ = ĐÚNG số tin đã lưu (tối đa 100), cả điện thoại lẫn máy tính (25/10/2026 — trước đây "9+" và máy tính không có số) */}
       <span className="relative flex">
@@ -237,12 +242,12 @@ const TAI_KHOAN_LINKS: { label: string; href: string }[] = [
   { label: "Tổng quan", href: "/tai-khoan" },
   { label: "Tin đăng", href: "/tai-khoan/tin-dang" },
   { label: "Khách hàng", href: "/tai-khoan/khach-hang" },
-  { label: "Tài khoản", href: "/tai-khoan/ca-nhan" },
+  { label: "Hồ sơ", href: "/tai-khoan/ca-nhan" }, // MỘT TÊN với thanh dưới (chủ dự án 07/11/2026: "Tài khoản = Hồ sơ")
 ];
 // Điện thoại: hai mục tài khoản ở nhóm cuối menu (Tổng quan = dòng ảnh đại diện, Tin đăng = nút cạnh Đăng tin)
 const TAI_KHOAN_PHU: { label: string; href: string; icon: TenBieuTuong }[] = [
   { label: "Khách hàng", href: "/tai-khoan/khach-hang", icon: "khachHang" },
-  { label: "Tài khoản", href: "/tai-khoan/ca-nhan", icon: "taiKhoan" },
+  { label: "Hồ sơ", href: "/tai-khoan/ca-nhan", icon: "taiKhoan" },
 ];
 
 function AccountMenu({ name, anh, phu, onLogout, soViec = {} }: { name: string; anh: string; phu: string[]; onLogout: () => void; soViec?: Record<string, number> }) {
@@ -312,6 +317,11 @@ function MobileMenu({
   // trang phía trên panel và mất luôn nút ☰ để đóng.
   // Panel đã phủ kín màn hình + overscroll-contain nên nền không trôi theo tay vuốt.
 
+  // MENU MỞ → TRANG PHÍA SAU ĐỨNG YÊN — dùng CHUNG hàm khoá cuộn của mọi lớp phủ (lib/khoaCuon: body position:fixed, không
+  // overflow:hidden nên header sticky không hỏng). Trước đây menu là lớp phủ duy nhất không khoá → vuốt trên menu là trang cuộn (07/11/2026).
+  // + nút Quay lại của điện thoại chỉ ĐÓNG menu, không rời trang — cùng hàm chung useKhoaCuon của mọi bảng nổi
+  useKhoaCuon(open, onClose);
+
   // Đóng menu thì gập luôn accordion để lần mở sau sạch sẽ
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -337,7 +347,7 @@ function MobileMenu({
             hàng hai nút bằng nhau cao 44px — trái nút viền (chưa đăng nhập: Đăng nhập · đã đăng nhập: Tin đăng),
             phải nút xanh "+ Đăng tin". Đã đăng nhập thì thêm MỘT dòng ảnh đại diện + tên phía trên (bấm → Tổng quan).
             Các mục tài khoản còn lại (Khách hàng, Tài khoản) nằm ở nhóm cuối menu cùng Tin đã lưu · Đăng xuất. */}
-        <div className="mb-7">
+        <div className="mb-5">
           {user && (
             // Ảnh đại diện 40px + tên 16px đậm + dòng phụ "Thành viên" — CÙNG khối tên trong menu ảnh đại diện máy tính (25/10/2026)
             <Link href="/tai-khoan" onClick={onClose} className="mb-4 flex min-w-0 items-center gap-3">
@@ -348,16 +358,19 @@ function MobileMenu({
               </span>
             </Link>
           )}
-          <div className="grid grid-cols-2 gap-2">
-            <Link href={user ? "/tai-khoan/tin-dang" : "/dang-nhap"} onClick={onClose} className="flex min-h-[44px] items-center justify-center rounded-full text-[15px] font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors active:bg-white/10">
+          <div className="flex items-center justify-between">
+            {/* HAI KHỐI ĐẶC CÙNG KHUÔN — ngắn vừa chữ, căn đều hai bên (chủ dự án 07/11/2026) (chủ dự án 07/11/2026: "cho hài hoà"): trái khối TRẮNG chữ đen + biểu tượng, phải khối XANH — cùng cao 40,
+                cùng chữ 14px (chủ dự án: "cho CTA nhỏ lại"), cùng bo tròn; Đăng tin vẫn nổi nhờ màu xanh */}
+            <Link href={user ? "/tai-khoan/tin-dang" : "/dang-nhap"} onClick={onClose} className="press flex min-h-[34px] items-center justify-center gap-1 rounded-full bg-white px-5 text-[13px] font-semibold text-cvr-ink">
+              <BieuTuong ten={user ? "tinDang" : "taiKhoan"} className="h-[14px] w-[14px] shrink-0" />
               {user ? "Tin đăng" : "Đăng nhập"}
             </Link>
             <Link
               href="/dang-tin"
               onClick={onClose}
-              className="press flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-cvr-blue text-[15px] font-semibold text-white"
+              className="press flex min-h-[34px] items-center justify-center gap-1 rounded-full bg-cvr-blue px-5 text-[13px] font-semibold text-white"
             >
-              <svg className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <svg className="h-[12px] w-[12px]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               Đăng tin
@@ -383,10 +396,10 @@ function MobileMenu({
                   <Link
                     href={item.href}
                     onClick={onClose}
-                    className="flex min-h-[56px] flex-1 items-center gap-3.5 text-[17px] font-medium text-white"
+                    className="flex min-h-[52px] flex-1 items-center gap-3.5 text-[18px] font-medium text-white"
                   >
                     {item.icon && (
-                      <BieuTuong ten={item.icon} className="h-[22px] w-[22px] shrink-0 text-white/75" />
+                      <BieuTuong ten={item.icon} className="h-6 w-6 shrink-0 text-white/75" />
                     )}
                     {item.label}
                   </Link>
@@ -395,7 +408,7 @@ function MobileMenu({
                     onClick={() => setExpanded(expanded === item.label ? null : item.label)}
                     aria-expanded={expanded === item.label}
                     aria-label={`${expanded === item.label ? "Thu gọn" : "Mở rộng"} ${item.label}`}
-                    className="-mr-2 flex h-[56px] w-12 shrink-0 items-center justify-center"
+                    className="-mr-2 flex h-[52px] w-12 shrink-0 items-center justify-center"
                   >
                     <svg
                       className={`h-4 w-4 text-white/50 transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
@@ -414,7 +427,9 @@ function MobileMenu({
                   }}
                 >
                   {/* pl-9 = 22px icon + gap-3.5 → danh mục con thẳng hàng với CHỮ của mục cha */}
-                  <div className="overflow-hidden pb-3 pl-9">
+                  {/* overflow-hidden + min-h-0: gập là 0px thật — phần đệm nằm trong khối con, các dòng menu cách ĐỀU nhau (07/11/2026) */}
+                  <div className="min-h-0 overflow-hidden">
+                  <div className="pb-3 pl-[38px]">
                     {item.children.map((child) => (
                       <div key={child.label}>
                         <div className="py-3">
@@ -422,7 +437,7 @@ function MobileMenu({
                             <Link
                               href={child.href}
                               onClick={onClose}
-                              className="block text-[15px] font-semibold text-white/90 transition-colors active:text-white"
+                              className="block text-[16px] font-semibold text-white/90 transition-colors active:text-white"
                             >
                               {child.label}
                             </Link>
@@ -438,7 +453,7 @@ function MobileMenu({
                                   key={grandChild.label}
                                   href={grandChild.href ?? "#"}
                                   onClick={onClose}
-                                  className="block text-[15px] font-medium text-white/75 transition-colors active:text-white"
+                                  className="block text-[16px] font-medium text-white/75 transition-colors active:text-white"
                                 >
                                   {grandChild.label}
                                 </Link>
@@ -449,16 +464,17 @@ function MobileMenu({
                       </div>
                     ))}
                   </div>
+                  </div>
                 </div>
               </>
             ) : (
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="flex min-h-[56px] items-center gap-3.5 text-[17px] font-medium text-white"
+                className="flex min-h-[52px] items-center gap-3.5 text-[18px] font-medium text-white"
               >
                 {item.icon && (
-                  <BieuTuong ten={item.icon} className="h-[22px] w-[22px] shrink-0 text-white/75" />
+                  <BieuTuong ten={item.icon} className="h-6 w-6 shrink-0 text-white/75" />
                 )}
                 {item.label}
               </Link>
@@ -470,29 +486,31 @@ function MobileMenu({
         {/* Hành động phụ — Tin đã lưu · Đăng xuất (tài khoản & đăng tin đã nằm ở ĐẦU menu).
             Icon 22px + gap-3.5 để chữ thẳng hàng với các mục menu chính phía trên.
             Tách khỏi menu chính bằng KHOẢNG TRẮNG, không dùng đường kẻ. */}
-        <div className="mt-7">
+        {/* nhóm cuối: cùng nhịp dòng với menu trên (space-y-1); chưa đăng nhập thì điện thoại không còn mục nào ở đây → không vẽ đường kẻ trống */}
+        <div className={`mt-5 space-y-1 border-white/10 pt-3 ${user ? "border-t" : "max-lg:hidden lg:border-t"}`}>
           {/* Đã đăng nhập: mục tài khoản còn lại — cùng kiểu hàng với Tin đã lưu · Đăng xuất */}
           {user && TAI_KHOAN_PHU.map((l) => (
-            <Link key={l.href} href={l.href} onClick={onClose} className="flex min-h-[56px] items-center gap-3.5 text-[16px] font-medium text-white/85">
-              <BieuTuong ten={l.icon} className="h-[22px] w-[22px] shrink-0 text-white/60" />
+            <Link key={l.href} href={l.href} onClick={onClose} className="flex min-h-[52px] items-center gap-3.5 text-[16px] font-medium text-white/85">
+              <BieuTuong ten={l.icon} className="h-6 w-6 shrink-0 text-white/60" />
               {l.label}
             </Link>
           ))}
+          {/* "Tin đã lưu": điện thoại đã có ♡ Lưu ở thanh dưới → ẩn (07/11/2026) */}
           <Link
             href="/tin-luu"
             onClick={onClose}
-            className="flex min-h-[56px] items-center gap-3.5 text-[16px] font-medium text-white/85"
+            className="flex min-h-[52px] items-center gap-3.5 text-[16px] font-medium text-white/85 max-lg:hidden"
           >
-            <BieuTuong ten="tim" className="h-[22px] w-[22px] shrink-0 text-white/60" />
+            <BieuTuong ten="tim" className="h-6 w-6 shrink-0 text-white/60" />
             Tin đã lưu
           </Link>
           {user && (
             <button
               type="button"
               onClick={() => { onLogout(); onClose(); }}
-              className="flex min-h-[56px] w-full items-center gap-3.5 text-left text-[16px] font-medium text-white/60"
+              className="flex min-h-[52px] w-full items-center gap-3.5 text-left text-[16px] font-medium text-white/60"
             >
-              <BieuTuong ten="dangXuat" className="h-[22px] w-[22px] shrink-0 text-white/45" />
+              <BieuTuong ten="dangXuat" className="h-6 w-6 shrink-0 text-white/45" />
               Đăng xuất
             </button>
           )}

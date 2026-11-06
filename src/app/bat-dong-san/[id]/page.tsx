@@ -420,8 +420,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {/* Đường dẫn cấp: CHỈ dữ liệu cho Google (JSON-LD), không hiện dòng chữ trên trang — chủ dự án 18/10/2026 */}
       <BreadcrumbJsonLd items={[...duongDanCap, { name: tieuDe1Dong, href: duongDanTin(l) }]} />
       <main className="flex-1 bg-white">
-        {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
-        <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">
+        {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng)
+            PC: chừa 20px dưới header (chủ dự án 07/11/2026, tệp yêu cầu 03/11 mục 3) — bằng đúng cột phải (sticky top-20) */}
+        <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-5 lg:px-8">
 
           <HomeExpandProvider>
           {/* TIN HẾT HẠN — CẤU TRÚC NHƯ BATDONGSAN (đo trang thật 03/10/2026, tin 45242191).

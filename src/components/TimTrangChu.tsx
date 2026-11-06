@@ -192,6 +192,10 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const [moPc, setMoPc] = useState(false); // máy tính: bảng gợi ý
   const [ganDay, setGanDay] = useState<Suggestion[]>([]);
   const [boLoc, setLoc] = useState<Filters>(emptyFilters); // trường lọc chi tiết
+  // TRƯỜNG DO KHÁCH TỰ CHỌN hay do CÂU tự điền (07/11/2026): câu được đọc chậm một nhịp → gõ câu mới rồi Enter ngay thì các trường vẫn
+  // là của CÂU CŨ ("cho thuê căn hộ đà nẵng" → gõ "bán căn hộ nha trang" Enter ra Đà Nẵng). Chỉ trường khách tự bấm chọn mới đi kèm câu.
+  const [khachChon, setKhachChon] = useState(false);
+  const setLocKhach = (f: Filters) => { setKhachChon(true); setLoc(f); };
   const [dangTim, setDangTim] = useState(false);
   const [chon, setChon] = useState(-1); // dòng gợi ý đang chọn bằng phím ↑ ↓ (máy tính) // vừa bấm tìm, đang chờ trang kết quả
   const router = useRouter();
@@ -271,7 +275,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const haPhim = () => { const a = document.activeElement as HTMLElement | null; if (a?.tagName === "TEXTAREA") a.blur(); };
   const dongMo = () => { if (history.state?.cvrTim === dauMo.current) history.back(); else dongNoi(); };
   const dongPc = () => { setDangDong(true); setTimeout(() => { setMoPc(false); setDangDong(false); }, 160); };
-  const xoaHet = () => { setTuKhoa(""); setLoc(emptyFilters()); };
+  const xoaHet = () => { setTuKhoa(""); setLoc(emptyFilters()); setKhachChon(false); };
   const pcRef = useRef<HTMLDivElement>(null);
   const daKiemSom = useRef(false);
 
@@ -455,7 +459,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     }
     // KHÁCH PHẢI THẤY CÂU MÌNH ĐÃ GÕ (chủ dự án 17/10/2026): trường lọc chỉ là phần máy tự tách từ câu → đi
     // đường câu gõ (trang kết quả hiện nguyên câu trong ô tìm). Khách tự chỉnh trường → tìm theo trường, kèm câu.
-    const tuDong = !!kw && JSON.stringify(boLoc) === JSON.stringify(muc === "duan" ? emptyFilters() : locTuCau(kw, mb));
+    const tuDong = !khachChon || (!!kw && JSON.stringify(boLoc) === JSON.stringify(muc === "duan" ? emptyFilters() : locTuCau(kw, mb)));
     if (!n && coLoc && !tuDong) {
       if (muc === "duan") {
         const p = filtersToParams({ ...emptyFilters(), keyword: kw, locations: boLoc.locations, project: boLoc.project, types: boLoc.types, loaiDuAn: boLoc.loaiDuAn, tinhTrang: boLoc.tinhTrang, chuDauTu: boLoc.chuDauTu });
@@ -516,6 +520,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   useEffect(() => {
     if (kw === kwDoc.current) return;
     // xoá hết chữ → các trường do câu tự điền cũng về trống (như trước)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- câu mới làm chủ các trường
+    setKhachChon(false);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc câu sau khi chữ ổn định
     if (!kw) { kwDoc.current = ""; setLoc((cu) => (JSON.stringify(cu) === JSON.stringify(emptyFilters()) ? cu : emptyFilters())); return; }
     kwDoc.current = kw;
@@ -572,11 +578,11 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // KHÔNG tải sẵn trang đích khi mở màn tìm (chủ dự án 17/10/2026: Vercel phải nằm trong gói $20) — trang không có sẵn
   // trong bộ nhớ đệm thì mỗi lần tải sẵn là một lần chạy máy chủ. Bấm tìm đã có thanh chạy báo đang tìm.
   // CÁCH A (chủ dự án 20/10/2026): mỗi trường chọn xong bấm "Áp dụng" là TÌM LUÔN — đồng bộ Mua bán / Cho thuê / Dự án
-  const hangLoc = (gon: boolean, chi?: string[]) => <TruongLocTrangChu muc={muc} value={boLoc} onChange={setLoc} onXong={() => tim(tuKhoa)} gon={gon} chi={chi} nhanXem={nhanTim} soLoai={soLoai} duAn={muc === "duan" ? duAnLoc ?? undefined : undefined} />;
+  const hangLoc = (gon: boolean, chi?: string[]) => <TruongLocTrangChu muc={muc} value={boLoc} onChange={setLocKhach} onXong={() => tim(tuKhoa)} gon={gon} chi={chi} nhanXem={nhanTim} soLoai={soLoai} duAn={muc === "duan" ? duAnLoc ?? undefined : undefined} />;
   // Điện thoại: hai trường chính là THẺ gọn dưới thẻ tìm; các trường còn lại nằm trong thẻ tìm
   // ĐỦ 5 TRƯỜNG (chủ dự án 17/10/2026: gõ từ khoá không bảo đảm chính xác 100%) trên MỘT HÀNG MENU CHẠY NGANG
   // ngay dưới ô gõ ("1 cái menu chạy phía dưới") — không xếp thẻ chồng bên dưới
-  const PHU = muc === "duan" ? ["kv", "lda", "cdt", "da", "them"] : ["kv", "lh", "gia", "dt", "them"];
+  const PHU = muc === "duan" ? ["kv", "lda", "cdt", "them"] : ["kv", "lh", "gia", "dt", "them"];
 
   // Gợi ý KHÔNG in đậm (chủ dự án 21/10/2026: in đậm phần web tự thêm kiểu Google làm khách thấy chữ vô nghĩa)
   // HIỂN THỊ KIỂU GOOGLE (chủ dự án 01/11/2026), cùng cách ô Mua bán · Cho thuê · Dự án (FilterBar.HighlightLabel): chữ khách đã gõ
@@ -603,7 +609,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     });
   };
   const dong = (s: Suggestion, icon: PhIcon, onClick: () => void, key: string, idx: number, xoa?: () => void) => (
-    <div key={key} onMouseEnter={() => setChon(idx)} className={`flex items-center rounded-xl transition ${chon === idx ? "bg-black/[0.05]" : "hover:bg-black/[0.04]"}`}>
+    <div key={key} onPointerMove={(e) => { if (e.pointerType === "mouse") setChon(idx); }} className={`flex items-center rounded-xl transition ${chon === idx ? "bg-black/[0.05]" : "hover:bg-black/[0.04]"}`}>
       <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2 text-left active:bg-black/[0.06] sm:px-3 sm:py-2.5">
         {/* gọn như màn tìm cũ đã chuẩn (chủ dự án 18/10/2026): kính lúp / đồng hồ nhỏ, không vòng tròn */}
         <span className="flex w-5 shrink-0 justify-center text-cvr-muted"><Icon i={icon} className="h-[18px] w-[18px]" /></span>
