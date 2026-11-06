@@ -78,7 +78,12 @@ export function useNutQuayLai(mo: boolean, dong?: () => void): () => void {
       choLui.current = null;
     } else {
       dau = `cvrBang${++demDau}`;
-      try { history.pushState({ ...history.state, [dau]: 1 }, ""); } catch { return; }
+      try {
+        const s = (history.state ?? {}) as Record<string, unknown>;
+        // Bước dư của bảng đóng trước (dấu cvrDu, cùng địa chỉ) → dùng lại, không thêm bước mới — lịch sử không dài ra
+        if (s.cvrDu) { const { cvrDu: _bo, ...con } = s; void _bo; history.replaceState({ ...con, [dau]: 1 }, ""); }
+        else history.pushState({ ...s, [dau]: 1 }, "");
+      } catch { return; }
     }
     dauRef.current = dau;
     const url = location.href;
@@ -96,7 +101,16 @@ export function useNutQuayLai(mo: boolean, dong?: () => void): () => void {
       choLui.current = window.setTimeout(() => {
         choLui.current = null;
         dauRef.current = "";
-        if (location.href === url && (history.state as Record<string, unknown> | null)?.[dau]) history.back();
+        // ĐÓNG BẰNG NÚT (✕, chạm nền, chọn xong) → KHÔNG history.back() nữa (chủ dự án 06/11/2026: "đang soạn tin, xem quy
+        // định / mẫu tin, tắt bảng là nhảy về trang chủ"). Lùi lịch sử là đường DUY NHẤT làm trang rời đi khi tắt bảng —
+        // trình duyệt điện thoại / trong Zalo có lúc lùi quá bước của bảng. Nay chỉ gỡ dấu bảng khỏi bước hiện tại và đánh dấu
+        // bước dư (cvrDu): trang đứng yên tuyệt đối; bảng mở sau dùng lại bước dư này. Nút Quay lại điện thoại vẫn đóng bảng.
+        const s = history.state as Record<string, unknown> | null;
+        if (location.href === url && s?.[dau]) {
+          const { [dau]: _bo, ...con } = s;
+          void _bo;
+          try { history.replaceState({ ...con, cvrDu: 1 }, ""); } catch { /* bỏ qua */ }
+        }
       }, 0);
     };
   }, [mo, coDong]);
