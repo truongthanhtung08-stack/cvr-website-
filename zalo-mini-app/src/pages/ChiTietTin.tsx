@@ -56,6 +56,7 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
   const anhLon = dsAnh.map((u) => ({ src: anh(u), alt: tieuDe }));
 
   return (
+    <>
     <div className="anh-tin">
       <div ref={khung} className="anh-tin-khung" onScroll={(e) => setDang(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
         {videos.map((v, i) => {
@@ -75,20 +76,17 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
           tin CÓ video: nút "Xem ảnh & video" góc trên phải (không có "Tất cả ảnh" ở đáy) ·
           CHẠM ẢNH = TRÌNH XEM ẢNH CỦA ZALO (ImageViewer, chuẩn Mini App: toàn màn hình, vuốt, phóng to) mở ngay đúng tấm đó ·
           "Tất cả ảnh" / "Xem ảnh & video" → bảng lưới: video trên cùng, ảnh 2 cột, chạm ảnh → trình xem ảnh. */}
-      <span className="anh-tin-dem">
-        {videos.length > 0 && <><Icon icon="zi-video" size={14} /> {videos.length}<i className="ngan" /></>}
-        <Icon icon="zi-photo" size={14} /> {anhs.length}
-      </span>
-      {videos.length > 0 && (
-        <button className="anh-tin-xem-het" onClick={() => setTatCa(true)}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><rect x="3" y="3" width="7" height="7" rx="1.2" /><rect x="14" y="3" width="7" height="7" rx="1.2" /><rect x="3" y="14" width="7" height="7" rx="1.2" /><rect x="14" y="14" width="7" height="7" rx="1.2" /></svg>
-          Xem ảnh &amp; video
-        </button>
+      {/* KHUNG VIDEO KHÔNG BỊ ĐÈ (06/11/2026 "mở video bị chồng"): đang ở tấm video thì không có huy hiệu, mũi tên, nút nào
+          nằm trên trình phát — vuốt ngang để sang ảnh; tin có video thì hàng "video · ảnh · Xem ảnh & video" nằm NGAY DƯỚI khung. */}
+      {!laVideoDang && (
+        <span className="anh-tin-dem">
+          <Icon icon="zi-photo" size={14} /> {anhs.length}
+        </span>
       )}
-      {tong > 1 && dang > 0 && (
+      {!laVideoDang && tong > 1 && dang > 0 && (
         <button className="anh-tin-nut trai" aria-label="Tấm trước" onClick={() => toi(dang - 1)}><Icon icon="zi-chevron-left" size={20} /></button>
       )}
-      {tong > 1 && dang < tong - 1 && (
+      {!laVideoDang && tong > 1 && dang < tong - 1 && (
         <button className="anh-tin-nut phai" aria-label="Tấm sau" onClick={() => toi(dang + 1)}><Icon icon="zi-chevron-right" size={20} /></button>
       )}
       {!laVideoDang && (
@@ -115,6 +113,13 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
       </Sheet>
       <ImageViewer images={anhLon} activeIndex={xemLon ?? 0} visible={xemLon !== null} onClose={() => setXemLon(null)} maskStyle={{ background: "#000" }} />
     </div>
+    {videos.length > 0 && (
+      <div className="anh-tin-duoi">
+        <span><Icon icon="zi-video" size={16} /> {videos.length} video · <Icon icon="zi-photo" size={16} /> {anhs.length} ảnh</span>
+        <button onClick={() => setTatCa(true)}>Xem ảnh &amp; video</button>
+      </div>
+    )}
+    </>
   );
 }
 
