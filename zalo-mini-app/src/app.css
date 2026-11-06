@@ -787,3 +787,7 @@ html.xem-thu .hang-app { padding-right: 0; }
 .nut-dang-tin:active { transform: scale(.96); }
 /* Logo chuẩn trên đầu trang chủ: cao 40px, giữ đúng tỷ lệ file, chừa chỗ cụm ⋯ ✕ bên phải. */
 .hang-app img.logo-chuan { width: auto !important; height: 40px !important; max-width: 100%; border-radius: 0 !important; display: block; }
+/* Logo trang chủ NGANG HÀNG cụm ⋯ ✕ (06/11/2026 "căn chỉnh lại logo"): tâm logo = tâm cụm (cụm cao 32, đỉnh cách đầu màn 35 → tâm 51;
+   vùng an toàn trên 58 → lùi 27px), logo cao 40 bắt đầu ở 31. Bên phải logo là cụm ⋯ ✕ (chừa 96px). */
+.trang-chu .dau-app { padding-top: calc(max(var(--zaui-safe-area-inset-top, 0px), env(safe-area-inset-top, 0px), 28px) - 27px) !important; }
+.trang-chu .hang-app { height: 40px !important; min-height: 40px !important; padding-right: 96px !important; }
