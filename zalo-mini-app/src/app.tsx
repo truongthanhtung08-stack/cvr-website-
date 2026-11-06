@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from "react";
-import { AnimationRoutes, App, BottomNavigation, Route, SnackbarProvider, ZMPRouter, useLocation } from "zmp-ui";
+import { AnimationRoutes, App, BottomNavigation, Route, SnackbarProvider, ZMPRouter, useLocation, useNavigate } from "zmp-ui";
 import IconCL from "./components/IconCL";
 
 // TẢI THEO MÀN (chuẩn hiệu suất Zalo: LCP < 2,5 giây, tải trang < 1,5 giây — Chính sách kiểm duyệt mục 5.3): màn đầu (5 tab) nằm sẵn
@@ -50,15 +50,23 @@ const tabCua = (p: string) => p;
 
 function ThanhDuoi() {
   const { pathname } = useLocation();
+  const dieuHuong = useNavigate();
   const tab = tabCua(pathname);
   // Đăng tin mở toàn màn hình (có thanh nút gửi ở đáy) — không hiện thanh tab.
   if (!TAB.some((t) => t.duong === tab)) return null;
   return (
+    <>
+    {/* NÚT "+ Đăng tin" nổi trên thanh dưới (06/11/2026) — thanh dưới giữ 4 tab theo Zalo Design Guidelines, Đăng tin là nút nổi. */}
+    <button className="nut-dang-tin" onClick={() => dieuHuong("/dang-tin")}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+      Đăng tin
+    </button>
     <BottomNavigation fixed activeKey={tab}>
       {TAB.map((t) => (
         <BottomNavigation.Item key={t.duong} itemKey={t.duong} label={t.nhan} icon={<IconCL ten={t.icon} />} linkTo={t.duong} />
       ))}
     </BottomNavigation>
+    </>
   );
 }
 

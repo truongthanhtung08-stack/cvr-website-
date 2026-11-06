@@ -779,3 +779,9 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Chân trang chạy tới sát đáy màn (06/11/2026): nền xám nằm dưới thanh menu, không còn dải trắng giữa chân trang và menu. */
 .zaui-page.trang-chu { padding-bottom: 0 !important; }
 .trang-chu .chan-trang { padding-bottom: calc(14px + 70px + var(--zaui-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important; }
+
+/* NÚT NỔI "+ Đăng tin" (06/11/2026): góc phải, ngay trên thanh dưới, nền xanh chính — có ở 4 màn có thanh dưới. */
+.nut-dang-tin { position: fixed; right: 16px; bottom: calc(64px + var(--zaui-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))); z-index: 50;
+  display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 18px 0 14px; border: 0; border-radius: 22px;
+  background: var(--cl-blue, #0071e3); color: #fff; font-size: 15px; font-weight: 600; box-shadow: 0 4px 14px rgba(0, 113, 227, .35); }
+.nut-dang-tin:active { transform: scale(.96); }
