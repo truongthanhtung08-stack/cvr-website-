@@ -83,10 +83,10 @@ function GonDoan({ children }: { children: React.ReactNode }) {
     <>
       <div ref={khung} className={mo ? undefined : "doan-gon"}>{children}</div>
       {(dai || mo) && (
-        <button className="nut-mo-ta" onClick={() => { if (mo) khung.current?.closest("section")?.scrollIntoView({ block: "start" }); setMo(!mo); }}>
+        <div className="hang-xem-them"><button className="btn-xemthem" onClick={() => { if (mo) khung.current?.closest("section")?.scrollIntoView({ block: "start" }); setMo(!mo); }}>
           {mo ? "Thu gọn" : "Xem thêm"}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ transform: mo ? "rotate(180deg)" : undefined }}><path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button>
+        </button></div>
       )}
     </>
   );
