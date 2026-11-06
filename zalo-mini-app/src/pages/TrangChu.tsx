@@ -48,7 +48,7 @@ export default function TrangChu() {
         <div className="hang-app">
           <img src={logoTron} alt="" />
           <div>
-            <strong>Coastal Land</strong>
+            <strong>COASTAL LAND</strong>
             <span>Cổng đăng tin mua bán, cho thuê nhà đất</span>
           </div>
         </div>

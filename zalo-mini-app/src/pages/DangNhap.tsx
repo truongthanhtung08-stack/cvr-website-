@@ -97,7 +97,7 @@ export default function DangNhap() {
             {/* Bố cục tự nói (chủ dự án 06/11/2026: "cấu trúc để khách hiểu, không giải thích vô vẩn"): logo · tên · nút Zalo chính · lối phụ */}
             <Box flex flexDirection="column" alignItems="center" style={{ gap: 10, margin: "24px 0 12px" }}>
               <img src={logoTron} alt="Coastal Land" width={72} height={72} />
-              <Text.Title size="large">Coastal Land</Text.Title>
+              <Text.Title size="large">COASTAL LAND</Text.Title>
             </Box>
             <Button fullWidth size="large" loading={dang} onClick={nhanhBangZalo}>Đăng nhập bằng Zalo</Button>
             <Button fullWidth variant="tertiary" onClick={() => setBuoc("so")}>Nhận mã qua số điện thoại</Button>
