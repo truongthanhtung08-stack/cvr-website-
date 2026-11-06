@@ -655,3 +655,8 @@ html.xem-thu .hang-app { padding-right: 0; }
 .dau-app + .khoi, .dau-app ~ .khoi:first-of-type { margin-top: 0 !important; padding-top: 14px !important; }
 /* Logo ngang có slogan ở chân trang — cao 54px như web (BrandLogo lg = 3.4rem). */
 .ct-logo { display: block; height: 54px; width: auto; max-width: 100%; }
+/* THẺ TIN — MỘT KHUNG ẢNH 16:10 cho mọi dải trượt (Nổi bật, Dự án, Tin tức), cao hơn khung 2:1 cũ cho cân với phần chữ (06/11/2026). */
+.o-noi-bat .the-tin .anh-the img, .truot-ngang.hep .anh-the img, .o-noi-bat .anh-trong, .truot-ngang.hep .anh-trong,
+.truot-ngang.hep img:not(.cg-anh) { aspect-ratio: 16 / 10 !important; }
+/* Cùng MỘT khung thẻ cho mọi dải trượt: thẻ Dự án, Tin tức rộng bằng thẻ tin Nổi bật (80%) — thay 66% cũ (06/11/2026 "đồng bộ 1 khung"). */
+.truot-ngang.hep > * { flex: 0 0 80% !important; max-width: 80% !important; }
