@@ -235,7 +235,7 @@ export async function getAbout(): Promise<AboutData> {
 // Lưu key 'pricing' (toàn bộ PricingData). Admin sửa từ mặc định → lưu trọn object.
 
 // ── GÓI ĐĂNG TIN · KHUYẾN MÃI · ĐIỂM · CẤP THÀNH VIÊN ────────────────────────
-// Lưu key 'billing' (toàn bộ BillingData). Admin sửa ở /admin/gia-khuyen-mai.
+// Lưu key 'billing' (toàn bộ BillingData). Admin sửa ở /admin/gia-chuan.
 // Quy định & quyền lợi gói — nguồn duy nhất là admin (/admin/gia-chuan → tab Quy định).
 export async function getQuyDinhGia(): Promise<QuyDinhGia> {
   return ghepQuyDinh(await fetchBlock<Partial<QuyDinhGia>>(KHOA_QUY_DINH_GIA));
