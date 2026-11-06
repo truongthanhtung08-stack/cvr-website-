@@ -499,11 +499,11 @@ html.xem-thu .hang-app { padding-right: 0; }
 .thanh-loc button { padding: 4px 8px 4px 10px !important; font-size: 12.5px !important; }
 .tieu-de-ds { padding: 8px 16px 2px !important; }
 /* THANH MENU DƯỚI cân đối (06/11/2026): 5 mục chia đều, chữ 11px không bị cắt ("Trang c…"), biểu tượng 22px, cao gọn. */
-.zaui-bottom-navigation { height: auto !important; padding: 4px 0 calc(4px + var(--zaui-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important; }
-.zaui-bottom-navigation-item { flex: 1 1 0 !important; min-width: 0 !important; padding: 2px 0 !important; }
 .zaui-bottom-navigation-item-label { font-size: 11px !important; white-space: nowrap !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
 .zaui-bottom-navigation-item-icon, .zaui-bottom-navigation-item svg { width: 22px !important; height: 22px !important; }
 /* CANH LỀ HEADER (06/11/2026): tiêu đề trang thẳng lề 16px với nội dung bên dưới (ô tìm, thẻ); có nút ‹ thì nút sát lề 8px, chữ theo sau. */
 .zaui-header { padding-left: 16px !important; padding-right: 100px !important; }
 .zaui-header .zaui-header-back { margin-left: -8px !important; }
 .zaui-header-title { font-size: 17px !important; font-weight: 700 !important; }
+.tieu-de-logo { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.tieu-de-logo img { width: 24px; height: 24px; border-radius: 50%; flex: none; }
