@@ -752,7 +752,9 @@ export async function khoCuaMinh(
   try {
     const r = await fetch(q, {
       headers: { apikey: anon, Authorization: `Bearer ${anon}` },
-      cache: "no-store",
+      // 07/11/2026: no-store làm TRANG TIN thành trang động (đo Vercel 7 ngày: 21 nghìn lượt, 0% từ bộ đệm, 50 phút CPU).
+      // Lưu theo thẻ "listings" — tin đổi / 0h mỗi ngày (cron het-han) là làm mới.
+      next: { tags: ["listings"], revalidate: false },
     });
     if (!r.ok) return [];
     const ds = (await r.json()) as {

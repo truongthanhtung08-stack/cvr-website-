@@ -127,6 +127,12 @@ function normalizeUrl(u: string): string {
 // Thứ tự ưu tiên dòng thông số trong bảng Tổng quan (nhãn hồ sơ viết tự do → so theo chữ, không dấu)
 const laDiaChi = (nhan: string) => /dia chi|dai chi|vi tri/.test(normalizeVi(nhan).replace(/đ/g, "d"));
 
+// 07/11/2026: KHAI để Vercel LƯU BẢN IN của từng trang (dựng lần đầu khi có người mở, sau đó phục vụ từ bộ đệm tới khi dữ liệu đổi).
+// Thiếu dòng này trang là trang động — đo 7 ngày: 0% lượt lấy từ bộ đệm.
+export async function generateStaticParams() {
+  return [];
+}
+
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 

@@ -222,6 +222,12 @@ function chuaToiNgay(iso: string): boolean {
   return new Date(iso).getTime() > Date.now();
 }
 
+// 07/11/2026: KHAI để Vercel LƯU BẢN IN của từng trang (dựng lần đầu khi có người mở, sau đó phục vụ từ bộ đệm tới khi dữ liệu đổi).
+// Thiếu dòng này trang là trang động — đo 7 ngày: 0% lượt lấy từ bộ đệm.
+export async function generateStaticParams() {
+  return [];
+}
+
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const doan = (await params).id;
   const id = await idTuDuongDan(doan);
