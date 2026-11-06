@@ -373,3 +373,16 @@ html.xem-thu .hang-app { padding-right: 0; }
 .ct-nhom .ct-link { margin-top: 6px !important; gap: 2px 14px !important; }
 .ct-nhom .ct-link button { font-size: 12.5px !important; }
 .ct-ban-quyen { margin-top: 14px !important; padding-top: 10px !important; font-size: 11px !important; }
+/* ── CÁ NHÂN gọn (06/11/2026) ── */
+.tk-dau { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; }
+.tk-anh { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex: none; display: flex; align-items: center; justify-content: center; background: var(--cl-surface); color: var(--cl-muted); }
+.tk-ten { min-width: 0; }
+.tk-ten strong { display: block; font-size: 16px; color: var(--cl-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tk-ten span { display: block; font-size: 13px; color: var(--cl-muted); }
+.tk-nhom { background: #fff; margin-top: 8px; padding: 4px 0; }
+.tk-nhom h3 { margin: 0; padding: 8px 16px 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--cl-muted); }
+.tk-muc { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 16px; border: 0; background: none; text-align: left; font-size: 14px; color: var(--cl-ink); }
+.tk-muc + .tk-muc { border-top: 1px solid var(--cl-surface); }
+.tk-muc-ten { flex: 1; }
+.tk-muc-phu { font-size: 13px; font-weight: 600; color: var(--cl-ink); }
+.tk-muc > :last-child { color: var(--cl-line); }

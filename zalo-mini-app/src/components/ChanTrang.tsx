@@ -3,7 +3,6 @@ import { openPhone, openWebview } from "zmp-sdk";
 import logoTron from "../assets/logo-tron.svg";
 import { layChanTrang } from "../lib/tin";
 import { useTai } from "../lib/useTai";
-import { nhanCoastalLand } from "../lib/zalo";
 
 // ============================================================================
 // CHÂN TRANG — CHÉP ĐÚNG CẤU TRÚC WEB (src/components/Footer.tsx, chủ dự án 06/11/2026: "lấy giao diện web trên mobile làm chuẩn"):
@@ -49,7 +48,7 @@ export default function ChanTrang() {
         <li>{MAC_DINH.address}</li>{/* như web: địa chỉ lấy từ phapLy.ts (Admin không đè) */}
         <li>Hỗ trợ kỹ thuật: <b onClick={goi}>{f.hotline}</b></li>
         <li>{f.email}</li>
-        <li><span className="ct-zalo" onClick={() => nhanCoastalLand()}>Zalo</span></li>
+        <li><b onClick={() => moWeb("/")}>coastalland.vn</b></li>
       </ul>
       {NHOM.map((n) => (
         <div key={n.ten} className="ct-nhom">

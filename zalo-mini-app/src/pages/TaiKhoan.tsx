@@ -1,53 +1,100 @@
 import React from "react";
-import { Box, Button, Icon, List, Page, Text, useNavigate } from "zmp-ui";
+import { Button, Icon, Page, useNavigate } from "zmp-ui";
+import { openWebview } from "zmp-sdk";
 import TieuDe from "../components/TieuDe";
-import { goiHotline, layNguoiZalo, nhanCoastalLand, quanTamOA } from "../lib/zalo";
+import { goiHotline, nhanCoastalLand, quanTamOA } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
 import { soVN, supabase, usePhien } from "../lib/supabase";
+
+// ============================================================================
+// CÁ NHÂN — GỌN NHƯNG ĐỦ (chủ dự án 06/11/2026). Mục = ĐÚNG menu Tài khoản của web (src/app/tai-khoan/layout.tsx MUC_CHINH +
+// src/lib/menuTaiKhoan.ts MUC_TAI_KHOAN), đổi ở web thì đổi ở đây. Đầu trang: ảnh · tên · số · số dư ví (hồ sơ tài khoản — ảnh, tên
+// Zalo đã ghi vào hồ sơ khi đăng nhập Zalo). Mục Mini App có trang riêng thì mở trong app; chưa có thì mở trang web trong khung Zalo.
+// Không câu giải thích (CLAUDE.md "CẤM chú thích vớ vẩn").
+// ============================================================================
+const WEB = "https://coastalland.vn";
+const moWeb = (duong: string) => {
+  const url = `${WEB}${duong}?utm_source=zalo&utm_medium=mini_app`;
+  openWebview({ url }).catch(() => { window.location.href = url; });
+};
+const vnd = (n: number) => `${n.toLocaleString("vi-VN")} đ`;
+
+type Muc = { ten: string; icon: string; app?: string; web?: string; bam?: () => void; phu?: string };
 
 export default function TaiKhoan() {
   const dieuHuong = useNavigate();
   const { nguoiDung } = usePhien();
-  const zalo = useTai(() => (nguoiDung ? layNguoiZalo() : Promise.resolve(null)), [nguoiDung?.id], null);
-  const muc = (icon: string, title: string, bam: () => void) => (
-    <List.Item prefix={<Icon icon={icon as never} />} title={title} suffix={<Icon icon="zi-chevron-right" />} onClick={bam} />
+  const hoSo = useTai(
+    async () => (nguoiDung ? ((await supabase.from("profiles").select("full_name,avatar_url,phone,email,balance").eq("id", nguoiDung.id).maybeSingle()).data as { full_name?: string; avatar_url?: string; phone?: string; email?: string; balance?: number } | null) : null),
+    [nguoiDung?.id],
+    null as { full_name?: string; avatar_url?: string; phone?: string; email?: string; balance?: number } | null,
   );
+  const h = hoSo.data;
+
+  const NHOM: { ten: string; muc: Muc[] }[] = [
+    { ten: "Quản lý", muc: [
+      { ten: "Tin đăng", icon: "zi-list-1", app: "/tin-cua-toi" },
+      { ten: "Khách hàng", icon: "zi-group", web: "/tai-khoan/khach-hang" },
+      { ten: "Đăng tin", icon: "zi-plus-circle", app: "/dang-tin" },
+    ] },
+    { ten: "Tài khoản", muc: [
+      { ten: "Ví & nạp tiền", icon: "zi-poll", app: "/nap-tien", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
+      { ten: "Hóa đơn", icon: "zi-note", web: "/tai-khoan/hoa-don" },
+      { ten: "Gói hội viên", icon: "zi-star", web: "/tai-khoan/hoi-vien" },
+      { ten: "Bảng giá dịch vụ", icon: "zi-more-diamond-solid", app: "/bang-gia" },
+      { ten: "Dự án của tôi", icon: "zi-home", web: "/tai-khoan/du-an" },
+      { ten: "Tin đã lưu", icon: "zi-heart", app: "/da-luu" },
+      { ten: "Tìm kiếm đã lưu", icon: "zi-notif", web: "/tai-khoan/tim-kiem" },
+      { ten: "Cài đặt", icon: "zi-setting", web: "/tai-khoan/cai-dat" },
+    ] },
+    { ten: "Hỗ trợ", muc: [
+      { ten: "Nhắn Zalo Coastal Land", icon: "zi-chat", bam: () => nhanCoastalLand() },
+      { ten: "Gọi 0377 985 036", icon: "zi-call", bam: () => goiHotline() },
+      { ten: "Quan tâm Zalo OA", icon: "zi-add-user", bam: () => quanTamOA() },
+    ] },
+  ];
+  const mo = (m: Muc) => {
+    if (m.bam) return m.bam();
+    if (!nguoiDung && m.ten !== "Bảng giá dịch vụ" && m.ten !== "Tin đã lưu") return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(m.app ?? "/tai-khoan")}`);
+    if (m.app) return dieuHuong(m.app);
+    if (m.web) moWeb(m.web);
+  };
+
   return (
     <Page style={{ paddingBottom: 72 }}>
       <TieuDe title="Cá nhân" showBackIcon={false} />
-      <Box p={4} style={{ background: "#fff" }}>
+      <div className="tk-dau">
         {nguoiDung ? (
-          <Box flex alignItems="center" style={{ gap: 12 }}>
-            {zalo.data?.avatar ? <img className="o-tron" src={zalo.data.avatar} alt="" /> : <span className="o-tron"><Icon icon="zi-user" /></span>}
-            <div>
-              {zalo.data?.name && <Text style={{ fontWeight: 600 }}>{zalo.data.name}</Text>}
-              <Text style={{ fontWeight: zalo.data?.name ? 400 : 600 }}>{soVN(nguoiDung.phone) || nguoiDung.email}</Text>
-              <Text size="xSmall" className="chu-phu">Dùng chung tài khoản với coastalland.vn</Text>
+          <>
+            {h?.avatar_url ? <img className="tk-anh" src={h.avatar_url} alt="" /> : <span className="tk-anh"><Icon icon="zi-user" /></span>}
+            <div className="tk-ten">
+              <strong>{h?.full_name || "Tài khoản"}</strong>
+              <span>{soVN(h?.phone ?? nguoiDung.phone) || h?.email || nguoiDung.email}</span>
             </div>
-          </Box>
+          </>
         ) : (
-          <Button fullWidth onClick={() => dieuHuong("/dang-nhap")}>Đăng nhập / Đăng ký</Button>
+          <Button fullWidth onClick={() => dieuHuong("/dang-nhap")}>Đăng nhập bằng Zalo</Button>
         )}
-      </Box>
-      <section className="khoi">
-        <List>
-          {muc("zi-list-1", "Tin của tôi", () => dieuHuong("/tin-cua-toi"))}
-          {muc("zi-poll", "Nạp tiền vào ví", () => dieuHuong("/nap-tien"))}
-          {muc("zi-reminder", "Tin đã xem", () => dieuHuong("/da-xem"))}
-          {muc("zi-star", "Gói tin & dịch vụ", () => dieuHuong("/dich-vu"))}
-          {muc("zi-more-diamond-solid", "Bảng giá đăng tin", () => dieuHuong("/bang-gia"))}
-        </List>
-      </section>
-      <section className="khoi">
-        <List>
-          {muc("zi-add-user", "Quan tâm Coastal Land", () => quanTamOA())}
-          {muc("zi-chat", "Nhắn tin tư vấn", () => nhanCoastalLand())}
-          {muc("zi-call", "Gọi hotline 0377 985 036", () => goiHotline())}
-        </List>
-      </section>
+      </div>
+      {NHOM.map((n) => (
+        <section key={n.ten} className="tk-nhom">
+          <h3>{n.ten}</h3>
+          {n.muc.map((m) => (
+            <button key={m.ten} className="tk-muc" onClick={() => mo(m)}>
+              <Icon icon={m.icon as never} />
+              <span className="tk-muc-ten">{m.ten}</span>
+              {m.phu && <span className="tk-muc-phu">{m.phu}</span>}
+              <Icon icon="zi-chevron-right" />
+            </button>
+          ))}
+        </section>
+      ))}
       {nguoiDung && (
-        <section className="khoi">
-          <List>{muc("zi-leave", "Đăng xuất", () => supabase.auth.signOut())}</List>
+        <section className="tk-nhom">
+          <button className="tk-muc" onClick={() => supabase.auth.signOut()}>
+            <Icon icon="zi-leave" />
+            <span className="tk-muc-ten">Đăng xuất</span>
+          </button>
         </section>
       )}
     </Page>
