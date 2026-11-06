@@ -211,8 +211,8 @@ Cách dùng trên web (đổi 05/11, đã build, CHƯA PUSH): câu 1 = tên thư
 (trang chủ, `layout`, `manifest`) · cả 2 câu: `SiteJsonLd` disambiguatingDescription, dòng 3 `public/llms.txt`, mô tả `/gioi-thieu`.
 **Đã sửa 1 chỗ trong cây:** địa lý = hệ mới 2 cấp tỉnh → phường/xã kèm tên cũ (không còn quận/huyện). **Còn trống, chờ anh quyết:** Bing Webmaster Tools (bước 10,
 kế hoạch chưa ghi đã thiết lập) · backlink, báo chí (bước 17, chưa có mục riêng) · log máy chủ (bước 12, công cụ Vercel của Claude chưa thấy dự án).
-**⚠️ Tệp chính `CÂY QUY TRÌNH…docx` vẫn là bản gốc 04/11 (Word đang mở, 06/11 kiểm còn tệp khoá `~$`)** — phần ▸ COASTAL LAND chỉ có ở bản
-bổ sung `_cu\cay-quy-trinh\…ban-bo-sung-05-11-2026.docx`. Anh đóng Word → chép bản bổ sung đè tệp chính.
+**✅ 06/11: tệp chính `CÂY QUY TRÌNH…docx` đã là bản bổ sung (có ▸ COASTAL LAND dưới mỗi bước).** Bản gốc 04/11 cất ở `_cu\cay-quy-trinh\`.
+Đổi quy trình → sửa thẳng tệp chính + mục 11.00 + bảng dưới đây.
 
 **LUẬT TỪNG BƯỚC (▸ COASTAL LAND của cây — đọc trước khi làm việc thuộc bước đó; chi tiết ở các mục CLAUDE.md được trỏ):**
 | Bước | Luật đã chốt |
