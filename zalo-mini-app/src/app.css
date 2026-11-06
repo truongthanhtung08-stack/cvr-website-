@@ -703,3 +703,16 @@ html.xem-thu .hang-app { padding-right: 0; }
 .o-noi-bat .the-tin .gia-dt > * + *::before { content: "·"; margin: 0 6px; color: var(--cl-muted); font-weight: 400; }
 .o-noi-bat .the-tin .gia-dt > span:not(.gia) { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .o-noi-bat .the-tin .day-the-moi { margin-top: auto; padding-top: 6px; }
+
+/* THẺ DỰ ÁN MỘT CHUẨN NHƯ WEB (06/11/2026): tên 2 dòng · ghim vị trí · Loại hình · gạch trên: Chủ đầu tư + giá vàng đậm. */
+.the-du-an .than-the { display: flex; flex-direction: column; }
+.the-du-an .vi-tri-da { display: flex; align-items: center; gap: 4px; margin: 4px 0 0; font-size: 12px; color: var(--cl-muted); min-width: 0; }
+.the-du-an .vi-tri-da svg { flex-shrink: 0; }
+.the-du-an .vi-tri-da span, .the-du-an .dong-da { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.the-du-an .dong-da { margin: 4px 0 0; font-size: 12px; color: #424245; min-width: 0; }
+.the-du-an .dong-da b { font-weight: 600; color: #1d1d1f; }
+.the-du-an .mo { color: #aeaeb2; }
+.the-du-an .day-da { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 8px; border-top: 1px solid #e8e8ed; }
+.the-du-an .day-da { margin-top: 10px; }
+.the-du-an .day-da .dong-da { margin: 0; flex: 1; }
+.the-du-an .gia-da { flex-shrink: 0; white-space: nowrap; font-size: 14px; font-weight: 600; color: #8a6d2e; }
