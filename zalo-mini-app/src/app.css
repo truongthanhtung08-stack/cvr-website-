@@ -609,3 +609,13 @@ html.xem-thu .hang-app { padding-right: 0; }
 .ct-cot .ct-nhom { margin-top: 0 !important; display: grid; grid-template-rows: auto 1fr; }
 .ct-cot .ct-nhom h3 { min-height: 2lh; display: flex; align-items: flex-end; margin: 0 !important; }
 .ct-cot + .ct-ban-quyen { margin-top: 20px !important; }
+/* TRANG THÔNG TIN theo web bản điện thoại: ảnh tràn khung 16:10 bo góc · thẻ viền (Tầm nhìn, Sứ mệnh, Giá trị cốt lõi) · hỏi đáp gập mở. */
+.trang-tinh img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 12px; margin: 12px 0; background: #f5f5f7; }
+.trang-tinh .the { border: 1px solid var(--cl-line); border-radius: 16px; padding: 16px; margin: 12px 0; }
+.trang-tinh .the h3 { margin-top: 0; font-size: 16px; }
+.trang-tinh .the p { margin-bottom: 0; }
+.trang-tinh details { border-bottom: 1px solid var(--cl-line); padding: 12px 0; }
+.trang-tinh details summary { list-style: none; margin: 0; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; }
+.trang-tinh details summary::after { content: "+"; font-weight: 400; color: #86868b; }
+.trang-tinh details[open] summary::after { content: "−"; }
+.trang-tinh details p { margin: 8px 0 0; }
