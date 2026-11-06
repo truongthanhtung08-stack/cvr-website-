@@ -246,7 +246,6 @@ export default function ChiTietTin() {
         </section>
       )}
 
-      </ThuGonTin>
 
       {tuongTu.data.length > 0 && (
         <section className="khoi-ct" style={{ padding: "14px 0 16px" }}>
@@ -254,6 +253,7 @@ export default function ChiTietTin() {
           <TruotNgang hep>{tuongTu.data.slice(0, 8).map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>
         </section>
       )}
+      </ThuGonTin>
 
       <div className="nut-chinh">
         <XemSo id={tin.id} sdt={tin.sdt} soAn={tin.sdt_an} />
@@ -277,16 +277,22 @@ function MoTa({ noiDung }: { noiDung: string }) {
 }
 
 // TIN DÀI → THU GỌN CẢ TIN (chủ dự án 06/11/2026: "1 tin dài! đến đủ chân có Xem thêm, nút Thu gọn là cuối tin"; cùng cơ chế trang dự
-// án web ThuGonTrang): nội dung từ Đặc điểm tới Người đăng cao hơn 1,5 lần 720px thì cắt ở 720px + vệt mờ + "Xem thêm" căn giữa;
-// mở ra thì "Thu gọn" nằm CUỐI tin (sau Người đăng, trước Tin tương tự), bấm thì cuộn về đầu phần đã thu. Ngắn thì hiện trọn.
+// án web ThuGonTrang): hiện trọn các mục tới ~1,5 màn hình, cắt ở ĐÁY một mục ("may dừng giữa chừng là sao" — không cắt giữa mục) + "Xem thêm";
+// mở ra thì "Thu gọn" nằm CUỐI TRANG (sau Tin tương tự), bấm thì cuộn về đầu phần đã thu. Ngắn thì hiện trọn.
 function ThuGonTin({ children }: { children: React.ReactNode }) {
   const khoi = useRef<HTMLDivElement>(null);
   const [mo, setMo] = useState(false);
-  const [dai, setDai] = useState(false);
+  const [cat, setCat] = useState<number>(); // px — cắt ở ĐÁY MỘT MỤC (không dừng giữa mục), undefined = hiện trọn
+  const dai = cat !== undefined;
   useEffect(() => {
     const el = khoi.current;
     if (!el) return;
-    const tinh = () => setDai(el.scrollHeight > 720 * 1.5);
+    const tinh = () => {
+      // Hiện trọn các mục tới khoảng 1,5 màn hình rồi mới cắt; còn ít (< nửa màn) thì hiện hết, không nút.
+      const nguong = window.innerHeight * 1.5;
+      const day = [...el.children].map((c) => (c as HTMLElement).offsetTop + (c as HTMLElement).offsetHeight).find((b) => b >= nguong);
+      setCat(day !== undefined && el.scrollHeight - day > window.innerHeight * 0.5 ? day : undefined);
+    };
     tinh();
     const ro = new ResizeObserver(tinh);
     [...el.children].forEach((c) => ro.observe(c));
@@ -302,7 +308,7 @@ function ThuGonTin({ children }: { children: React.ReactNode }) {
   );
   return (
     <>
-      <div ref={khoi} className="thu-gon-tin" style={dai && !mo ? { maxHeight: 720 } : undefined}>
+      <div ref={khoi} className="thu-gon-tin" style={dai && !mo ? { maxHeight: cat } : undefined}>
         {children}
         {dai && !mo && <div className="mo-ta-mo" aria-hidden />}
       </div>
