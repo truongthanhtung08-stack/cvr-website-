@@ -20,3 +20,8 @@ export const ZALO_OA_ID = "1928684637254080247";
 
 /** Link mở thẳng OA — dùng cho mọi nút/liên kết Zalo trên web. */
 export const ZALO_OA_URL = `https://zalo.me/${ZALO_OA_ID}`;
+
+/** Zalo Mini App "COASTAL LAND" (06/11/2026). Link mở Mini App; thêm đường dẫn trang sau dấu / (vd `/tin/<id>`) là mở thẳng trang đó.
+ *  Trên điện thoại có Zalo → mở app Zalo vào Mini App; máy tính → trang Zalo có mã QR. */
+export const ZALO_MINI_APP_ID = "1268705237708475790";
+export const ZALO_MINI_APP_URL = `https://zalo.me/s/${ZALO_MINI_APP_ID}/`;

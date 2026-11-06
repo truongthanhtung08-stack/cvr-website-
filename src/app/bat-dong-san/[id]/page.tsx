@@ -14,6 +14,7 @@ import { ContactActions, ContactBarMobile } from "@/components/LienHeReveal";
 import YeuCauLienHeLai, { NutYeuCauLienHe } from "@/components/YeuCauLienHeLai";
 import KhoiDanhGiaTin from "@/components/KhoiDanhGiaTin";
 import ShareButtons from "@/components/ShareButtons";
+import { ZALO_MINI_APP_URL } from "@/lib/lienHe";
 import PriceHistory from "@/components/PriceHistory";
 import {
   chiSoChoTin,
@@ -515,7 +516,21 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   {/* CHIA SẺ — đặt ngay đầu tin, ngang tầm mắt, không chiếm thêm
                       dòng nào. Nút Lưu / So sánh bỏ đi vì đã có sẵn trên từng thẻ
                       tin ngoài trang chủ và trang Mua bán / Cho thuê. */}
-                  <ShareButtons title={tieuDe1Dong} />
+                  {/* MỞ TRONG ZALO (06/11/2026, anh duyệt "làm hết"): mở đúng tin này trong Zalo Mini App — điện thoại có Zalo vào
+                      thẳng app, máy tính ra trang mã QR của Zalo. Chỉ biểu tượng, cạnh Chia sẻ, không thêm dòng. */}
+                  <div className="flex shrink-0 items-center gap-2">
+                    <a
+                      href={`${ZALO_MINI_APP_URL}tin/${l.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Mở trong Zalo"
+                      title="Mở trong Zalo"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#0068ff] text-[12px] font-bold text-white transition active:scale-95"
+                    >
+                      Za
+                    </a>
+                    <ShareButtons title={tieuDe1Dong} />
+                  </div>
                 </div>
                 {/* Mã tin · NGÀY ĐĂNG THẬT · NGÀY KẾT THÚC (chủ dự án chốt 01/10/2026, như Batdongsan) — mỗi mục không
                     ngắt giữa chừng; màn hẹp chỉ xuống dòng giữa các mục */}
