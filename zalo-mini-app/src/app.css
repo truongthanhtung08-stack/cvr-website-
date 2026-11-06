@@ -662,10 +662,6 @@ html.xem-thu .hang-app { padding-right: 0; }
 .truot-ngang.hep > * { flex: 0 0 80% !important; max-width: 80% !important; }
 /* Thẻ trang chủ to hơn cho chữ dưới ảnh chứa được nhiều hơn (06/11/2026): 86% bề rộng, mọi dải cùng một khung. */
 .o-noi-bat, .truot-ngang.hep > * { flex: 0 0 86% !important; max-width: 86% !important; }
-/* THẺ TRANG CHỦ HÌNH VUÔNG (06/11/2026 "hình vuông", "đéo bỏ cái gì hết"): khung thẻ rộng = cao, giữ ĐỦ nội dung (tiêu đề, giá, diện tích,
-   địa chỉ / loại hình…); phần chữ chiếm đúng chỗ của nó, ẢNH lấp phần còn lại (cắt cho vừa, không méo). */
-.o-noi-bat .the-tin, .truot-ngang.hep > .the-tin { aspect-ratio: 1 / 1; height: auto !important; display: flex !important; flex-direction: column; overflow: hidden; }
-.o-noi-bat .the-tin .anh-the, .truot-ngang.hep > .the-tin .anh-the { flex: 1 1 auto; min-height: 0; position: relative; }
-.o-noi-bat .the-tin .anh-the img, .truot-ngang.hep > .the-tin .anh-the img,
-.o-noi-bat .the-tin .anh-trong, .truot-ngang.hep > .the-tin .anh-trong { aspect-ratio: auto !important; width: 100%; height: 100% !important; object-fit: cover; position: absolute; inset: 0; }
-.o-noi-bat .the-tin .than-the, .truot-ngang.hep > .the-tin .than-the { flex: 0 0 auto !important; }
+/* THẺ TRANG CHỦ — ẢNH TỶ LỆ CHUẨN 4:3 (06/11/2026 "khung hình phải đạt chuẩn tỷ lệ và to ra 1 chút"), mọi dải cùng một khung; chữ đủ bên dưới. */
+.o-noi-bat .the-tin .anh-the img, .truot-ngang.hep .anh-the img, .o-noi-bat .anh-trong, .truot-ngang.hep .anh-trong,
+.truot-ngang.hep img:not(.cg-anh) { aspect-ratio: 4 / 3 !important; }
