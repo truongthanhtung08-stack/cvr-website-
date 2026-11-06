@@ -13,6 +13,9 @@ export default function robots(): MetadataRoute.Robots {
         // trang HTML, 306 trang chưa được ghé lần nào. Trang đã dựng sẵn ở máy chủ nên Google không cần tệp này để đọc nội dung.
         disallow: ["/admin", "/api", "/auth", "/tai-khoan", "/dang-nhap", "/dang-ky", "/quen-mat-khau", "/*_rsc="],
       },
+      // CHẶN MÁY DÒ AHREFS (anh chốt 07/11/2026): đo Vercel 7 ngày 7.500 lượt (AhrefsBot + AhrefsSiteAudit), chỉ 6–19% lấy
+      // từ bộ đệm → gần như lượt nào cũng chạy máy chủ, tốn tiền Vercel, không giúp lên Google.
+      { userAgent: ["AhrefsBot", "AhrefsSiteAudit"], disallow: "/" },
     ],
     sitemap: `${SITE}/sitemap.xml`,
     host: SITE,
