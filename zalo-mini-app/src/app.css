@@ -672,3 +672,10 @@ html.xem-thu .hang-app { padding-right: 0; }
 .chon-md-kv button:active { opacity: .6; }
 .ray-slide.doi-md { animation: hienDan .35s ease; }
 @keyframes hienDan { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+/* PHẦN CHỮ DƯỚI THẺ (06/11/2026): tiêu đề luôn đủ chỗ 2 dòng (thẻ thẳng hàng) · 1 dòng giá · diện tích (dự án: loại hình) · 1 dòng địa chỉ. */
+.o-noi-bat .the-tin .tieu-de, .truot-ngang.hep .the-tin .tieu-de { -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(2 * 1.35em) !important; line-height: 1.35 !important; }
+.o-noi-bat .the-tin .gia-dt { flex-wrap: nowrap !important; overflow: hidden; white-space: nowrap; }
+.o-noi-bat .the-tin .gia-dt > * { overflow: hidden; text-overflow: ellipsis; }
+.o-noi-bat .the-tin .dia-chi, .o-noi-bat .the-tin .than-the > p:last-of-type, .truot-ngang.hep .the-tin .dong-phu { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.o-noi-bat .the-tin .day-the-moi { display: flex; min-width: 0; }
+.o-noi-bat .the-tin .day-the-moi span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
