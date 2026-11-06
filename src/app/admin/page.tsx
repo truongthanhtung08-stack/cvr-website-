@@ -96,8 +96,6 @@ export default function AdminDashboard() {
     { n: stats?.tinNap ?? 0, chu: VIEC.tinNap, href: "/admin/tin-dang/duyet-nap" },
     { n: loiTuKiem, chu: VIEC.tuKiem, href: "/admin/tin-dang" },
     { n: chuaChuan?.length ?? 0, chu: VIEC.chuaChuanSeo, href: "#tin-chua-chuan" },
-    { n: stats?.duAnPending ?? 0, chu: VIEC.duAn, href: "/admin/du-an" },
-    { n: stats?.yeuCauMoi ?? 0, chu: VIEC.yeuCau, href: "/admin/yeu-cau" },
     { n: stats?.khachChoDuyet ?? 0, chu: VIEC.taiKhoan, href: "/admin/khach-hang" },
   ].filter((v) => v.n > 0);
 
@@ -170,15 +168,6 @@ export default function AdminDashboard() {
           </Link>
           <Link href="/admin/tin-dang/nhap-hang-loat" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
             Đăng nhiều tin bằng file
-          </Link>
-          <Link href="/admin/du-an/moi" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-            + Thêm dự án
-          </Link>
-          <Link href="/admin/tin-tuc/moi" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-            + Viết bài tin tức
-          </Link>
-          <Link href="/admin/noi-dung" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-            Sửa nội dung web
           </Link>
         </div>
       </Panel>

@@ -138,7 +138,7 @@ export default function NhapHangLoatPage() {
       .map((a) => a.url)
       .filter((u) => !urls.includes(u)); // đã lấy theo tên tệp thì không lấy lại
 
-    // GIỚI HẠN ẢNH & VIDEO — mức chung 15 ảnh + 1 video (đổi ở /admin/gia-khuyen-mai).
+    // GIỚI HẠN ẢNH & VIDEO — mức chung 15 ảnh + 1 video (đổi ở /admin/gia-chuan).
     // Cắt RIÊNG hai loại: video xếp chung cột images nhưng KHÔNG chiếm suất ảnh,
     // và luôn xếp sau ảnh để ảnh đầu tiên vẫn là ảnh đại diện.
     const tier = (r.payload.tier as TierId) ?? "basic";

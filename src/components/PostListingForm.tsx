@@ -189,8 +189,8 @@ export default function PostListingForm() {
   // Người có ảnh thật được khách bấm gọi nhiều hơn hẳn ảnh chữ cái mặc định.
   const [contactAvatar, setContactAvatar] = useState("");
   // Tin thuộc dự án nào (không bắt buộc) — hiện trong mục tin liên quan của dự án đó
-  // Gói đăng tin khách chọn (giá do quản trị đặt ở /admin/gia-khuyen-mai)
-  // Bảng giá HIỆN HÀNH (bản admin đã lưu ở /admin/gia-khuyen-mai), không phải giá cứng trong code
+  // Gói đăng tin khách chọn (giá do quản trị đặt ở /admin/gia-chuan)
+  // Bảng giá HIỆN HÀNH (bản admin đã lưu ở /admin/gia-chuan), không phải giá cứng trong code
   const { billing, loading: billingLoading } = useBilling();
   // Bảng giá gói tin theo NHU CẦU đang chọn (bán / cho thuê) — cùng bảng máy chủ
   // dùng lúc duyệt tin, nên số báo ở đây là số bị trừ.
@@ -1827,7 +1827,7 @@ export default function PostListingForm() {
         </div>
       </Card>
 
-      {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-khuyen-mai */}
+      {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-chuan */}
       {/* Sửa tin ĐÃ DUYỆT: ẩn hẳn mục Gói tin — không sửa được gói (chủ dự án 06/11/2026) */}
       {!(goiDangDung && editId) && (
       <Card id="b-goi" step={buoc()} title="Gói tin — thanh toán *">

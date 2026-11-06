@@ -55,20 +55,20 @@ export async function GET(request: Request) {
       });
     // Khách sửa tin đang hiển thị: Admin không kiểm, không báo (chủ dự án 05/11/2026 — Admin chỉ duyệt tin mới)
     const da = (duAn.data ?? []) as { name: string | null }[];
-    if (da.length) khoi.push({ tieuDe: kemSo(VIEC.duAnKhach, da.length), dong: da.map((d) => ten(d.name)), link: "/admin/du-an" });
+    if (da.length) khoi.push({ tieuDe: kemSo(VIEC.duAnKhach, da.length), dong: da.map((d) => ten(d.name)), link: "/admin" });
     const hs = (hoSo.data ?? []) as { company_name: string | null; project_name: string | null }[];
     if (hs.length)
       khoi.push({
         tieuDe: kemSo(VIEC.hoSoDuAn, hs.length),
         dong: hs.map((h) => `${ten(h.company_name)}${h.project_name ? ` · ${h.project_name}` : ""}`),
-        link: "/admin/du-an",
+        link: "/admin",
       });
     const yc = (yeuCau.data ?? []) as { ten: string | null; dien_thoai: string | null; noi_dung: string | null }[];
     if (yc.length)
       khoi.push({
         tieuDe: kemSo(VIEC.yeuCau, yc.length),
         dong: yc.map((y) => `${y.ten || "(không tên)"} · ${y.dien_thoai || "—"} · ${(y.noi_dung ?? "").slice(0, 80)}`),
-        link: "/admin/yeu-cau",
+        link: "/admin",
       });
     // Tự kiểm tin (src/lib/kiemTin.ts) là việc nội bộ → không email nữa, hiện ở Admin → Tổng quan (chủ dự án 31/10/2026).
   } catch (e) {

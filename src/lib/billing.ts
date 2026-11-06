@@ -133,7 +133,7 @@ export function chuanHoaCapHoiVien(levels: LegacyMemberLevel[] | undefined): Mem
 // ── BA BẢNG GIÁ DỊCH VỤ CÒN LẠI: ĐẨY TIN · PR · BANNER ─────────────────────
 // Trước đây ba bảng này ghi cứng trong trang Báo giá dịch vụ nên sửa ở admin
 // không đổi được gì. Nay gom về đây cùng một chỗ với giá gói tin: mọi chương
-// trình · giá · khuyến mãi đều sửa ở /admin/gia-khuyen-mai, không sửa trong code.
+// trình · giá · khuyến mãi đều sửa ở /admin/gia-chuan, không sửa trong code.
 // Giá để dạng SỐ (VNĐ) — web tự định dạng, admin không phải gõ dấu chấm.
 
 // Một dòng trong bảng Đẩy tin: mỗi cột là một cấp tin (Diamond·Gold·Silver·Basic).
@@ -357,7 +357,7 @@ export function bangTheoMucDich(d: BillingData, purpose?: string | null): Billin
 
 // ── GIÁ GÓI DỰ ÁN CHUẨN (khớp mục "Gói Dự án" trong trang Báo giá) ──────────
 // Giai đoạn đầu: CVR-PJ Basic để 0đ (miễn phí) cho dự án chạy trước.
-// Chủ dự án sửa được toàn bộ ở /admin/gia-khuyen-mai → tab "Gói dự án".
+// Chủ dự án sửa được toàn bộ ở /admin/gia-chuan → tab "Gói dự án".
 export const PROJECT_PLANS_DEFAULT: Plan[] = [
   {
     tierId: "diamond",
@@ -437,7 +437,7 @@ export function goiUpNhieuLuot(d: BillingData, tierId: TierId): GoiUp[] {
 
 // GIÁ MỘT LƯỢT ĐẨY NGAY của một cấp tin (dòng đầu bảng Đẩy tin, "Đẩy 1 lượt").
 // Giá CHƯA gồm GTGT — cộng thuế ở chỗ trừ ví, giống mọi khoản khác.
-// Đọc từ bảng admin đang lưu nên chủ dự án đổi giá ở /admin/gia-khuyen-mai là
+// Đọc từ bảng admin đang lưu nên chủ dự án đổi giá ở /admin/gia-chuan là
 // đổi luôn số tiền trừ khi khách bấm Đẩy, không phải sửa code.
 export function giaDayTin(d: BillingData, tierId: TierId): number {
   const cot = COT_UP.indexOf(tierId);
@@ -494,7 +494,7 @@ export const BILLING_DEFAULT: BillingData = {
   // CẤP HỘI VIÊN — ĐÚNG 4 CẤP, TRÙNG TÊN với 4 hạng tin (Basic · Silver · Gold ·
   // Diamond) để khách không phải nhớ hai hệ tên. Basic là cấp khởi điểm (nạp 0đ),
   // NẠP đủ mốc là tự lên cấp trên. Màu lấy đúng màu hạng tin trong packages.ts.
-  // Mốc mặc định — chủ dự án sửa được ở /admin/gia-khuyen-mai → tab Cấp hội viên.
+  // Mốc mặc định — chủ dự án sửa được ở /admin/gia-chuan → tab Cấp hội viên.
   levels: [], // hệ cấp theo tổng nạp đã bỏ 25/09/2026
   topupAmounts: [200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000],
   projectPlans: PROJECT_PLANS_DEFAULT,
@@ -695,7 +695,7 @@ export function ngayVn(iso: string): string {
 }
 
 // ── DÒNG GIÁ CHO TRANG BÁO GIÁ (/bao-gia-dang-tin) ──────────────────────────
-// Sinh thẳng từ bảng giá admin đang lưu → sửa giá ở /admin/gia-khuyen-mai là
+// Sinh thẳng từ bảng giá admin đang lưu → sửa giá ở /admin/gia-chuan là
 // trang báo giá đổi theo (trước đây giá viết cứng trong trang nên không đổi).
 // Mốc 1 tuần làm giá gốc: kỳ dài hơn rẻ hơn thì hiện giá gạch + % giảm.
 export type PriceLineOut = { label: string; original?: string; price: string };
@@ -724,7 +724,7 @@ export function priceLinesFor(data: BillingData, tierId: TierId): PriceLineOut[]
 }
 
 // GIÁ GÓI DỰ ÁN (CVR-PJ) cho trang báo giá — trước đây bảng này viết cứng trong
-// trang nên sửa ở /admin/gia-khuyen-mai → tab "Gói dự án" không đổi được gì.
+// trang nên sửa ở /admin/gia-chuan → tab "Gói dự án" không đổi được gì.
 export function priceLinesDuAn(data: BillingData, tierId: TierId): PriceLineOut[] | null {
   return priceLinesFor({ ...data, plans: goiDuAn(data) }, tierId);
 }
