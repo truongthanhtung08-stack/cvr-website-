@@ -213,8 +213,10 @@ export default function DangTin() {
       if (j.doiTaiKhoan) await supabase.auth.setSession({ access_token: j.doiTaiKhoan.access_token, refresh_token: j.doiTaiKhoan.refresh_token });
       if (j.sdt) setSdt(soVN(j.sdt));
       setDaXmXong(true);
-    } catch {
-      setLoi("Không kết nối được. Vui lòng thử lại.");
+    } catch (e) {
+      // Khách bấm Từ chối ở hộp hỏi số của Zalo → không báo lỗi, vẫn nhập số khác được (Chính sách kiểm duyệt Zalo 6.3).
+      if (buoc !== "so-zalo") setLoi("Không kết nối được. Vui lòng thử lại.");
+      void e;
     } finally {
       setDangXm(false);
     }

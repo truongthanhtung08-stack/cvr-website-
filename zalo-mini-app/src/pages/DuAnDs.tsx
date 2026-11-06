@@ -10,7 +10,7 @@ export default function DuAnDs() {
   const { data, dangTai } = useTai(() => layDuAnTrang(), [], { noiBat: [], traCuu: [] });
   return (
     <Page style={{ paddingBottom: 72 }}>
-      <TieuDe title="Dự án" showBackIcon={false} />
+      <TieuDe title="Dự án" />
       {dangTai ? (
         <Box flex justifyContent="center" p={6}><Spinner /></Box>
       ) : (

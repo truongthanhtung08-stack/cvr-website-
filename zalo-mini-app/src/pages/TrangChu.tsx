@@ -5,7 +5,8 @@ import KhoiNoiBat from "../components/KhoiNoiBat";
 import TheDuAn from "../components/TheDuAn";
 import TruotNgang from "../components/TruotNgang";
 import IconCL, { type TenIcon } from "../components/IconCL";
-import { layDuAnNoiBat, layTinhCoTin } from "../lib/tin";
+import { layBaiViet, layDuAnNoiBat, layTinhCoTin } from "../lib/tin";
+import TheBaiViet from "../components/TheBaiViet";
 import { useTai } from "../lib/useTai";
 import { nhanCoastalLand } from "../lib/zalo";
 import logoTron from "../assets/logo-tron.svg";
@@ -35,7 +36,8 @@ const DICH_VU: DichVu[] = [
 export default function TrangChu() {
   const dieuHuong = useNavigate();
   const duAn = useTai(() => layDuAnNoiBat(8), [], []); // như web: chỉ dự án nổi bật, theo cấp, 8 dự án — còn lại ở Xem thêm
-  const tinh = useTai(() => layTinhCoTin("ban"), [], []); // tỉnh đang có tin thật — không ảnh, không số bịa
+  const tinh = useTai(() => layTinhCoTin("ban"), [], []);
+  const baiViet = useTai(() => layBaiViet(6), [], []); // như web: khối Tin tức trên trang chủ, Xem thêm → danh sách bài // tỉnh đang có tin thật — không ảnh, không số bịa
 
   return (
     <Page style={{ paddingBottom: 72, paddingTop: 0 }}>
@@ -70,6 +72,12 @@ export default function TrangChu() {
               <button key={t} onClick={() => dieuHuong(`/ds/ban?kv=${encodeURIComponent(t)}`)}>{t}</button>
             ))}
           </div>
+        </Khoi>
+      )}
+
+      {baiViet.data.length > 0 && (
+        <Khoi tieuDe="Tin tức" xemThem="/tin-tuc">
+          <TruotNgang hep>{baiViet.data.map((b) => <TheBaiViet key={b.slug} bai={b} />)}</TruotNgang>
         </Khoi>
       )}
 

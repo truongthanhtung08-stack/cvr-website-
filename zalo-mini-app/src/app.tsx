@@ -31,13 +31,13 @@ const CaiDat = cham(() => import("./pages/CaiDat"));
 const TrangTinh = cham(() => import("./pages/TrangTinh"));
 const NapTien = cham(() => import("./pages/NapTien"));
 
-// THANH DƯỚI = ĐÚNG web điện thoại (06/11/2026 "lấy giao diện web trên mobile làm chuẩn"): Trang chủ · Mua bán · Cho thuê · Dự án ·
+// THANH DƯỚI 4 NÚT (Zalo Mini App Design Guidelines: "số lượng tab ở bottom bar không nên vượt quá 4", 06/11/2026) — Dự án vào từ
+// khối "Dự án nổi bật · Xem thêm" ở Trang chủ. Trước đó: THANH DƯỚI = ĐÚNG web điện thoại (06/11/2026 "lấy giao diện web trên mobile làm chuẩn"): Trang chủ · Mua bán · Cho thuê · Dự án ·
 // Tài khoản. Đăng tin vào từ ô công cụ trang chủ và trang Tài khoản; mở toàn màn hình, không hiện thanh tab.
 const TAB = [
   { duong: "/", nhan: "Trang chủ", icon: "home" },
   { duong: "/ds/ban", nhan: "Mua bán", icon: "muaBan" },
   { duong: "/ds/thue", nhan: "Cho thuê", icon: "choThue" },
-  { duong: "/du-an", nhan: "Dự án", icon: "duAn" },
   { duong: "/tai-khoan", nhan: "Tài khoản", icon: "taiKhoan" },
 ] as const;
 const tabCua = (p: string) => p;
