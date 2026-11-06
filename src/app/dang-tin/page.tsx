@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PostListingForm from "@/components/PostListingForm";
+import KhungDangTin from "@/components/KhungDangTin";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/dang-tin" },
@@ -22,7 +22,7 @@ export default function DangTinPage() {
           <div className="mt-4">
             {/* Suspense: form đọc ?id= (chế độ sửa tin) bằng useSearchParams */}
             <Suspense fallback={<p className="py-16 text-center text-sm text-cvr-muted">Đang tải…</p>}>
-              <PostListingForm />
+              <KhungDangTin />
             </Suspense>
           </div>
         </div>
