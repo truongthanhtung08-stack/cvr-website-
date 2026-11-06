@@ -126,7 +126,7 @@ export default function ChiTietTinCuaToiPage() {
           Sửa tin
         </Link>
         {row.status === "approved" && (
-          <Link href={`/bat-dong-san/${row.id}`} target="_blank" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+          <Link href={`/bat-dong-san/${row.id}`} className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
             Xem trên web ↗
           </Link>
         )}

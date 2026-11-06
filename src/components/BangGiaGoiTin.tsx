@@ -244,8 +244,6 @@ export default function BangGiaGoiTin({
               // bảng còn gập — chủ dự án 22/10/2026). Trang khác → mở trang Báo giá ở tab mới, bảng tự mở (MoMucTheoNeo).
               <a
                 href="/bao-gia-dang-tin#dac-diem"
-                target="_blank"
-                rel="noopener"
                 onClick={(e) => {
                   const bang = document.getElementById("dac-diem") as HTMLDetailsElement | null;
                   if (!bang) return;

@@ -513,7 +513,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
               </Link>
               )}
               {r.status === "approved" && (
-                <Link href={`/bat-dong-san/${r.id}`} target="_blank" className={NUT_PHU}>Xem ↗</Link>
+                <Link href={`/bat-dong-san/${r.id}`} className={NUT_PHU}>Xem</Link>
               )}
               {(r.status === "expired" || (r.status === "hidden" && r.details?.ha_boi === "khach")) && (
                 <button type="button" onClick={() => { setUpCho(r); setUpChon(goiLanTruoc(r)); }} className={`bg-cvr-blue hover:bg-cvr-blue/90 ${NUT_CHINH_TIN}`}>
