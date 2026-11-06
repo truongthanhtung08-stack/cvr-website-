@@ -48,7 +48,7 @@ export default function TrangChu() {
           <img src={logoTron} alt="" />
           <div>
             <strong>COASTAL LAND</strong>
-            <span>Cổng thông tin Bất động sản</span>
+            <span>Cổng thông tin bất động sản trực tuyến</span>
           </div>
         </div>
         <div onClick={() => dieuHuong("/tim-kiem")}>
