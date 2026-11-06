@@ -422,3 +422,13 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Giá một dòng, diện tích dòng dưới — mọi thẻ cao đều, không lúc 1 lúc 2 dòng (kiểm mắt 06/11/2026) */
 .the-tin .gia-dt { flex-direction: column; align-items: flex-start !important; gap: 0 !important; }
 .nut-chinh { z-index: 50; } /* cột dính của bảng giá từng đè lên thanh nút đáy (kiểm mắt 06/11/2026) */
+/* MÁY THẬT trong Zalo (kiểm 06/11/2026 qua chiếu màn hình Samsung): thanh trạng thái + nút "••• ✕" của Zalo đè đầu trang, tên xuống 2 dòng.
+   → chừa đủ chỗ thanh trạng thái (lấy giá trị lớn nhất của Zalo / trình duyệt / tối thiểu 28px), tên MỘT dòng, nhỏ lại. */
+.dau-app { padding-top: calc(max(var(--zaui-safe-area-inset-top, 0px), env(safe-area-inset-top, 0px), 28px) + 6px) !important; }
+.hang-app { height: 44px; gap: 10px; }
+.hang-app img { width: 38px; height: 38px; }
+.hang-app strong { font-size: 17px; white-space: nowrap; }
+.hang-app span { font-size: 12px; }
+/* Thẻ trong dải trượt: không để chữ dài (nowrap) kéo giãn thẻ — trên máy thật thẻ rộng ~60% thay vì 44% */
+.o-noi-bat, .truot-ngang.hep > * { min-width: 0; max-width: 44%; }
+.the-tin, .the-tin .than-the { min-width: 0; }
