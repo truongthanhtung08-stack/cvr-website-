@@ -826,4 +826,7 @@ html.xem-thu .hang-app { padding-right: 0; }
 .logo-chuan, .ct-logo { cursor: pointer; transition: transform .15s ease, opacity .15s ease; -webkit-tap-highlight-color: transparent; }
 .logo-chuan:active, .ct-logo:active { transform: scale(.94); opacity: .75; }
 /* Nút "Thu gọn" / "Xem thêm" cuối trang tin / dự án không bị thanh liên hệ dính đáy che (06/11/2026): hàng nút nền trắng, chừa 64px dưới. */
-.thu-gon-tin + .hang-xem-them { margin: 0 0 0 !important; padding: 12px 0 64px; background: #fff; }
+.thu-gon-tin + .hang-xem-them { margin: 0 !important; padding: 12px 0 16px; background: #fff; }
+/* Khối dải trượt trong trang tin (Bất động sản tương tự / đã xem): tên khối thẳng lề với các khối khác, dải thẻ chạy sát mép. */
+.khoi-ct.khoi-truot { padding-left: 0 !important; padding-right: 0 !important; }
+.khoi-ct.khoi-truot > .muc-tin { padding: 0 16px; }

@@ -220,7 +220,8 @@ export default function ChiTietTin() {
       </section>
 
       {/* THU GỌN CẢ TIN (chủ dự án 06/11/2026: "Xem thêm / Thu gọn không phải cho nội dung mà cả 1 trang tin"): từ Mô tả tới hết
-          hết trang; tin dài tới mức nhất định thì "Xem thêm" (cắt trong phần Mô tả), mở ra thì "Thu gọn" ở CUỐI TRANG. */}
+          hết Xác thực thông tin; tin dài tới mức nhất định thì "Xem thêm" (cắt trong phần Mô tả), mở ra thì "Thu gọn" NGAY DƯỚI PHẦN TIN
+          (trước Bất động sản tương tự — chủ dự án 06/11/2026 "nút thu gọn để dưới phần tin"). */}
       <ThuGonTin>
       {tin.description && <MoTa noiDung={tin.description} />}
 
@@ -278,20 +279,21 @@ export default function ChiTietTin() {
         </ul>
       </section>
 
+      </ThuGonTin>
+
       {tuongTu.data.length > 0 && (
-        <section className="khoi-ct" style={{ padding: "14px 0 16px" }}>
-          <h2 className="muc-tin" style={{ padding: "0 16px" }}>Bất động sản tương tự</h2>
+        <section className="khoi-ct khoi-truot">
+          <h2 className="muc-tin">Bất động sản tương tự</h2>
           <TruotNgang hep>{tuongTu.data.slice(0, 8).map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>
         </section>
       )}
 
       {daXem.data.length > 0 && (
-        <section className="khoi-ct" style={{ padding: "14px 0 16px" }}>
-          <h2 className="muc-tin" style={{ padding: "0 16px" }}>Bất động sản đã xem</h2>
+        <section className="khoi-ct khoi-truot">
+          <h2 className="muc-tin">Bất động sản đã xem</h2>
           <TruotNgang hep>{daXem.data.map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>
         </section>
       )}
-      </ThuGonTin>
 
       <div className="nut-chinh">
         <XemSo id={tin.id} sdt={tin.sdt} soAn={tin.sdt_an} />
