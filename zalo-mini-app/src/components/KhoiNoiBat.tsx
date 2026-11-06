@@ -53,7 +53,6 @@ export default function KhoiNoiBat() {
     <section className="khoi">
       <div className="khoi-dau">
         <h2 className="tieu-de-khoi">Bất động sản nổi bật</h2>
-        <span className="xem-them" onClick={() => dieuHuong(`/ds/${TAB[tab].md}`)}>Xem thêm</span>
       </div>
       <div className="tab-noi-bat">
         {TAB.map((t, i) => (
@@ -80,6 +79,7 @@ export default function KhoiNoiBat() {
           )}
         </>
       )}
+      <div className="hang-xem-them"><button className="btn-xemthem" onClick={() => dieuHuong(`/ds/${TAB[tab].md}`)}>Xem thêm<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" /></svg></button></div>
     </section>
   );
 }
