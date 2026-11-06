@@ -432,3 +432,26 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Thẻ trong dải trượt: không để chữ dài (nowrap) kéo giãn thẻ — trên máy thật thẻ rộng ~60% thay vì 44% */
 .o-noi-bat, .truot-ngang.hep > * { min-width: 0; max-width: 44%; }
 .the-tin, .the-tin .than-the { min-width: 0; }
+/* MÁY THẬT (Samsung, Zalo, 06/11/2026) — sửa một lần:
+   1) Trang tin: nhãn cấp không vỡ 2 dòng, dòng mã · ngày gọn, nút Lưu / Chia sẻ không lấn mép phải. */
+.meta-ct { flex-wrap: wrap; row-gap: 6px; }
+.meta-ct .nhan-loai { white-space: nowrap; font-size: 10px; padding: 4px 10px; line-height: 1; flex: none; }
+.meta-ct > span:not(.nhan-loai) { white-space: nowrap; }
+.nut-ct { flex: none; }
+/* 2) Thanh liên hệ đáy: chữ không bị cắt — cỡ chữ vừa, nút Zalo gọn, nút gọi co theo chỗ. */
+.lien-he { gap: 8px !important; }
+.lien-he .nut-zalo { flex: none !important; padding: 0 14px !important; }
+.lien-he .nut-goi { flex: 1 1 auto !important; min-width: 0; font-size: 14px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 12px !important; }
+/* 3) Giá cho thuê dài ("12,5 triệu/tháng") không tràn thẻ trong dải trượt. */
+.o-noi-bat .the-tin .gia-dt .gia { font-size: 13px !important; white-space: normal; }
+/* THẺ TO, TỐI ƯU HIỂN THỊ (chủ dự án 06/11/2026: "thẻ tin trên 80% hiển thị của màn hình"): dải trượt thẻ 85% (hé thẻ sau),
+   danh sách mỗi hàng MỘT thẻ (như web điện thoại). Chữ to lại theo thẻ. Đè các luật cỡ thẻ phía trên. */
+.o-noi-bat, .truot-ngang.hep > * { flex: 0 0 85% !important; max-width: 85% !important; }
+.ds-doc, .luoi-du-an { grid-template-columns: 1fr !important; gap: 12px !important; }
+.the-tin .than-the { padding: 10px 12px 12px !important; }
+.the-tin .tieu-de { font-size: 15px !important; line-height: 1.45 !important; }
+.the-tin .gia-dt { flex-direction: row !important; align-items: baseline !important; gap: 10px !important; font-size: 14px !important; }
+.the-tin .gia-dt .gia, .o-noi-bat .the-tin .gia-dt .gia { font-size: 17px !important; white-space: nowrap; }
+.the-tin .day-the-moi { font-size: 13px !important; }
+.the-tin .nhan-hang { top: 10px !important; left: 10px !important; }
+.the-du-an .dong-phu { font-size: 13px; }
