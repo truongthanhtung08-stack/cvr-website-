@@ -269,7 +269,7 @@ const sachMoTa = (s: string) =>
 
 function MoTa({ noiDung }: { noiDung: string }) {
   return (
-    <section className="khoi-ct">
+    <section className="khoi-ct" data-thu-gon="mo-ta">
       <h2 className="muc-tin">Mô tả</h2>
       <p className="mo-ta-ct">{sachMoTa(noiDung)}</p>
     </section>
@@ -288,10 +288,12 @@ function ThuGonTin({ children }: { children: React.ReactNode }) {
     const el = khoi.current;
     if (!el) return;
     const tinh = () => {
-      // Hiện trọn các mục tới khoảng 1,5 màn hình rồi mới cắt; còn ít (< nửa màn) thì hiện hết, không nút.
-      const nguong = window.innerHeight * 1.5;
-      const day = [...el.children].map((c) => (c as HTMLElement).offsetTop + (c as HTMLElement).offsetHeight).find((b) => b >= nguong);
-      setCat(day !== undefined && el.scrollHeight - day > window.innerHeight * 0.5 ? day : undefined);
+      // CẮT TRONG PHẦN CHỮ MÔ TẢ (đẹp nhất — chữ mờ dần tự nhiên, không cắt ngang lưới, bản đồ, ảnh): hiện ảnh · giá · Đặc điểm ·
+      // ~5 dòng đầu Mô tả. Không có mô tả → cắt ở đáy Đặc điểm. Phần còn lại ít (< 240px) thì hiện hết, không nút.
+      const moTa = el.querySelector<HTMLElement>("[data-thu-gon=mo-ta]");
+      const dacDiem = el.firstElementChild as HTMLElement | null;
+      const day = moTa ? moTa.offsetTop + 150 : dacDiem ? dacDiem.offsetTop + dacDiem.offsetHeight : undefined;
+      setCat(day !== undefined && el.scrollHeight - day > 240 ? day : undefined);
     };
     tinh();
     const ro = new ResizeObserver(tinh);
