@@ -18,12 +18,15 @@ import ChanTrang from "../components/ChanTrang";
 // Phần lớn trang là TIN (80/20). Không banner (chủ dự án bỏ 27/09).
 
 type DichVu = { nhan: string; icon: TenIcon; nen: string; mau: string } & ({ duong: string } | { bam: () => void });
+// Hai hàng, mỗi hàng một việc (06/11/2026 "sắp lại cho logic"): hàng 1 = XEM (3 mảng + Tin tức) · hàng 2 = ĐĂNG (Đăng tin,
+// tin của mình, giá đăng, hỏi Coastal Land). Đủ 4 × 2, không ô trống.
 const DICH_VU: DichVu[] = [
   { nhan: "Mua bán", icon: "muaBan", nen: "#eef4ff", mau: "#0071e3", duong: "/ds/ban" },
   { nhan: "Cho thuê", icon: "choThue", nen: "#eaf7ef", mau: "#1a8f4c", duong: "/ds/thue" },
   { nhan: "Dự án", icon: "duAn", nen: "#fbf4e6", mau: "#8a6d2e", duong: "/du-an" },
-  { nhan: "Đăng tin", icon: "dangTin", nen: "#0071e3", mau: "#ffffff", duong: "/dang-tin" },
   { nhan: "Tin tức", icon: "tinTuc", nen: "#f2efff", mau: "#6b4fd8", duong: "/tin-tuc" },
+  { nhan: "Đăng tin", icon: "dangTin", nen: "#0071e3", mau: "#ffffff", duong: "/dang-tin" },
+  { nhan: "Tin của tôi", icon: "taiKhoan", nen: "#eaf7ef", mau: "#1a8f4c", duong: "/tin-cua-toi" },
   { nhan: "Bảng giá", icon: "bangGia", nen: "#eef4ff", mau: "#0071e3", duong: "/bang-gia" },
   { nhan: "Tư vấn", icon: "tuVan", nen: "#fbf4e6", mau: "#8a6d2e", bam: () => nhanCoastalLand() },
 ];
