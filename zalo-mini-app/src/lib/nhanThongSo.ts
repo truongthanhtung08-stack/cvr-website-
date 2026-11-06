@@ -1,4 +1,5 @@
-// Nhãn + đơn vị các thông số tin (chép từ src/lib/listingSpec.ts của web — web đổi thì chép lại).
+// Nhãn + đơn vị các thông số tin — SINH TỪ src/lib/listingSpec.ts của web (fieldsFor mọi loại hình, 06/11/2026: trước thiếu viaHe,
+// ketCau, loaiNha, thangMay… → trang tin lộ tên kỹ thuật). Web thêm ô thì sinh lại.
 export const NHAN_THONG_SO: Record<string, [string, string?]> = {
  "floors": [
   "Số tầng"
@@ -25,7 +26,7 @@ export const NHAN_THONG_SO: Record<string, [string, string?]> = {
   "Phí quản lý"
  ],
  "usableArea": [
-  "Diện tích sử dụng",
+  "Diện tích xưởng/kho",
   "m²"
  ],
  "balcony": [
@@ -53,7 +54,7 @@ export const NHAN_THONG_SO: Record<string, [string, string?]> = {
   "Tổng số tầng toà"
  ],
  "loaiCanho": [
-  "Loại hình căn hộ"
+  "Loại căn hộ"
  ],
  "khoLoai": [
   "Loại kho / xưởng"
@@ -149,5 +150,66 @@ export const NHAN_THONG_SO: Record<string, [string, string?]> = {
  ],
  "waterPrice": [
   "Giá nước"
+ ],
+ "maCan": [
+  "Mã căn"
+ ],
+ "canGoc": [
+  "Căn góc"
+ ],
+ "choDauXe": [
+  "Chỗ đậu xe"
+ ],
+ "loaiNha": [
+  "Loại nhà"
+ ],
+ "otoDoCua": [
+  "Ô tô đỗ cửa"
+ ],
+ "ketCau": [
+  "Kết cấu"
+ ],
+ "thangMay": [
+  "Thang máy"
+ ],
+ "viaHe": [
+  "Vỉa hè",
+  "m"
+ ],
+ "choDauOto": [
+  "Chỗ đậu ô tô"
+ ],
+ "gara": [
+  "Gara"
+ ],
+ "loaiNghiDuong": [
+  "Loại BĐS nghỉ dưỡng"
+ ],
+ "soHuu": [
+  "Thời hạn sở hữu"
+ ],
+ "phiDichVu": [
+  "Phí dịch vụ"
+ ],
+ "loaiPhong": [
+  "Loại phòng"
+ ],
+ "gacLung": [
+  "Gác lửng"
+ ],
+ "choDeXe": [
+  "Chỗ để xe"
+ ],
+ "gioGiac": [
+  "Giờ giấc"
+ ],
+ "soNguoiToiDa": [
+  "Số người ở tối đa"
+ ],
+ "loaiVanPhong": [
+  "Loại văn phòng"
+ ],
+ "gioLamViec": [
+  "Giờ làm việc toà nhà"
  ]
 };

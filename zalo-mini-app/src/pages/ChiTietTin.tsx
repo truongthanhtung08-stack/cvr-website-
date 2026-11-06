@@ -22,7 +22,7 @@ const NHAN_HANG: Record<string, { ten: string; mau: string }> = {
   diamond: { ten: "CVR Diamond", mau: "#c1121f" },
   gold: { ten: "CVR Gold", mau: "#b8860b" },
   silver: { ten: "CVR Silver", mau: "#2f5d84" },
-  basic: { ten: "CVR Basic", mau: "#6e6e73" },
+  basic: { ten: "CVR Basic", mau: "#9aa0a6" }, // = web packages.ts accent
 };
 
 const laDat = (t: TinChiTiet) => /đất/i.test(t.type);
@@ -172,7 +172,7 @@ export default function ChiTietTin() {
           </span>
         </p>
         <div className="meta-ct">
-          <span className="nhan-loai" style={{ color: hang.mau, borderColor: `${hang.mau}55` }}>{hang.ten}</span>
+          <span className="nhan-loai" style={{ color: "#fff", background: hang.mau, borderColor: hang.mau, borderRadius: 999 }}>{hang.ten}</span>
           <span>Mã {tin.id.slice(0, 8).toUpperCase()}</span>
           {tin.published_at && <span>· {ngay(tin.published_at)}</span>}
           <div className="nut-ct">
@@ -186,6 +186,7 @@ export default function ChiTietTin() {
         </div>
       </section>
 
+      <ThuGonTin>
       <section className="khoi-ct">
         <h2 className="muc-tin">Đặc điểm</h2>
         <div className="dong-ds">
@@ -245,6 +246,8 @@ export default function ChiTietTin() {
         </section>
       )}
 
+      </ThuGonTin>
+
       {tuongTu.data.length > 0 && (
         <section className="khoi-ct" style={{ padding: "14px 0 16px" }}>
           <h2 className="muc-tin" style={{ padding: "0 16px" }}>Tin tương tự</h2>
@@ -260,14 +263,50 @@ export default function ChiTietTin() {
 }
 
 // Mô tả dài thu gọn 6 dòng, bấm "Xem thêm" mới mở hết (kiểu Zalo).
+// Mô tả sạch ký hiệu (06/11/2026): bỏ ký tự thoát Markdown (\* \-), dấu đầu dòng trang trí (▪︎ * •) thành "• " thống nhất.
+const sachMoTa = (s: string) =>
+  s.replace(/\\([*_#.\-])/g, "$1").replace(/^[ \t​]*[*▪•●]︎?[ \t​]*/gm, "• ");
+
 function MoTa({ noiDung }: { noiDung: string }) {
-  const [mo, setMo] = useState(false);
-  const dai = noiDung.length > 280;
   return (
     <section className="khoi-ct">
       <h2 className="muc-tin">Mô tả</h2>
-      <p className={`mo-ta-ct${mo || !dai ? "" : " gon"}`}>{noiDung}</p>
-      {dai && <button className="xem-them-ct" onClick={() => setMo(!mo)}>{mo ? "Thu gọn" : "Xem thêm"}</button>}
+      <p className="mo-ta-ct">{sachMoTa(noiDung)}</p>
     </section>
+  );
+}
+
+// TIN DÀI → THU GỌN CẢ TIN (chủ dự án 06/11/2026: "1 tin dài! đến đủ chân có Xem thêm, nút Thu gọn là cuối tin"; cùng cơ chế trang dự
+// án web ThuGonTrang): nội dung từ Đặc điểm tới Người đăng cao hơn 1,5 lần 720px thì cắt ở 720px + vệt mờ + "Xem thêm" căn giữa;
+// mở ra thì "Thu gọn" nằm CUỐI tin (sau Người đăng, trước Tin tương tự), bấm thì cuộn về đầu phần đã thu. Ngắn thì hiện trọn.
+function ThuGonTin({ children }: { children: React.ReactNode }) {
+  const khoi = useRef<HTMLDivElement>(null);
+  const [mo, setMo] = useState(false);
+  const [dai, setDai] = useState(false);
+  useEffect(() => {
+    const el = khoi.current;
+    if (!el) return;
+    const tinh = () => setDai(el.scrollHeight > 720 * 1.5);
+    tinh();
+    const ro = new ResizeObserver(tinh);
+    [...el.children].forEach((c) => ro.observe(c));
+    return () => ro.disconnect();
+  }, []);
+  const nut = (
+    <div className="hang-xem-them">
+      <button className="btn-xemthem" onClick={() => { if (mo) khoi.current?.scrollIntoView({ block: "start" }); setMo(!mo); }}>
+        {mo ? "Thu gọn" : "Xem thêm"}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ transform: mo ? "rotate(180deg)" : undefined }}><path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
+    </div>
+  );
+  return (
+    <>
+      <div ref={khoi} className="thu-gon-tin" style={dai && !mo ? { maxHeight: 720 } : undefined}>
+        {children}
+        {dai && !mo && <div className="mo-ta-mo" aria-hidden />}
+      </div>
+      {dai && nut}
+    </>
   );
 }
