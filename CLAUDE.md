@@ -262,6 +262,11 @@ kế hoạch chưa ghi đã thiết lập) · backlink, báo chí (bước 17, c
   "Kho, nhà xưởng"…), "Đất nền dự án" tự điền `loai_dat` · tên dự án chưa có hồ sơ vẫn nạp, trang tin hiện ngay tên.
 - [B06] `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 18–20 + bảng loại hình mục 7 (theo form web) · hồ sơ dự án TẠM DỪNG ở đợt tin, nạp dự án
   hàng loạt làm sau · giao Cowork lọc ở `RA\VIEC.md` mục 0B.
+- [B05][B07][B15] Rà MỘT ENTITY trên web thật (HTML Googlebot, CHƯA SỬA, chờ anh "làm"): ① breadcrumb gọi "Nhà đất bán" / "Nhà đất cho thuê"
+  còn menu, trang gốc gọi "Mua bán" / "Cho thuê" — dính cả trang top `/cho-thue/can-ho-chung-cu/da-nang` · ② breadcrumb tin đất ghi "Đất nền, đất nền
+  dự án" còn form 05/11 gọi "Đất nền" / "Đất nền dự án" · ③ không có `BreadcrumbList`: `/mua-ban`, `/du-an`, `/tin-tuc`, `/chuyen-gia`, `/tien-ich/*`
+  · ④ `/chu-dau-tu` và `/tien-ich` 404 trong khi trang con có trong sitemap (chủ đầu tư breadcrumb đi qua "Dự án") · ⑤ bài Tin tức khai
+  `publisher` là Organization rời, logo SVG — không trỏ `#to-chuc` · ⑥ trang gốc trỏ `#to-chuc` / `#website` đúng, canonical, H1 đủ ở các trang đã đo.
 - Còn treo [B06]: `/quy-dinh` vẫn ghi "Tiêu đề mở đầu bằng Bán hoặc Cho thuê" — chữ khách đọc, chờ anh duyệt câu mới.
 
 ---
@@ -274,6 +279,12 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
 thống nhất, logic." Một cây loại hình cha – con, một tên cho mỗi mục, dùng Ở MỌI NƠI: Admin → form khách → trang tin → menu → bộ lọc →
 breadcrumb → trang Google (pSEO) → JSON-LD. Nguồn: `src/lib/filters.ts` (nhóm) + `src/lib/categories.ts` (`cayLoaiHinh`,
 `nhomChonLoaiHinh`, `tenLoaiHinhMenu`, `tenLoaiHinhDayDu`). Sửa tên / cây ở một chỗ thì kiểm hết các nơi trên.
+**⛔ 06/11/2026 (anh): MỌI chỉnh sửa từ nay hướng về MỘT ENTITY toàn trang web** — các phân mục là thực thể con, khớp nhau, liên kết logic,
+on-page đúng chuẩn Google để Google vào truy xuất [B05][B07][B15][B16]. Mỗi trang công khai phải: ① một tên mục thống nhất (menu = H1 gốc =
+breadcrumb = JSON-LD) · ② breadcrumb hiện + `BreadcrumbList` đi đúng cây Trang chủ → mảng (Mua bán · Cho thuê · Dự án · Tin tức…) → con ·
+③ mọi trang cha trong breadcrumb trả 200, không 404 · ④ JSON-LD trỏ về MỘT tổ chức `https://coastalland.vn/#to-chuc` và MỘT website
+`#website` bằng `@id` (không khai Organization rời, logo PNG) · ⑤ canonical + một H1 + có trong sitemap khi index. Sửa mã dùng chung →
+trang `TRANG_TOP` so HTML trước/sau, không đổi. Danh sách lệch đo 06/11: xem khối "06/11/2026 (phiên 2f67d7f5)" mục 🌳.
 **Sửa, chỉnh, tạo mới một mục → rà hết phần liên quan; CẤM làm ảnh hưởng mục khác** (anh 05/11). Thêm mới = THÊM, không đổi cái đang có.
 Nhu cầu: **một ô** Cần bán · Cần mua · Cho thuê · Cần thuê (KHÔNG có ô "Bạn là" — anh bác 05/11: "phức tạp"); "Dự án" chỉ cho tài khoản
 được duyệt yêu cầu. Tin cần mua / cần thuê: không bắt ảnh, thẻ dùng chung (không ảnh → logo xám), chặn ở gốc `getListings` →
