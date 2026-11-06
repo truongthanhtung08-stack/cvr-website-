@@ -122,7 +122,12 @@ const nextConfig: NextConfig = isPages
             { source: "/_next/static/chunks/maplibre-gl-shared.js", destination: toi("maplibre-gl-shared.js") },
           ],
           // /favicon.ico 404 (Search Console 24/10/2026: Google + trình duyệt gọi địa chỉ này) → trỏ về biểu tượng sẵn có src/app/icon.png
-          afterFiles: [{ source: "/favicon.ico", destination: "/icon.png" }],
+          afterFiles: [
+            { source: "/favicon.ico", destination: "/icon.png" },
+            // ẢNH /anh/... (07/11/2026): rewrite NGOÀI thẳng tới kho Supabase — không chạy hàm máy chủ (trước: hàm /anh 24 nghìn lượt/tuần, chỉ
+            // 12,8% từ bộ đệm, hỏi R2 trước mà 3/4 ảnh không có ở R2). Bật lưu bộ đệm 1 năm: vercel.json headers (x-vercel-enable-rewrite-caching).
+            { source: "/anh/:path*", destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/:path*` },
+          ],
           fallback: [],
         };
       },
