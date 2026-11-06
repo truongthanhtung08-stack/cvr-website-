@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import { bangNangGoi, bangTheoMucDich, chuNangGoi, giaNangGoi, vnd, type BillingData, type Plan } from "@/lib/billing";
 import { goiHienTai, hangDangChay, oNangDuoc, soNgayCon } from "@/lib/nangGoi";
@@ -260,20 +261,47 @@ export function DongSoDu({ vi, can }: { vi: ViKhach; can: number }) {
 /** Dòng liên kết quy định (chữ từ Admin, mỗi phần cách " · "): Quy định gói tin · Up tin · Đẩy tin — CÙNG KIỂU BẢN ĐANG CHẠY TRÊN WEB
  *  (chủ dự án 01/11/2026: "làm cùng kiểu với bản trên web"): như chữ "Quy định" ở trang Báo giá, dẫn tới trang /quy-dinh mục 5
  *  (Gói đăng tin · Gói Up tin · Gói đẩy tin). Mở tab mới để khách không mất form / bảng đang chọn. Phần chưa duyệt thì không hiện. */
-const DICH_QUY_DINH = ["/quy-dinh#quy-dinh-goi-tin", "/quy-dinh#quy-dinh-up-tin", "/quy-dinh#quy-dinh-day-tin"];
+// MỞ BẢNG TẠI CHỖ (chủ dự án 06/11/2026: "đang đăng tin, chọn gói, bấm xem quy định… ra bảng, bấm tắt bảng về lại chỗ đang làm!
+// KHÔNG NHẢY BẬY"): trước đây mở /quy-dinh ở tab mới — điện thoại, trình duyệt trong Zalo/Facebook mở đè lên form, khách mất chỗ
+// đang làm. Nay bảng nổi trên trang, không đổi đường dẫn, không cuộn trang; tắt (X, bấm nền, Esc) là về đúng chỗ cũ.
 export function LienKetQuyDinh({ chu, className = "" }: { chu: string; className?: string }) {
   const qd = useQuyDinhGia();
+  const [mo, setMo] = useState<number | null>(null);
   const noiDung = [qd.quyDinhGoiTin, qd.quyDinhUpTin ?? [], qd.quyDinhDayTin];
   const phan = chu.split(" · ").filter(Boolean).map((ten, i) => ({ ten, i })).filter((x) => (noiDung[x.i] ?? []).length > 0);
+  useEffect(() => {
+    if (mo === null) return;
+    const dong = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setMo(null); } };
+    window.addEventListener("keydown", dong, true);
+    return () => window.removeEventListener("keydown", dong, true);
+  }, [mo]);
   if (!phan.length) return null;
+  const dangMo = phan.find((x) => x.i === mo);
   return (
-    <p className={`text-[12.5px] text-cvr-muted ${className}`}>
-      {phan.map((x, k) => (
-        <span key={x.ten}>
-          {k > 0 && " · "}
-          <a href={DICH_QUY_DINH[x.i]} target="_blank" rel="noopener" className="font-semibold text-cvr-blue-ink hover:underline">{x.ten}</a>
-        </span>
-      ))}
-    </p>
+    <>
+      <p className={`text-[12.5px] text-cvr-muted ${className}`}>
+        {phan.map((x, k) => (
+          <span key={x.ten}>
+            {k > 0 && " · "}
+            <button type="button" onClick={() => setMo(x.i)} className="font-semibold text-cvr-blue-ink hover:underline">{x.ten}</button>
+          </span>
+        ))}
+      </p>
+      {dangMo && createPortal(
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 sm:items-center sm:p-4" onClick={() => setMo(null)}>
+          <div role="dialog" aria-modal="true" aria-label={dangMo.ten} onClick={(e) => e.stopPropagation()}
+            className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-t-2xl bg-white shadow-xl sm:rounded-2xl">
+            <div className="flex items-center justify-between gap-3 border-b border-cvr-line px-5 py-3.5">
+              <p className="text-base font-semibold text-cvr-ink">{dangMo.ten}</p>
+              <button type="button" onClick={() => setMo(null)} aria-label="Đóng" className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-cvr-muted hover:bg-cvr-surface">×</button>
+            </div>
+            <ul className="space-y-2 overflow-y-auto px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[14px] leading-relaxed text-cvr-body">
+              {(noiDung[dangMo.i] ?? []).map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
+            </ul>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }

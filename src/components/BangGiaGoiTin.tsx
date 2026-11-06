@@ -237,7 +237,9 @@ export default function BangGiaGoiTin({
             ) : null}
             {onXemBangQuyenLoi ? (
               <button type="button" onClick={() => { setXemDacDiem(null); onXemBangQuyenLoi(); }} className="mt-4 inline-flex text-[13px] font-semibold text-cvr-blue-ink">Xem bảng quyền lợi đầy đủ →</button>
-            ) : (
+            ) : onChon || khoaO ? null : (
+              // Đang CHỌN GÓI (đăng tin, sửa / đăng lại, Up tin): không có link mở tab mới — điện thoại mở đè lên form, tắt là về trang
+              // chủ, khách mất tin đang soạn (chủ dự án 06/11/2026). Quyền lợi đã hiện ngay trong bảng Đặc điểm này.
               // Đang ở trang Báo giá → ở lại trang, mở bảng ngay bên dưới (trước đây mở thêm tab mới của chính trang này, tới nơi
               // bảng còn gập — chủ dự án 22/10/2026). Trang khác → mở trang Báo giá ở tab mới, bảng tự mở (MoMucTheoNeo).
               <a
