@@ -1,7 +1,6 @@
 import React, { ComponentProps } from "react";
 import { Header, useNavigate } from "zmp-ui";
 import { useLocation } from "react-router-dom";
-import logoTron from "../assets/logo-tron.svg";
 
 // THANH TIÊU ĐỀ dùng cho MỌI trang — bọc Header của Zalo, thêm đúng một luật chống kẹt:
 // nút ‹ quay lại trang trước; nếu KHÔNG có trang trước (khách mở thẳng từ link chia sẻ,
@@ -15,7 +14,7 @@ export default function TieuDe({ ve, ...props }: ComponentProps<typeof Header> &
     else if (key === "default") dieuHuong("/", { replace: true, direction: "backward" }); // trang đầu tiên của phiên
     else dieuHuong(-1);
   };
-  // LOGO trên thanh tiêu đề MỌI trang (chủ dự án 06/11/2026: "logo đâu — từ trang chủ đến trang con").
-  const tieuDe = props.title ? <span className="tieu-de-logo"><img src={logoTron} alt="" />{props.title}</span> : props.title;
-  return <Header {...props} title={tieuDe as never} onBackClick={props.onBackClick ?? quayLai} />;
+  // TRANG CON KHÔNG CÓ LOGO (chủ dự án 06/11/2026 tối: "logo các trang con rất vô lí", tên dài bị che) — logo chỉ ở đầu Trang chủ.
+  // Tên trang dừng trước cụm ⋯ ✕ của Zalo (CSS .zaui-header-title), dài quá thì "…".
+  return <Header {...props} onBackClick={props.onBackClick ?? quayLai} />;
 }

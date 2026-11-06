@@ -585,3 +585,21 @@ html.xem-thu .hang-app { padding-right: 0; }
    nổi bật" mới đủ một dòng không bị cắt; dòng thương hiệu dưới logo giữ 11px như bản 47 (12px tràn mép phải). */
 .khoi-dau { gap: 8px !important; }
 .hang-app span { font-size: 11px !important; }
+/* Thẻ dự án: tên 1 dòng thì không chừa dòng trống — loại hình, địa chỉ nằm ngay dưới tên (06/11/2026). */
+.the-du-an .tieu-de { min-height: 0 !important; }
+/* Tên trang con: không chui dưới cụm ⋯ ✕ của Zalo (rộng ~84px + lề 6px) — dài quá thì "…" (06/11/2026). */
+.zaui-header { padding-right: 96px !important; }
+.zaui-header-title { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0; }
+/* CHÂN TRANG — liên kết xếp lưới 2 cột thẳng hàng (trước: chảy tự do, dòng dài ngắn lộn xộn) · khoảng cách nhóm đều 20px (06/11/2026). */
+.ct-nhom { margin-top: 20px !important; }
+.ct-nhom .ct-link { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px 16px !important; margin-top: 10px !important; }
+.ct-nhom .ct-link button { text-align: left; padding: 0 !important; line-height: 20px; }
+.ct-lien-he { margin-top: 12px !important; gap: 6px !important; }
+.ct-ban-quyen { margin-top: 20px !important; padding-top: 14px !important; }
+/* CHÂN TRANG = chân trang web bản điện thoại (src/components/Footer.tsx, 06/11/2026): dòng liên hệ có biểu tượng · 2 nhóm liên kết cạnh nhau,
+   mỗi nhóm một cột dọc (thay lưới 2 cột trong từng nhóm vừa thử — chữ xuống dòng lộn xộn). */
+.ct-lien-he li { display: flex; align-items: flex-start; gap: 10px; }
+.ct-lien-he svg { width: 16px; height: 16px; flex: none; margin-top: 3px; color: #86868b; }
+.ct-cot { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 4px; }
+.ct-cot .ct-nhom h3 { font-size: 12px !important; letter-spacing: .04em; }
+.ct-nhom .ct-link { display: grid !important; grid-template-columns: 1fr !important; gap: 10px !important; margin-top: 10px !important; }
