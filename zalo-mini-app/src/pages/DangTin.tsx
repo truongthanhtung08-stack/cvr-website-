@@ -9,7 +9,7 @@ import { chonAnh, taiAnhLen } from "../lib/taiAnh";
 import { laVideo, tachAnh } from "../lib/media";
 import { useTai } from "../lib/useTai";
 import { layNguoiZalo } from "../lib/zalo";
-import { getAccessToken, getPhoneNumber } from "zmp-sdk";
+import { getAccessToken, getLocation, getPhoneNumber } from "zmp-sdk";
 import BangGiaMaTran, { TEN_HANG } from "../components/BangGiaMaTran";
 
 const { Option } = Select;
@@ -187,6 +187,36 @@ export default function DangTin() {
     const g = so(gia);
     if (Number.isNaN(g)) return null;
     return Math.round(md === "thue" ? g * 1e6 : g * (donVi === "ty" ? 1e9 : 1e6));
+  };
+
+  // VỊ TRÍ HIỆN TẠI (Zalo getLocation): Zalo hỏi khách cho chia sẻ vị trí → máy chủ web đổi ra tỉnh · phường · đường (/api/vi-tri-zalo),
+  // điền sẵn ô Vị trí; khách vẫn sửa được. Từ chối thì thôi, không báo lỗi (Chính sách kiểm duyệt Zalo 6.3).
+  const [dangViTri, setDangViTri] = useState(false);
+  const boDauVT = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/^(thanh pho|tinh)s+/, "").trim();
+  const dungViTri = async () => {
+    setLoi(undefined);
+    setDangViTri(true);
+    try {
+      const tokenViTri = (await getLocation()).token;
+      const zaloAccessToken = await getAccessToken();
+      const { data } = await supabase.auth.getSession();
+      const r = await fetch("https://coastalland.vn/api/vi-tri-zalo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token}` },
+        body: JSON.stringify({ tokenViTri, zaloAccessToken }),
+      });
+      const j = (await r.json().catch(() => ({}))) as { ok?: boolean; loi?: string; tinh?: string; phuong?: string; duong?: string };
+      if (!j.ok) return setLoi(j.loi || "Chưa lấy được vị trí.");
+      const t = provincesNew.find((x) => boDauVT(x.name) === boDauVT(j.tinh ?? ""));
+      if (!t) return setLoi("Chưa nhận ra tỉnh/thành từ vị trí này.");
+      setTinh(t.name);
+      setPhuong(t.wards.find((w) => boDauVT(w) === boDauVT(j.phuong ?? "")) ?? "");
+      if (j.duong && !diaChi.trim()) setDiaChi(j.duong);
+    } catch {
+      /* khách từ chối chia sẻ vị trí */
+    } finally {
+      setDangViTri(false);
+    }
   };
 
   // SỐ ZALO MỘT CHẠM (Zalo getPhoneNumber): Zalo hỏi khách cho chia sẻ số → máy chủ đổi token ra số, coi như đã xác minh.
@@ -393,6 +423,7 @@ export default function DangTin() {
       </Nhom>
 
       <Nhom tieuDe="Vị trí">
+        <Button size="small" variant="secondary" loading={dangViTri} onClick={dungViTri}>Dùng vị trí hiện tại</Button>
         <Select label="Tỉnh/Thành" placeholder="Chọn tỉnh/thành" value={tinh} onChange={(v) => { setTinh(String(v)); setPhuong(""); }} closeOnSelect>
           {provincesNew.map((p) => <Option key={p.name} value={p.name} title={p.name} />)}
         </Select>
