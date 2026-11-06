@@ -8,7 +8,7 @@ import { dungDsDuAn } from "@/lib/duAnTenMayChu";
 // Nạp ở trình duyệt MỘT lần khi khách bắt đầu tìm (lib/duAnTen). Lưu đệm như /api/danh-sach: 1 giờ + xoá khi tin/dự án đổi
 // thật (thẻ "listings" của getListings) — mỗi tháng gần như toàn đọc từ CDN, không thêm lượt chạy hàm đáng kể.
 // ============================================================================
-export const revalidate = 3600;
+export const revalidate = false; // 07/11/2026 CHUẨN: chỉ làm mới khi dữ liệu đổi (thẻ)
 
 export async function GET() {
   const [tin, duAn] = await Promise.all([getListings(), getProjects()]);

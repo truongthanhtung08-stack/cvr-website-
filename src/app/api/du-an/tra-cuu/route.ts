@@ -8,7 +8,7 @@ import { dongTraCuu } from "@/lib/traCuuDuAn";
 // thêm, không nhúng sẵn vào HTML trang chủ (giữ trang chủ < 450 KB). Lưu đệm như /api/du-an/ten: 1 giờ — mỗi tháng gần như toàn
 // đọc từ CDN, không thêm lượt chạy hàm đáng kể.
 // ============================================================================
-export const revalidate = 3600;
+export const revalidate = false; // 07/11/2026 CHUẨN: chỉ làm mới khi dữ liệu đổi (thẻ)
 
 export async function GET() {
   const [tin, duAn] = await Promise.all([getListings(), getProjects()]);

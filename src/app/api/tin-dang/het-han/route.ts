@@ -42,7 +42,14 @@ export async function GET(request: Request) {
       .eq("status", "approved")
       .gt("published_at", new Date(Date.now() - 75_000).toISOString())
       .lte("published_at", new Date().toISOString());
-    if ((vuaDoi ?? 0) + (vuaLen ?? 0) > 0) revalidateTag("listings", "max");
+    // 0h00 giờ VN mỗi ngày làm mới MỘT lần (07/11/2026): trang không còn tự làm mới theo giờ, mà tiêu đề có "tháng/năm",
+    // danh sách tin hết hạn 90 ngày… đổi theo ngày → mỗi ngày dựng lại một lần là đủ, không tốn thêm đáng kể.
+    const vn = new Date(Date.now() + 7 * 3_600_000);
+    const dauNgay = vn.getUTCHours() === 0 && vn.getUTCMinutes() === 0;
+    if ((vuaDoi ?? 0) + (vuaLen ?? 0) > 0 || dauNgay) {
+      revalidateTag("listings", "max");
+      if (dauNgay) revalidateTag("noi-dung", "max");
+    }
     // Báo Bing các trang tin vừa đổi (IndexNow) — chỉ khi có đổi thật, không thêm lệnh nào lúc yên.
     if (dsDoi?.length) await baoIndexNow(dsDoi.map((r: { id: string; title: string | null }) => duongDanTin(r)));
     return NextResponse.json({ ok: true, ...kq, lamMoi: vuaDoi ?? 0 });

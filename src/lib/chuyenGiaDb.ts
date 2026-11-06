@@ -146,7 +146,7 @@ export async function getChuyenGia(): Promise<ChuyenGia[]> {
       `${url}/rest/v1/listings?select=id,type,province,details&status=eq.approved&order=created_at.desc&limit=1000`,
       {
         headers: { apikey: key, Authorization: `Bearer ${key}` },
-        next: { tags: ["listings"], revalidate: 3600 },
+        next: { tags: ["listings"], revalidate: false }, /* 07/11/2026 CHUẨN (anh chốt): KHÔNG làm mới theo giờ — chỉ làm mới khi dữ liệu đổi thật (revalidateTag ở lưu Admin, duyệt, sửa, đẩy, hết hạn, công bố giá, tin hẹn giờ). Làm mới theo giờ = dựng lại trang y hệt, tốn ISR Writes + Fast Origin Transfer. */
       },
     );
     if (!res.ok) return [];
@@ -205,7 +205,7 @@ export async function getCongTy(): Promise<CongTy[]> {
   try {
     const res = await fetch(`${url}/rest/v1/profiles?select=*&role=eq.company&dn_dong_y_dang=eq.true&limit=500`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
-      next: { tags: ["noi-dung"], revalidate: 3600 },
+      next: { tags: ["noi-dung"], revalidate: false }, /* 07/11/2026 CHUẨN (anh chốt): KHÔNG làm mới theo giờ — chỉ làm mới khi dữ liệu đổi thật (revalidateTag ở lưu Admin, duyệt, sửa, đẩy, hết hạn, công bố giá, tin hẹn giờ). Làm mới theo giờ = dựng lại trang y hệt, tốn ISR Writes + Fast Origin Transfer. */
     });
     if (!res.ok) return []; // chưa chạy migration 0065 → chưa có cột → trang hiện như chưa có công ty
     const { thieuHoSoDn } = await import("@/lib/hoSoDoanhNghiep");

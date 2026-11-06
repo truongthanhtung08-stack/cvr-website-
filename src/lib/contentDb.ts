@@ -44,7 +44,7 @@ async function rest<T>(table: string, query: string): Promise<T[] | null> {
       // đẩy lại nguyên trang từ Tokyo.
       // 300 giây là lưới an toàn cho trường hợp sửa thẳng trong bảng Supabase
       // (không qua giao diện admin nên không ai gọi làm mới).
-      next: { tags: ["noi-dung"], revalidate: 3600 } /* 07/11/2026: 300 → 3600. 300 giây kéo MỌI trang dựng lại 5 phút/lần (ISR Writes 1,3 triệu, $6,74 kỳ 14/10–14/11). Admin lưu đã xoá cache ngay qua /api/lam-moi. */,
+      next: { tags: ["noi-dung"], revalidate: false } /* 07/11/2026 CHUẨN (anh chốt): KHÔNG làm mới theo giờ — chỉ làm mới khi dữ liệu đổi thật (revalidateTag ở lưu Admin, duyệt, sửa, đẩy, hết hạn, công bố giá, tin hẹn giờ). Làm mới theo giờ = dựng lại trang y hệt, tốn ISR Writes + Fast Origin Transfer. */,
     });
     if (!res.ok) return null; // bảng chưa tạo (404) / lỗi khác → fallback
     return (await res.json()) as T[];

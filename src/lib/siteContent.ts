@@ -26,7 +26,7 @@ async function fetchBlock<T>(key: string): Promise<T | null> {
         // đầy đủ ở src/lib/contentDb.ts và src/app/api/lam-moi/route.ts.
         // Admin lưu trong /admin/noi-dung → gọi /api/lam-moi → cache bay ngay,
         // nên "sửa là hiện" vẫn đúng, mà khách lạ được phục vụ bản dựng sẵn.
-        next: { tags: ["noi-dung"], revalidate: 3600 } /* 07/11/2026: 300 → 3600. 300 giây kéo MỌI trang dựng lại 5 phút/lần (ISR Writes 1,3 triệu, $6,74 kỳ 14/10–14/11). Admin lưu đã xoá cache ngay qua /api/lam-moi. */,
+        next: { tags: ["noi-dung"], revalidate: false } /* 07/11/2026 CHUẨN (anh chốt): KHÔNG làm mới theo giờ — chỉ làm mới khi dữ liệu đổi thật (revalidateTag ở lưu Admin, duyệt, sửa, đẩy, hết hạn, công bố giá, tin hẹn giờ). Làm mới theo giờ = dựng lại trang y hệt, tốn ISR Writes + Fast Origin Transfer. */,
       },
     );
     if (!res.ok) return null;

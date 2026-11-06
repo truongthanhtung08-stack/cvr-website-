@@ -354,7 +354,7 @@ async function napSoNgayCt(): Promise<void> {
   try {
     const res = await fetch(`${url}/rest/v1/site_content?select=data&key=eq.billing&limit=1`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
-      next: { tags: ["noi-dung"], revalidate: 3600 },
+      next: { tags: ["noi-dung"], revalidate: false }, /* 07/11/2026 CHUẨN (anh chốt): KHÔNG làm mới theo giờ — chỉ làm mới khi dữ liệu đổi thật (revalidateTag ở lưu Admin, duyệt, sửa, đẩy, hết hạn, công bố giá, tin hẹn giờ). Làm mới theo giờ = dựng lại trang y hệt, tốn ISR Writes + Fast Origin Transfer. */
     });
     const ds = res.ok ? ((await res.json()) as { data?: { free?: { hienThi?: number } } }[]) : [];
     const n = ds[0]?.data?.free?.hienThi;
@@ -392,7 +392,7 @@ async function rest(query: string): Promise<Row[] | null> {
       //   · Thay đổi ngoài luồng duyệt (admin ẩn/sửa tin ghi thẳng Supabase) do cron
       //     /api/tin-dang/het-han mỗi phút bắt qua updated_at. revalidate 1 giờ chỉ là lưới
       //     an toàn cuối (15/10/2026: 60s làm trang dựng lại liên tục → tốn ISR Writes).
-      next: { tags: ["listings"], revalidate: 3600 },
+      next: { tags: ["listings"], revalidate: false }, /* 07/11/2026 CHUẨN (anh chốt): KHÔNG làm mới theo giờ — chỉ làm mới khi dữ liệu đổi thật (revalidateTag ở lưu Admin, duyệt, sửa, đẩy, hết hạn, công bố giá, tin hẹn giờ). Làm mới theo giờ = dựng lại trang y hệt, tốn ISR Writes + Fast Origin Transfer. */
     });
     if (!res.ok) return null; // bảng chưa tạo (404) / lỗi khác → fallback
     return (await res.json()) as Row[];

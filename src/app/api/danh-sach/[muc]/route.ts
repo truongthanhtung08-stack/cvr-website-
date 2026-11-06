@@ -12,7 +12,7 @@ import { goiNheTin, goiNheHetHan } from "@/lib/goiNhe";
 // Cache theo thẻ "listings" (1 giờ + xoá ngay khi tin đổi thật) — đúng quy tắc chi phí Vercel.
 // ============================================================================
 
-export const revalidate = 3600;
+export const revalidate = false; // 07/11/2026 CHUẨN: chỉ làm mới khi dữ liệu đổi (thẻ)
 
 export function generateStaticParams() {
   return [{ muc: "ban" }, { muc: "thue" }];

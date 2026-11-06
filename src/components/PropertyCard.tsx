@@ -9,6 +9,7 @@ import CompareButton from "@/components/CompareButton";
 import Highlight from "@/components/Highlight";
 import ShareButtons from "@/components/ShareButtons";
 import { freshText, type Listing } from "@/lib/data";
+import MocDang from "@/components/MocDang";
 import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { thongSoTheoCap } from "@/lib/thongSoThe";
 import { tierFromBadge, getTier, HUY_HIEU_CLS } from "@/lib/packages";
@@ -211,7 +212,7 @@ export default function PropertyCard({
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] font-medium text-cvr-body">{agentName}</span>
                 {(item.hetHan || freshText(item.postedAt, item.bumpedAt)) && (
-                  <span className="block truncate text-[12px] text-cvr-faint">{item.hetHan ? "Hết hạn" : ((m) => (m.startsWith("Làm mới") ? m : `Đăng ${m.charAt(0).toLowerCase()}${m.slice(1)}`))(freshText(item.postedAt, item.bumpedAt))}</span>
+                  <MocDang className="block truncate text-[12px] text-cvr-faint" postedAt={item.postedAt} bumpedAt={item.bumpedAt} hetHan={item.hetHan} coChuDang />
                 )}
               </span>
               {/* HÀNG NGƯỜI ĐĂNG — MỘT MẪU CHO MỌI CẤP (chủ dự án 23/10/2026): ảnh + tên · ngày đăng · Thích · Chia sẻ */}
@@ -252,7 +253,7 @@ export default function PropertyCard({
             <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
             <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cvr-body">{agentName}</span>
             {showTime && (item.hetHan || freshText(item.postedAt, item.bumpedAt)) && (
-              <span className="shrink-0 text-[12px] text-cvr-faint">{item.hetHan ? "Hết hạn" : freshText(item.postedAt, item.bumpedAt)}</span>
+              <MocDang className="shrink-0 text-[12px] text-cvr-faint" postedAt={item.postedAt} bumpedAt={item.bumpedAt} hetHan={item.hetHan} />
             )}
             {/* Nút Yêu thích (tim) ở ĐÁY thẻ — CHỈ mobile (desktop giữ tim trên ảnh) */}
             <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0 sm:hidden" />
@@ -340,7 +341,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
           <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
           <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cvr-body">{agentName}</span>
           {showTime && (item.hetHan || freshText(item.postedAt, item.bumpedAt)) && (
-              <span className="shrink-0 text-[12px] text-cvr-faint">{item.hetHan ? "Hết hạn" : freshText(item.postedAt, item.bumpedAt)}</span>
+              <MocDang className="shrink-0 text-[12px] text-cvr-faint" postedAt={item.postedAt} bumpedAt={item.bumpedAt} hetHan={item.hetHan} />
             )}
         </div>
       </div>
