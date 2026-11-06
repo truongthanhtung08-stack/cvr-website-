@@ -603,3 +603,9 @@ html.xem-thu .hang-app { padding-right: 0; }
 .ct-cot { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 4px; }
 .ct-cot .ct-nhom h3 { font-size: 12px !important; letter-spacing: .04em; }
 .ct-nhom .ct-link { display: grid !important; grid-template-columns: 1fr !important; gap: 10px !important; margin-top: 10px !important; }
+/* CHÂN TRANG — cân tỷ lệ (06/11/2026): 2 tiêu đề nhóm CAO BẰNG NHAU (tiêu đề ngắn canh đáy theo tiêu đề 2 dòng) → 2 cột liên kết bắt đầu
+   cùng một hàng · nhịp đều: liên hệ → nhóm 20px · tiêu đề → liên kết 10px · giữa các liên kết 10px · liên kết cuối → vạch © 20px. */
+.ct-cot { margin-top: 20px !important; align-items: start; }
+.ct-cot .ct-nhom { margin-top: 0 !important; display: grid; grid-template-rows: auto 1fr; }
+.ct-cot .ct-nhom h3 { min-height: 2lh; display: flex; align-items: flex-end; margin: 0 !important; }
+.ct-cot + .ct-ban-quyen { margin-top: 20px !important; }
