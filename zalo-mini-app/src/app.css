@@ -466,3 +466,18 @@ html.xem-thu .hang-app { padding-right: 0; }
 .the-tin .gia-dt .gia, .o-noi-bat .the-tin .gia-dt .gia { font-size: 16px !important; }
 .the-tin .day-the-moi { font-size: 12px !important; }
 .ds-doc, .luoi-du-an { padding: 10px 16px !important; }
+/* Chủ dự án 06/11/2026: "thẻ dự án hơi to" · "mở chi tiết: chỉnh khung ảnh, nội dung — cân đối, gọn lại" */
+.truot-ngang.hep > * { flex: 0 0 66% !important; max-width: 66% !important; }
+.the-du-an .tieu-de { font-size: 13.5px !important; min-height: 2.9em; }
+.the-du-an .dong-phu { font-size: 12px !important; }
+/* Chi tiết tin / dự án: khung ảnh 16:10 (thấp hơn, thấy nội dung ngay), khối chữ gọn */
+.anh-tin-khung img, .anh-tin-video { aspect-ratio: 16 / 10 !important; }
+.zaui-swiper img, .swiper-slide img { aspect-ratio: 16 / 10 !important; }
+.khoi-ct { padding: 10px 14px !important; margin-top: 4px !important; }
+.khoi-ct .muc-tin { font-size: 14.5px !important; margin-bottom: 6px !important; }
+.gia-ct strong { font-size: 19px !important; }
+.khoi-ct .tieu-de-tin { font-size: 15px !important; margin: 4px 0 2px !important; }
+.khoi-ct .dong-ds:not(.dong-bam) > div { padding: 6px 0 !important; font-size: 12.5px !important; }
+.mo-ta-ct, .noi-dung { font-size: 14px !important; line-height: 1.55 !important; }
+.luoi-tt > div { padding: 8px 10px !important; }
+.luoi-tt dd { font-size: 13px !important; }
