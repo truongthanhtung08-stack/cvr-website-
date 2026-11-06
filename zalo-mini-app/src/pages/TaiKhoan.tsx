@@ -30,13 +30,21 @@ export default function TaiKhoan() {
       { ten: "Tin đăng", icon: "zi-list-1", app: "/tin-cua-toi" },
       { ten: "Khách hàng", icon: "zi-group", app: "/khach-hang" },
       { ten: "Đăng tin", icon: "zi-plus-circle", app: "/dang-tin" },
+      { ten: "Dự án của tôi", icon: "zi-home", app: "/du-an-cua-toi" },
     ] },
     { ten: "Tài khoản", muc: [
       { ten: "Ví & nạp tiền", icon: "zi-poll", app: "/nap-tien", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
       { ten: "Hóa đơn", icon: "zi-note", app: "/hoa-don" },
+      { ten: "Gói hội viên", icon: "zi-star", app: "/hoi-vien" },
       { ten: "Bảng giá dịch vụ", icon: "zi-more-diamond-solid", app: "/bang-gia" },
       { ten: "Tin đã lưu", icon: "zi-heart", app: "/da-luu" },
+      { ten: "Tìm kiếm đã lưu", icon: "zi-notif", app: "/tim-kiem-luu" },
       { ten: "Cài đặt", icon: "zi-setting", app: "/cai-dat" },
+    ] },
+    { ten: "Khám phá", muc: [
+      { ten: "Danh bạ chuyên gia", icon: "zi-group", app: "/chuyen-gia" },
+      { ten: "So sánh bất động sản", icon: "zi-more-grid", app: "/so-sanh" },
+      { ten: "Tin tức", icon: "zi-note", app: "/tin-tuc" },
     ] },
     { ten: "Hỗ trợ", muc: [
       { ten: "Nhắn Zalo Coastal Land", icon: "zi-chat", bam: () => nhanCoastalLand() },
@@ -46,7 +54,7 @@ export default function TaiKhoan() {
   ];
   const mo = (m: Muc) => {
     if (m.bam) return m.bam();
-    if (!nguoiDung && m.ten !== "Bảng giá dịch vụ" && m.ten !== "Tin đã lưu") return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(m.app ?? "/tai-khoan")}`);
+    if (!nguoiDung && !["Bảng giá dịch vụ", "Tin đã lưu", "Danh bạ chuyên gia", "So sánh bất động sản", "Tin tức"].includes(m.ten)) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(m.app ?? "/tai-khoan")}`);
     if (m.app) return dieuHuong(m.app);
   };
 

@@ -1,6 +1,6 @@
 import { baoThanhToan } from "@/lib/baoThanhToan";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { nguoiGoi, optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { vnd, type BillingData } from "@/lib/billing";
@@ -23,9 +23,12 @@ function loi(thongBao: string, code = 400) {
   return NextResponse.json({ ok: false, loi: thongBao }, { status: code });
 }
 
-export async function POST(request: Request) {
-  const ssr = await createClient();
-  const { data: { user } } = await ssr.auth.getUser();
+// Web (cookie) + Zalo Mini App (Bearer) — src/lib/goiTuMiniApp.ts
+export const POST = postMiniApp(xuLy);
+export const OPTIONS = optionsMiniApp;
+
+async function xuLy(request: Request) {
+  const user = await nguoiGoi(request);
   if (!user) return loi("Bạn cần đăng nhập.", 401);
 
   const { goi: maGoi, thang } = (await request.json().catch(() => ({}))) as { goi?: string; thang?: number };

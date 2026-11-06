@@ -12,6 +12,7 @@ import { NHAN_THONG_SO } from "../lib/nhanThongSo";
 import { daLuu, doiLuu } from "../lib/daLuu";
 import { ghiDaXem } from "../lib/daXem";
 import { chiaSeTin } from "../lib/zalo";
+import { dangSoSanh, doiSoSanh } from "../lib/soSanh";
 import { useTai } from "../lib/useTai";
 import { supabase } from "../lib/supabase";
 import { nhungVideo, tachAnh, tachVideo } from "../lib/media";
@@ -103,6 +104,7 @@ export default function ChiTietTin() {
   const { data: tin, dangTai, loi } = useTai(() => layTinChiTiet(id), [id], null);
   const tuongTu = useTai(() => (tin ? layTinTuongTu(tin) : Promise.resolve([])), [tin?.id], []);
   const [luu, setLuu] = useState(() => daLuu(id));
+  const [soSanh, setSoSanh] = useState(() => dangSoSanh(id));
   useEffect(() => {
     if (!tin) return;
     ghiDaXem(tin.id);
@@ -177,6 +179,9 @@ export default function ChiTietTin() {
           <div className="nut-ct">
             <button onClick={() => setLuu(doiLuu(tin.id))} aria-label="Lưu tin">
               <Icon icon={luu ? "zi-heart-solid" : "zi-heart"} size={20} style={luu ? { color: "#e11d48" } : undefined} />
+            </button>
+            <button onClick={() => { const co = doiSoSanh(tin.id); setSoSanh(co); if (co) dieuHuong("/so-sanh"); }} aria-label="So sánh" className={soSanh ? "dang-so-sanh" : ""}>
+              <Icon icon="zi-more-grid" size={20} />
             </button>
             <button onClick={() => chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(tachAnh(tin.images)[0]), `/tin/${tin.id}`)} aria-label="Chia sẻ">
               <Icon icon="zi-share-external-1" size={20} />

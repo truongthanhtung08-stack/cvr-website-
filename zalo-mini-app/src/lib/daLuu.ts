@@ -1,24 +1,14 @@
-// Tin đã lưu — giữ trên máy khách (giống nút tim trên web khi chưa đăng nhập).
+import { docKho, ghiKho } from "./kho";
+
+// Tin đã lưu — giữ trong bộ nhớ của Zalo (src/lib/kho.ts), tối đa 200 tin.
 const KHOA = "cl-da-luu";
 
-export function dsDaLuu(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(KHOA) ?? "[]");
-  } catch {
-    return [];
-  }
-}
-
-export function daLuu(id: string) {
-  return dsDaLuu().includes(id);
-}
+export const dsDaLuu = (): string[] => docKho<string[]>(KHOA, []);
+export const daLuu = (id: string) => dsDaLuu().includes(id);
 
 export function doiLuu(id: string): boolean {
   const ds = dsDaLuu();
   const co = ds.includes(id);
-  const moi = co ? ds.filter((x) => x !== id) : [id, ...ds].slice(0, 200);
-  try {
-    localStorage.setItem(KHOA, JSON.stringify(moi));
-  } catch {}
+  ghiKho(KHOA, co ? ds.filter((x) => x !== id) : [id, ...ds].slice(0, 200));
   return !co;
 }

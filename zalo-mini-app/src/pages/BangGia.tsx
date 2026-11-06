@@ -17,7 +17,7 @@ import BangGiaMaTran, { NhanHang, QuyDinh, gomVat } from "../components/BangGiaM
 const HANG = ["basic", "silver", "gold", "diamond"] as const;
 // Cột của bảng Đẩy tin do admin lưu theo thứ tự Diamond · Gold · Silver · Basic (COT_UP trên web).
 const COT_UP = ["diamond", "gold", "silver", "basic"];
-const TEN_VOUCHER: Record<string, string> = {
+export const TEN_VOUCHER: Record<string, string> = {
   "tin-thuong": "đăng tin CVR Basic",
   "tin-vip": "đăng tin CVR Silver / Gold / Diamond",
   "day-thuong": "đẩy tin CVR Basic",
