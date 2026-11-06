@@ -2,7 +2,7 @@ import React from "react";
 import { openPhone } from "zmp-sdk";
 import { useNavigate } from "zmp-ui";
 import { nhanCoastalLand } from "../lib/zalo";
-import logoTron from "../assets/logo-tron.svg";
+import logoNgang from "../assets/logo-ngang.svg";
 import { layChanTrang } from "../lib/tin";
 import { useTai } from "../lib/useTai";
 
@@ -36,10 +36,8 @@ export default function ChanTrang() {
 
   return (
     <footer className="chan-trang">
-      <div className="ct-hieu">
-        <img src={logoTron} alt="" />
-        <strong>COASTAL LAND</strong>
-      </div>
+      {/* Logo ngang có slogan — ĐÚNG tệp chân trang web dùng (public/logo/logo-horizontal-dark.svg, BrandLogo size lg). */}
+      <img className="ct-logo" src={logoNgang} alt="COASTAL LAND" />
       <p className="ct-tagline">{f.tagline}</p>
       <ul className="ct-lien-he">
         {/* Như chân trang web bản điện thoại: mỗi dòng có biểu tượng (vị trí · điện thoại · thư). Địa chỉ lấy từ phapLy.ts (Admin không đè). */}

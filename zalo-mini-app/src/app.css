@@ -653,3 +653,5 @@ html.xem-thu .hang-app { padding-right: 0; }
    mảnh để tách nội dung khi cuộn. */
 .dau-app { border-bottom: 1px solid var(--cl-line); }
 .dau-app + .khoi, .dau-app ~ .khoi:first-of-type { margin-top: 0 !important; padding-top: 14px !important; }
+/* Logo ngang có slogan ở chân trang — cao 54px như web (BrandLogo lg = 3.4rem). */
+.ct-logo { display: block; height: 54px; width: auto; max-width: 100%; }
