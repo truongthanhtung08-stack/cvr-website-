@@ -254,3 +254,28 @@ html.xem-thu .hang-app { padding-right: 0; }
 .tom-tat-goi { margin-top: 10px; background: #f5f5f7; border-radius: 12px; padding: 10px 12px; font-size: 13px; }
 .tom-tat-goi div { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; color: var(--cl-body); }
 .tom-tat-goi b { color: var(--cl-ink); font-weight: 600; text-align: right; }
+
+/* BẤT ĐỘNG SẢN NỔI BẬT (06/11/2026) — 2 slide × 8 tin, lưới 2 cột như web; thẻ gọn trong lưới */
+.tieu-de-khoi { font-size: 18px; font-weight: 700; color: var(--cl-ink); margin: 0; }
+.tab-noi-bat { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 12px; scrollbar-width: none; }
+.tab-noi-bat::-webkit-scrollbar { display: none; }
+.tab-noi-bat button { flex: none; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--cl-line); background: #fff; color: var(--cl-body); font-size: 13px; font-weight: 500; }
+.tab-noi-bat button.bat { background: var(--cl-ink); border-color: var(--cl-ink); color: #fff; }
+.ray-slide { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+.ray-slide::-webkit-scrollbar { display: none; }
+.slide-noi-bat { flex: 0 0 100%; scroll-snap-align: start; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; box-sizing: border-box; align-content: start; }
+.slide-noi-bat .the-tin { border-radius: 12px; }
+.slide-noi-bat .the-tin .anh-the img { aspect-ratio: 4 / 3; }
+.slide-noi-bat .the-tin .than-the { padding: 8px 10px 10px; }
+.slide-noi-bat .the-tin .tieu-de { font-size: 13px; line-height: 1.35; -webkit-line-clamp: 2; }
+.slide-noi-bat .the-tin .mo-ta { display: none; }
+.slide-noi-bat .the-tin .gia-dt { font-size: 12px; margin-top: 4px; flex-wrap: wrap; column-gap: 6px; row-gap: 0; justify-content: flex-start; }
+.slide-noi-bat .the-tin .gia-dt > * { white-space: nowrap; }
+.slide-noi-bat .the-tin .gia-dt .gia { font-size: 14px; }
+.slide-noi-bat .the-tin .day-the-moi { font-size: 11px; }
+.slide-noi-bat .the-tin .day-the-moi span:last-child { display: none; }
+.slide-noi-bat .the-tin .nhan-hang { font-size: 9px; padding: 2px 6px; }
+.slide-noi-bat .the-tin .so-anh { display: none; }
+.cham-slide { display: flex; justify-content: center; gap: 6px; padding-top: 12px; }
+.cham-slide span { width: 6px; height: 6px; border-radius: 999px; background: var(--cl-line); transition: width .2s; }
+.cham-slide span.bat { width: 16px; background: var(--cl-ink); }

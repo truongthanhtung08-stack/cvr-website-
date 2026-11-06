@@ -1,11 +1,11 @@
 import React from "react";
-import { Box, Input, Page, Spinner, useNavigate } from "zmp-ui";
+import { Input, Page, useNavigate } from "zmp-ui";
 import Khoi from "../components/Khoi";
-import TheTin from "../components/TheTin";
+import KhoiNoiBat from "../components/KhoiNoiBat";
 import TheDuAn from "../components/TheDuAn";
 import TruotNgang from "../components/TruotNgang";
 import IconCL, { type TenIcon } from "../components/IconCL";
-import { layDuAn, layTinhCoTin, layTinTrangChu } from "../lib/tin";
+import { layDuAn, layTinhCoTin } from "../lib/tin";
 import { useTai } from "../lib/useTai";
 import { nhanCoastalLand } from "../lib/zalo";
 import logoTron from "../assets/logo-tron.svg";
@@ -31,14 +31,9 @@ const DICH_VU: DichVu[] = [
   { nhan: "Tư vấn", icon: "tuVan", nen: "#fbf4e6", mau: "#8a6d2e", bam: () => nhanCoastalLand() },
 ];
 
-function Cho({ dang }: { dang: boolean }) {
-  return dang ? <Box flex justifyContent="center" p={4}><Spinner /></Box> : null;
-}
 
 export default function TrangChu() {
   const dieuHuong = useNavigate();
-  const ban = useTai(() => layTinTrangChu("ban"), [], []);
-  const thue = useTai(() => layTinTrangChu("thue"), [], []);
   const duAn = useTai(() => layDuAn(8), [], []);
   const tinh = useTai(() => layTinhCoTin("ban"), [], []); // tỉnh đang có tin thật — không ảnh, không số bịa
 
@@ -66,16 +61,8 @@ export default function TrangChu() {
         ))}
       </div>
 
-      {/* Hai khối tin song song: BÁN · CHO THUÊ — mỗi khối tin VIP xếp trước, rồi tin mới. */}
-      <Khoi tieuDe="Nhà đất bán" xemThem="/ds/ban">
-        <Cho dang={ban.dangTai} />
-        {!ban.dangTai && <TruotNgang>{ban.data.map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>}
-      </Khoi>
-
-      <Khoi tieuDe="Nhà đất cho thuê" xemThem="/ds/thue">
-        <Cho dang={thue.dangTai} />
-        {!thue.dangTai && <TruotNgang>{thue.data.map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>}
-      </Khoi>
+      {/* Như web: Bất động sản nổi bật (2 slide × 8 tin theo cấp, có tab + Xem thêm) — thay 2 khối trượt Bán / Cho thuê (06/11/2026) */}
+      <KhoiNoiBat />
 
       {duAn.data.length > 0 && (
         <Khoi tieuDe="Dự án nổi bật" xemThem="/du-an">

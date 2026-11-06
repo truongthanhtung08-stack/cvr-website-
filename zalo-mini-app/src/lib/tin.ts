@@ -246,3 +246,13 @@ export async function layChanTrang(): Promise<ChanTrang> {
   const r = await doc<{ data: ChanTrang }>("site_content", "select=data&key=eq.footer&limit=1").catch(() => []);
   return r[0]?.data ?? {};
 }
+
+// BẤT ĐỘNG SẢN NỔI BẬT trang chủ — như web (src/components/FeaturedListings.tsx, src/lib/tinNoiBat.ts): cả Mua bán lẫn Cho thuê,
+// xếp theo cấp Diamond → Gold → Silver → Basic, cùng cấp giữ thứ tự mới nhất. Lấy đủ cho 5 tab × 16 tin (2 slide × 8).
+export async function layTinNoiBat() {
+  const ds = await rest(`select=${COT}&status=eq.approved&purpose=in.(ban,thue)&${THU_TU}&limit=120`);
+  return ds
+    .map((t, i) => ({ t, i }))
+    .sort((a, b) => THU_HANG[hangHieuLuc(a.t)] - THU_HANG[hangHieuLuc(b.t)] || a.i - b.i)
+    .map((x) => x.t);
+}
