@@ -1035,6 +1035,8 @@ export default function PostListingForm() {
   useEffect(() => {
     if (!error || !loiBuoc) return;
     const l = loiDangTin();
+    // Chỉ chạy khi khách đổi ô (không vòng lặp) — tắt dòng báo một lần
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!l || l[0] !== error) { setError(""); setLoiBuoc(""); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaiHinh, province, priceValue, giaTuGhi, donVi, area, title, planTier, images, contactPhone, contactEmail]);

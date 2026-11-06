@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { Plan } from "@/lib/billing";
 import { vnd } from "@/lib/billing";
 import { getTier, type TierId } from "@/lib/packages";
@@ -242,7 +243,7 @@ export default function BangGiaGoiTin({
               // chủ, khách mất tin đang soạn (chủ dự án 06/11/2026). Quyền lợi đã hiện ngay trong bảng Đặc điểm này.
               // Đang ở trang Báo giá → ở lại trang, mở bảng ngay bên dưới (trước đây mở thêm tab mới của chính trang này, tới nơi
               // bảng còn gập — chủ dự án 22/10/2026). Trang khác → mở trang Báo giá ở tab mới, bảng tự mở (MoMucTheoNeo).
-              <a
+              <Link
                 href="/bao-gia-dang-tin#dac-diem"
                 onClick={(e) => {
                   const bang = document.getElementById("dac-diem") as HTMLDetailsElement | null;
@@ -255,7 +256,7 @@ export default function BangGiaGoiTin({
                 className="mt-4 inline-flex text-[13px] font-semibold text-cvr-blue-ink"
               >
                 Xem bảng quyền lợi đầy đủ →
-              </a>
+              </Link>
             )}
           </div>
         </div>
