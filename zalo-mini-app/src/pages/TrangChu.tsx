@@ -12,7 +12,7 @@ const KHU_VUC_WEB = ["Đà Nẵng", "Huế", "Quảng Trị", "Quảng Ngãi", "
 import TheBaiViet from "../components/TheBaiViet";
 import { useTai } from "../lib/useTai";
 import { nhanCoastalLand } from "../lib/zalo";
-import logoTron from "../assets/logo-tron.svg";
+import logoNgang from "../assets/logo-ngang.svg";
 import ChanTrang from "../components/ChanTrang";
 
 // TRANG CHỦ — cấu trúc chuẩn Mini App Zalo (không bê nguyên web):
@@ -45,11 +45,8 @@ export default function TrangChu() {
     <Page className="trang-chu" style={{ paddingBottom: 0, paddingTop: 0 }}>
       <div className="dau-app">
         <div className="hang-app">
-          <img src={logoTron} alt="" />
-          <div>
-            <strong>COASTAL LAND</strong>
-            <span>Cổng thông tin bất động sản trực tuyến</span>
-          </div>
+          {/* LOGO CHUẨN (06/11/2026 "lấy logo CHUẨN, không làm kiểu dối"): đúng file logo ngang của thương hiệu (cùng chân trang), không tự ghép chữ */}
+          <img className="logo-chuan" src={logoNgang} alt="COASTAL LAND" />
         </div>
         <div onClick={() => dieuHuong("/tim-kiem")}>
           <Input.Search placeholder="Tìm nhà đất, khu vực, dự án…" readOnly />
