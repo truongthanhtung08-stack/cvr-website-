@@ -6,8 +6,9 @@ const so = (n: number, le = 1) => n.toLocaleString("vi-VN", { maximumFractionDig
 export function gia(t: Tin): string {
   const v = t.price_vnd;
   if (v == null) return "Thỏa thuận";
-  if (t.purpose === "thue" || t.purpose === "can-thue") return `${so(v / 1e6)} triệu/tháng`;
-  return v >= 1e9 ? `${so(v / 1e9)} tỷ` : `${so(v / 1e6)} triệu`;
+  // Giữ đúng số người bán (luật 29/10/2026: không làm tròn 7,65 → 7,7) — tỷ 3 số lẻ, triệu 2 số lẻ như web.
+  if (t.purpose === "thue" || t.purpose === "can-thue") return `${so(v / 1e6, 2)} triệu/tháng`;
+  return v >= 1e9 ? `${so(v / 1e9, 3)} tỷ` : `${so(v / 1e6, 2)} triệu`;
 }
 
 // "3 giờ trước" / "Làm mới hôm qua" — chép freshText + postedText của web (src/lib/data.ts).
@@ -60,7 +61,8 @@ export function diaChiDuAn(d: { ward: string | null; district: string | null; pr
 
 // Đoạn nội dung ngắn cho thẻ tin: bỏ ký hiệu định dạng, bỏ phần lặp lại tiêu đề.
 export function tomTatTin(t: Tin): string {
-  let mo = (t.description ?? "").replace(/::\w+::|\*\*|!\[[^\]]*\]\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+  // Bỏ cả ký tự thoát Markdown (\*, \-) và dấu chấm trang trí (▪︎ •) — thẻ tin không lộ ký hiệu.
+  let mo = (t.description ?? "").replace(/::\w+::|\*\*|!\[[^\]]*\]\([^)]*\)|\\[*_#.\-]|[▪•●]︎?/g, " ").replace(/\s+/g, " ").trim();
   if (mo.toLowerCase().startsWith(t.title.toLowerCase().slice(0, 40))) mo = mo.slice(t.title.length).replace(/^[\s.,:;–—-]+/, "");
   return mo;
 }

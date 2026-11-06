@@ -17,9 +17,10 @@ const { Option } = Select;
 // status "pending" chờ admin duyệt, details.plan = gói + số tiền đã báo (giaBao, chưa VAT).
 // Mini App chỉ mở GÓI TIN THƯỜNG (Basic); gói VIP / thanh toán cần Checkout SDK của Zalo (chưa bật).
 
-// Loại hình — đúng danh mục web (src/lib/filters.ts saleTypeGroups / rentTypeGroups).
-const LOAI_BAN = ["Căn hộ", "Chung cư", "Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại", "Đất nền / Đất nền dự án", "Đất nông nghiệp", "Villa / Biệt thự biển", "Condotel", "Đất công nghiệp", "Kho / Nhà xưởng", "Bất động sản khác"];
-const LOAI_THUE = ["Căn hộ", "Chung cư", "Căn hộ dịch vụ", "Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề", "Nhà trọ / Phòng trọ", "Văn phòng", "Mặt bằng / Cửa hàng bán lẻ", "Thuê đất / Nhà xưởng / Kho bãi", "Bất động sản khác"];
+// Loại hình — ĐÚNG ô Loại hình của form web (06/11/2026, sinh từ src/lib/categories.ts nhomChonLoaiHinh + tenLoaiHinhMenu).
+// ma = giá trị lưu ("<loại hình>::<loại đất>" khi là Đất nền dự án) · ten = chữ khách thấy. Web đổi cây thì sinh lại hai dòng này.
+const LOAI_BAN = [{"ma":"Căn hộ","ten":"Căn hộ"},{"ma":"Chung cư","ten":"Chung cư"},{"ma":"Căn hộ dịch vụ","ten":"Căn hộ dịch vụ"},{"ma":"Nhà riêng","ten":"Nhà riêng"},{"ma":"Nhà mặt phố","ten":"Nhà mặt phố"},{"ma":"Nhà biệt thự / Liền kề","ten":"Nhà biệt thự, liền kề"},{"ma":"Shophouse / Nhà phố thương mại","ten":"Shophouse, nhà phố thương mại"},{"ma":"Đất khác","ten":"Đất"},{"ma":"Đất nền / Đất nền dự án","ten":"Đất nền"},{"ma":"Đất nền / Đất nền dự án::Đất nền dự án","ten":"Đất nền dự án"},{"ma":"Villa / Biệt thự biển","ten":"Villa, biệt thự biển"},{"ma":"Condotel","ten":"Condotel"},{"ma":"Homestay / Farmstay","ten":"Homestay, Farmstay"},{"ma":"Khu nghỉ dưỡng","ten":"Khu nghỉ dưỡng"},{"ma":"Đất công nghiệp","ten":"Đất công nghiệp"},{"ma":"Kho / Nhà xưởng","ten":"Kho, nhà xưởng"},{"ma":"Bất động sản khác","ten":"Bất động sản khác"}];
+const LOAI_THUE = [{"ma":"Căn hộ","ten":"Căn hộ"},{"ma":"Chung cư","ten":"Chung cư"},{"ma":"Căn hộ dịch vụ","ten":"Căn hộ dịch vụ"},{"ma":"Nhà riêng","ten":"Nhà riêng"},{"ma":"Nhà mặt phố","ten":"Nhà mặt phố"},{"ma":"Nhà phố thương mại","ten":"Shophouse, nhà phố thương mại"},{"ma":"Biệt thự / Liền kề","ten":"Nhà biệt thự, liền kề"},{"ma":"Nhà trọ / Phòng trọ","ten":"Nhà trọ, phòng trọ"},{"ma":"Văn phòng","ten":"Văn phòng"},{"ma":"Mặt bằng / Cửa hàng bán lẻ","ten":"Cửa hàng, ki ốt"},{"ma":"Homestay / Farmstay","ten":"Homestay, Farmstay"},{"ma":"Thuê đất / Nhà xưởng / Kho bãi","ten":"Kho, nhà xưởng, đất"},{"ma":"Bất động sản khác","ten":"Bất động sản khác"}];
 const PHAP_LY = ["Sổ đỏ / Sổ hồng", "Hợp đồng mua bán", "Đang chờ sổ"];
 const HUONG = ["Đông", "Đông Nam", "Nam", "Tây Nam", "Tây", "Tây Bắc", "Bắc", "Đông Bắc"];
 const TOI_DA_ANH = 15; // web: mọi tin 15 ảnh (mức chung hiện hành)
@@ -188,11 +189,13 @@ export default function DangTin() {
     const viThieu = tien.tongTra > 0 && khaDung < tien.tongTra;
     setDangGui(true);
     const specs: Record<string, string> = {};
+    const [loaiLuu, loaiDat] = loai.split("::"); // Đất nền dự án = loại hình Đất nền / Đất nền dự án + loại đất (như web)
+    if (loaiDat) specs.landType = loaiDat;
     if (matTien.trim()) specs.frontage = matTien.trim();
     if (soTang.trim()) specs.floors = soTang.trim();
     const { error } = await supabase.from("listings").insert({
       purpose: md,
-      type: loai,
+      type: loaiLuu,
       title: tieuDe.trim(),
       description: moTa.trim() || null,
       price_vnd: giaVnd(),
@@ -276,7 +279,7 @@ export default function DangTin() {
           <button className={md === "thue" ? "bat" : ""} onClick={() => { setMd("thue"); setLoai(""); }}>Cho thuê</button>
         </div>
         <Select label="Loại hình" placeholder="Chọn loại hình" value={loai} onChange={(v) => setLoai(String(v))} closeOnSelect>
-          {(md === "thue" ? LOAI_THUE : LOAI_BAN).map((l) => <Option key={l} value={l} title={l} />)}
+          {(md === "thue" ? LOAI_THUE : LOAI_BAN).map((l) => <Option key={l.ma} value={l.ma} title={l.ten} />)}
         </Select>
       </Nhom>
 
