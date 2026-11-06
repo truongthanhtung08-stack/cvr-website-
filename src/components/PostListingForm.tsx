@@ -1026,6 +1026,15 @@ export default function PostListingForm() {
     }, 350);
   }
 
+  // Khách điền / chọn xong đúng ô đang báo thiếu → dòng báo đỏ tự tắt (06/11/2026: trước đây chọn xong vẫn còn "Chưa chọn…"
+  // tới lần bấm Đăng sau). Chỉ chạy khi ô thay đổi; ô khác còn thiếu thì chờ khách bấm Đăng mới báo tiếp.
+  useEffect(() => {
+    if (!error || !loiBuoc) return;
+    const l = loiDangTin();
+    if (!l || l[0] !== error) { setError(""); setLoiBuoc(""); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaiHinh, province, priceValue, giaTuGhi, donVi, area, title, planTier, images, contactPhone, contactEmail]);
+
   // KIỂM THEO ĐÚNG THỨ TỰ 7 BƯỚC (15/10/2026): thiếu nhiều ô thì trả ô ở bước SỚM NHẤT trước. null = đủ để gửi duyệt.
   function loiDangTin(): [string, string, string?] | null {
     // Bước 1 — Loại tin & vị trí
