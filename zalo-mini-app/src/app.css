@@ -852,3 +852,11 @@ html.xem-thu .hang-app { padding-right: 0; }
 .anh-tin-duoi { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #f0f0f3; font-size: 13px; color: var(--cl-body); }
 .anh-tin-duoi span { display: flex; align-items: center; gap: 4px; }
 .anh-tin-duoi button { border: 0; background: none; padding: 4px 0; font-size: 14px; font-weight: 600; color: var(--cl-blue, #0071e3); }
+
+/* ══ LUẬT GỐC CHO MỌI TRANG (06/11/2026 "làm từ gốc", sau rà toàn bộ màn) ══
+   ① Không màn nào trượt ngang: nội dung rộng (bảng, hàng chip) tự cuộn trong khung của nó, trang không bao giờ lệch sang bên.
+   ② Hàng nút cạnh nhau (Box flex + Button fullWidth) chia đều bề ngang, chữ dài tự xuống dòng — không đẩy tràn.
+   ③ Thanh dính đáy (nút chính, menu dưới) không che nội dung cuối trang: .zaui-page đã chừa 84px (đo: thanh cao 69px). */
+.zaui-page { overflow-x: hidden; }
+.zaui-box-flex > .zaui-btn-full-width { flex: 1 1 0; min-width: 0; width: auto !important; }
+.zaui-box-flex > .zaui-btn-full-width span { white-space: normal; line-height: 1.2; }

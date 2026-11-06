@@ -3,6 +3,9 @@ import "./app.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import UngDung from "./app";
+import { batKeoNgang } from "./lib/keoNgang";
+
+batKeoNgang(); // kéo ngang bằng chuột / touchpad trên Zalo PC — một chỗ cho mọi dải ảnh, dải thẻ
 
 // XEM THỬ NGOÀI MINI APP (link cloudflared mở trong trình duyệt Zalo / localhost): không có cụm ⋯ ✕
 // của Mini App nên bỏ khoảng chừa cho nó — không thì đầu trang hở một khoảng vô lý.
