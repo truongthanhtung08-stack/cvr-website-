@@ -459,3 +459,10 @@ html.xem-thu .hang-app { padding-right: 0; }
    2) trang tin — hàng 1: nhãn cấp + Lưu / Chia sẻ; hàng 2: "Mã · ngày" một dòng (trước ngày rớt lẻ một mình). */
 .dau-app { position: sticky; top: 0; z-index: 20; box-shadow: 0 1px 0 var(--cl-surface); }
 .meta-ct .meta-chu { order: 3; flex-basis: 100%; white-space: nowrap; font-size: 12px; color: var(--cl-muted); }
+/* Thẻ nhỏ lại một chút (chủ dự án 06/11/2026 "thẻ tin hơi to"): dải trượt 80%, ảnh thấp hơn 16:10, chữ nhỏ một nấc */
+.o-noi-bat, .truot-ngang.hep > * { flex: 0 0 80% !important; max-width: 80% !important; }
+.the-tin .anh-the img, .the-du-an .anh-the img, .anh-trong { aspect-ratio: 16 / 10 !important; }
+.the-tin .tieu-de { font-size: 14px !important; }
+.the-tin .gia-dt .gia, .o-noi-bat .the-tin .gia-dt .gia { font-size: 16px !important; }
+.the-tin .day-the-moi { font-size: 12px !important; }
+.ds-doc, .luoi-du-an { padding: 10px 16px !important; }
