@@ -272,6 +272,12 @@ kiểm bằng mắt phải xoá đệm tab. 4 lỗi eslint ở PostListingForm /
 bản gốc của anh ở `…ban-goc-04-11-2026.docx` cùng thư mục (tệp chính đang mở trong Word nên chưa ghi đè — đóng Word rồi chép đè).
 - **Mọi việc** (tin Mua bán, Cho thuê, dự án, bài Tin tức, Zalo, Facebook, sửa mã web) phải gắn được vào một bước của cây; không gắn được thì không làm.
   Ghi việc ở `RA\VIEC.md`, `CAN-ANH-DUYET.md`, nhật ký kèm số bước, vd `[B13] xin index /mua-ban/dat/da-nang`.
+- **⛔ 5 LUẬT ANH CHỐT 07/11/2026 (đã ghi cả vào cây, mục 6–10 phần "Cách 3 bên dùng cây"):**
+  ① Mọi chỉnh sửa, thay đổi đi theo MỘT quy trình này; web là một thực thể (entity), các phần là thực thể con, cả trang là một khối thống nhất.
+  ② Anh yêu cầu từng phần hay cả một phần, ở bất kỳ bước nào → NHÌN VÀO CÂY để làm đúng cấu trúc.
+  ③ Sửa TẬN GỐC: không sửa tay, không phá phần đã fix (trừ khi anh yêu cầu).
+  ④ Làm được nói ĐƯỢC, không được nói KHÔNG; làm thì chuẩn bị đủ môi trường trước, không lằng nhằng mất thời gian.
+  ⑤ Giao tiếp: không nói nhiều, dài dòng. Hiểu thì làm; không hiểu PHẢI hỏi.
 - **Cây = CÁI GÌ, mục 11.00 = LÀM THẾ NÀO MỖI NGÀY.** Vòng ngày 11.00 chạy lại các bước: ĐO (21, 02) → nhu cầu SEO hôm nay (03, 04) → giao
   Cowork (06, 09) → KIỂM (07, 20) → anh đưa lên web → xin index (11–13) → đo lại thứ Hai (21). Đổi quy trình → sửa cây + 11.00, không tạo tệp mới.
 

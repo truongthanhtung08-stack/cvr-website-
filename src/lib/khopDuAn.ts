@@ -11,7 +11,8 @@ import { cachGoiDuAn } from "@/lib/duAnTen";
 // ============================================================================
 
 export type HoSoDuAn = { slug: string; name: string; province: string | null };
-export type KetQuaKhop = { hoSo: HoSoDuAn } | { loi: string };
+// chuaCo: chưa có hồ sơ → tin VẪN NẠP, giữ tên dự án tin ghi, bổ sung hồ sơ sau (anh 06/11/2026).
+export type KetQuaKhop = { hoSo: HoSoDuAn } | { loi: string } | { chuaCo: true };
 
 const gon = (s: string) => normalizeVi(s).replace(/[^a-z0-9]/g, "");
 const gonTinh = (s: string) => gon(normalizeVi(s).replace(/^(tinh|thanh pho|tp\.?)\s+/, ""));
@@ -33,5 +34,5 @@ export function khopHoSoDuAn(ten: string, ma: string, tinh: string | null | unde
   if (dungMa) return { hoSo: dungMa };
   if (khop.length === 1) return { hoSo: khop[0] };
   if (khop.length > 1) return { loi: `tên dự án "${ten}" khớp nhiều hồ sơ: ${khop.map((h) => h.name).join(", ")}` };
-  return { loi: `chưa có hồ sơ dự án: ${ten}` };
+  return { chuaCo: true };
 }

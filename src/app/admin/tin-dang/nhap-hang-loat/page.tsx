@@ -34,6 +34,7 @@ async function ganHoSoDuAn(ds: ParsedRow[], sheetDuAn: DongDuAn[]): Promise<Pars
     const ct = r.payload.details as { project: string; projectName?: string };
     if (error) return { ...r, loi: [...r.loi, `không đọc được danh sách hồ sơ dự án: ${error.message}`] };
     const k = khopHoSoDuAn(ct.projectName || ma, ma, r.payload.province as string | null, hoSo);
+    if ("chuaCo" in k) return r;
     if ("loi" in k) return { ...r, loi: [...r.loi, k.loi] };
     return { ...r, payload: { ...r.payload, details: { ...ct, project: k.hoSo.slug, projectName: k.hoSo.name } } };
   });
