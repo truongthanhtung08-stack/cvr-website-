@@ -244,7 +244,6 @@ export default function DangTin() {
         <TieuDe title="Đăng tin" ve="/" />
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
           <Text.Title size="large">Đăng nhập để đăng tin</Text.Title>
-          <Text className="chu-phu">Tin gắn với tài khoản để bạn quản lý và theo dõi trạng thái duyệt — dùng chung tài khoản với coastalland.vn.</Text>
           <Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent("/dang-tin")}`)}>Đăng nhập bằng Zalo</Button>
         </Box>
       </Page>

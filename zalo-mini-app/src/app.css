@@ -419,3 +419,6 @@ html.xem-thu .hang-app { padding-right: 0; }
 .tcm-nut { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--cl-surface); }
 .tcm-nut button { height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--cl-line); background: #fff; font-size: 13px; font-weight: 600; color: var(--cl-ink); }
 .tcm-nut button.chinh { border-color: var(--cl-blue); background: var(--cl-blue); color: #fff; flex: 1; }
+/* Giá một dòng, diện tích dòng dưới — mọi thẻ cao đều, không lúc 1 lúc 2 dòng (kiểm mắt 06/11/2026) */
+.the-tin .gia-dt { flex-direction: column; align-items: flex-start !important; gap: 0 !important; }
+.nut-chinh { z-index: 50; } /* cột dính của bảng giá từng đè lên thanh nút đáy (kiểm mắt 06/11/2026) */
