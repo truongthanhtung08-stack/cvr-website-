@@ -5,9 +5,9 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { anhNho } from "@/lib/asset";
 // Bộ xem ảnh lớn (zoom, vuốt đổi ảnh) — CÙNG bộ với thư viện ảnh dự án nổi bật; chỉ tải khi bấm vào ảnh
-const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"));
+const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"), { loading: () => null }); // khung chờ riêng: lần đầu tải không thay cả trang (06/11/2026)
 // Điện thoại: bấm ảnh → danh sách ảnh xếp dọc kiểu Facebook — CÙNG cơ chế khung ảnh dự án nổi bật (ProjectGallery / PhotoList, 31/10/2026)
-const PhotoList = dynamic(() => import("@/components/PhotoList"));
+const PhotoList = dynamic(() => import("@/components/PhotoList"), { loading: () => null });
 
 // ============================================================================
 // ẢNH ĐẦU TRANG DỰ ÁN TRA CỨU (chủ dự án 31/10/2026): MỘT khung = ảnh đại diện; có từ 2 ảnh thì tự chuyển (mờ dần, như ô Khu

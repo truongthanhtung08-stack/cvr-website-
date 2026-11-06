@@ -57,7 +57,10 @@ import { useKhoaCuon } from "@/lib/khoaCuon";
 import { homNayVn } from "@/lib/gioVn";
 import { taiKhiRanh } from "@/lib/taiKhiRanh";
 // Thẻ tin mẫu (nút "Tin hiển thị" ở mục gói tin) — chỉ tải khi khách bấm, không nặng lúc mở trang đăng tin.
-const TinHienThiMau = dynamic(() => import("@/components/TinHienThiMau"));
+// ⛔ `loading` BẮT BUỘC (06/11/2026, gốc lỗi "đang chọn gói, xem Mẫu tin / Quy định, tắt là nhảy về đầu trang"): dynamic() không
+// có loading thì KHÔNG có khung chờ riêng → lần đầu tải mã, cả form (khung chờ của trang) bị thay bằng "Đang tải…", trang sụp
+// từ ~3.900px còn ~850px, mất chỗ đang soạn. Có loading = chỉ phần này chờ, form đứng yên.
+const TinHienThiMau = dynamic(() => import("@/components/TinHienThiMau"), { loading: () => null });
 // Khung "Xem trước" (kèm bộ xem ảnh và lớp dựng chi tiết tin ~60 KB mã) — tách khỏi lúc mở trang, tải ngầm khi máy rảnh
 // (taiKhiRanh trong form) nên lúc bấm đã có sẵn (27/10/2026: /dang-tin nặng).
 const taiTruocXemTruoc = () => Promise.all([import("@/components/XemTruocTin"), import("@/lib/listingsDb")]);
@@ -68,6 +71,7 @@ const XemTruocTin = dynamic(() =>
       return <Khung du={l.xemTruocTin(row)} {...p} />;
     };
   }),
+  { loading: () => null }, // khung chờ riêng — xem ghi chú TinHienThiMau
 );
 
 // Đơn vị giá "Khác — tự ghi" (chủ dự án 14/10/2026): khách ghi nguyên văn, lưu details.giaTuGhi.
