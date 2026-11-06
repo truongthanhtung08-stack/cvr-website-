@@ -7,7 +7,9 @@
 
 ## ⛔⛔⛔ CẤM TỰ PUSH (anh chốt 06/11/2026)
 Claude **CẤM tự push** ở phiên này và mọi phiên. Không push, không chạy lệnh push, không nhắc / hỏi / gợi ý push, không bảo anh tự
-chạy lệnh push. Sửa xong chỉ báo link xem thử + "chưa push". Chỉ khi anh nhắn đúng chữ **"Push"** mới làm.
+chạy lệnh push. Chỉ khi anh nhắn đúng chữ **"Push"** mới làm.
+**⛔ 07/11/2026 (anh): cấm tự push KHÔNG có nghĩa là im lặng.** Xong mỗi việc PHẢI báo đủ 3 ý: **đã build** (qua / lỗi) · **đã kiểm** (kiểm gì,
+ở đâu) · **cần Push mới lên web** (việc nào khách / Google chưa thấy cho tới khi Push). Không để anh phải hỏi "web thật là gì", "làm sao để thấy".
 
 ## ⛔⛔ CẤM CHÚ THÍCH VỚ VẨN — LÀM CHUẨN (anh chốt 06/11/2026, gắt)
 Giao diện (web + Zalo Mini App) KHÔNG viết câu giải thích / chỉ dẫn / "chúng tôi chỉ lấy…". Dựng **cấu trúc để khách tự hiểu**:
@@ -28,6 +30,17 @@ Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm.
   từ Zalo (template/info/v2): ô kiểu SỐ chỉ chữ số ("0đ"/"64.800đ" → Zalo -1124, bỏ cả tin — gốc lỗi duyệt/nạp/thanh toán không có Zalo
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
+
+## ⏳ BÀN GIAO ĐỢT TIN 06/11/2026 (phiên a1f3fbff, anh: "đổi thằng khác") — CHƯA COMMIT, CHƯA PUSH
+- Đợt 1 `D:\Coastal Land\SEO\DA-DUYET\06112026\` (10 tin, 74 ảnh, 2 video): CHƯA lên web — đọc CSDL 06/11 khuya: 0 tin nạp chờ duyệt.
+  Tệp đã sửa: qngai01 bỏ trống `ten_du_an` (web đang chặn "chưa có hồ sơ dự án: Khu đô thị An Phú Sinh"), bỏ `loi_vao` ở dn03/qngai01/qngai02;
+  2 video đã xoá dấu Chợ Tốt. `thu-doc-dot` ĐẠT. Việc tiếp: anh nạp lại → kiểm CSDL có 10 tin `choChuDuyet` → anh duyệt ở /admin/tin-dang/duyet-nap.
+  hue02 tin gốc Chợ Tốt "đã hết hạn" — anh quyết GIỮ. Bản gốc Cowork: `SEO\_cu\ban-cowork\06112026\`.
+- Đợt 2 `...\06112026\dot2\` (5 tin): đã sửa phap_ly dn06/dn07, loi_vao qnhon01/qnhon03, video qnhon01 xoá dấu; ĐẠT; anh chưa làm đợt này.
+- Mã (chưa build, chưa commit): `src/lib/khopDuAn.ts` + `nhap-hang-loat/page.tsx` — dự án chưa có hồ sơ vẫn nạp (anh: "chưa có thông tin vẫn cho up rồi bổ sung").
+  Máy kiểm `thu-doc-dot` KHÔNG chạy bước khớp hồ sơ dự án → sót lỗi này; cần thêm vào máy kiểm.
+- `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 7: đã thêm bảng loại hình Đất + loai_dat theo web.
+- Anh mắng: nói nhiều, báo "up được" khi chưa kiểm hết, nghi Cowork bịa khi không bịa (câu nhấn điểm có thật ≠ bịa), sửa tệp qua lại.
 
 ## ⏳ ZALO MINI APP — 06/11/2026 TỐI (commit 797737e · 3ba21e8 · 4767781, CHƯA PUSH, Zalo đang bản thử 47 — chưa có các sửa này)
 Theo tài liệu Zalo (Design Guidelines + Chính sách kiểm duyệt, đã đọc): không mở trang web (chân trang mở 8 trang thông tin trong app —
