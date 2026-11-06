@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 import TheTin from "../components/TheTin";
 import TruotNgang from "../components/TruotNgang";
 import XemSo from "../components/XemSo";
+import LichSuGia from "../components/LichSuGia";
 import { anh, hangHieuLuc, layNhieuTin, layTinChiTiet, layTinTuongTu, type TinChiTiet } from "../lib/tin";
 import { gia, dienTich, diaChi, ngay } from "../lib/dinhDang";
 import { NHAN_THONG_SO } from "../lib/nhanThongSo";
@@ -66,13 +67,14 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
           );
         })}
         {dsAnh.map((u, i) => (
-          <img key={i} src={anh(u)} alt={`${tieuDe} ${i + 1}`} onClick={() => setTatCa(true)} />
+          <img key={i} src={anh(u)} alt={`${tieuDe} ${i + 1}`} onClick={() => setXemLon(i)} />
         ))}
       </div>
       {/* NHƯ WEB (Gallery bản điện thoại, 06/11/2026 "cách mở hình xem ảnh · mở video cách sắp xếp"):
           huy hiệu đếm góc trên trái = số video · số ảnh (video trước vì video đứng đầu dãy) ·
           tin CÓ video: nút "Xem ảnh & video" góc trên phải (không có "Tất cả ảnh" ở đáy) ·
-          bấm ảnh → danh sách ảnh & video xếp dọc → bấm một ảnh mới xem lớn toàn màn hình. */}
+          CHẠM ẢNH = TRÌNH XEM ẢNH CỦA ZALO (ImageViewer, chuẩn Mini App: toàn màn hình, vuốt, phóng to) mở ngay đúng tấm đó ·
+          "Tất cả ảnh" / "Xem ảnh & video" → bảng lưới: video trên cùng, ảnh 2 cột, chạm ảnh → trình xem ảnh. */}
       <span className="anh-tin-dem">
         {videos.length > 0 && <><Icon icon="zi-video" size={14} /> {videos.length}<i className="ngan" /></>}
         <Icon icon="zi-photo" size={14} /> {anhs.length}
@@ -95,9 +97,9 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
           <span>{dang - videos.length + 1}/{dsAnh.length}</span>
         </div>
       )}
-      {/* DANH SÁCH ẢNH & VIDEO xếp dọc full bề ngang (như PhotoList của web): video trước, rồi ảnh; bấm ảnh → xem lớn. */}
+      {/* BẢNG ẢNH & VIDEO: video rộng hết khung ở trên, ảnh lưới 2 cột; chạm ảnh → trình xem ảnh của Zalo. */}
       <Sheet visible={tatCa} onClose={() => setTatCa(false)} mask handler swipeToClose title={videos.length ? `${videos.length} video · ${anhs.length} ảnh` : `${anhs.length} ảnh`}>
-        <div className="anh-doc">
+        <div className="anh-luoi">
           {tatCa && videos.map((v, i) => {
             const nhung = nhungVideo(v);
             return nhung ? (
@@ -239,6 +241,9 @@ export default function ChiTietTin() {
           <Box flex style={{ flexWrap: "wrap", gap: 8 }}>{tienIch.map((x) => <span key={x} className="chip">{x}</span>)}</Box>
         </section>
       )}
+
+      {/* LỊCH SỬ GIÁ — như web: sau Đặc điểm, trước Vị trí (chỉ tin có giá) */}
+      {tin.price_vnd != null && <LichSuGia id={tin.id} />}
 
       {/* VỊ TRÍ TRÊN BẢN ĐỒ — như web (src/lib/googleMaps.ts nhungGoogleMaps): bản nhúng Google,
           không khoá, không tính tiền. Ghim toạ độ nếu có, không thì số nhà + tên đường + phường/tỉnh. */}

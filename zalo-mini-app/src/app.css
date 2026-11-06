@@ -833,3 +833,18 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Mô tả như web: mỗi đoạn cách nhau 12px, giữ xuống dòng; ảnh chèn giữa mô tả rộng hết khung. */
 .khoi-ct .mo-ta-ct + .mo-ta-ct, .khoi-ct .mo-ta-ct + .anh-mo-ta, .khoi-ct .anh-mo-ta + .mo-ta-ct { margin-top: 12px; }
 .anh-mo-ta { width: 100%; border-radius: 8px; display: block; }
+
+/* Lịch sử giá (như web PriceHistory): nguồn chữ nhỏ · khung viền · thẻ Mua bán | Cho thuê gạch chân xanh · ô xám "sẽ cập nhật". */
+.lich-su-gia .muc-tin { margin-bottom: 2px; }
+.lsg-nguon { margin: 0 0 10px; font-size: 12px; color: var(--cl-muted); }
+.lsg-khung { border: 1px solid #e8e8ed; border-radius: 12px; padding: 0 12px 12px; }
+.lsg-the { display: flex; gap: 24px; border-bottom: 1px solid #e8e8ed; margin: 0 -12px 12px; padding: 0 12px; }
+.lsg-the button { border: 0; background: none; padding: 10px 2px 8px; margin-bottom: -1px; border-bottom: 2px solid transparent; font-size: 15px; font-weight: 600; color: var(--cl-muted); }
+.lsg-the button.bat { color: var(--cl-ink); border-bottom-color: #1565c0; }
+.lsg-trong { margin: 0; padding: 28px 12px; border-radius: 10px; background: #f5f5f7; text-align: center; font-size: 14px; color: var(--cl-muted); }
+.lsg-so { padding: 8px 10px; border-radius: 8px; background: #f5f5f7; font-size: 14px; color: var(--cl-body); }
+.lsg-so p { margin: 0; line-height: 1.6; }
+.lsg-bieu-do { width: 100%; height: auto; display: block; margin-top: 8px; }
+.anh-luoi { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 0 0 24px; max-height: 80vh; overflow-y: auto; }
+.anh-luoi iframe, .anh-luoi video { grid-column: 1 / -1; width: 100%; aspect-ratio: 16 / 9; border: 0; display: block; background: #000; }
+.anh-luoi img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: #f5f5f7; }
