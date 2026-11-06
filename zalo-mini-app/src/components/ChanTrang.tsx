@@ -24,7 +24,7 @@ const MAC_DINH = {
 // 06/11/2026: Mini App KHÔNG mở trang web (bấm là bật bảng web của Zalo — chủ dự án bác). Hai nhóm liên kết như web, mỗi liên kết mở
 // MÀN TRONG APP: trang thông tin (TrangTinh, chữ lấy từ web lúc build) · Bảng giá · Nhắn Zalo Coastal Land (Liên hệ, Góp ý).
 const NHOM: { ten: string; link: [string, string][] }[] = [
-  { ten: "Về COASTAL LAND", link: [["Giới thiệu", "/thong-tin/gioi-thieu"], ["Tuyển dụng", "/thong-tin/tuyen-dung"], ["Liên hệ", "chat"], ["Quy chế hoạt động", "/thong-tin/quy-che"], ["Điều khoản thoả thuận", "/thong-tin/dieu-khoan"], ["Chính sách bảo mật", "/thong-tin/bao-mat"]] },
+  { ten: "Về COASTAL LAND", link: [["Giới thiệu", "/thong-tin/gioi-thieu"], ["Quy chế hoạt động", "/thong-tin/quy-che"], ["Điều khoản thoả thuận", "/thong-tin/dieu-khoan"], ["Chính sách bảo mật", "/thong-tin/bao-mat"]] },
   { ten: "Hỗ trợ khách hàng", link: [["Hướng dẫn đăng tin", "/thong-tin/huong-dan"], ["Báo giá dịch vụ", "/bang-gia"], ["Câu hỏi thường gặp", "/thong-tin/faq"], ["Quy định đăng tin", "/thong-tin/quy-dinh"], ["Góp ý, báo lỗi", "chat"]] },
 ];
 
