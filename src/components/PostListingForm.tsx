@@ -40,7 +40,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, chuNangGoi, chuongTrinhTvMoi, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, quotePrice, soAnhToiDa, soVideoToiDa, vnd, loaiVoucherTin } from "@/lib/billing";
+import { bangTheoMucDich, mucDichGia, chuNangGoi, chuongTrinhTvMoi, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, quotePrice, soAnhToiDa, soVideoToiDa, vnd, loaiVoucherTin } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -206,6 +206,9 @@ export default function PostListingForm() {
   const [moLich, setMoLich] = useState(false); // bảng lịch chọn ngày (máy tính)
   // Tin ĐANG HIỂN THỊ / ĐÃ HẾT HẠN đang sửa → gói cố định, chỉ hiện thông tin gói (không chọn lại).
   const [goiDangDung, setGoiDangDung] = useState<{ tier: TierId; het: string | null; tu?: string | null } | null>(null);
+  // Tin ĐÃ DUYỆT lên web: KHÔNG đổi được Mua bán ↔ Cho thuê — giá gói tin hai bên khác nhau (chủ dự án 06/11/2026).
+  // Chỉ chọn nhu cầu cùng bảng giá (Cần bán · Cần mua | Cho thuê · Cần thuê); loại hình, địa chỉ vẫn sửa được (0070).
+  const [mucDichKhoa, setMucDichKhoa] = useState<"ban" | "thue" | null>(null);
   // Số ảnh / video của tin đã đăng lúc mở form sửa — sửa tin không bị đòi xoá bớt ảnh đã được duyệt (05/11/2026)
   const [soAnhDaLuu, setSoAnhDaLuu] = useState({ anh: 0, video: 0 });
   // Thông tin ví/hồ sơ dùng để tính ưu đãi (null = chưa đăng nhập hoặc chưa tải xong)
@@ -775,6 +778,7 @@ export default function PostListingForm() {
       // Tin đã lên web (đang hiện · hết hạn · khách tự hạ): sửa nội dung giữ nguyên gói, KHÔNG bắt chọn gói (chủ dự án 05/11/2026)
       const khachHa = r.status === "hidden" && (r.details as { ha_boi?: string } | null)?.ha_boi === "khach";
       if (r.status === "approved" || r.status === "expired" || khachHa) setGoiDangDung({ tier: r.tier as TierId, het: r.tier_expires_at, tu: r.published_at });
+      if (r.published_at || r.tier_expires_at) setMucDichKhoa(mucDichGia(r.purpose));
       // Tin NHÁP / CHỜ DUYỆT: nạp lại gói khách đã chọn (details.plan) — trước đây form mở ra trống gói, khách lưu
       // là gói của tin bị ghi thành trống (26/10/2026)
       if (r.status === "draft" || r.status === "pending") {
@@ -1393,6 +1397,7 @@ export default function PostListingForm() {
           onDong={() => setXemTruoc(false)}
           onDang={() => { setXemTruoc(false); save(false); }}
           dangLuu={saving === "publish"}
+          nhanDang={goiDangDung && editId ? "Cập nhật" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : undefined}
           chuaCoAnh={!images.some((x) => !isVideoUrl(x))}
           soNgay={planTier ? soNgayThat : undefined}
           moc={goiDangDung ? { tu: goiDangDung.tu ?? null, den: goiDangDung.het } : undefined}
@@ -1430,11 +1435,13 @@ export default function PostListingForm() {
       {editId && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3">
           <p className="text-sm font-medium text-cvr-blue-ink">
-            Đang chỉnh sửa tin{editStatus === "draft" ? " nháp" : editStatus === "approved" ? " (đang hiển thị — lưu xong cập nhật ngay; gói và ngày đăng giữ nguyên)" : editStatus === "expired" ? " (đã hết hạn — sửa xong bấm Đăng lại)" : goiDangDung && editStatus === "hidden" ? " (đã hạ — sửa xong bấm Đăng lại)" : ""}
+            Đang chỉnh sửa tin{editStatus === "draft" ? " nháp" : editStatus === "approved" ? " đang hiển thị — lưu xong tin cập nhật ngay." : editStatus === "expired" ? " (đã hết hạn — sửa xong bấm Đăng lại)" : goiDangDung && editStatus === "hidden" ? " (đã hạ — sửa xong bấm Đăng lại)" : ""}
             {/* Quy tắc 0045: tin đã đăng chỉ sửa nội dung của chính căn đó */}
-            {editStatus && editStatus !== "draft" && (
+            {mucDichKhoa && (
               <span className="mt-0.5 block text-[13px] font-normal text-cvr-body">
-                Mục đích, loại hình và địa chỉ giữ nguyên — bất động sản khác vui lòng đăng tin mới.
+                {mucDichKhoa === "thue"
+                  ? "Muốn bán, vui lòng đăng tin mới."
+                  : "Muốn cho thuê, vui lòng đăng tin mới."}
               </span>
             )}
           </p>
@@ -1450,7 +1457,8 @@ export default function PostListingForm() {
       <Card id="b-loai" step={buoc()} title="Loại hình & địa chỉ">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Tin cũ có nhu cầu đã tạm ẩn (Cần mua / Cần thuê) vẫn hiện đúng giá trị của nó khi sửa */}
-          <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={[...new Set([...demandTypes, ...(duocDangDuAn ? [DEMAND_DU_AN] : []), demand])]} />
+          <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={[...new Set([...demandTypes, ...(duocDangDuAn ? [DEMAND_DU_AN] : []), demand])]
+            .filter((d) => !mucDichKhoa || d === demand || mucDichGia(purposeOfDemand(d)) === mucDichKhoa)} />
           {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
           <div id="o-loaihinh">
             <Label>Loại hình bất động sản *</Label>

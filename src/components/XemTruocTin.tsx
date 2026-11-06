@@ -24,6 +24,7 @@ export default function XemTruocTin({
   onDong,
   onDang,
   dangLuu,
+  nhanDang,
   chuaCoAnh,
   soNgay,
   batDau,
@@ -34,6 +35,8 @@ export default function XemTruocTin({
   onDong: () => void;
   onDang: () => void;
   dangLuu: boolean;
+  /** Chữ nút gửi — cùng chữ với nút cuối form (sửa tin đang hiện: "Cập nhật"); bỏ trống = "Đăng tin ngay" */
+  nhanDang?: string;
   /** Khách chưa up ảnh nào → hiện ảnh mẫu đẹp nhất hợp loại hình, ghi "Ảnh mẫu" (chủ dự án 23/10/2026). */
   chuaCoAnh?: boolean;
   /** Gói + ngày khách đã chọn (chủ dự án 06/11/2026: "khách đã chọn gói, chọn ngày rồi") → dòng Hiệu lực · Hết hạn như trang tin thật */
@@ -239,7 +242,7 @@ export default function XemTruocTin({
           Sửa tiếp
         </button>
         <button type="button" onClick={onDang} disabled={dangLuu} className="btn-dangtin flex h-12 flex-1 items-center justify-center rounded-full px-8 text-base font-bold text-white disabled:opacity-50 sm:flex-none">
-          {dangLuu ? "Đang gửi duyệt…" : "Đăng tin ngay"}
+          {dangLuu ? "Đang lưu…" : nhanDang ?? "Đăng tin ngay"}
         </button>
       </div>
     </div>
