@@ -59,7 +59,9 @@ export async function POST(request: Request) {
   // ── TỪ CHỐI ───────────────────────────────────────────────────────────────
   if (tuChoi) {
     const ly = (lyDo ?? "").trim() || "Yêu cầu chưa phù hợp";
-    const { error } = await admin.from("listings").update({ details: khongYeuCau }).eq("id", id);
+    // Dấu "Up bị từ chối" → chấm đỏ mục Tin đăng của khách (useSoTinCanXem), tắt khi khách mở mục (06/11/2026)
+    const { error } = await admin.from("listings")
+      .update({ details: { ...khongYeuCau, nang_tu_choi: { ly_do: ly, luc: new Date().toISOString() } } }).eq("id", id);
     if (error) return loi(error.message, 500);
     await guiThongBao({
       email: hs?.email, phone: hs?.phone,
