@@ -1,0 +1,190 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { lamMoiWeb } from "@/lib/lamMoiWeb";
+import { type ProjectRow, type ContentStatus, contentStatusBadge } from "@/lib/contentAdmin";
+
+// Quản lý dự án: danh sách + lọc + Đăng/Ẩn nhanh.
+export default function AdminProjectsPage() {
+  const [rows, setRows] = useState<ProjectRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dbMissing, setDbMissing] = useState(false);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState<"all" | ContentStatus>("all");
+  // DỰ ÁN KHÁCH GHI TRONG TIN, CHƯA CÓ HỒ SƠ (22/10/2026): tin "Thuộc dự án" khách tự ghi → web tự tạo mã + trang rút gọn;
+  // admin tạo hồ sơ cùng mã là trang dự án tự đầy đủ, tin tự về. Cùng nguồn với ô tìm (/api/du-an/ten, gộp tên trùng).
+  const [chuaHoSo, setChuaHoSo] = useState<{ ten: string; slug: string; tinh: string; ban: number; thue: number }[]>([]);
+  useEffect(() => {
+    void fetch("/api/du-an/ten").then((r) => r.json()).then((ds: { ten: string; slug: string; tinh: string; coTrang: boolean; ban: number; thue: number }[]) =>
+      setChuaHoSo(ds.filter((d) => !d.coTrang).sort((a, b) => b.ban + b.thue - (a.ban + a.thue)))).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) setDbMissing(true); // bảng chưa tạo (chưa chạy 0009_articles_projects.sql)
+      else setRows((data ?? []) as ProjectRow[]);
+      setLoading(false);
+    })();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const kw = q.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (status !== "all" && r.status !== status) return false;
+      if (!kw) return true;
+      return [r.name, r.developer, r.district, r.province, r.slug]
+        .filter(Boolean)
+        .some((v) => (v as string).toLowerCase().includes(kw));
+    });
+  }, [rows, q, status]);
+
+  // Đăng / Ẩn nhanh — thất bại phải báo ngay
+  async function setRowStatus(id: string, next: ContentStatus) {
+    const supabase = createClient();
+    const patch: Partial<ProjectRow> = { status: next };
+    if (next === "published") patch.published_at = new Date().toISOString();
+    const { error } = await supabase.from("projects").update(patch).eq("id", id);
+    if (!error) await lamMoiWeb();  // nội dung đổi → web bỏ cache, hiện ngay
+    if (error) {
+      window.alert(`Đổi trạng thái THẤT BẠI — dự án chưa thay đổi.\nLỗi: ${error.message}`);
+      return;
+    }
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  }
+
+  if (dbMissing) {
+    return (
+      <div className="max-w-2xl">
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Dự án</h1>
+        <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 p-6">
+          <p className="text-sm leading-relaxed text-amber-900">
+            Bảng <code className="font-semibold">projects</code> chưa được tạo trên Supabase.
+            Vào <strong>Supabase → SQL Editor</strong>, dán toàn bộ file{" "}
+            <code className="font-semibold">supabase/migrations/0009_articles_projects.sql</code> rồi bấm <strong>Run</strong>.
+            Xong tải lại trang này.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Dự án</h1>
+          <p className="mt-1 text-sm text-cvr-muted">
+            {loading ? "Đang tải…" : `${filtered.length} / ${rows.length} dự án`}
+          </p>
+        </div>
+        <Link
+          href="/admin/du-an/nhap-hang-loat"
+          className="ml-auto rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink"
+        >
+          Nạp CSV
+        </Link>
+        <Link
+          href="/admin/du-an/moi"
+          className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
+        >
+          + Thêm dự án
+        </Link>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-3">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Tìm theo tên dự án, chủ đầu tư, khu vực…"
+          className="h-10 min-w-[240px] flex-1 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-ink"
+        />
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value as typeof status)}
+          className="h-10 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-body outline-none focus:border-cvr-ink"
+        >
+          <option value="all">Tất cả trạng thái</option>
+          <option value="pending">Chờ duyệt</option>
+          <option value="published">Đã đăng</option>
+          <option value="draft">Nháp</option>
+        </select>
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux">
+        {filtered.map((r) => (
+          <div key={r.id} className="flex flex-wrap items-center gap-3 border-b border-cvr-line/70 px-4 py-3 last:border-0 hover:bg-cvr-surface/60">
+            <div className="min-w-0 flex-1">
+              {/* Tên + dòng phụ xuống tối đa 2 dòng thay vì cắt cụt: hai dự án
+                  cùng chủ đầu tư chỉ khác nhau ở khúc đuôi tên. */}
+              <Link href={`/admin/du-an/${r.id}`} className="block line-clamp-2 font-medium text-cvr-ink hover:text-cvr-blue-ink">
+                {r.name}
+              </Link>
+              <p className="line-clamp-2 text-xs text-cvr-muted">
+                {[r.status_text, r.price_from, [r.district, r.province].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+            {contentStatusBadge(r.status)}
+            <span className="flex items-center gap-3">
+              <a href={`/du-an/${r.slug}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-cvr-body hover:text-cvr-ink">
+                Xem
+              </a>
+              {r.status === "published" ? (
+                <button type="button" onClick={() => setRowStatus(r.id, "draft")} className="text-sm font-medium text-cvr-muted hover:text-cvr-ink">
+                  Ẩn
+                </button>
+              ) : (
+                <>
+                  <button type="button" onClick={() => setRowStatus(r.id, "published")} className="text-sm font-semibold text-green-700 hover:text-green-800">
+                    {r.status === "pending" ? "Duyệt & đăng" : "Đăng"}
+                  </button>
+                  {r.status === "pending" && (
+                    <button type="button" onClick={() => setRowStatus(r.id, "draft")} className="text-sm font-medium text-red-700 hover:text-red-800">
+                      Trả lại
+                    </button>
+                  )}
+                </>
+              )}
+              <Link href={`/admin/du-an/${r.id}`} className="text-sm font-medium text-cvr-blue-ink hover:text-cvr-blue">
+                Sửa
+              </Link>
+            </span>
+          </div>
+        ))}
+        {!loading && filtered.length === 0 && (
+          <p className="px-4 py-10 text-center text-sm text-cvr-muted">
+            {rows.length === 0 ? "Chưa có dự án nào — bấm “+ Thêm dự án”." : "Không có dự án nào khớp bộ lọc."}
+          </p>
+        )}
+      </div>
+      {chuaHoSo.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold tracking-tight text-cvr-ink">Dự án khách ghi trong tin, chưa có hồ sơ ({chuaHoSo.length})</h2>
+          <div className="mt-3 divide-y divide-cvr-line overflow-hidden rounded-2xl border border-cvr-line bg-white">
+            {chuaHoSo.map((d) => (
+              <div key={d.slug} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-cvr-ink">{d.ten}</p>
+                  <p className="text-xs text-cvr-muted">{[d.tinh, d.ban ? `${d.ban} tin bán` : "", d.thue ? `${d.thue} tin thuê` : ""].filter(Boolean).join(" · ")} · mã {d.slug}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <a href={`/du-an/${d.slug}`} target="_blank" rel="noopener" className="rounded-lg border border-cvr-line px-3 py-1.5 text-xs font-medium text-cvr-body hover:border-cvr-ink">Xem trang</a>
+                  <Link href={`/admin/du-an/moi?ten=${encodeURIComponent(d.ten)}&ma=${encodeURIComponent(d.slug)}&tinh=${encodeURIComponent(d.tinh)}`} className="rounded-lg bg-cvr-ink px-3 py-1.5 text-xs font-semibold text-white hover:bg-cvr-ink/90">Tạo hồ sơ</Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+      <p className="mt-3 text-xs text-cvr-faint">
+        Khi chưa có dự án thật nào <strong>Đã đăng</strong>, web tạm hiện các dự án mẫu. Đăng dự án thật đầu tiên → chỉ hiện dự án thật.
+      </p>
+    </div>
+  );
+}

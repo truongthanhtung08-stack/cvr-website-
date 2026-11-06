@@ -15,6 +15,10 @@ bố cục, nhãn nút, ô nhập. Chữ còn lại chỉ là THÔNG TIN. Bài h
 đại diện Zalo…" → anh: "lấy cái gì mà lấy", "CẤM chú thích vớ vẩn" → đã bỏ, còn logo · tên · nút "Đăng nhập bằng Zalo" · lối phụ.
 Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm. Câu chữ bắt buộc phải có → đưa anh duyệt nguyên văn trước.
 
+## ⛔ ADMIN — CHỈ BỎ THỨ GÂY PHÁT SINH TIỀN (anh chốt 07/11/2026): "cái gì làm phát sinh thì chuyển". Trang Admin dựng sẵn,
+đọc Supabase từ trình duyệt → không tốn Vercel; giữ. Đã bỏ: Lịch sử giá (máy tự nộp), Giá đất Nhà nước (trống), mẫu thẻ tin (demo),
+giá khuyến mãi cũ (đã gộp Bảng giá). Đổi gì phải kiểm khớp quy trình (quy-trinh-3-ben.md, VIEC.md) để không đứt đoạn.
+
 ## ⛔ LUẬT TÀI KHOẢN — ANH CHỐT 06/11/2026, CẤM HỎI LẠI ("đừng để tao nói lại")
 - Khách **đăng nhập bằng bất cứ cách nào** (số, email, Google, Zalo). **Đăng ký bắt buộc họ tên.**
 - **Đăng tin: số điện thoại BẮT BUỘC, đã xác minh.** Chưa có số → xác minh bằng mã gửi **tới chính số đó** (Zalo; sau thêm SMS
@@ -28,6 +32,40 @@ Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm.
   từ Zalo (template/info/v2): ô kiểu SỐ chỉ chữ số ("0đ"/"64.800đ" → Zalo -1124, bỏ cả tin — gốc lỗi duyệt/nạp/thanh toán không có Zalo
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
+
+## ⏳ ZALO MINI APP — 06/11/2026 TỐI (commit 797737e · 3ba21e8 · 4767781, CHƯA PUSH, Zalo đang bản thử 47 — chưa có các sửa này)
+Theo tài liệu Zalo (Design Guidelines + Chính sách kiểm duyệt, đã đọc): không mở trang web (chân trang mở 8 trang thông tin trong app —
+`scripts/lay-trang-tinh.mjs` lấy chữ từ web lúc build) · cỡ chữ thang Zalo 20/18/16/15/14/12/10 · thanh dưới 4 nút (Dự án vào từ trang chủ) ·
+số điện thoại Zalo khi đăng tin (getPhoneNumber → `xac-minh-sdt` bước `so-zalo`, cần ZALO_APP_SECRET; quyền ID 100 Zalo đang duyệt) ·
+lưu tin bằng nativeStorage · tải theo màn. Thêm bản gọn: Tìm kiếm đã lưu (+ nút Nhận tin mới), Gói hội viên, So sánh, Danh bạ chuyên gia
+(`/api/chuyen-gia` mới trên web), Dự án của tôi. Bỏ (chỉ SEO/chuyển hướng): Giá nhà đất, Phong thuỷ, Chủ đầu tư, Tiện ích, Tương tác, Đổi điểm.
+Khung giả lập `khung-dt.html` có hàng chọn máy (Máy anh 338×732 chữ 129% đo từ ảnh bản 47 · 320–430). Máy thử hiện ở cổng 3102.
+⛔ Anh cấm Claude điều khiển máy tính (computer-use) — chỉ làm trên Chrome. Chưa làm: quyền Vị trí (ID 38 chưa xin), thông báo OA.
+
+## ⏳ ZALO MINI APP — 06/11/2026 KHUYA: ĐỦ CHỨC NĂNG TRONG APP (commit 2ec0211 + 5dbec51, CHƯA PUSH, chưa deploy Zalo)
+Sửa tin (`DangTin ?id=`, tin đã lên web giữ gói/mốc, ẩn Nhu cầu + Gói) · Up tin / Đẩy tin / Đăng lại (`GoiTin`, `/goi-tin/:id?viec=`) ·
+Khách hàng · Hóa đơn · Cài đặt (tên + xuất hóa đơn) — hết mở web. Menu Tài khoản bỏ Gói hội viên · Dự án của tôi · Tìm kiếm đã lưu (chỉ web).
+API web `day` · `nang-goi` · `up` · `tai-khoan/dong-bo-ten-anh` nhận thêm token Mini App + CORS (`src/lib/goiTuMiniApp.ts`) và chế độ
+`xemGia` (máy chủ tính số tiền, không ghi gì). **Chạy được trên Zalo chỉ khi web có mã này (anh nhắn "Push")**; chưa `next build`, chưa
+thử thật có đăng nhập (máy thử không đăng nhập Zalo được). Còn: ZaloPay/Checkout (chờ Zalo) · đo cụm ⋯ ✕ trên máy thật · nộp duyệt.
+
+## ⏳ BÀN GIAO ZALO MINI APP — 06/11/2026 TỐI (phiên 2f67d7f5, anh dừng: "bàn giao qua claude.md")
+**Đang làm:** giao diện Mini App (`zalo-mini-app/`), lấy giao diện web điện thoại làm chuẩn. Anh chỉ từng bước, từ trên xuống. Làm từng cái, không hỏi lắm.
+**Đã commit (chưa push, chưa deploy Zalo sau bản 44):** 8ee7c31 và các commit trước: logo trên thanh tiêu đề mọi trang, menu dưới sát đáy, ô tìm + bộ lọc gọn, dải trượt.
+**Chưa commit:** `zalo-mini-app/src/app.css` (ảnh thẻ trong dải trượt 2:1 · cuối tệp: đầu trang chuẩn Zalo — hàng logo cao 44px, chừa 88px
+bên phải cho cụm ⋯ ✕, câu thương hiệu 1 dòng 11px) · `zalo-mini-app/src/pages/TrangChu.tsx` (bỏ lưới ô công cụ, vì đã có menu dưới) ·
+`zalo-mini-app/khung-dt.html` (khung giả lập, CHỈ dùng trên máy, không đưa lên Zalo).
+**Khung giả lập:** máy `zalo-mini-app` cổng 3100 (`.claude/launch.json`), mở `http://localhost:3100/khung-dt.html` ở cột phải.
+Khổ chuẩn Mini App Zalo 375 × 812, 100% (anh: "cấm làm theo điện thoại S24 Ultra", "làm CHUẨN trên nền tảng Zalo"). Khung tự bỏ lớp
+`xem-thu` (main.tsx) để đầu trang chừa chỗ như trong Zalo thật, ẩn thanh cuộn, vẽ thanh trạng thái + cụm ⋯ ✕.
+**Chưa đạt:** cụm ⋯ ✕ + thanh trạng thái trong khung là Claude tự vẽ, CHƯA đo khớp Zalo thật (vị trí, cỡ, màu). Muốn chuẩn phải đo từ màn
+Mini App thật trên điện thoại anh (Phone Link đã cấp quyền cho Claude; mã QR bản thử ở trang versions Zalo). Cột phải chỉ cao 555px → khung
+bị cắt chiều cao.
+**Anh mắng, ĐỪNG LẶP:** nói dài · hỏi lại · gửi link khi anh không cần · nhắc push ("push cái gì mà push") · làm theo cỡ máy riêng thay vì
+chuẩn Zalo · báo "chuẩn" khi chưa đo.
+**Việc khác còn treo:** máy chủ đăng nhập Zalo + xác minh số (`api/auth/zalo-mini-app`, `taiKhoanZalo.ts`, CORS `xac-minh-sdt`) cần web
+push (chỉ khi anh nhắn "Push") · màn Sửa / Up / Đẩy / Đăng lại riêng trong Mini App · ZaloPay · nộp duyệt Zalo · 5 lỗi MỘT ENTITY của web
+(chờ "làm") · `/quy-dinh` còn câu "Tiêu đề mở đầu bằng Bán hoặc Cho thuê" (chờ anh duyệt câu mới).
 
 ## ✅ 06/11/2026 CHIỀU (phiên 8d8722b3) — PUSH theo lệnh anh, gồm mọi commit 268d6b8 → db29f72 (+ 9ac6e77 phiên khác: nạp tin hàng loạt)
 **Lỗi anh báo hôm nay — đã sửa từ gốc, đã thử cả điện thoại 375px lẫn máy tính (Chrome anh, đăng nhập thật):**

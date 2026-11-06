@@ -20,16 +20,25 @@ const navGroups: { group: string; items: { label: string; href: string; icon: st
       { label: "Tin đăng", href: "/admin/tin-dang", icon: "doc" },
       { label: "Đăng tin mới", href: "/admin/tin-dang/moi", icon: "plus" },
       { label: "Đăng nhiều tin (file)", href: "/admin/tin-dang/nhap-hang-loat", icon: "upload" },
-      { label: "Nạp dự án (file)", href: "/admin/du-an/nhap-hang-loat", icon: "building" },
+      { label: "Dự án", href: "/admin/du-an", icon: "building" },
+      { label: "Tin tức", href: "/admin/tin-tuc", icon: "news" },
     ],
   },
   {
     group: "Kinh doanh",
     items: [
+      { label: "Yêu cầu khách hàng", href: "/admin/yeu-cau", icon: "check" },
       { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
       { label: "Bảng giá", href: "/admin/gia-chuan", icon: "tag" },
       { label: "Thanh toán", href: "/admin/thanh-toan", icon: "card" },
       { label: "Hóa đơn & thuế", href: "/admin/hoa-don-thue", icon: "card" },
+    ],
+  },
+  {
+    group: "Website",
+    items: [
+      { label: "Nội dung web", href: "/admin/noi-dung", icon: "doc" },
+      { label: "Dọn kho ảnh", href: "/admin/kho-anh", icon: "doc" },
     ],
   },
 ];
@@ -65,7 +74,7 @@ function useSoViec(pathname: string, bat: boolean): Record<string, number> {
         // Yêu cầu Up tin (nâng gói) khách gửi, chờ anh duyệt — details.nang_cho (06/11/2026)
         dem(sb.from("listings").select("*", { count: "exact", head: true }).eq("status", "approved").not("details->nang_cho", "is", null)),
       ]);
-      if (!huy) setSo({ "/admin": suCo, "/admin/tin-dang": tin + nangGoi, "/admin/khach-hang": khach });
+      if (!huy) setSo({ "/admin": suCo, "/admin/tin-dang": tin + nangGoi, "/admin/du-an": duAn, "/admin/yeu-cau": yeuCau, "/admin/khach-hang": khach });
     })();
     return () => { huy = true; };
   }, [pathname, bat]);

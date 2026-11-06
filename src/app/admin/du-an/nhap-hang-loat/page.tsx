@@ -115,7 +115,7 @@ export default function NapDuAnPage() {
 
   return (
     <div className="max-w-5xl">
-      <Link href="/admin" className="text-sm text-cvr-muted hover:text-cvr-ink">← Tổng quan</Link>
+      <Link href="/admin/du-an" className="text-sm text-cvr-muted hover:text-cvr-ink">← Dự án</Link>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-cvr-ink">Nạp dự án bằng tệp CSV</h1>
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
