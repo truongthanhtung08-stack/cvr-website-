@@ -31,6 +31,19 @@ Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm.
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
 
+## ⏳ BÀN GIAO 07/11/2026 ~00:30 (anh: "bàn giao thằng khác vào") — CHƯA COMMIT, CHƯA PUSH
+- **Đợt 1 06/11 ĐÃ LÊN:** 10 tin, 74 ảnh, khớp hết (`kiem-dot-tren-web.mjs` lúc 00:2x: 10 đang hiện). Bẫy: tệp trùng tên
+  `SEO\_cu\ban-cowork\06112026\Bang-2026-11-06.xlsx` (bản cũ, dòng 9 lỗi dự án) — bản đúng ở `DA-DUYET\06112026\`.
+- **Đã xoá 196 tệp rác kho ảnh (290 MB)**, kho còn 3.129 tệp / 563 MB; kiểm lại 4.771 ảnh đang dùng + hero/banner/video pt01: còn đủ.
+- **`scripts/don-kho-anh.mjs` đã sửa, CHƯA COMMIT** (anh hỏi vì sao commit, chưa nói "commit"): bản cũ chỉ nhận tên có mã băm →
+  từng định xoá 6 ảnh hero trang chủ (`site_content.hero_home`), 3 banner dự phòng (`src/lib/banners.ts`), video `pt01-0710-video.mp4`.
+  Nay rác = tên đầy đủ không có ở MỌI bảng CSDL + tài khoản + mã src/public/zalo-mini-app, tệp > 7 ngày, không phải thư mục.
+  Ảnh nhỏ `nho/` của ảnh rác chưa dọn.
+- **Gốc sinh rác chưa sửa** (anh chưa nói "làm"): `nhap-hang-loat/page.tsx` `taiAnhHangLoat` tải ảnh lên kho NGAY lúc chọn, trước khi
+  bấm Đăng → nạp hỏng là ảnh nằm lại kho. Hướng sửa: chọn ảnh chỉ giữ trên máy, bấm Đăng mới tải.
+- `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 19: thêm dòng ⚠️ tạm — web chưa nhận dự án chưa có hồ sơ → để trống `ten_du_an`, ghi vào bao-cao.
+- Anh mắng phiên này: nói dài, báo số rác 212 sai (chưa kiểm hết), bắt anh chọn lại ảnh khi chưa giải thích rõ. Trả lời NGẮN, đúng câu hỏi.
+
 ## ⏳ BÀN GIAO ĐỢT TIN 06/11/2026 (phiên a1f3fbff, anh: "đổi thằng khác") — CHƯA COMMIT, CHƯA PUSH
 - Đợt 1 `D:\Coastal Land\SEO\DA-DUYET\06112026\` (10 tin, 74 ảnh, 2 video): CHƯA lên web — đọc CSDL 06/11 khuya: 0 tin nạp chờ duyệt.
   Tệp đã sửa: qngai01 bỏ trống `ten_du_an` (web đang chặn "chưa có hồ sơ dự án: Khu đô thị An Phú Sinh"), bỏ `loi_vao` ở dn03/qngai01/qngai02;

@@ -142,7 +142,39 @@ console.log("Quét các nguồn đang dùng ảnh:");
 const dangDung = await liet_ke_dang_dung();
 console.log(`   → tổng cộng ${dangDung.size} tệp đang được dùng\n`);
 
-let rac = kho.filter((f) => !dangDung.has(f.name));
+// ⛔ 07/11/2026: lọc theo mẫu tên ở trên bỏ sót tên không mã băm → từng định xoá 6 ảnh hero trang chủ (hero-…),
+// 3 ảnh banner dự phòng trong mã (src/lib/banners.ts) và video pt01-0710-video.mp4 của tin đang có.
+// Nay rác chỉ khi TÊN ĐẦY ĐỦ không nằm ở MỌI bảng CSDL, tài khoản, mã nguồn web + Mini App, và tệp đã quá 7 ngày
+// (khách đang soạn tin, nháp còn trên máy khách). Thư mục (không id) không bao giờ là rác.
+async function toanVanDangDung() {
+  let s = "";
+  const api = await (await fetch(`${URL_}/rest/v1/`, { headers: { ...H, Accept: "application/openapi+json" } })).json();
+  for (const b of Object.keys(api.paths ?? {}).filter((p) => /^\/[a-z_0-9]+$/.test(p)).map((p) => p.slice(1))) {
+    for (let off = 0; ; off += 1000) {
+      const r = await fetch(`${URL_}/rest/v1/${b}?select=*&limit=1000&offset=${off}`, { headers: H });
+      if (!r.ok) throw new Error(`Không đọc được bảng ${b}: ${r.status}`);
+      const ds = await r.json();
+      s += JSON.stringify(ds);
+      if (ds.length < 1000) break;
+    }
+  }
+  for (let p = 1; ; p++) {
+    const r = await fetch(`${URL_}/auth/v1/admin/users?page=${p}&per_page=1000`, { headers: H });
+    if (!r.ok) throw new Error(`Không đọc được tài khoản: ${r.status}`);
+    const u = (await r.json()).users ?? [];
+    s += JSON.stringify(u);
+    if (u.length < 1000) break;
+  }
+  const doc = (d) => { if (!fs.existsSync(d)) return; for (const f of fs.readdirSync(d, { withFileTypes: true })) {
+    const p = path.join(d, f.name);
+    if (f.isDirectory()) { if (f.name !== "node_modules") doc(p); } else if (/\.(tsx?|jsx?|mjs|json|css|md|html|txt)$/i.test(f.name)) s += fs.readFileSync(p, "utf8");
+  } };
+  ["src", "public", "zalo-mini-app/src"].forEach((d) => doc(path.join(GOC, d)));
+  try { return decodeURIComponent(s) + s; } catch { return s; }
+}
+const toanVan = await toanVanDangDung();
+const moc7Ngay = new Date(Date.now() - 7 * 864e5).toISOString();
+let rac = kho.filter((f) => f.id && !dangDung.has(f.name) && !toanVan.includes(f.name) && f.created_at && f.created_at < moc7Ngay);
 if (GIU_VIDEO) {
   const video = rac.filter((f) => laVideo(f.name));
   rac = rac.filter((f) => !laVideo(f.name));
