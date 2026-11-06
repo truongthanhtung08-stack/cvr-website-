@@ -211,6 +211,44 @@ Cách dùng trên web (đổi 05/11, đã build, CHƯA PUSH): câu 1 = tên thư
 (trang chủ, `layout`, `manifest`) · cả 2 câu: `SiteJsonLd` disambiguatingDescription, dòng 3 `public/llms.txt`, mô tả `/gioi-thieu`.
 **Đã sửa 1 chỗ trong cây:** địa lý = hệ mới 2 cấp tỉnh → phường/xã kèm tên cũ (không còn quận/huyện). **Còn trống, chờ anh quyết:** Bing Webmaster Tools (bước 10,
 kế hoạch chưa ghi đã thiết lập) · backlink, báo chí (bước 17, chưa có mục riêng) · log máy chủ (bước 12, công cụ Vercel của Claude chưa thấy dự án).
+**⚠️ Tệp chính `CÂY QUY TRÌNH…docx` vẫn là bản gốc 04/11 (Word đang mở, 06/11 kiểm còn tệp khoá `~$`)** — phần ▸ COASTAL LAND chỉ có ở bản
+bổ sung `_cu\cay-quy-trinh\…ban-bo-sung-05-11-2026.docx`. Anh đóng Word → chép bản bổ sung đè tệp chính.
+
+**LUẬT TỪNG BƯỚC (▸ COASTAL LAND của cây — đọc trước khi làm việc thuộc bước đó; chi tiết ở các mục CLAUDE.md được trỏ):**
+| Bước | Luật đã chốt |
+|---|---|
+| 01 Mục tiêu | Người mua miễn phí · thị trường Duyên hải miền Trung (7 tỉnh) · branding 2 câu, không chữ "Miền Trung" |
+| 02 Audit | Bằng chứng = Search Console + web thật trên Chrome của anh; mã / curl chỉ lọc danh sách. Không kiểm chứng không nói |
+| 03 Từ khoá | Gợi ý Google là chuẩn chữ + thứ tự · từ khoá dài, khu vực ít cạnh tranh trước · cùng nghĩa một trang, đo riêng từng cách gõ (`HE-THONG-TU-KHOA.xlsx`) |
+| 04 Chiến lược | Việc ra kết quả thì tăng khối lượng; không ra thì đổi cách hoặc bỏ (`KE-HOACH-SEO.md`, `CAN-ANH-DUYET.md`) |
+| 05 Kiến trúc | Đường dẫn mô tả + 301 · địa giới 2 cấp kèm tên cũ · một cây loại hình (`categories.ts`, `filters.ts`) · `TRANG_TOP` không đụng |
+| 06 Nội dung | Cowork theo `RA\VIEC.md` + `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` · cấm bịa, giữ lời người bán, cấm tin hết hạn, cấm ảnh AI · chữ mới trên web anh duyệt nguyên văn |
+| 07 On-page | Sửa từ gốc 4 luật dùng chung (đặt chữ · số liệu · nối trang · giao tin), không vá từng trang |
+| 08 Technical | Mục 0C1 (Vercel $20) + 0C2 (LCP ≤ 2,5 s) · build trước push |
+| 09 Dữ liệu BĐS | Giá / gói / hạn = một nguồn Admin (0.1) · loại hình cha – con · địa chỉ mới + cũ theo bảng sáp nhập · nạp hàng loạt theo `quy-trinh-3-ben.md` 11.0B |
+| 10 Công cụ đo | Search Console (`search-console-tai-khoan`), GA4 · Bing chưa kiểm |
+| 11 Discovery | Sitemap tự sinh, IndexNow khi duyệt / hết hạn · chỉ khai đường dẫn mô tả |
+| 12 Crawling | Search Console → Số liệu thu thập · log Vercel chưa đọc được |
+| 13 Indexing | Trang ≥ 5 tin thật mới xin · Mua bán, Cho thuê trước; Dự án, Tin tức sau · làm hết một lần (`THEO-DOI-INDEX.md`) |
+| 14 pSEO | Trang tự mở khi đủ tin · hai trang cùng bộ tin không xin cả hai · không mở trục mới |
+| 15 Dữ liệu cấu trúc | Logo PNG · kiểm bằng Rich Results Test |
+| 16 Entity | Một tên COASTAL LAND + coastalland.vn mọi kênh · đo thương hiệu thứ Hai |
+| 17 Off-page | Chưa có mục — anh quyết |
+| 18 GEO | `llms.txt`, hỏi đáp pSEO · đo khung AI thứ Hai |
+| 19 UX | Đã duyệt = đóng băng (0A1, 0F) · bộ lọc giữ cơ chế đã chốt · không che chỗ khách gõ |
+| 20 Kiểm soát | Xoá bản thử trước push (luật 13) · đổi URL đi cùng 301 + sitemap + canonical |
+| 21 Đo | Thứ Hai đo · việc 2 tuần không lên hạng → kiểm 5 điều kiện (đúng trang đích · ≥ 5 tin · tiêu đề + H1 đúng chữ · đã index · được nối trang) |
+
+**06/11/2026 (phiên 2f67d7f5) — việc theo cây:**
+- [B21][B13] Search Console (thuộc tính `https://coastalland.vn/`, `/u/0/`): **78 trang đã index · 452 chưa** (403 "đã phát hiện – chưa index",
+  37 noindex, 8 "đã thu thập – chưa index"; số Google cập nhật đến 23/10) · sitemap đọc 4/11 thành công, 618 trang · 28 ngày: 374 lượt bấm,
+  2.220 lượt hiển thị, vị trí TB 18,2 (319 lượt bấm từ "coastal land").
+- [B09] Nạp tin hàng loạt (`src/lib/csvTin.ts`, commit `9ac6e77`, CHƯA PUSH — đã bàn giao phiên đang làm để push chung): tiêu đề KHÔNG bắt buộc
+  "Bán"/"Cho thuê" (chỉ báo vàng khi nói ngược `muc_dich`) · `loai_hinh` nhận cả tên ô Loại hình của form (Đất · Đất nền · Đất nền dự án ·
+  "Kho, nhà xưởng"…), "Đất nền dự án" tự điền `loai_dat` · tên dự án chưa có hồ sơ vẫn nạp, trang tin hiện ngay tên.
+- [B06] `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 18–20 + bảng loại hình mục 7 (theo form web) · hồ sơ dự án TẠM DỪNG ở đợt tin, nạp dự án
+  hàng loạt làm sau · giao Cowork lọc ở `RA\VIEC.md` mục 0B.
+- Còn treo [B06]: `/quy-dinh` vẫn ghi "Tiêu đề mở đầu bằng Bán hoặc Cho thuê" — chữ khách đọc, chờ anh duyệt câu mới.
 
 ---
 
