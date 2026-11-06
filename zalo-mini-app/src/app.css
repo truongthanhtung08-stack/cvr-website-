@@ -739,3 +739,14 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Thẻ dự án: MỌI THỨ MỘT DÒNG (06/11/2026) — tên dự án cũng 1 dòng. */
 .the-du-an .tieu-de { -webkit-line-clamp: 1 !important; min-height: 0 !important; }
 .truot-ngang.hep .the-tin.the-du-an .tieu-de, .the-tin.the-du-an .tieu-de { -webkit-line-clamp: 1 !important; min-height: 0 !important; height: auto !important; }
+
+/* THẺ TIN TỨC GỌN (06/11/2026 "gọn lại, khung hình nhỏ lại"): thẻ hẹp 64% · ảnh 16:9 · tiêu đề 2 dòng · chuyên mục · ngày 1 dòng. */
+.truot-ngang.hep > .the-bai { flex: 0 0 64% !important; max-width: 64% !important; }
+.truot-ngang.hep .the-bai .anh-the img, .truot-ngang.hep .the-bai .anh-trong { aspect-ratio: 16 / 9 !important; }
+.truot-ngang.hep .the-tin.the-bai .tieu-de { -webkit-line-clamp: 2 !important; min-height: calc(2 * 1.35em) !important; font-size: 14px !important; line-height: 1.35 !important; }
+.the-bai .than-the { padding: 8px 10px 10px !important; }
+.the-bai .dong-phu { margin-top: 4px; font-size: 12px !important; }
+/* Dòng cuối thẻ tin tức: chuyên mục trái (cắt "…" khi dài) · ngày đăng phải, luôn đủ. */
+.the-bai .dong-bai { display: flex; justify-content: space-between; gap: 8px; }
+.the-bai .dong-bai span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.the-bai .dong-bai span:last-child { flex-shrink: 0; }

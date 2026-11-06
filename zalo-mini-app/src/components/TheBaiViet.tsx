@@ -8,13 +8,13 @@ import logoTron from "../assets/logo-tron.svg";
 export default function TheBaiViet({ bai }: { bai: BaiViet }) {
   const dieuHuong = useNavigate();
   return (
-    <div className="the-tin the-du-an" onClick={() => dieuHuong(`/tin-tuc/${bai.slug}`)}>
+    <div className="the-tin the-du-an the-bai" onClick={() => dieuHuong(`/tin-tuc/${bai.slug}`)}>
       <div className="anh-the">
         {bai.image ? <img src={anh(bai.image)} alt={bai.title} loading="lazy" /> : <div className="anh-trong"><img src={logoTron} alt="" /></div>}
       </div>
       <div className="than-the">
         <h3 className="tieu-de dam">{bai.title}</h3>
-        <p className="dong-phu">{[bai.category, ngay(bai.published_at)].filter(Boolean).join(" · ")}</p>
+        <p className="dong-phu dong-bai"><span>{bai.category}</span><span>{ngay(bai.published_at)}</span></p>
       </div>
     </div>
   );
