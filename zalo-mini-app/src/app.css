@@ -679,3 +679,27 @@ html.xem-thu .hang-app { padding-right: 0; }
 .o-noi-bat .the-tin .dia-chi, .o-noi-bat .the-tin .than-the > p:last-of-type, .truot-ngang.hep .the-tin .dong-phu { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .o-noi-bat .the-tin .day-the-moi { display: flex; min-width: 0; }
 .o-noi-bat .the-tin .day-the-moi span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* THẺ TRANG CHỦ THEO LUẬT CẤP (06/11/2026, docs/THE-TIN-THEO-CAP.md mục 7): tiêu đề Diamond/Gold VIẾT HOA đậm 3 dòng ·
+   Silver đậm 2 · Basic thường 2 → ngay dưới là dòng thông số (giá · DT · giá/m² [· PN · WC]) → địa chỉ 1 dòng sát đáy. */
+.o-noi-bat .the-tin .than-the { display: flex; flex-direction: column; }
+.o-noi-bat .the-tin .tieu-de { min-height: 0 !important; }
+.o-noi-bat .hang-diamond .tieu-de, .o-noi-bat .hang-gold .tieu-de { -webkit-line-clamp: 3 !important; text-transform: uppercase; font-weight: 700; }
+.o-noi-bat .hang-silver .tieu-de { font-weight: 700; }
+.o-noi-bat .hang-basic .tieu-de { font-weight: 500; }
+.o-noi-bat .the-tin .gia-dt { margin-top: 6px; column-gap: 0 !important; }
+.o-noi-bat .the-tin .gia-dt > * + *::before { content: "·"; margin: 0 6px; color: var(--cl-muted); font-weight: 400; }
+.o-noi-bat .the-tin .gia-dt > span:not(.gia) { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.o-noi-bat .the-tin .day-the-moi { margin-top: auto; padding-top: 6px; }
+
+/* THẺ TRANG CHỦ THEO LUẬT CẤP (06/11/2026, docs/THE-TIN-THEO-CAP.md mục 7): tiêu đề Diamond/Gold VIẾT HOA đậm 3 dòng ·
+   Silver đậm 2 · Basic thường 2 → ngay dưới là dòng thông số (giá · DT · giá/m² [· PN · WC]) → địa chỉ 1 dòng sát đáy. */
+.o-noi-bat .the-tin .than-the { display: flex; flex-direction: column; }
+.o-noi-bat .the-tin .tieu-de { min-height: 0 !important; }
+.o-noi-bat .hang-diamond .tieu-de, .o-noi-bat .hang-gold .tieu-de { -webkit-line-clamp: 3 !important; text-transform: uppercase; font-weight: 700; }
+.o-noi-bat .hang-silver .tieu-de { font-weight: 700; }
+.o-noi-bat .hang-basic .tieu-de { font-weight: 500; }
+.o-noi-bat .the-tin .gia-dt { margin-top: 6px; column-gap: 0 !important; }
+.o-noi-bat .the-tin .gia-dt > * + *::before { content: "·"; margin: 0 6px; color: var(--cl-muted); font-weight: 400; }
+.o-noi-bat .the-tin .gia-dt > span:not(.gia) { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.o-noi-bat .the-tin .day-the-moi { margin-top: auto; padding-top: 6px; }

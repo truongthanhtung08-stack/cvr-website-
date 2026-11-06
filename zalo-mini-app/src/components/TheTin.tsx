@@ -23,6 +23,12 @@ const HANG: Record<string, { ten: string; mau: string; dai: string; hoa: boolean
   silver: { ten: "Silver", mau: "#2f5d84", dai: "#2f5d84", hoa: false, dong: 1 },
 };
 
+// Giá / m² — cùng luật trang tin (ChiTietTin giaM2): chỉ tin bán đất, căn hộ tự tính.
+function giaM2(t: Tin): string | null {
+  if (t.purpose !== "ban" || !t.price_vnd || !t.area_m2 || !/đất|căn hộ|chung cư/i.test(t.type)) return null;
+  return `${(t.price_vnd / t.area_m2 / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} tr/m²`;
+}
+
 export default function TheTin({ tin }: { tin: Tin }) {
   const dieuHuong = useNavigate();
   const h = HANG[hangHieuLuc(tin)];
@@ -61,6 +67,10 @@ export default function TheTin({ tin }: { tin: Tin }) {
         <div className="gia-dt">
           <span className="gia" style={tin.price_vnd == null ? { color: "var(--cl-muted)" } : undefined}>{gia(tin)}</span>
           {dienTich(tin) && <span>{dienTich(tin)}</span>}
+          {giaM2(tin) && <span>{giaM2(tin)}</span>}
+          {/* Luật cấp (docs/THE-TIN-THEO-CAP.md mục 7): Diamond, Gold thêm PN · WC trên cùng một dòng */}
+          {h?.hoa && tin.beds ? <span>{tin.beds} PN</span> : null}
+          {h?.hoa && tin.baths ? <span>{tin.baths} WC</span> : null}
         </div>
         <div className="day-the-moi">
           <span>{diaChi(tin)}</span>
