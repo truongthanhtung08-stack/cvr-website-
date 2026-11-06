@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, Button, Input, Page, Text, useNavigate } from "zmp-ui";
 import { authorize, getAccessToken } from "zmp-sdk";
 import TieuDe from "../components/TieuDe";
+import logoTron from "../assets/logo-tron.svg";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -42,7 +43,7 @@ export default function DangNhap() {
       if (error) throw error;
       dieuHuong(tiep, { replace: true });
     } catch {
-      setLoi("Chưa đăng nhập bằng Zalo được. Bạn có thể nhận mã qua số điện thoại.");
+      setLoi("Chưa đăng nhập được. Vui lòng thử lại.");
     } finally {
       setDang(false);
     }
@@ -93,11 +94,12 @@ export default function DangNhap() {
       <Box p={4} style={{ display: "grid", gap: 12 }}>
         {buoc === "chon" && (
           <>
-            <Text.Title size="large">Đăng nhập Coastal Land</Text.Title>
-            <Text size="small" className="chu-phu">
-              Đăng nhập bằng tài khoản Zalo: Coastal Land chỉ lấy tên và ảnh đại diện Zalo của bạn để tạo tài khoản, lưu tin và theo dõi tin đăng. Số điện thoại chỉ hỏi khi bạn đăng tin.
-            </Text>
-            <Button fullWidth loading={dang} onClick={nhanhBangZalo}>Đăng nhập bằng Zalo</Button>
+            {/* Bố cục tự nói (chủ dự án 06/11/2026: "cấu trúc để khách hiểu, không giải thích vô vẩn"): logo · tên · nút Zalo chính · lối phụ */}
+            <Box flex flexDirection="column" alignItems="center" style={{ gap: 10, margin: "24px 0 12px" }}>
+              <img src={logoTron} alt="Coastal Land" width={72} height={72} />
+              <Text.Title size="large">Coastal Land</Text.Title>
+            </Box>
+            <Button fullWidth size="large" loading={dang} onClick={nhanhBangZalo}>Đăng nhập bằng Zalo</Button>
             <Button fullWidth variant="tertiary" onClick={() => setBuoc("so")}>Nhận mã qua số điện thoại</Button>
           </>
         )}
