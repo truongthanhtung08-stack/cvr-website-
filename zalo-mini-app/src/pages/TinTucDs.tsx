@@ -9,8 +9,8 @@ export default function TinTucDs() {
   const { data, dangTai } = useTai(() => layBaiViet(), [], []);
   return (
     <Page>
-      <TieuDe title="Tin tức & cẩm nang" />
-      {dangTai ? <Box flex justifyContent="center" p={6}><Spinner /></Box> : data.map((b) => <TheBaiViet key={b.slug} bai={b} />)}
+      <TieuDe title="Tin tức" />
+      {dangTai ? <Box flex justifyContent="center" p={6}><Spinner /></Box> : <div className="luoi-du-an">{data.map((b) => <TheBaiViet key={b.slug} bai={b} />)}</div>}
     </Page>
   );
 }

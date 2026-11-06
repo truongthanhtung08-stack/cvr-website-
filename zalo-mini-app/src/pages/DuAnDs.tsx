@@ -9,8 +9,8 @@ import { useTai } from "../lib/useTai";
 export default function DuAnDs() {
   const { data, dangTai } = useTai(() => layDuAnTrang(), [], { noiBat: [], traCuu: [] });
   return (
-    <Page>
-      <TieuDe title="Dự án" />
+    <Page style={{ paddingBottom: 72 }}>
+      <TieuDe title="Dự án" showBackIcon={false} />
       {dangTai ? (
         <Box flex justifyContent="center" p={6}><Spinner /></Box>
       ) : (

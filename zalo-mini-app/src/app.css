@@ -408,3 +408,14 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Không ảnh → khung xám + logo mờ (như web, cấm ảnh mẫu — CLAUDE.md luật 13) */
 .anh-trong { aspect-ratio: 4 / 3; background: var(--cl-surface); display: flex; align-items: center; justify-content: center; }
 .anh-trong img { width: 44px !important; height: 44px; aspect-ratio: 1 !important; opacity: .25; object-fit: contain; background: none !important; }
+/* Tin đăng (Tin của tôi) theo web */
+.tcm-dong { background: #fff; margin-top: 8px; padding: 12px 16px; }
+.tcm-tren { display: flex; gap: 12px; }
+.tcm-tren > img, .tcm-anh { width: 96px !important; height: 72px; aspect-ratio: auto !important; border-radius: 8px; object-fit: cover; flex: none; }
+.tcm-chu { min-width: 0; flex: 1; }
+.tcm-ten { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--cl-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tcm-tt { margin: 4px 0 0; font-size: 12px; font-weight: 600; }
+.tcm-ngay { margin: 2px 0 0; font-size: 12px; color: var(--cl-muted); }
+.tcm-nut { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--cl-surface); }
+.tcm-nut button { height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--cl-line); background: #fff; font-size: 13px; font-weight: 600; color: var(--cl-ink); }
+.tcm-nut button.chinh { border-color: var(--cl-blue); background: var(--cl-blue); color: #fff; flex: 1; }

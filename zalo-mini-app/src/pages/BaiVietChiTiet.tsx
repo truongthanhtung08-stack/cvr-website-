@@ -21,7 +21,7 @@ export default function BaiVietChiTiet() {
   return (
     <Page style={{ background: "#fff" }}>
       <TieuDe title="Tin tức" />
-      {b.image && <img src={anh(b.image)} alt={b.title} style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", display: "block" }} />}
+      {b.image && <img src={anh(b.image)} alt={b.title} style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", display: "block" }} />}
       <Box p={4}>
         <Text.Title size="large">{b.title}</Text.Title>
         <Text size="xSmall" className="chu-phu" style={{ margin: "6px 0 12px" }}>{[b.category, ngay(b.published_at)].filter(Boolean).join(" · ")}</Text>

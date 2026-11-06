@@ -4,12 +4,11 @@ import TieuDe from "../components/TieuDe";
 import { useParams, useSearchParams } from "react-router-dom";
 import DanhSachTin from "../components/DanhSachTin";
 import ThanhLoc from "../components/ThanhLoc";
-import ChonMucDich from "../components/ChonMucDich";
 import { BO_LOC_TRONG, type BoLoc, type MucDich } from "../lib/boLoc";
 import { layTinhCoTin, locTin } from "../lib/tin";
 import { useTai } from "../lib/useTai";
 
-// Tab TÌM TIN — gộp Mua bán + Cho thuê (nút gạt trên cùng), ô tìm, hàng lọc, danh sách tin.
+// Tab MUA BÁN / CHO THUÊ (hai tab dưới riêng như web): ô tìm, hàng lọc, danh sách tin.
 export default function DanhSach() {
   const dieuHuong = useNavigate();
   const { md: mdUrl } = useParams();
@@ -28,9 +27,8 @@ export default function DanhSach() {
 
   return (
     <Page style={{ paddingBottom: 72 }}>
-      <TieuDe title="Tìm tin" showBackIcon={false} />
+      <TieuDe title={md === "thue" ? "Cho thuê" : "Mua bán"} showBackIcon={false} />
       <div className="khung-tim">
-        <ChonMucDich giaTri={md} doi={(v) => dieuHuong(`/ds/${v}`, { replace: true, animate: false })} />
         <div onClick={() => dieuHuong("/tim-kiem")}>
           <Input.Search placeholder="Tìm theo khu vực, dự án, đường…" readOnly />
         </div>
