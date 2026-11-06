@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Box, Button, Page, Spinner, Text, useNavigate } from "zmp-ui";
-import { openWebview } from "zmp-sdk";
 import TieuDe from "../components/TieuDe";
 import { anh } from "../lib/tin";
 import { tachAnh } from "../lib/media";
@@ -12,13 +11,9 @@ import logoTron from "../assets/logo-tron.svg";
 // ============================================================================
 // TIN CỦA TÔI — CẤU TRÚC THEO WEB (src/components/TinCuaToi.tsx, 06/11/2026): hàng lọc trạng thái cuộn ngang · mỗi tin: ảnh · tiêu đề ·
 // trạng thái · ngày · hàng nút (Sửa · Xem · Up tin · Đẩy tin · Đăng lại). Tin Admin ẩn không có nút Sửa (như web).
-// Sửa: màn Sửa tin của Mini App (DangTin ?id=). Up / Đẩy / Đăng lại tạm mở trang web trong khung Zalo (cùng tài khoản, cùng luật giá Admin) — Mini App chưa có màn riêng.
+// Sửa → DangTin ?id= · Up tin / Đẩy tin / Đăng lại → GoiTin (cùng API máy chủ web, giá do máy chủ tính).
 // ============================================================================
 const WEB = "https://coastalland.vn";
-const moWeb = (duong: string) => {
-  const url = `${WEB}${duong}${duong.includes("?") ? "&" : "?"}utm_source=zalo&utm_medium=mini_app`;
-  openWebview({ url }).catch(() => { window.location.href = url; });
-};
 const TRANG_THAI: Record<string, { nhan: string; mau: string }> = {
   approved: { nhan: "Đang hiển thị", mau: "#15803d" },
   pending: { nhan: "Chờ duyệt", mau: "#b8860b" },
@@ -83,9 +78,9 @@ export default function TinCuaToi() {
                   <div className="tcm-nut">
                     {!adminAn && <button onClick={() => dieuHuong(`/dang-tin?id=${t.id}`)}>Sửa</button>}
                     {t.status === "approved" && <button onClick={() => dieuHuong(`/tin/${t.id}`)}>Xem</button>}
-                    {t.status === "approved" && <button className="chinh" onClick={() => moWeb("/tai-khoan/tin-dang")}>Up tin</button>}
-                    {t.status === "approved" && <button className="chinh" onClick={() => moWeb("/tai-khoan/tin-dang")}>Đẩy tin</button>}
-                    {(t.status === "expired" || (t.status === "hidden" && !adminAn)) && <button className="chinh" onClick={() => moWeb("/tai-khoan/tin-dang")}>Đăng lại</button>}
+                    {t.status === "approved" && <button className="chinh" onClick={() => dieuHuong(`/goi-tin/${t.id}?viec=up`)}>Up tin</button>}
+                    {t.status === "approved" && <button className="chinh" onClick={() => dieuHuong(`/goi-tin/${t.id}?viec=day`)}>Đẩy tin</button>}
+                    {(t.status === "expired" || (t.status === "hidden" && !adminAn)) && <button className="chinh" onClick={() => dieuHuong(`/goi-tin/${t.id}?viec=dang-lai`)}>Đăng lại</button>}
                   </div>
                 </div>
               );

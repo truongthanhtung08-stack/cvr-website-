@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { nguoiGoi, optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { HANG_UP, thucHienUpTin } from "@/lib/upTin";
 import type { TierId } from "@/lib/packages";
@@ -17,18 +17,22 @@ function loi(thongBao: string, code = 400, them: Record<string, unknown> = {}) {
   return NextResponse.json({ ok: false, loi: thongBao, ...them }, { status: code });
 }
 
-export async function POST(request: Request) {
-  const ssr = await createClient();
-  const { data: { user } } = await ssr.auth.getUser();
+// Web (cookie) + Zalo Mini App (Bearer) — src/lib/goiTuMiniApp.ts
+export const POST = postMiniApp(xuLy);
+export const OPTIONS = optionsMiniApp;
+
+async function xuLy(request: Request) {
+  const user = await nguoiGoi(request);
   if (!user) return loi("Bạn cần đăng nhập.", 401);
 
-  const { id, tier, soNgay } = (await request.json().catch(() => ({}))) as { id?: string; tier?: string; soNgay?: number };
+  const { id, tier, soNgay, xemGia } = (await request.json().catch(() => ({}))) as { id?: string; tier?: string; soNgay?: number; xemGia?: boolean };
   if (!id || !tier || !HANG_UP.includes(tier as TierId) || !Number.isInteger(soNgay)) return loi("Thiếu tin, hạng hoặc thời hạn.");
 
   const admin = createAdminClient();
   if (!admin) return loi("Máy chủ chưa cấu hình đủ.", 500);
 
-  const kq = await thucHienUpTin(admin, user.id, id, tier as TierId, soNgay!);
+  const kq = await thucHienUpTin(admin, user.id, id, tier as TierId, soNgay!, !!xemGia);
+  if (xemGia) return NextResponse.json(kq.ok ? { ok: true, phaiTra: kq.phaiTra, mienPhi: kq.mienPhi } : { ok: false, loi: kq.loi }, { status: kq.ok ? 200 : kq.code ?? 400 });
   if (!kq.ok) {
     if (kq.viThieu) {
       // Ghi yêu cầu chờ nạp — mỗi tin một yêu cầu, bấm lại thì thay yêu cầu cũ.

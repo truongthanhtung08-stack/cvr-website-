@@ -17,6 +17,10 @@ import DaXem from "./pages/DaXem";
 import DangNhap from "./pages/DangNhap";
 import DangTin from "./pages/DangTin";
 import TinCuaToi from "./pages/TinCuaToi";
+import GoiTin from "./pages/GoiTin";
+import HoaDon from "./pages/HoaDon";
+import KhachHang from "./pages/KhachHang";
+import CaiDat from "./pages/CaiDat";
 import NapTien from "./pages/NapTien";
 
 // THANH DƯỚI = ĐÚNG web điện thoại (06/11/2026 "lấy giao diện web trên mobile làm chuẩn"): Trang chủ · Mua bán · Cho thuê · Dự án ·
@@ -66,6 +70,10 @@ export default function UngDung() {
             <Route path="/dang-nhap" element={<DangNhap />} />
             <Route path="/dang-tin" element={<DangTin />} />
             <Route path="/tin-cua-toi" element={<TinCuaToi />} />
+            <Route path="/goi-tin/:id" element={<GoiTin />} />
+            <Route path="/hoa-don" element={<HoaDon />} />
+            <Route path="/khach-hang" element={<KhachHang />} />
+            <Route path="/cai-dat" element={<CaiDat />} />
             <Route path="/nap-tien" element={<NapTien />} />
           </AnimationRoutes>
           <ThanhDuoi />

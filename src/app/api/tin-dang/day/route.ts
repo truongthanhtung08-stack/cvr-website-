@@ -1,7 +1,7 @@
 import { baoThanhToan } from "@/lib/baoThanhToan";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { nguoiGoi, optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, bangTheoMucDich, bangUp, COT_UP, giaDayTin, vnd, type BillingData } from "@/lib/billing";
@@ -35,12 +35,15 @@ function loi(thongBao: string, code = 400) {
   return NextResponse.json({ ok: false, loi: thongBao }, { status: code });
 }
 
-export async function POST(request: Request) {
-  const ssr = await createClient();
-  const { data: { user } } = await ssr.auth.getUser();
+// Web (cookie) + Zalo Mini App (Bearer) — src/lib/goiTuMiniApp.ts
+export const POST = postMiniApp(xuLy);
+export const OPTIONS = optionsMiniApp;
+
+async function xuLy(request: Request) {
+  const user = await nguoiGoi(request);
   if (!user) return loi("Bạn cần đăng nhập.", 401);
 
-  const { id } = (await request.json().catch(() => ({}))) as { id?: string };
+  const { id, xemGia } = (await request.json().catch(() => ({}))) as { id?: string; xemGia?: boolean };
   if (!id) return loi("Thiếu mã tin.");
 
   const admin = createAdminClient();
@@ -64,6 +67,8 @@ export async function POST(request: Request) {
 
   // ── CÒN LƯỢT TRONG KHO thì TIÊU LƯỢT, KHÔNG thu tiền lần nữa ─────────────
   // Khách đã trả tiền lúc mua gói Up 3/7/13/27 lần. Thu thêm ở đây là thu hai lần.
+  // XEM GIÁ (Mini App hiện trước khi khách bấm): không trừ gì, không ghi gì.
+  if (xemGia && Number(tin.bump_credits ?? 0) > 0) return NextResponse.json({ ok: true, dungLuot: true, conLai: Number(tin.bump_credits) });
   if (Number(tin.bump_credits ?? 0) > 0) {
     const { data: kqLuot, error: loiLuot } = await admin.rpc("day_tin_bang_luot", {
       p_listing: id,
@@ -92,6 +97,7 @@ export async function POST(request: Request) {
   // ⛔ 09/10/2026: chưa có giá đẩy tin trong bảng giá ĐÃ DUYỆT thì không đẩy (trước đây tính 0đ).
   if (bangUp(bang)[0]?.values[COT_UP.indexOf(cap)]?.gia === undefined) return loi("Chưa có giá đẩy tin trong bảng giá hiện hành.");
   let tien = tachThue(giaDayTin(bang, cap));
+  if (xemGia) return NextResponse.json({ ok: true, phaiTra: tien.tongTra, hang: getTier(cap).name });
 
   // VOUCHER GÓI HỘI VIÊN "đẩy tin thường" (0040) — chỉ cho lượt đẩy lẻ của tin
   // thường, như Batdongsan. Lần đẩy không thành thì hoàn voucher (hoanVoucher).

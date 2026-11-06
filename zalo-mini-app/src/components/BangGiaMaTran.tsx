@@ -30,10 +30,12 @@ export default function BangGiaMaTran({
   plans,
   chon,
   onChon,
+  khoa,
 }: {
   plans: GoiBang[];
   chon?: { tier: string; days: number };
   onChon?: (tier: string, days: number) => void;
+  khoa?: (tier: string, days: number) => boolean; // ô không chọn được (Up tin: giá không cao hơn gói đang chạy — như web khoaO)
 }) {
   const cot = HANG.map((id) => plans.find((p) => p.tierId === id)).filter((p): p is GoiBang => Boolean(p));
   const hang = [...new Set(cot.flatMap((p) => p.terms.map((t) => t.days)))].sort((a, b) => a - b);
@@ -57,11 +59,12 @@ export default function BangGiaMaTran({
                   const goc = donGiaGoc(p);
                   const giam = goc > 0 && t.price > 0 ? Math.round((1 - t.price / t.days / goc) * 100) : 0;
                   const dangChon = chon?.tier === p.tierId && chon.days === ngay;
+                  const khoaO = !!khoa?.(p.tierId, ngay);
                   return (
                     <td
                       key={p.tierId}
-                      className={`${onChon ? "o-chon" : ""} ${dangChon ? "dang-chon" : ""}`}
-                      onClick={onChon ? () => onChon(p.tierId, ngay) : undefined}
+                      className={`${onChon && !khoaO ? "o-chon" : ""} ${dangChon ? "dang-chon" : ""} ${khoaO ? "khoa" : ""}`}
+                      onClick={onChon && !khoaO ? () => onChon(p.tierId, ngay) : undefined}
                     >
                       <b>{t.price > 0 ? tien(gomVat(t.price)) : "0 đ"}</b>
                       {giam > 0 && <span className="giam">−{giam}%</span>}

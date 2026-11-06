@@ -36,6 +36,7 @@ export async function thucHienUpTin(
   id: string,
   goi: TierId,
   soNgay: number,
+  chiXemGia = false, // Mini App xem số phải trả trước khi bấm — dừng sau khi tính giá, không kiểm ví, không ghi gì
 ): Promise<KetQuaUp> {
   const { data: tin } = await admin.from("listings").select("id,title,owner_id,status,purpose,details").eq("id", id).single();
   if (!tin) return { ok: false, loi: "Không tìm thấy tin.", code: 404 };
@@ -73,6 +74,7 @@ export async function thucHienUpTin(
   const mienPhi = (!laNhap || chonKhuyenMai(tin.details)) && huongKhuyenMai(bang.free, { goi, homNay, coChu: laChuThat(hs), soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined });
   const giaBao = mienPhi ? 0 : bao.total;
   const phaiTra = tachThue(giaBao).tongTra;
+  if (chiXemGia) return { ok: true, phaiTra, mienPhi, tieuDe: tin.title, tenGoi };
 
   // So với KHẢ DỤNG (0056: trừ tiền đang tạm giữ cho các tin chờ duyệt khác).
   const vi = await viKhaDung(admin, userId, id);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
 
 // ============================================================================
 // ĐỔI TÊN / ẢNH TÀI KHOẢN → TIN CỦA TÀI KHOẢN ĐỔI THEO (chủ dự án 05/11/2026: "tên tài khoản, ảnh đại diện của tài khoản — thể
@@ -16,7 +17,11 @@ export const dynamic = "force-dynamic";
 
 type Tin = { id: string; details: { contact?: { name?: string; avatar?: string } } & Record<string, unknown> | null };
 
-export async function POST(req: Request) {
+// Web + Zalo Mini App (Cài đặt đổi tên) — CORS: src/lib/goiTuMiniApp.ts
+export const POST = postMiniApp(xuLy);
+export const OPTIONS = optionsMiniApp;
+
+async function xuLy(req: Request) {
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   const admin = createAdminClient();
   if (!admin || !token) return NextResponse.json({ ok: false }, { status: 401 });

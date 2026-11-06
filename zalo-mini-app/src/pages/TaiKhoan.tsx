@@ -1,6 +1,5 @@
 import React from "react";
 import { Button, Icon, Page, useNavigate } from "zmp-ui";
-import { openWebview } from "zmp-sdk";
 import TieuDe from "../components/TieuDe";
 import { goiHotline, nhanCoastalLand, quanTamOA } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
@@ -9,17 +8,12 @@ import { soVN, supabase, usePhien } from "../lib/supabase";
 // ============================================================================
 // CÁ NHÂN — GỌN NHƯNG ĐỦ (chủ dự án 06/11/2026). Mục = ĐÚNG menu Tài khoản của web (src/app/tai-khoan/layout.tsx MUC_CHINH +
 // src/lib/menuTaiKhoan.ts MUC_TAI_KHOAN), đổi ở web thì đổi ở đây. Đầu trang: ảnh · tên · số · số dư ví (hồ sơ tài khoản — ảnh, tên
-// Zalo đã ghi vào hồ sơ khi đăng nhập Zalo). Mục Mini App có trang riêng thì mở trong app; chưa có thì mở trang web trong khung Zalo.
+// Zalo đã ghi vào hồ sơ khi đăng nhập Zalo). Mọi mục mở trong app (06/11/2026: Gói hội viên · Dự án của tôi · Tìm kiếm đã lưu chỉ ở web).
 // Không câu giải thích (CLAUDE.md "CẤM chú thích vớ vẩn").
 // ============================================================================
-const WEB = "https://coastalland.vn";
-const moWeb = (duong: string) => {
-  const url = `${WEB}${duong}?utm_source=zalo&utm_medium=mini_app`;
-  openWebview({ url }).catch(() => { window.location.href = url; });
-};
 const vnd = (n: number) => `${n.toLocaleString("vi-VN")} đ`;
 
-type Muc = { ten: string; icon: string; app?: string; web?: string; bam?: () => void; phu?: string };
+type Muc = { ten: string; icon: string; app?: string; bam?: () => void; phu?: string };
 
 export default function TaiKhoan() {
   const dieuHuong = useNavigate();
@@ -34,18 +28,15 @@ export default function TaiKhoan() {
   const NHOM: { ten: string; muc: Muc[] }[] = [
     { ten: "Quản lý", muc: [
       { ten: "Tin đăng", icon: "zi-list-1", app: "/tin-cua-toi" },
-      { ten: "Khách hàng", icon: "zi-group", web: "/tai-khoan/khach-hang" },
+      { ten: "Khách hàng", icon: "zi-group", app: "/khach-hang" },
       { ten: "Đăng tin", icon: "zi-plus-circle", app: "/dang-tin" },
     ] },
     { ten: "Tài khoản", muc: [
       { ten: "Ví & nạp tiền", icon: "zi-poll", app: "/nap-tien", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
-      { ten: "Hóa đơn", icon: "zi-note", web: "/tai-khoan/hoa-don" },
-      { ten: "Gói hội viên", icon: "zi-star", web: "/tai-khoan/hoi-vien" },
+      { ten: "Hóa đơn", icon: "zi-note", app: "/hoa-don" },
       { ten: "Bảng giá dịch vụ", icon: "zi-more-diamond-solid", app: "/bang-gia" },
-      { ten: "Dự án của tôi", icon: "zi-home", web: "/tai-khoan/du-an" },
       { ten: "Tin đã lưu", icon: "zi-heart", app: "/da-luu" },
-      { ten: "Tìm kiếm đã lưu", icon: "zi-notif", web: "/tai-khoan/tim-kiem" },
-      { ten: "Cài đặt", icon: "zi-setting", web: "/tai-khoan/cai-dat" },
+      { ten: "Cài đặt", icon: "zi-setting", app: "/cai-dat" },
     ] },
     { ten: "Hỗ trợ", muc: [
       { ten: "Nhắn Zalo Coastal Land", icon: "zi-chat", bam: () => nhanCoastalLand() },
@@ -57,7 +48,6 @@ export default function TaiKhoan() {
     if (m.bam) return m.bam();
     if (!nguoiDung && m.ten !== "Bảng giá dịch vụ" && m.ten !== "Tin đã lưu") return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(m.app ?? "/tai-khoan")}`);
     if (m.app) return dieuHuong(m.app);
-    if (m.web) moWeb(m.web);
   };
 
   return (

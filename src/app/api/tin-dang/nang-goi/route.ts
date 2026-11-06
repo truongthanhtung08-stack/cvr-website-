@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { nguoiGoi, optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
-import { ghepBillingLuu, giaNangGoi, laChuThat, type BillingData } from "@/lib/billing";
+import { bangTheoMucDich, chuNangGoi, ghepBillingLuu, giaNangGoi, giaOUpTin, laChuThat, type BillingData } from "@/lib/billing";
 import { goiHienTai, oNangDuoc, tinNangDuoc, type YeuCauNang } from "@/lib/nangGoi";
 import { getTier, type TierId } from "@/lib/packages";
 import { guiThongBao, maTin, MAU_DA_NHAN_TIN } from "@/lib/thongBao";
@@ -20,12 +20,15 @@ export const dynamic = "force-dynamic";
 
 const loi = (thongBao: string, code = 400) => NextResponse.json({ ok: false, loi: thongBao }, { status: code });
 
-export async function POST(request: Request) {
-  const ssr = await createClient();
-  const { data: { user } } = await ssr.auth.getUser();
+// Web (cookie) + Zalo Mini App (Bearer) — src/lib/goiTuMiniApp.ts
+export const POST = postMiniApp(xuLy);
+export const OPTIONS = optionsMiniApp;
+
+async function xuLy(request: Request) {
+  const user = await nguoiGoi(request);
   if (!user) return loi("Bạn cần đăng nhập.", 401);
 
-  const body = (await request.json().catch(() => ({}))) as { id?: string; tier?: TierId; days?: number; apKhauTru?: boolean; huy?: boolean };
+  const body = (await request.json().catch(() => ({}))) as { id?: string; tier?: TierId; days?: number; apKhauTru?: boolean; huy?: boolean; xemGia?: boolean };
   if (!body.id) return loi("Thiếu mã tin.");
 
   const admin = createAdminClient();
@@ -59,6 +62,18 @@ export async function POST(request: Request) {
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const bang = ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined);
+  // XEM GIÁ (Mini App): mọi ô hạng × số ngày — giá ô, có Up được không, số phải trả nếu Up (máy chủ tính, cùng giaNangGoi). Không ghi gì.
+  if (body.xemGia) {
+    if (!((bang.congBo?.ban?.nangGoi?.length ?? 0) || (bang.congBo?.thue?.nangGoi?.length ?? 0))) return loi("Chức năng nâng gói chưa mở.");
+    const { data: hvX } = await admin.from("hoi_vien").select("goi").eq("user_id", user.id).gt("het_han", new Date().toISOString()).limit(1);
+    const lucX = Date.now();
+    const o = bangTheoMucDich(bang, tin.purpose).plans.flatMap((p) => p.terms.map((t) => {
+      const duoc = oNangDuoc(tin, bang, p.tierId, t.days);
+      const g = duoc ? giaNangGoi({ data: bang, purpose: tin.purpose, tierMoi: p.tierId, soNgay: t.days, goiHienTai: goiHienTai(tin), hoiVienId: (hvX?.[0]?.goi as string | undefined) ?? null, apKhauTru: body.apKhauTru !== false, luc: lucX }) : null;
+      return { tier: p.tierId, ten: p.name, days: t.days, gia: giaOUpTin(bang, tin.purpose, p.tierId, t.days)?.price ?? null, duoc: duoc && !!g, phaiTra: g?.tongTra ?? null, khauTruCo: g?.khauTruCo ?? 0, khauTru: g?.khauTru ?? 0 };
+    }));
+    return NextResponse.json({ ok: true, o, chuKhauTru: chuNangGoi(bang).oKhauTru });
+  }
   // UP TIN = CHỌN LẠI GÓI (06/11/2026): gói mới phải có giá cao hơn gói đang chạy (cùng luật bảng phía khách).
   if (!body.tier || !oNangDuoc(tin, bang, body.tier, days)) return loi("Chỉ chọn gói có giá cao hơn gói đang chạy.");
   // Chữ phía khách chưa Duyệt trong Admin = chức năng chưa mở trên web (máy xem thử vẫn chạy với chữ mẫu).
