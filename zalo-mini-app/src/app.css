@@ -315,3 +315,10 @@ html.xem-thu .hang-app { padding-right: 0; }
 .the-du-an .than-the { padding: 8px 10px 10px; }
 .the-du-an .tieu-de { margin: 0; font-size: 13.5px; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; }
 .the-du-an .dong-phu { margin: 3px 0 0; font-size: 12px; color: var(--cl-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* GỌN + ĐỒNG NHẤT (chủ dự án 06/11/2026 "thẻ cho gọn lại, đồng nhất"): mọi cấp CÙNG khung ảnh, cùng 2 dòng tiêu đề, bỏ mô tả (giữ quyền lợi cấp: nhãn + chữ hoa Gold/Diamond) —
+   cấp chỉ còn nhãn trên ảnh. Thẻ dự án cùng khung, cùng cỡ với thẻ tin. (Đè các luật khung theo cấp phía trên.) */
+.o-noi-bat .the-tin .anh-the img, .the-du-an .anh-the img { aspect-ratio: 4 / 3 !important; }
+.o-noi-bat .the-tin .tieu-de, .the-du-an .tieu-de { -webkit-line-clamp: 2 !important; min-height: 2.9em !important; font-size: 13px; }
+.o-noi-bat .the-tin .mo-ta { display: none !important; }
+.o-noi-bat .the-tin .gia-dt { margin-top: 6px; }
+.truot-ngang.hep > *, .o-noi-bat { flex: 0 0 44% !important; }
