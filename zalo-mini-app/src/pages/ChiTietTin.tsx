@@ -174,8 +174,6 @@ export default function ChiTietTin() {
         </p>
         <div className="meta-ct">
           <span className="nhan-loai" style={{ color: "#fff", background: hang.mau, borderColor: hang.mau, borderRadius: 999 }}>{hang.ten}</span>
-          <span>Mã {tin.id.slice(0, 8).toUpperCase()}</span>
-          {tin.published_at && <span>· {ngay(tin.published_at)}</span>}
           <div className="nut-ct">
             <button onClick={() => setLuu(doiLuu(tin.id))} aria-label="Lưu tin">
               <Icon icon={luu ? "zi-heart-solid" : "zi-heart"} size={20} style={luu ? { color: "#e11d48" } : undefined} />
@@ -184,6 +182,7 @@ export default function ChiTietTin() {
               <Icon icon="zi-share-external-1" size={20} />
             </button>
           </div>
+          <span className="meta-chu">Mã {tin.id.slice(0, 8).toUpperCase()}{tin.published_at ? ` · ${ngay(tin.published_at)}` : ""}</span>
         </div>
       </section>
 
