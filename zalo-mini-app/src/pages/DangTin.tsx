@@ -6,7 +6,7 @@ import { provincesNew } from "../lib/provincesNew";
 import { layBangGia } from "../lib/tin";
 import { soVN, supabase, usePhien } from "../lib/supabase";
 import { chonAnh, taiAnhLen } from "../lib/taiAnh";
-import { laVideo } from "../lib/media";
+import { laVideo, tachAnh } from "../lib/media";
 import { useTai } from "../lib/useTai";
 import { layNguoiZalo } from "../lib/zalo";
 import BangGiaMaTran, { TEN_HANG } from "../components/BangGiaMaTran";
@@ -75,7 +75,50 @@ export default function DangTin() {
   const [soNgay, setSoNgay] = useState<number>();
   const [dangGui, setDangGui] = useState(false);
   const [loi, setLoi] = useState<string>();
-  const [xong, setXong] = useState<"pending" | "draft" | null>(null);
+  const [xong, setXong] = useState<"pending" | "draft" | "sua" | null>(null);
+
+  // SỬA TIN (?id=…) — như web (PostListingForm): nạp tin của chính khách, điền sẵn form. Tin đã lên web (đang hiện · hết hạn ·
+  // khách tự hạ) = "daDang": sửa nội dung lên ngay, GIỮ gói / ngày đăng / hạn, ẩn Nhu cầu + Gói tin. Nháp / chờ duyệt: chọn lại gói được.
+  const maSua = thamSo.get("id");
+  const [tinSua, setTinSua] = useState<{ status: string; details: Record<string, any> } | null>(null);
+  const [loiNap, setLoiNap] = useState(false);
+  const daDang = !!tinSua && (tinSua.status === "approved" || tinSua.status === "expired" || (tinSua.status === "hidden" && tinSua.details?.ha_boi === "khach"));
+  useEffect(() => {
+    if (!maSua || !nguoiDung) return;
+    supabase.from("listings").select("*").eq("id", maSua).eq("owner_id", nguoiDung.id).maybeSingle().then(({ data: r }) => {
+      if (!r) return setLoiNap(true);
+      const d = (r.details ?? {}) as Record<string, any>;
+      const sp = (d.specs ?? {}) as Record<string, any>;
+      setTinSua({ status: r.status, details: d });
+      setMd(r.purpose === "thue" ? "thue" : "ban");
+      setLoai(sp.landType === "Đất nền dự án" ? `${r.type}::Đất nền dự án` : r.type ?? "");
+      setTinh(r.province ?? "");
+      setPhuong(r.ward ?? "");
+      setDiaChi(d.addressDetail ?? "");
+      setTieuDe(r.title ?? "");
+      setMoTa(r.description ?? "");
+      const g = Number(r.price_vnd);
+      if (g > 0) {
+        const tyDv = r.purpose !== "thue" && g >= 1e9;
+        setDonVi(tyDv ? "ty" : "trieu");
+        setGia(String(+(g / (tyDv ? 1e9 : 1e6)).toFixed(3)).replace(".", ","));
+      }
+      setDienTich(r.area_m2 != null ? String(r.area_m2).replace(".", ",") : "");
+      setNgu(r.beds != null ? String(r.beds) : "");
+      setTam(r.baths != null ? String(r.baths) : "");
+      setMatTien(sp.frontage ? String(sp.frontage) : "");
+      setSoTang(sp.floors ? String(sp.floors) : "");
+      setPhapLy(d.legal ?? "");
+      setHuong(d.direction ?? "");
+      const ds = (r.images ?? []) as string[];
+      setAnh(tachAnh(ds));
+      setVideo(ds.find(laVideo) ?? "");
+      if (d.contact?.name) setTen(d.contact.name);
+      if (d.contact?.phone) setSdt(soVN(d.contact.phone));
+      if (d.plan?.tier) setHang(d.plan.tier);
+      if (d.plan?.days) setSoNgay(d.plan.days);
+    });
+  }, [maSua, nguoiDung?.id]);
 
   const bangGia = useTai(() => layBangGia(), [], null);
   const hoSo = useTai(
@@ -151,7 +194,7 @@ export default function DangTin() {
     try {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
-      if (!token) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent("/dang-tin")}`);
+      if (!token) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`);
       const r = await fetch("https://coastalland.vn/api/xac-thuc/xac-minh-sdt", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -173,20 +216,75 @@ export default function DangTin() {
 
   const gui = async () => {
     setLoi(undefined);
-    if (!nguoiDung) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent("/dang-tin")}`);
+    if (!nguoiDung) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`);
     if (!loai) return setLoi("Chưa chọn loại hình bất động sản.");
     if (!tinh) return setLoi("Chưa chọn Tỉnh/Thành.");
     if (!tieuDe.trim()) return setLoi("Chưa nhập tiêu đề tin.");
     if (Number.isNaN(so(dienTich))) return setLoi("Chưa nhập diện tích.");
-    if (!daXacMinh || !sdt.trim()) return setLoi("Xác minh số điện thoại trước khi đăng tin.");
+    if (!tinSua && (!daXacMinh || !sdt.trim())) return setLoi("Xác minh số điện thoại trước khi đăng tin.");
     if (!ten.trim()) return setLoi("Tài khoản chưa có họ tên — vào Cá nhân để đặt tên.");
-    if (!soNgay) return setLoi("Chưa chọn thời hạn đăng tin.");
+    if (!daDang && !soNgay) return setLoi("Chưa chọn thời hạn đăng tin.");
+    if (maSua && !tinSua) return;
+
+    const specsSua = (goc: Record<string, any>) => {
+      const s: Record<string, any> = { ...goc };
+      const [, ld] = loai.split("::");
+      if (ld) s.landType = ld; else if (s.landType === "Đất nền dự án") delete s.landType;
+      if (matTien.trim()) s.frontage = matTien.trim(); else delete s.frontage;
+      if (soTang.trim()) s.floors = soTang.trim(); else delete s.floors;
+      return s;
+    };
+    const noiDung = {
+      type: loai.split("::")[0],
+      title: tieuDe.trim(),
+      description: moTa.trim() || null,
+      price_vnd: giaVnd(),
+      area_m2: so(dienTich),
+      beds: ngu.trim() ? parseInt(ngu, 10) : null,
+      baths: tam.trim() ? parseInt(tam, 10) : null,
+      ward: phuong || null,
+      province: tinh,
+      images: laVideo(video.trim()) ? [video.trim(), ...anh] : anh,
+    };
+
+    // TIN ĐÃ LÊN WEB: lưu nội dung, giữ trạng thái + gói + mốc (đọc lại details MỚI NHẤT ngay trước khi ghi, như web 05/11).
+    // Tin nháp chưa đủ tiền / tin chờ duyệt: lưu nội dung + gói mới chọn (tạm giữ tiền CSDL tự tính lại theo details.plan).
+    if (tinSua && (daDang || tinSua.status === "pending" || tinSua.status === "draft")) {
+      const { data: viSua } = await supabase.rpc("so_du_kha_dung");
+      const giaCu = tinSua.status === "pending" ? Number(tinSua.details?.plan?.giaBao ?? 0) : 0;
+      const khaDungSua = Number((viSua as { kha_dung: number }[] | null)?.[0]?.kha_dung ?? tien.viCo) + giaCu + Math.round(giaCu * VAT);
+      const nhapThieu = !daDang && tien.tongTra > 0 && khaDungSua < tien.tongTra;
+      // Nháp đủ tiền → gửi duyệt bằng đường tạo tin mới bên dưới (như web: tạo tin chờ duyệt + xoá nháp).
+      if (!(tinSua.status === "draft" && !nhapThieu)) {
+        if (tinSua.status === "pending" && nhapThieu) return setLoi(`Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn.`);
+        setDangGui(true);
+        const goc = ((await supabase.from("listings").select("details").eq("id", maSua).single()).data?.details as Record<string, any> | null) ?? tinSua.details;
+        const details = {
+          ...goc,
+          specs: specsSua(goc.specs ?? {}),
+          legal: phapLy || undefined,
+          direction: huong || undefined,
+          addressDetail: diaChi.trim() || undefined,
+          contact: { ...(goc.contact ?? {}), name: ten.trim() },
+          plan: daDang ? goc.plan : { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien },
+        };
+        const capNhat: Record<string, unknown> = daDang
+          ? { ...noiDung, details }
+          : { ...noiDung, purpose: md, details, tier: goi?.tierId ?? "basic" };
+        const { error } = await supabase.from("listings").update(capNhat).eq("id", maSua);
+        setDangGui(false);
+        if (error && /VI_KHONG_DU/.test(error.message)) return setLoi("Ví không đủ tiền cho gói đã chọn.");
+        if (error) return setLoi(/BDS_KHAC/.test(error.message) ? error.message.replace(/^.*BDS_KHAC:\s*/, "") : `Lưu thất bại: ${error.message}`);
+        return setXong(daDang ? "sua" : tinSua.status === "pending" ? "pending" : "draft");
+      }
+    }
 
     // Ví không đủ → lưu nháp nguyên vẹn (như web), khách nạp tiền rồi đăng tiếp.
     // So với KHẢ DỤNG = số dư − tiền tạm giữ cho tin chờ duyệt khác (0056, y như web + CSDL).
     const { data: vi } = await supabase.rpc("so_du_kha_dung");
     const khaDung = Number((vi as { kha_dung: number }[] | null)?.[0]?.kha_dung ?? tien.viCo);
     const viThieu = tien.tongTra > 0 && khaDung < tien.tongTra;
+    if (maSua && viThieu) return setLoi(`Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn.`);
     setDangGui(true);
     const specs: Record<string, string> = {};
     const [loaiLuu, loaiDat] = loai.split("::"); // Đất nền dự án = loại hình Đất nền / Đất nền dự án + loại đất (như web)
@@ -227,6 +325,8 @@ export default function DangTin() {
       return setLoi(m ? `Nạp thêm ${Number(m[1]).toLocaleString("vi-VN")} đ để đăng tin.` : "Ví không đủ tiền để đăng tin.");
     }
     if (error) return setLoi(/BDS_KHAC/.test(error.message) ? error.message.replace(/^.*BDS_KHAC:\s*/, "") : `Gửi tin thất bại: ${error.message}`);
+    // Gửi duyệt từ tin nháp: tin chờ duyệt đã tạo → xoá nháp cũ (như web, không để tin trùng).
+    if (maSua && (tinSua?.status === "draft" || tinSua?.status === "rejected") && !viThieu) await supabase.from("listings").delete().eq("id", maSua);
     setXong(viThieu ? "draft" : "pending");
     // Tin vào hàng chờ duyệt → nhờ máy chủ web báo khách "đã nhận tin" (máy chủ tự kiểm, không báo trùng).
     if (!viThieu) {
@@ -241,10 +341,10 @@ export default function DangTin() {
   if (!phien)
     return (
       <Page style={{ background: "#fff" }}>
-        <TieuDe title="Đăng tin" ve="/" />
+        <TieuDe title={maSua ? "Sửa tin" : "Đăng tin"} ve="/" />
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
           <Text.Title size="large">Đăng nhập để đăng tin</Text.Title>
-          <Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent("/dang-tin")}`)}>Đăng nhập bằng Zalo</Button>
+          <Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`)}>Đăng nhập bằng Zalo</Button>
         </Box>
       </Page>
     );
@@ -255,12 +355,12 @@ export default function DangTin() {
         <TieuDe title="Đăng tin" />
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
           <Icon icon="zi-check-circle-solid" size={56} style={{ color: "var(--cl-blue)", margin: "0 auto" }} />
-          <Text.Title size="large">{xong === "pending" ? "Đã gửi tin, đang chờ duyệt" : "Đã lưu nháp tin"}</Text.Title>
-          <Text className="chu-phu">
+          <Text.Title size="large">{xong === "sua" ? "Đã cập nhật tin" : xong === "pending" ? "Đã gửi tin, đang chờ duyệt" : "Đã lưu nháp tin"}</Text.Title>
+          {xong !== "sua" && <Text className="chu-phu">
             {xong === "pending"
               ? "Coastal Land sẽ báo kết quả duyệt qua Zalo."
               : `Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn. Tin đã lưu nháp nguyên vẹn — nạp tiền xong là đăng tiếp.`}
-          </Text>
+          </Text>}
           {xong === "draft" && <Button fullWidth onClick={() => dieuHuong("/nap-tien")}>Nạp tiền để đăng tin</Button>}
           <Button fullWidth variant={xong === "draft" ? "secondary" : "primary"} onClick={() => dieuHuong("/tin-cua-toi", { replace: true })}>Xem tin của tôi</Button>
           <Button fullWidth variant="secondary" onClick={() => dieuHuong("/", { replace: true })}>Về trang chủ</Button>
@@ -270,13 +370,15 @@ export default function DangTin() {
 
   return (
     <Page style={{ paddingBottom: 96 }}>
-      <TieuDe title="Đăng tin" />
+      <TieuDe title={maSua ? "Sửa tin" : "Đăng tin"} />
 
-      <Nhom tieuDe="Nhu cầu & loại hình">
-        <div className="tab-md">
+      {maSua && loiNap && <Box p={4}><Text size="small" style={{ color: "#d70018" }}>Không tìm thấy tin.</Text></Box>}
+
+      <Nhom tieuDe={daDang ? "Loại hình" : "Nhu cầu & loại hình"}>
+        {!daDang && <div className="tab-md">
           <button className={md === "ban" ? "bat" : ""} onClick={() => { setMd("ban"); setLoai(""); }}>Cần bán</button>
           <button className={md === "thue" ? "bat" : ""} onClick={() => { setMd("thue"); setLoai(""); }}>Cho thuê</button>
-        </div>
+        </div>}
         <Select label="Loại hình" placeholder="Chọn loại hình" value={loai} onChange={(v) => setLoai(String(v))} closeOnSelect>
           {(md === "thue" ? LOAI_THUE : LOAI_BAN).map((l) => <Option key={l.ma} value={l.ma} title={l.ten} />)}
         </Select>
@@ -342,7 +444,7 @@ export default function DangTin() {
       </Nhom>
 
       <Nhom tieuDe="Liên hệ">
-        {daXacMinh ? (
+        {daXacMinh || tinSua ? (
           <Text size="small">{ten || "—"} · {sdt}</Text>
         ) : buocXm === "so" ? (
           <>
@@ -358,7 +460,7 @@ export default function DangTin() {
         )}
       </Nhom>
 
-      <Nhom tieuDe="Gói tin">
+      {!daDang && <Nhom tieuDe="Gói tin">
         {/* BẢNG GIÁ MA TRẬN như web — bấm ô = chọn hạng + số ngày. Giá từ admin, đã gồm VAT. */}
         {dsGoi.length ? (
           <BangGiaMaTran
@@ -385,12 +487,12 @@ export default function DangTin() {
           </div>
         )}
 
-      </Nhom>
+      </Nhom>}
 
       {loi && <Box p={4}><Text size="small" style={{ color: "#d70018" }}>{loi}</Text></Box>}
 
       <div className="nut-chinh">
-        <Button fullWidth loading={dangGui} disabled={dangTaiAnh} onClick={gui}>Gửi tin chờ duyệt</Button>
+        <Button fullWidth loading={dangGui} disabled={dangTaiAnh} onClick={gui}>{daDang || tinSua?.status === "pending" ? "Cập nhật" : "Gửi tin chờ duyệt"}</Button>
       </div>
     </Page>
   );

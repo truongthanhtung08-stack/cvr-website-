@@ -12,7 +12,7 @@ import logoTron from "../assets/logo-tron.svg";
 // ============================================================================
 // TIN CỦA TÔI — CẤU TRÚC THEO WEB (src/components/TinCuaToi.tsx, 06/11/2026): hàng lọc trạng thái cuộn ngang · mỗi tin: ảnh · tiêu đề ·
 // trạng thái · ngày · hàng nút (Sửa · Xem · Up tin · Đẩy tin · Đăng lại). Tin Admin ẩn không có nút Sửa (như web).
-// Sửa / Up / Đẩy / Đăng lại tạm mở trang web trong khung Zalo (cùng tài khoản, cùng luật giá Admin) — Mini App chưa có màn riêng.
+// Sửa: màn Sửa tin của Mini App (DangTin ?id=). Up / Đẩy / Đăng lại tạm mở trang web trong khung Zalo (cùng tài khoản, cùng luật giá Admin) — Mini App chưa có màn riêng.
 // ============================================================================
 const WEB = "https://coastalland.vn";
 const moWeb = (duong: string) => {
@@ -81,7 +81,7 @@ export default function TinCuaToi() {
                     </div>
                   </div>
                   <div className="tcm-nut">
-                    {!adminAn && <button onClick={() => moWeb(`/dang-tin?id=${t.id}`)}>Sửa</button>}
+                    {!adminAn && <button onClick={() => dieuHuong(`/dang-tin?id=${t.id}`)}>Sửa</button>}
                     {t.status === "approved" && <button onClick={() => dieuHuong(`/tin/${t.id}`)}>Xem</button>}
                     {t.status === "approved" && <button className="chinh" onClick={() => moWeb("/tai-khoan/tin-dang")}>Up tin</button>}
                     {t.status === "approved" && <button className="chinh" onClick={() => moWeb("/tai-khoan/tin-dang")}>Đẩy tin</button>}

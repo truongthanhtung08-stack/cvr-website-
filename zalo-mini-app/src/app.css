@@ -507,3 +507,9 @@ html.xem-thu .hang-app { padding-right: 0; }
 .zaui-header-title { font-size: 17px !important; font-weight: 700 !important; }
 .tieu-de-logo { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .tieu-de-logo img { width: 24px; height: 24px; border-radius: 50%; flex: none; }
+/* Khung ảnh thẻ NHỎ LẠI (chủ dự án 06/11/2026 "khung hình quá to"): ảnh thấp 2:1 trong dải trượt (Nổi bật, Dự án, Tin tương tự). */
+.o-noi-bat .the-tin .anh-the img, .truot-ngang.hep .anh-the img, .o-noi-bat .anh-trong, .truot-ngang.hep .anh-trong { aspect-ratio: 2 / 1 !important; }
+/* ĐẦU TRANG CHUẨN MINI APP ZALO (06/11/2026): hàng logo nằm NGANG cụm ⋯ ✕ của Zalo, chừa đúng bề rộng cụm (~82px + lề),
+   tên + câu thương hiệu mỗi dòng MỘT dòng, không xuống dòng, không chui dưới cụm nút. */
+.hang-app { height: 44px !important; padding-right: 88px; }
+.hang-app span { white-space: nowrap !important; font-size: 11px !important; letter-spacing: -0.1px; }

@@ -52,14 +52,7 @@ export default function TrangChu() {
         </div>
       </div>
 
-      <div className="luoi-dv">
-        {DICH_VU.map((d) => (
-          <button key={d.nhan} onClick={() => ("bam" in d ? d.bam() : dieuHuong(d.duong))}>
-            <span className="o" style={{ background: d.nen, color: d.mau }}><IconCL ten={d.icon} co={24} /></span>
-            {d.nhan}
-          </button>
-        ))}
-      </div>
+      {/* Ô công cụ đã BỎ (chủ dự án 06/11/2026: "đã có menu phía dưới thì bỏ dòng menu bên trên") — thanh menu dưới là lối vào chính. */}
 
       {/* Như web: Bất động sản nổi bật (2 slide × 8 tin theo cấp, có tab + Xem thêm) — thay 2 khối trượt Bán / Cho thuê (06/11/2026) */}
       <KhoiNoiBat />
