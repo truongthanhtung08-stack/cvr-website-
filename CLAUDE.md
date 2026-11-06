@@ -9,6 +9,12 @@
 Claude **CẤM tự push** ở phiên này và mọi phiên. Không push, không chạy lệnh push, không nhắc / hỏi / gợi ý push, không bảo anh tự
 chạy lệnh push. Sửa xong chỉ báo link xem thử + "chưa push". Chỉ khi anh nhắn đúng chữ **"Push"** mới làm.
 
+## ⛔⛔ CẤM CHÚ THÍCH VỚ VẨN — LÀM CHUẨN (anh chốt 06/11/2026, gắt)
+Giao diện (web + Zalo Mini App) KHÔNG viết câu giải thích / chỉ dẫn / "chúng tôi chỉ lấy…". Dựng **cấu trúc để khách tự hiểu**:
+bố cục, nhãn nút, ô nhập. Chữ còn lại chỉ là THÔNG TIN. Bài học: màn Đăng nhập Mini App ghi "Coastal Land chỉ lấy tên và ảnh
+đại diện Zalo…" → anh: "lấy cái gì mà lấy", "CẤM chú thích vớ vẩn" → đã bỏ, còn logo · tên · nút "Đăng nhập bằng Zalo" · lối phụ.
+Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm. Câu chữ bắt buộc phải có → đưa anh duyệt nguyên văn trước.
+
 ## ⛔ LUẬT TÀI KHOẢN — ANH CHỐT 06/11/2026, CẤM HỎI LẠI ("đừng để tao nói lại")
 - Khách **đăng nhập bằng bất cứ cách nào** (số, email, Google, Zalo). **Đăng ký bắt buộc họ tên.**
 - **Đăng tin: số điện thoại BẮT BUỘC, đã xác minh.** Chưa có số → xác minh bằng mã gửi **tới chính số đó** (Zalo; sau thêm SMS
