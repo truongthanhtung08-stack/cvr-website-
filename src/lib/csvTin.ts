@@ -8,6 +8,7 @@
 
 import { loiTinSeo, type TinKiem } from "@/lib/kiemTinSeo";
 import { saleTypeGroups, rentTypeGroups, loaiHinhTheoLoaiCon } from "@/lib/filters";
+import { nhomChonLoaiHinh, tenLoaiHinhMenu, tachChonLoaiHinh } from "@/lib/categories";
 // Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
 // dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
 import { chuanHoaDiaChiCu } from "@/lib/diaChiHaiHe";
@@ -349,7 +350,9 @@ export function docTinTuBang(bang: string[][]): KetQuaDoc {
 }
 
 function docMotDong(header: string[], cells: string[], soDong: number): ParsedRow {
+  const ghiDe: Record<string, string> = {}; // ô web tự điền từ chính dòng này (vd loai_dat từ loai_hinh "Đất nền dự án")
   const lay = (ten: string): string => {
+    if (ghiDe[ten] !== undefined) return ghiDe[ten];
     const k = header.indexOf(ten);
     return k >= 0 ? (cells[k] ?? "").trim() : "";
   };
@@ -402,10 +405,18 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
 
   const loaiHinh = lay(COT.loaiHinh);
   const dsLoai = mucDich === "thue" ? loaiHinhThue : loaiHinhBan;
+  // MỘT DANH MỤC VỚI FORM ĐĂNG TIN (chủ dự án 06/11/2026: "chuẩn lại loại hình", nạp không bị lỗi): nhận cả tên lưu
+  // ("Đất nền / Đất nền dự án") lẫn tên khách thấy ở ô Loại hình của form ("Đất", "Đất nền", "Đất nền dự án", "Kho, nhà xưởng"…)
+  // — nhomChonLoaiHinh + tenLoaiHinhMenu (categories.ts). "Đất nền dự án" tự điền loai_dat khi ô đó trống.
+  const theoMenu = loaiHinh && !dsLoai.some((x) => chuanHoa(x) === chuanHoa(loaiHinh))
+    ? nhomChonLoaiHinh(mucDich).flatMap((g) => g.items).map((ma) => ({ ten: tenLoaiHinhMenu(ma, mucDich), ...tachChonLoaiHinh(ma) }))
+        .find((x) => chuanHoa(x.ten) === chuanHoa(loaiHinh))
+    : undefined;
+  if (theoMenu?.loaiCon && !lay(COT.loaiDat).trim()) ghiDe[COT.loaiDat] = theoMenu.loaiCon;
   if (!loaiHinh) loi.push("Thiếu loại hình");
-  else if (!dsLoai.some((x) => chuanHoa(x) === chuanHoa(loaiHinh)))
+  else if (!theoMenu && !dsLoai.some((x) => chuanHoa(x) === chuanHoa(loaiHinh)))
     loi.push(`loai_hinh "${loaiHinh}" không có trong danh mục ${mucDich === "thue" ? "cho thuê" : "mua bán"}`);
-  const loaiHinhGhi = dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
+  const loaiHinhGhi = theoMenu?.type ?? dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
   // Loại con thuộc loại hình anh em cùng mục cha → theo loại con (loaiHinhTheoLoaiCon — một luật với lúc đọc tin, 31/10/2026)
   const theoCon = loaiHinhTheoLoaiCon(loaiHinhGhi, mucDich, chuanLoaiCon(lay(COT.loaiCanHo) || lay(COT.loaiDat)));
   if (theoCon) canhBao.push(`loai_hinh "${loaiHinhGhi}" nhưng loại con "${theoCon.loaiCon || loaiHinhGhi}" thuộc loại hình "${theoCon.type}" — đã đổi sang "${theoCon.type}"`);
@@ -447,10 +458,8 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     const t = chuanHoa(tieuDe);
     const noiBan = /(^|_)ban(_|$)|chuyen_nhuong|sang_nhuong|can_ban|cat_lo/.test(t);
     const noiThue = /cho_thue|(^|_)thue(_|$)|cho_muon/.test(t);
-    if (tieuDe && mucDich === "ban" && !noiBan)
-      loi.push('Tiêu đề không cho biết là tin BÁN — mở đầu bằng "Bán …" (hoặc "Chuyển nhượng …")');
-    if (tieuDe && mucDich === "thue" && !noiThue)
-      loi.push('Tiêu đề không cho biết là tin CHO THUÊ — mở đầu bằng "Cho thuê …"');
+    // 06/11/2026 (chủ dự án): tiêu đề KHÔNG rập khuôn, không bắt buộc có "Bán" / "Cho thuê" — chỉnh chuẩn SEO theo lời khách viết.
+    // Mục đích đã có ở cột muc_dich, trang tin + thẻ <title> tự hiện. Chỉ còn báo khi tiêu đề nói NGƯỢC muc_dich.
     if (tieuDe && mucDich === "ban" && noiThue && !noiBan)
       canhBao.push("muc_dich ghi BÁN nhưng tiêu đề nói CHO THUÊ — kiểm tra lại cả dòng");
     if (tieuDe && mucDich === "thue" && noiBan && !noiThue)
