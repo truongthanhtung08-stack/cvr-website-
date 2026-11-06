@@ -5,7 +5,10 @@ import KhoiNoiBat from "../components/KhoiNoiBat";
 import TheDuAn from "../components/TheDuAn";
 import TruotNgang from "../components/TruotNgang";
 import IconCL, { type TenIcon } from "../components/IconCL";
-import { layBaiViet, layDuAnNoiBat, layTinhCoTin } from "../lib/tin";
+import { layBaiViet, layDuAnNoiBat } from "../lib/tin";
+
+// Khu vực của web — chép đúng src/lib/khuVuc.ts khuVucTrongDiem (web đổi thì đổi ở đây).
+const KHU_VUC_WEB = ["Đà Nẵng", "Huế", "Quảng Trị", "Quảng Ngãi", "Gia Lai", "Khánh Hòa", "Đắk Lắk", "Lâm Đồng"];
 import TheBaiViet from "../components/TheBaiViet";
 import { useTai } from "../lib/useTai";
 import { nhanCoastalLand } from "../lib/zalo";
@@ -36,8 +39,7 @@ const DICH_VU: DichVu[] = [
 export default function TrangChu() {
   const dieuHuong = useNavigate();
   const duAn = useTai(() => layDuAnNoiBat(8), [], []); // như web: chỉ dự án nổi bật, theo cấp, 8 dự án — còn lại ở Xem thêm
-  const tinh = useTai(() => layTinhCoTin("ban"), [], []);
-  const baiViet = useTai(() => layBaiViet(6), [], []); // như web: khối Tin tức trên trang chủ, Xem thêm → danh sách bài // tỉnh đang có tin thật — không ảnh, không số bịa
+  const baiViet = useTai(() => layBaiViet(6), [], []); // như web: khối Tin tức trên trang chủ, Xem thêm → danh sách bài
 
   return (
     <Page style={{ paddingBottom: 72, paddingTop: 0 }}>
@@ -65,15 +67,14 @@ export default function TrangChu() {
         </Khoi>
       )}
 
-      {tinh.data.length > 0 && (
-        <Khoi tieuDe="Tìm theo khu vực">
-          <div className="chip-loc boc">
-            {tinh.data.map((t) => (
-              <button key={t} onClick={() => dieuHuong(`/ds/ban?kv=${encodeURIComponent(t)}`)}>{t}</button>
-            ))}
-          </div>
-        </Khoi>
-      )}
+      {/* KHU VỰC = đủ 8 khu vực của web (src/lib/khuVuc.ts khuVucTrongDiem), chỉ tên (chủ dự án 06/11/2026: "bỏ đi, để tên các khu vực"). */}
+      <Khoi tieuDe="Bất động sản theo khu vực">
+        <div className="luoi-kv">
+          {KHU_VUC_WEB.map((t) => (
+            <button key={t} onClick={() => dieuHuong(`/ds/ban?kv=${encodeURIComponent(t)}`)}>{t}</button>
+          ))}
+        </div>
+      </Khoi>
 
       {baiViet.data.length > 0 && (
         <Khoi tieuDe="Tin tức" xemThem="/tin-tuc">

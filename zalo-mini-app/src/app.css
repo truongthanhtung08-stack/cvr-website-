@@ -635,3 +635,6 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* "Xem thêm" dưới khối trang chủ: nút canh giữa như trang tin; cách nội dung 12px, khối vẫn đệm đáy 16px. */
 .khoi > .hang-xem-them { padding: 12px 0 0; }
 .khoi .cham-slide + .hang-xem-them { padding-top: 8px; }
+/* Khu vực trang chủ: lưới 2 cột đều nhau (8 khu vực = 4 hàng), nút cao bằng nhau, chữ canh giữa. */
+.luoi-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px; }
+.luoi-kv button { height: 40px; border-radius: 10px; border: 1px solid var(--cl-line); background: #fff; color: var(--cl-ink); font-size: 14px; font-weight: 500; }
