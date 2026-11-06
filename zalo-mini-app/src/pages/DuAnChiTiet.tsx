@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import { Box, Button, Page, Spinner, Text } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
+import ThuGonTin from "../components/ThuGonTin";
 import { useParams } from "react-router-dom";
 import NoiDung from "../components/NoiDung";
 import { anh, layMotDuAn } from "../lib/tin";
@@ -41,6 +42,8 @@ export default function DuAnChiTiet() {
         {/* Tình trạng đã có ở bảng Thông tin dự án bên dưới — bỏ nhãn trùng dưới tên (06/11/2026). */}
       </section>
 
+      {/* Thu gọn CẢ TRANG như trang tin: dài thì "Xem thêm" (cắt trong Tổng quan), "Thu gọn" ở cuối trang. */}
+      <ThuGonTin>
         {thongTin.length > 0 && (
           <section className="khoi-ct">
             <h2 className="muc-tin">Thông tin dự án</h2>
@@ -50,9 +53,9 @@ export default function DuAnChiTiet() {
           </section>
         )}
         {d.overview && (
-          <section className="khoi-ct">
+          <section className="khoi-ct" data-thu-gon="mo-ta">
             <h2 className="muc-tin">Tổng quan</h2>
-            <GonDoan><NoiDung text={d.overview} /></GonDoan>
+            <NoiDung text={d.overview} />
           </section>
         )}
         {d.amenities?.length > 0 && (
@@ -61,6 +64,7 @@ export default function DuAnChiTiet() {
             <Box flex style={{ flexWrap: "wrap", gap: 8 }}>{d.amenities.map((x) => <span key={x} className="chip">{x}</span>)}</Box>
           </section>
         )}
+      </ThuGonTin>
 
       <div className="nut-chinh">
         <Button variant="secondary" onClick={() => chiaSeTin(d.name, diaChiDuAn(d), anh(anhs[0]), `/du-an/${slug}`)}>Chia sẻ</Button>
@@ -70,24 +74,3 @@ export default function DuAnChiTiet() {
   );
 }
 
-// NHƯ TRANG TIN: phần chữ dài thu gọn, nút "Xem thêm" / "Thu gọn" NGAY DƯỚI phần chữ (không đặt cuối trang).
-function GonDoan({ children }: { children: React.ReactNode }) {
-  const khung = useRef<HTMLDivElement>(null);
-  const [mo, setMo] = useState(false);
-  const [dai, setDai] = useState(false);
-  useEffect(() => {
-    const el = khung.current;
-    if (el) setDai(el.scrollHeight > el.clientHeight + 4);
-  }, [children]);
-  return (
-    <>
-      <div ref={khung} className={mo ? undefined : "doan-gon"}>{children}</div>
-      {(dai || mo) && (
-        <div className="hang-xem-them"><button className="btn-xemthem" onClick={() => { if (mo) khung.current?.closest("section")?.scrollIntoView({ block: "start" }); setMo(!mo); }}>
-          {mo ? "Thu gọn" : "Xem thêm"}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ transform: mo ? "rotate(180deg)" : undefined }}><path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button></div>
-      )}
-    </>
-  );
-}

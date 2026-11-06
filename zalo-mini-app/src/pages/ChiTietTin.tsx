@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box, Icon, ImageViewer, Page, Sheet, Spinner, Text, useNavigate } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
+import ThuGonTin from "../components/ThuGonTin";
 import { useParams } from "react-router-dom";
 import TheTin from "../components/TheTin";
 import TruotNgang from "../components/TruotNgang";
@@ -8,10 +9,8 @@ import XemSo from "../components/XemSo";
 import { anh, hangHieuLuc, layNhieuTin, layTinChiTiet, layTinTuongTu, type TinChiTiet } from "../lib/tin";
 import { gia, dienTich, diaChi, ngay } from "../lib/dinhDang";
 import { NHAN_THONG_SO } from "../lib/nhanThongSo";
-import { daLuu, doiLuu } from "../lib/daLuu";
 import { dsDaXem, ghiDaXem } from "../lib/daXem";
 import { chiaSeTin } from "../lib/zalo";
-import { dangSoSanh, doiSoSanh } from "../lib/soSanh";
 import { useTai } from "../lib/useTai";
 import { supabase } from "../lib/supabase";
 import { nhungVideo, tachAnh, tachVideo } from "../lib/media";
@@ -124,8 +123,6 @@ export default function ChiTietTin() {
   // Bất động sản đã xem (như web) — đọc danh sách TRƯỚC khi ghi tin này vào, bỏ chính tin đang xem.
   const [idDaXem] = useState(() => dsDaXem().filter((x) => x !== id).slice(0, 8));
   const daXem = useTai(() => (idDaXem.length ? layNhieuTin(idDaXem) : Promise.resolve([])), [idDaXem.join(",")], []);
-  const [luu, setLuu] = useState(() => daLuu(id));
-  const [soSanh, setSoSanh] = useState(() => dangSoSanh(id));
   useEffect(() => {
     if (!tin) return;
     ghiDaXem(tin.id);
@@ -194,12 +191,7 @@ export default function ChiTietTin() {
           <span className="nhan-loai" style={{ color: hang.mau, borderColor: hang.mau }}>{hang.ten}</span>
           <span>Mã tin: {tin.id.slice(0, 8).toUpperCase()}</span>
           <div className="nut-ct">
-            <button onClick={() => setLuu(doiLuu(tin.id))} aria-label="Lưu tin">
-              <Icon icon={luu ? "zi-heart-solid" : "zi-heart"} size={20} style={luu ? { color: "#e11d48" } : undefined} />
-            </button>
-            <button onClick={() => { const co = doiSoSanh(tin.id); setSoSanh(co); if (co) dieuHuong("/so-sanh"); }} aria-label="So sánh" className={soSanh ? "dang-so-sanh" : ""}>
-              <Icon icon="zi-more-grid" size={20} />
-            </button>
+            {/* Như web: chỉ nút Chia sẻ (06/11/2026 "cái gì không cần thì bỏ" — Mã tin không bị che) */}
             <button onClick={() => chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(tachAnh(tin.images)[0]), `/tin/${tin.id}`)} aria-label="Chia sẻ">
               <Icon icon="zi-share-external-1" size={20} />
             </button>
@@ -227,6 +219,9 @@ export default function ChiTietTin() {
         </dl>
       </section>
 
+      {/* THU GỌN CẢ TIN (chủ dự án 06/11/2026: "Xem thêm / Thu gọn không phải cho nội dung mà cả 1 trang tin"): từ Mô tả tới hết
+          hết trang; tin dài tới mức nhất định thì "Xem thêm" (cắt trong phần Mô tả), mở ra thì "Thu gọn" ở CUỐI TRANG. */}
+      <ThuGonTin>
       {tin.description && <MoTa noiDung={tin.description} />}
 
       {phu.length > 0 && (
@@ -296,6 +291,7 @@ export default function ChiTietTin() {
           <TruotNgang hep>{daXem.data.map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>
         </section>
       )}
+      </ThuGonTin>
 
       <div className="nut-chinh">
         <XemSo id={tin.id} sdt={tin.sdt} soAn={tin.sdt_an} />
@@ -309,25 +305,11 @@ export default function ChiTietTin() {
 const sachMoTa = (s: string) =>
   s.replace(/\\([*_#.\-])/g, "$1").replace(/^[ \t​]*[*▪•●]︎?[ \t​]*/gm, "• ");
 
-// NHƯ WEB: mô tả thu gọn, nút "Xem thêm" / "Thu gọn" NGAY DƯỚI mô tả (06/11/2026 "nút thu gọn đặt sai chỗ" — trước nằm cuối trang).
 function MoTa({ noiDung }: { noiDung: string }) {
-  const chu = useRef<HTMLParagraphElement>(null);
-  const [mo, setMo] = useState(false);
-  const [dai, setDai] = useState(false);
-  useEffect(() => {
-    const el = chu.current;
-    if (el) setDai(el.scrollHeight > el.clientHeight + 4);
-  }, [noiDung]);
   return (
-    <section className="khoi-ct">
+    <section className="khoi-ct" data-thu-gon="mo-ta">
       <h2 className="muc-tin">Mô tả</h2>
-      <p ref={chu} className={`mo-ta-ct${mo ? "" : " gon"}`}>{sachMoTa(noiDung)}</p>
-      {(dai || mo) && (
-        <div className="hang-xem-them"><button className="btn-xemthem" onClick={() => { if (mo) chu.current?.closest("section")?.scrollIntoView({ block: "start" }); setMo(!mo); }}>
-          {mo ? "Thu gọn" : "Xem thêm"}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ transform: mo ? "rotate(180deg)" : undefined }}><path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button></div>
-      )}
+      <p className="mo-ta-ct">{sachMoTa(noiDung)}</p>
     </section>
   );
 }
