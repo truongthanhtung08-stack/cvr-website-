@@ -6,7 +6,7 @@ import { useTai } from "../lib/useTai";
 
 // BẤT ĐỘNG SẢN NỔI BẬT — chép cấu trúc web (src/components/FeaturedListings.tsx + src/lib/tinNoiBat.ts typeTabs), chủ dự án 06/11/2026:
 // "chạy slide, mỗi slide 8 tin, 2 slide, xếp theo cấp như web, có Xem thêm". Tab lọc như web · xếp Diamond → Gold → Silver → Basic ·
-// 2 slide × 8 tin (lưới 2 cột × 4 hàng) · tự chạy 10 giây/slide khi khối đang hiện và khách không chạm · Xem thêm mở danh sách đúng mục.
+// 2 slide × 8 tin trên MỘT DÒNG · tự trượt từng thẻ 3,5 giây khi khối đang hiện và khách không chạm · Xem thêm mở danh sách đúng mục.
 const laBan = (t: Tin) => t.purpose !== "thue";
 const TAB: { nhan: string; khop: (t: Tin) => boolean; md: "ban" | "thue" }[] = [
   { nhan: "Tất cả", khop: () => true, md: "ban" },
@@ -29,7 +29,8 @@ export default function KhoiNoiBat() {
   const loc = ds.data.filter(TAB[tab].khop);
   const slides = Array.from({ length: SO_SLIDE }, (_, i) => loc.slice(i * MOI_SLIDE, (i + 1) * MOI_SLIDE)).filter((s) => s.length);
 
-  const toi = (i: number) => ray.current?.scrollTo({ left: i * ray.current.clientWidth, behavior: "smooth" });
+  const buocThe = () => { const o = ray.current?.firstElementChild as HTMLElement | null; return o ? o.offsetWidth + 10 : 0; };
+  const toi = (i: number) => ray.current?.scrollTo({ left: i * MOI_SLIDE * buocThe(), behavior: "smooth" });
 
   // Tự chạy 10 giây/slide như web — chỉ khi khối đang hiện, trang không ẩn, khách không chạm trong 10 giây.
   useEffect(() => {
@@ -39,9 +40,12 @@ export default function KhoiNoiBat() {
     const io = new IntersectionObserver(([e]) => { thay = e.intersectionRatio >= 0.4; }, { threshold: [0, 0.4, 1] });
     io.observe(el);
     const id = window.setInterval(() => {
-      if (!thay || document.hidden || Date.now() - cham.current < 10000) return;
-      toi((Math.round(el.scrollLeft / el.clientWidth) + 1) % slides.length);
-    }, 10000);
+      if (!thay || document.hidden || Date.now() - cham.current < 6000) return;
+      const o = el.firstElementChild as HTMLElement | null;
+      const w = o ? o.offsetWidth + 10 : el.clientWidth;
+      const ke = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4 ? 0 : el.scrollLeft + w;
+      el.scrollTo({ left: ke, behavior: "smooth" });
+    }, 3500);
     return () => { window.clearInterval(id); io.disconnect(); };
   }, [slides.length, tab]);
 
@@ -64,13 +68,10 @@ export default function KhoiNoiBat() {
             ref={ray}
             className="ray-slide"
             onTouchStart={() => { cham.current = Date.now(); }}
-            onScroll={(e) => setDang(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
+            onScroll={(e) => { const b = buocThe(); if (b) setDang(Math.min(slides.length - 1, Math.floor((e.currentTarget.scrollLeft + 1) / (b * MOI_SLIDE)))); }}
           >
-            {slides.map((s, i) => (
-              <div key={i} className="slide-noi-bat">
-                {s.map((t) => <TheTin key={t.id} tin={t} />)}
-              </div>
-            ))}
+            {/* MỘT DÒNG chạy slide (chủ dự án 06/11/2026: "để 1 dòng, chạy slide") — 16 tin = 2 slide × 8 nối nhau trên một hàng */}
+            {slides.flat().map((t) => <div key={t.id} className="o-noi-bat"><TheTin tin={t} /></div>)}
           </div>
           {slides.length > 1 && (
             <div className="cham-slide">

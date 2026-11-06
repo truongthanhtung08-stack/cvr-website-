@@ -279,3 +279,16 @@ html.xem-thu .hang-app { padding-right: 0; }
 .cham-slide { display: flex; justify-content: center; gap: 6px; padding-top: 12px; }
 .cham-slide span { width: 6px; height: 6px; border-radius: 999px; background: var(--cl-line); transition: width .2s; }
 .cham-slide span.bat { width: 16px; background: var(--cl-ink); }
+/* Một dòng chạy slide (06/11/2026): ~2,2 thẻ trong khung, trượt từng thẻ */
+.ray-slide { gap: 10px; padding: 0 16px; scroll-padding-inline: 16px; }
+.o-noi-bat { flex: 0 0 44%; scroll-snap-align: start; }
+.o-noi-bat .the-tin { border-radius: 12px; height: 100%; }
+.o-noi-bat .the-tin .anh-the img { aspect-ratio: 4 / 3; }
+.o-noi-bat .the-tin .than-the { padding: 8px 10px 10px; }
+.o-noi-bat .the-tin .tieu-de { font-size: 13px; line-height: 1.35; -webkit-line-clamp: 2; }
+.o-noi-bat .the-tin .mo-ta, .o-noi-bat .the-tin .so-anh, .o-noi-bat .the-tin .day-the-moi span:last-child { display: none; }
+.o-noi-bat .the-tin .gia-dt { font-size: 12px; margin-top: 4px; flex-wrap: wrap; column-gap: 6px; row-gap: 0; justify-content: flex-start; }
+.o-noi-bat .the-tin .gia-dt > * { white-space: nowrap; }
+.o-noi-bat .the-tin .gia-dt .gia { font-size: 14px; }
+.o-noi-bat .the-tin .day-the-moi { font-size: 11px; }
+.o-noi-bat .the-tin .nhan-hang { font-size: 9px; padding: 2px 6px; }
