@@ -643,3 +643,9 @@ html.xem-thu .hang-app { padding-right: 0; }
 .chon-md-kv button { border: 0; background: none; padding: 0; font-size: 14px; color: #6e6e73; }
 .chon-md-kv button.bat { color: var(--cl-ink); font-weight: 600; }
 .chon-md-kv span { width: 1px; height: 16px; background: var(--cl-line); }
+/* TRANG CHỦ — MỘT NHỊP DỌC (06/11/2026, đo trên khung): đỉnh khối → tiêu đề 16 · tiêu đề → hàng đường dẫn 8 · → thẻ 12 · thẻ → chấm trượt 12
+   · → "Xem thêm" 12 · "Xem thêm" → đáy khối 16 · giữa các khối 8 (dải xám). */
+.khoi-dau:has(+ .chon-md-kv) { padding-bottom: 8px !important; }
+.khoi .cham-slide { padding-top: 12px !important; }
+.khoi > .hang-xem-them, .khoi .cham-slide + .hang-xem-them { padding-top: 12px !important; padding-bottom: 0 !important; }
+.khoi > .truot-ngang + .hang-xem-them { padding-top: 8px !important; } /* dải trượt đã có 4px đệm đáy → thẻ → "Xem thêm" đúng 12 */
