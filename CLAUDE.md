@@ -31,6 +31,41 @@ Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm.
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
 
+## ⏳ ZALO MINI APP + VERCEL — 07/11/2026 ~02:30 (phiên 2e02c3ed) — ĐÃ PUSH f997211 + a824ac9, web Ready, đã kiểm web thật
+**Zalo — CHỜ DUYỆT:** bản thử 51 (gồm mọi sửa 06/11) **đã gửi xét duyệt 21:08 06/11** (miniapp.zaloplatforms.com → Xét duyệt phiên bản).
+Zalo báo 2–3 ngày làm việc → dự kiến **thứ Ba 10/11 – thứ Tư 11/11**. Mini App đã xác thực, bật "Hiển thị công khai". Quyền Vị trí · Chọn ảnh ·
+Số điện thoại "Đợi xét duyệt". API web cho Mini App (lịch sử giá, Up / Đẩy / Nâng gói, đăng nhập Zalo, xác minh số…) ĐÃ LÊN web.
+**Làm NGAY khi Zalo duyệt bản 51:** ① Menu OA (oa.zalo.me → Quản lý → Thiết lập menu): 10 nút đang mở coastalland.vn → đổi link sang
+`https://zalo.me/s/1268705237708475790/<đường dẫn Mini App>` (/ds/ban · /ds/thue · /du-an · /tin-tuc · /dang-tin · /bang-gia · /tin-cua-toi · /hoi-vien…)
+② OA → Trang thông tin OA → **Nút bấm** / **Tiện ích** (đang ẩn): gắn Mini App lên trang hồ sơ OA ③ ZBS: nút trong 13 mẫu đang mở web → tạo
+mẫu mới có nút mở Mini App, chờ Zalo duyệt, sửa `MAU_ZBS` (src/lib/thongBao.ts) ④ quét QR bản đã duyệt thử thật: đăng nhập Zalo, chat OA,
+xem số, chia sẻ, đăng tin, Up / Đẩy. Bị trả về → đọc lý do, sửa, deploy bản mới (`npx zmp deploy --passive --testing` trong zalo-mini-app), gửi lại.
+**Đã có (không làm lại):** Mini App ↔ OA (chat, quan tâm, chia sẻ mở thẳng tin) · bot OA 4 kịch bản + từ khoá đang bật · `sameAs` + llms.txt khai
+Mini App · nút "Za" (Mở trong Zalo) trên trang tin web.
+**Vercel — CHỜ ĐO (anh: "đo sau 1 ngày"):** từ 08/11 xem Usage + Observability CDN theo đường, so kỳ trước, báo anh số. Đã sửa: bỏ làm mới
+theo giờ (chỉ revalidateTag khi dữ liệu đổi + 0h mỗi ngày) · trang tin + dự án lưu bản in (web thật HIT) · chặn Ahrefs · ảnh /anh bỏ hàm máy chủ
+(rewrite ngoài tới Supabase). **Ảnh vẫn MISS** vì Supabase/Cloudflare gửi cookie `__cf_bm` → nếu đo vẫn tốn: dẫn ảnh thẳng URL Supabase (đổi
+đường dẫn ảnh toàn web — anh quyết). Observability Plus ($2,50/kỳ): tắt hay giữ — anh quyết sau số đo.
+**Việc khác chờ anh "làm":** sửa gốc ảnh rác khi nạp tin hàng loạt (`taiAnhHangLoat` tải ảnh lúc chọn → chỉ tải khi bấm Đăng) · dọn ảnh `nho/`
+của 196 tệp rác đã xoá · khối đánh giá tin ("Tin này có đúng như mô tả không?") trong Mini App · ZaloPay / Checkout (chờ Zalo).
+
+## ⏳ BÀN GIAO 07/11/2026 (phiên 4a3174b0, anh: "bàn giao lại") — CHƯA BUILD, CHƯA COMMIT, CHƯA PUSH
+**Việc anh giao:** tệp `C:\Users\X1 GEN 8\OneDrive\Desktop\YÊU CẦU CHÍNH SỮA 03112026.docx` — **làm mục 2 → 6, dứt điểm từng phần.**
+⛔ **Số mục = số CẤP NGOÀI của tệp** (Claude phiên này đếm theo dòng con → làm nhầm). Đúng là:
+1 Admin đăng tin (9 dòng con — KHÔNG thuộc việc này) · **2 Bộ lọc:** ô chọn nhiều (vd Tỉnh/Thành PC) chỉ tìm khi bấm "Áp dụng";
+ô chọn một → chọn là tìm ngay — rà hết, cấu trúc lại · **3 PC:** khung có ảnh (tin, dự án; nhất là Mua bán, Cho thuê) chừa khoảng nhỏ
+hợp lý với Header (logo) · **4** Xem thêm / Thu gọn trong trang tin chi tiết: làm đúng chức năng · **5** giao diện Footer + trang Giới thiệu
+công ty · **6** menu Tiện ích thêm dữ liệu ngoài tin/dự án cho Google tin: biểu đồ giá (nhà nước, thị trường theo khu vực) · mục con Báo cáo
+thị trường (form chuẩn Coastal Land, tham khảo DKRA + Batdongsan, link PDF DKRA trong tệp) · tóm tắt thành bài Tin tức + MXH · dữ liệu web + Cowork.
+Lưu ý mục 2: luật cũ 12 ("cơ chế đã chốt: chọn một tự tìm, chọn nhiều Áp dụng là tìm") khớp yêu cầu; bàn giao 05/11 ghi gốc lệch ở
+`FilterBar.tsx` `set()` cập nhật kết quả ngay khi tick. Đọc mã + thử trên Chrome trước khi nói.
+**Đã sửa NHẦM (mục 1 dòng 2 — bảng chọn Loại hình cha – con), CHƯA kiểm, anh CHƯA quyết giữ hay bỏ — KHÔNG tự gỡ, hỏi anh:**
+`src/components/ChonCoTim.tsx` (khối `nhom`: tiêu đề cha đậm màu chữ chính, con thụt `pl-8`; nhóm một con trùng tên cha không lặp tiêu đề) ·
+`src/components/PostListingForm.tsx` + `src/components/admin/ListingForm.tsx` (thêm `nhom={nhomChonLoaiHinh(...)}` cho ô Loại hình).
+**Đã xong phiên này:** ghi 5 luật 07/11 vào cây quy trình (mục 6–10) + CLAUDE.md (mục 🌳); bản cây cũ ở `SEO\_cu\cay-quy-trinh\CAY-QUY-TRINH-truoc-07-11-2026.docx`.
+**Môi trường (đã kiểm 07/11):** Chrome của anh nối được, Search Console vào được (78 index · 452 chưa) · máy 3000 chạy · web 200 · 88 commit chưa push.
+**Anh mắng:** làm nhầm mục, chép cây ra chat khi anh bảo "đọc kỹ" (= tự đọc). Hiểu sai thì hỏi MỘT câu trước khi làm.
+
 ## ⏳ BÀN GIAO 07/11/2026 ~00:30 (anh: "bàn giao thằng khác vào") — CHƯA COMMIT, CHƯA PUSH
 - **Đợt 1 06/11 ĐÃ LÊN:** 10 tin, 74 ảnh, khớp hết (`kiem-dot-tren-web.mjs` lúc 00:2x: 10 đang hiện). Bẫy: tệp trùng tên
   `SEO\_cu\ban-cowork\06112026\Bang-2026-11-06.xlsx` (bản cũ, dòng 9 lỗi dự án) — bản đúng ở `DA-DUYET\06112026\`.
