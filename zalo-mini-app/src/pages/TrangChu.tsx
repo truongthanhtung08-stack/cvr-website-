@@ -61,11 +61,13 @@ export default function TrangChu() {
       {/* Như web: Bất động sản nổi bật (2 slide × 8 tin theo cấp, có tab + Xem thêm) — thay 2 khối trượt Bán / Cho thuê (06/11/2026) */}
       <KhoiNoiBat />
 
+
       {duAn.data.length > 0 && (
         <Khoi tieuDe="Dự án nổi bật" xemThem="/du-an">
           <TruotNgang hep>{duAn.data.map((d) => <TheDuAn key={d.slug} duAn={d} />)}</TruotNgang>
         </Khoi>
       )}
+
 
       {/* KHU VỰC = đủ 8 khu vực của web (src/lib/khuVuc.ts khuVucTrongDiem), chỉ tên (chủ dự án 06/11/2026: "bỏ đi, để tên các khu vực"). */}
       <Khoi tieuDe="Bất động sản theo khu vực">

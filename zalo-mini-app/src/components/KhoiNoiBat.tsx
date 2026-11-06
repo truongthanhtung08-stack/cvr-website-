@@ -54,11 +54,13 @@ export default function KhoiNoiBat() {
       <div className="khoi-dau">
         <h2 className="tieu-de-khoi">Bất động sản nổi bật</h2>
       </div>
-      <div className="tab-noi-bat">
-        {TAB.map((t, i) => (
-          <button key={t.nhan} className={i === tab ? "bat" : ""} onClick={() => { setTab(i); setDang(0); ray.current?.scrollTo({ left: 0 }); }}>{t.nhan}</button>
-        ))}
+      {/* Như web (FeaturedListings): 2 đường dẫn "Mua bán nhà đất | Cho thuê nhà đất" dưới tiêu đề — mở danh sách Mua bán / Cho thuê. */}
+      <div className="chon-md-kv">
+        <button onClick={() => dieuHuong("/ds/ban")}>Mua bán nhà đất</button>
+        <span />
+        <button onClick={() => dieuHuong("/ds/thue")}>Cho thuê nhà đất</button>
       </div>
+      {/* Hàng tab Tất cả · Bán đất · Bán nhà riêng… ĐÃ BỎ (chủ dự án 06/11/2026: có Mua bán nhà đất | Cho thuê nhà đất thì bỏ menu dưới) — hiện Tất cả. */}
       {ds.dangTai ? (
         <div style={{ display: "flex", justifyContent: "center", padding: 16 }}><Spinner /></div>
       ) : (

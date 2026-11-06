@@ -638,3 +638,8 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Khu vực trang chủ: lưới 2 cột đều nhau (8 khu vực = 4 hàng), nút cao bằng nhau, chữ canh giữa. */
 .luoi-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px; }
 .luoi-kv button { height: 40px; border-radius: 10px; border: 1px solid var(--cl-line); background: #fff; color: var(--cl-ink); font-size: 14px; font-weight: 500; }
+/* "Mua bán nhà đất | Cho thuê nhà đất" trên lưới khu vực — như web: chữ, vạch đứng giữa, bên đang chọn chữ đậm màu đen. */
+.chon-md-kv { display: flex; align-items: center; gap: 12px; padding: 0 16px 12px; }
+.chon-md-kv button { border: 0; background: none; padding: 0; font-size: 14px; color: #6e6e73; }
+.chon-md-kv button.bat { color: var(--cl-ink); font-weight: 600; }
+.chon-md-kv span { width: 1px; height: 16px; background: var(--cl-line); }
