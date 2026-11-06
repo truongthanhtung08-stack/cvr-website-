@@ -3,7 +3,7 @@
 //
 //   node scripts/nop-lich-su-gia.mjs
 //
-// Cowork chỉ việc lưu tệp D:/Coastal Land/SEO/DA-DUYET/<ngày>/lich-su-gia-<ngày>.csv. Máy (lịch Windows mỗi giờ
+// Cowork chỉ việc lưu tệp D:/Coastal Land/SEO/DA-DUYET/<ngày>/lich-su-gia-<ngày>.csv. Máy (lịch Windows 10 phút một lần
 // "CoastalLand-NopLichSuGia") thấy tệp MỚI hoặc VỪA SỬA → gửi lên /api/chi-so-gia/nop (bổ sung, KHÔNG làm mới) → web tự
 // kiểm → ghi kết quả vào ket-qua-nop.txt cùng thư mục + một dòng vào mục 0 của SEO/RA/VIEC.md.
 // Mã nộp lấy từ .env.local (MA_NOP_SO_LIEU) — không in ra, không ghi vào tệp nào Cowork đọc.

@@ -20,6 +20,7 @@ const navGroups: { group: string; items: { label: string; href: string; icon: st
       { label: "Tin đăng", href: "/admin/tin-dang", icon: "doc" },
       { label: "Đăng tin mới", href: "/admin/tin-dang/moi", icon: "plus" },
       { label: "Đăng nhiều tin (file)", href: "/admin/tin-dang/nhap-hang-loat", icon: "upload" },
+      { label: "Nạp dự án (file)", href: "/admin/du-an/nhap-hang-loat", icon: "building" },
     ],
   },
   {

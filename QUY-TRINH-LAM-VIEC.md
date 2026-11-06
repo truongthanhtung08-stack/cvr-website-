@@ -88,7 +88,7 @@ Sau push: đợi **1–2 phút** → Vercel tự build → kiểm tra **https://
 
 ### Nội dung admin đè lên code
 
-Nội dung sửa ở `/admin/noi-dung` lưu trên **Supabase**, và **luôn đè lên giá trị mặc định trong code**.
+Nội dung sửa trên **Supabase** `site_content` (07/11/2026: trang `/admin/noi-dung` đã bỏ), và **luôn đè lên giá trị mặc định trong code**.
 
 → Đổi ảnh/chữ mặc định trong code sẽ **KHÔNG hiện** nếu admin đã lưu giá trị riêng.
 → Muốn đổi thật thì phải sửa trong admin.
