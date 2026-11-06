@@ -15,10 +15,11 @@ import { theoDoiThe } from "../lib/hienThi";
 //   Gold:    dải nhấn vàng · huy hiệu · tiêu đề VIẾT HOA, in đậm · 2 dòng mô tả
 //   Silver:  dải nhấn xanh · huy hiệu · tiêu đề in đậm · 1 dòng mô tả
 //   Basic:   trình bày mặc định — không dải nhấn, không huy hiệu, không mô tả
+// MÀU = ĐÚNG src/lib/packages.ts của web (accent = nền huy hiệu = dải nhấn, chữ trắng) — 06/11/2026: cấm tự chế màu.
 const HANG: Record<string, { ten: string; mau: string; dai: string; hoa: boolean; dong: number }> = {
   diamond: { ten: "Diamond", mau: "#c1121f", dai: "#c1121f", hoa: true, dong: 3 },
-  gold: { ten: "Gold", mau: "#b8860b", dai: "#d9b84e", hoa: true, dong: 2 },
-  silver: { ten: "Silver", mau: "#2f5d84", dai: "#7ea6c8", hoa: false, dong: 1 },
+  gold: { ten: "Gold", mau: "#b8860b", dai: "#b8860b", hoa: true, dong: 2 },
+  silver: { ten: "Silver", mau: "#2f5d84", dai: "#2f5d84", hoa: false, dong: 1 },
 };
 
 export default function TheTin({ tin }: { tin: Tin }) {
@@ -38,7 +39,7 @@ export default function TheTin({ tin }: { tin: Tin }) {
       {h && <div className="dai-nhan" style={{ background: h.dai }} aria-hidden />}
       <div className="anh-the">
         <img src={anh(anhs[0])} alt={tin.title} loading="lazy" />
-        {h && <span className="nhan-hang" style={{ background: `${h.mau}e6` }}>{h.ten}</span>}
+        {h && <span className="nhan-hang" style={{ background: h.mau }}>{h.ten}</span>}
         {(soAnh > 1 || coVideo) && <span className="so-anh">{coVideo ? "▶ Video · " : ""}{soAnh} ảnh</span>}
         <button
           className="nut-tim"

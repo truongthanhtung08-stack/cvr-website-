@@ -322,3 +322,54 @@ html.xem-thu .hang-app { padding-right: 0; }
 .o-noi-bat .the-tin .mo-ta { display: none !important; }
 .o-noi-bat .the-tin .gia-dt { margin-top: 6px; }
 .truot-ngang.hep > *, .o-noi-bat { flex: 0 0 44% !important; }
+/* ── Chân trang THEO WEB (06/11/2026, src/components/Footer.tsx + .footer-glow) ── */
+.chan-trang { background: radial-gradient(130% 90% at 50% 0%, rgba(0,0,0,.035), transparent 58%), linear-gradient(180deg, #f6f6f7 0%, #efeff1 100%); padding: 28px 16px 20px; }
+.ct-hieu { gap: 10px; }
+.ct-hieu img { width: 40px; height: 40px; }
+.ct-tagline { margin: 12px 0 0; font-size: 14px; font-weight: 600; color: var(--cl-ink); }
+.ct-gioi-thieu { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--cl-muted); }
+.ct-lien-he { list-style: none; margin: 20px 0 0; padding: 0; display: grid; gap: 8px; font-size: 14px; color: var(--cl-body); }
+.ct-lien-he b { color: var(--cl-ink); }
+.ct-zalo { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 999px; background: #0068ff; color: #fff; font-size: 13px; font-weight: 600; }
+.ct-nhom { margin-top: 24px; }
+.ct-nhom h3 { margin: 0; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--cl-ink); }
+.ct-nhom .ct-link { margin-top: 12px; gap: 8px 20px; }
+.ct-nhom .ct-link button { font-size: 14px; color: var(--cl-muted); padding: 2px 0; }
+.ct-ban-quyen { margin: 28px 0 0; padding-top: 18px; border-top: 1px solid var(--cl-line); font-size: 12px; color: var(--cl-muted); }
+/* ── MỘT KIỂU THẺ CHO CẢ MINI APP (chủ dự án 06/11/2026: "thẻ tin, thẻ dự án cần đồng nhất trên cái Zalo này", "tối ưu hiển thị") ──
+   Trang chủ · danh sách Mua bán / Cho thuê · trang Dự án · tin tương tự: cùng khung ảnh 4:3, tiêu đề 2 dòng, giá · diện tích,
+   địa chỉ một dòng; cấp tin giữ nhãn + chữ hoa (quyền lợi gói). Danh sách xếp 2 cột. Đè mọi luật thẻ cũ phía trên. */
+.the-tin { display: flex; flex-direction: column; border-radius: 12px !important; }
+.the-tin .anh-the img { aspect-ratio: 4 / 3 !important; }
+.the-tin .than-the { flex: 1; padding: 8px 10px 10px !important; }
+.the-tin .tieu-de { font-size: 13px !important; line-height: 1.45 !important; -webkit-line-clamp: 2 !important; min-height: 2.9em; margin: 0; }
+.the-tin .mo-ta, .the-tin .so-anh { display: none !important; }
+.the-tin .gia-dt { font-size: 12px !important; margin-top: 6px !important; flex-wrap: wrap; column-gap: 6px; row-gap: 0; justify-content: flex-start !important; }
+.the-tin .gia-dt > * { white-space: nowrap; }
+.the-tin .gia-dt .gia { font-size: 14px !important; }
+.the-tin .day-the-moi { display: block !important; font-size: 11px !important; margin-top: 4px; }
+.the-tin .day-the-moi span:first-child { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.the-tin .day-the-moi span:last-child { display: none; }
+.the-tin .nhan-hang { font-size: 9px !important; padding: 2px 6px !important; }
+.ds-doc, .luoi-du-an { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px !important; padding: 12px !important; }
+.khoi .ds-doc { padding: 0 16px !important; }
+/* HUY HIỆU CẤP = ĐÚNG web (packages.ts HUY_HIEU_CLS): góc trái trên, cao 20px rộng 70px, bo tròn, chữ 10px đậm in hoa giãn 0.08em,
+   chữ trắng, nền đặc màu cấp, bóng nhẹ. Đè mọi luật nhãn cũ. */
+.the-tin .nhan-hang { top: 12px !important; left: 12px !important; height: 20px; width: 70px; padding: 0 0 0 .08em !important; display: flex; align-items: center; justify-content: center;
+  border-radius: 999px; font-size: 10px !important; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; line-height: 1; color: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.the-tin .dai-nhan { height: 1px; }
+/* Nhãn tình trạng dự án: cùng kiểu huy hiệu, rộng theo chữ */
+.the-du-an .nhan-hang { width: auto !important; padding: 0 10px !important; }
+/* CHÂN TRANG GỌN (06/11/2026 "footer làm gọn lại"): chữ nhỏ lại, khoảng cách hẹp, liên kết sát nhau */
+.chan-trang { padding: 18px 16px 14px !important; }
+.ct-hieu img { width: 32px !important; height: 32px !important; }
+.ct-hieu strong { font-size: 16px !important; }
+.ct-tagline { margin-top: 8px !important; font-size: 13px !important; }
+.ct-gioi-thieu { margin-top: 4px !important; font-size: 12.5px !important; line-height: 1.5 !important; }
+.ct-lien-he { margin-top: 10px !important; gap: 4px !important; font-size: 12.5px !important; }
+.ct-zalo { height: 26px !important; padding: 0 10px !important; font-size: 12px !important; }
+.ct-nhom { margin-top: 14px !important; }
+.ct-nhom h3 { font-size: 12px !important; }
+.ct-nhom .ct-link { margin-top: 6px !important; gap: 2px 14px !important; }
+.ct-nhom .ct-link button { font-size: 12.5px !important; }
+.ct-ban-quyen { margin-top: 14px !important; padding-top: 10px !important; font-size: 11px !important; }

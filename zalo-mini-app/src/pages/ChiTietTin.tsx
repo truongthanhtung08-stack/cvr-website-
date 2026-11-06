@@ -248,7 +248,7 @@ export default function ChiTietTin() {
       {tuongTu.data.length > 0 && (
         <section className="khoi-ct" style={{ padding: "14px 0 16px" }}>
           <h2 className="muc-tin" style={{ padding: "0 16px" }}>Tin tương tự</h2>
-          <TruotNgang>{tuongTu.data.slice(0, 8).map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>
+          <TruotNgang hep>{tuongTu.data.slice(0, 8).map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>
         </section>
       )}
 

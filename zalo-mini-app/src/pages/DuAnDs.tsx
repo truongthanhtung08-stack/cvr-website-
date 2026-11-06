@@ -13,7 +13,7 @@ export default function DuAnDs() {
       {dangTai ? (
         <Box flex justifyContent="center" p={6}><Spinner /></Box>
       ) : (
-        <Box p={3} style={{ display: "grid", gap: 12 }}>{data.map((d) => <TheDuAn key={d.slug} duAn={d} />)}</Box>
+        <div className="luoi-du-an">{data.map((d) => <TheDuAn key={d.slug} duAn={d} />)}</div>
       )}
     </Page>
   );
