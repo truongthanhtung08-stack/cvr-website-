@@ -37,7 +37,6 @@ export default function TheDuAn({ duAn }: { duAn: DuAn }) {
           <span className={viTri ? "" : "mo"}>{viTri || "Đang cập nhật"}</span>
         </p>
         <Dong nhan="Loại hình" gt={duAn.type} />
-        {!mau && <Dong nhan="Tiến độ" gt={duAn.status_text} />}
         <div className="day-da">
           <Dong nhan="Chủ đầu tư" gt={duAn.developer} />
           <span className="gia-da">{duAn.price_from ? String(duAn.price_from) : "Liên hệ"}</span>

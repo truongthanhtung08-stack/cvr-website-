@@ -732,3 +732,10 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Dòng Chủ đầu tư + giá luôn sát đáy thẻ (thẻ VIP không có dòng Tiến độ vẫn thẳng hàng với thẻ thường cạnh bên) */
 .the-du-an .day-da { margin-top: auto !important; }
 .the-du-an .than-the > p:nth-last-child(2) { margin-bottom: 10px; }
+/* GỌN (06/11/2026 "gọn lại nội dung thẻ dự án"): bỏ dòng Tiến độ · dòng sát nhau · dòng cuối gần nội dung. */
+.the-du-an .vi-tri-da, .the-du-an .dong-da { margin-top: 2px; }
+.the-du-an .than-the > p:nth-last-child(2) { margin-bottom: 8px; }
+.the-du-an .day-da { padding-top: 6px; }
+/* Thẻ dự án: MỌI THỨ MỘT DÒNG (06/11/2026) — tên dự án cũng 1 dòng. */
+.the-du-an .tieu-de { -webkit-line-clamp: 1 !important; min-height: 0 !important; }
+.truot-ngang.hep .the-tin.the-du-an .tieu-de, .the-tin.the-du-an .tieu-de { -webkit-line-clamp: 1 !important; min-height: 0 !important; height: auto !important; }
