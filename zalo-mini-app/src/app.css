@@ -489,3 +489,21 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* 3) Đầu trang chủ: câu thương hiệu không bị cắt trên máy thật (chừa chỗ nút Zalo) — xuống 2 dòng nhỏ cạnh logo. */
 .hang-app { height: auto !important; min-height: 44px; }
 .hang-app span { white-space: normal !important; overflow: visible !important; font-size: 11.5px !important; line-height: 1.3; }
+/* Ô tìm + bộ lọc GỌN (chủ dự án 06/11/2026): ô tìm thấp 40px, chữ 14px; hàng lọc nút nhỏ, sát nhau, lề hẹp. */
+.zaui-input-search, .zaui-input-search .zaui-input-affix-wrapper, .zaui-input-group, .zaui-input-wrapper { min-height: 40px !important; height: 40px !important; }
+.zaui-input-search input, .zaui-input-wrapper input { font-size: 14px !important; }
+.dau-app { padding-bottom: 8px !important; }
+.dau-app > div:last-child { margin-top: 6px !important; }
+.khung-tim { padding: 8px 16px 2px !important; gap: 6px !important; }
+.thanh-loc { padding: 8px 16px !important; gap: 6px !important; }
+.thanh-loc button { padding: 4px 8px 4px 10px !important; font-size: 12.5px !important; }
+.tieu-de-ds { padding: 8px 16px 2px !important; }
+/* THANH MENU DƯỚI cân đối (06/11/2026): 5 mục chia đều, chữ 11px không bị cắt ("Trang c…"), biểu tượng 22px, cao gọn. */
+.zaui-bottom-navigation { height: auto !important; padding: 4px 0 calc(4px + var(--zaui-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important; }
+.zaui-bottom-navigation-item { flex: 1 1 0 !important; min-width: 0 !important; padding: 2px 0 !important; }
+.zaui-bottom-navigation-item-label { font-size: 11px !important; white-space: nowrap !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
+.zaui-bottom-navigation-item-icon, .zaui-bottom-navigation-item svg { width: 22px !important; height: 22px !important; }
+/* CANH LỀ HEADER (06/11/2026): tiêu đề trang thẳng lề 16px với nội dung bên dưới (ô tìm, thẻ); có nút ‹ thì nút sát lề 8px, chữ theo sau. */
+.zaui-header { padding-left: 16px !important; padding-right: 100px !important; }
+.zaui-header .zaui-header-back { margin-left: -8px !important; }
+.zaui-header-title { font-size: 17px !important; font-weight: 700 !important; }
