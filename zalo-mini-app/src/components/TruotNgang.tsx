@@ -5,7 +5,7 @@ import React, { ReactNode, useEffect, useRef, useState } from "react";
 //   · 5 giây sang ĐÚNG MỘT thẻ (tính theo chỉ số thẻ, không cộng dồn), hết dải thì về đầu
 //   · khách chạm/vuốt → dừng, im 6 giây không chạm nữa thì tự chạy tiếp
 //   · chỉ chạy khi dải đang trong tầm nhìn (mặc định coi như trong tầm — bài học của web)
-export default function TruotNgang({ children }: { children: ReactNode }) {
+export default function TruotNgang({ children, hep }: { children: ReactNode; hep?: boolean }) {
   const khung = useRef<HTMLDivElement>(null);
   const [dung, setDung] = useState(false);
   const [trongTam, setTrongTam] = useState(true);
@@ -43,7 +43,7 @@ export default function TruotNgang({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div ref={khung} className="truot-ngang" onTouchStart={chamVao} onPointerDown={chamVao}>
+    <div ref={khung} className={hep ? "truot-ngang hep" : "truot-ngang"} onTouchStart={chamVao} onPointerDown={chamVao}>
       {children}
     </div>
   );

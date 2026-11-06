@@ -34,7 +34,7 @@ export default function TheTin({ tin }: { tin: Tin }) {
   useEffect(() => (the.current ? theoDoiThe(the.current, tin.id) : undefined), [tin.id]);
 
   return (
-    <article ref={the} className="the-tin" onClick={() => dieuHuong(`/tin/${tin.id}`)}>
+    <article ref={the} className={`the-tin hang-${hangHieuLuc(tin)}`} onClick={() => dieuHuong(`/tin/${tin.id}`)}>
       {h && <div className="dai-nhan" style={{ background: h.dai }} aria-hidden />}
       <div className="anh-the">
         <img src={anh(anhs[0])} alt={tin.title} loading="lazy" />

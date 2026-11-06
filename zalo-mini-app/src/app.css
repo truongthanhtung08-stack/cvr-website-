@@ -292,3 +292,26 @@ html.xem-thu .hang-app { padding-right: 0; }
 .o-noi-bat .the-tin .gia-dt .gia { font-size: 14px; }
 .o-noi-bat .the-tin .day-the-moi { font-size: 11px; }
 .o-noi-bat .the-tin .nhan-hang { font-size: 9px; padding: 2px 6px; }
+/* THẺ TIN Ở DẢI NỔI BẬT = thẻ trang chủ web (PropertyCard variant "tier", 06/11/2026): khung ảnh theo cấp · tiêu đề đủ chữ
+   (Diamond · Gold 3 dòng VIẾT HOA, Silver · Basic 2 dòng) · giá · diện tích · địa chỉ 1 dòng · mô tả 2 dòng · thẻ cao bằng nhau */
+.o-noi-bat .the-tin { display: flex; flex-direction: column; }
+.o-noi-bat .the-tin .than-the { flex: 1; }
+.o-noi-bat .hang-diamond .anh-the img { aspect-ratio: 1.272; }
+.o-noi-bat .hang-gold .anh-the img { aspect-ratio: 1.436; }
+.o-noi-bat .hang-silver .anh-the img { aspect-ratio: 1.618; }
+.o-noi-bat .hang-basic .anh-the img { aspect-ratio: 1.809; }
+.o-noi-bat .the-tin .tieu-de { font-size: 13.5px; line-height: 1.45; -webkit-line-clamp: 2; min-height: 2.9em; }
+.o-noi-bat .hang-diamond .tieu-de, .o-noi-bat .hang-gold .tieu-de { -webkit-line-clamp: 3; min-height: 4.35em; }
+.o-noi-bat .the-tin .mo-ta { display: -webkit-box; -webkit-line-clamp: 2 !important; font-size: 12px; line-height: 1.45; margin-top: 4px; }
+.o-noi-bat .the-tin .day-the-moi { display: block; }
+.o-noi-bat .the-tin .day-the-moi span:first-child { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Dải dự án cùng chuẩn dải tin nổi bật (06/11/2026): ~2,2 thẻ trong khung */
+.truot-ngang.hep { gap: 10px; }
+.truot-ngang.hep > * { flex: 0 0 44%; }
+.the-du-an { display: flex; flex-direction: column; border-radius: 12px; }
+.the-du-an .anh-the { position: relative; }
+.the-du-an .anh-the img { aspect-ratio: 1.618; }
+.the-du-an .nhan-hang { font-size: 9px; padding: 2px 6px; }
+.the-du-an .than-the { padding: 8px 10px 10px; }
+.the-du-an .tieu-de { margin: 0; font-size: 13.5px; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; }
+.the-du-an .dong-phu { margin: 3px 0 0; font-size: 12px; color: var(--cl-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

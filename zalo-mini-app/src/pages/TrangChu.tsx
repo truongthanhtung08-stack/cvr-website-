@@ -5,7 +5,7 @@ import KhoiNoiBat from "../components/KhoiNoiBat";
 import TheDuAn from "../components/TheDuAn";
 import TruotNgang from "../components/TruotNgang";
 import IconCL, { type TenIcon } from "../components/IconCL";
-import { layDuAn, layTinhCoTin } from "../lib/tin";
+import { layDuAnNoiBat, layTinhCoTin } from "../lib/tin";
 import { useTai } from "../lib/useTai";
 import { nhanCoastalLand } from "../lib/zalo";
 import logoTron from "../assets/logo-tron.svg";
@@ -34,7 +34,7 @@ const DICH_VU: DichVu[] = [
 
 export default function TrangChu() {
   const dieuHuong = useNavigate();
-  const duAn = useTai(() => layDuAn(8), [], []);
+  const duAn = useTai(() => layDuAnNoiBat(8), [], []); // như web: chỉ dự án nổi bật, theo cấp, 8 dự án — còn lại ở Xem thêm
   const tinh = useTai(() => layTinhCoTin("ban"), [], []); // tỉnh đang có tin thật — không ảnh, không số bịa
 
   return (
@@ -66,7 +66,7 @@ export default function TrangChu() {
 
       {duAn.data.length > 0 && (
         <Khoi tieuDe="Dự án nổi bật" xemThem="/du-an">
-          <TruotNgang>{duAn.data.map((d) => <TheDuAn key={d.slug} duAn={d} />)}</TruotNgang>
+          <TruotNgang hep>{duAn.data.map((d) => <TheDuAn key={d.slug} duAn={d} />)}</TruotNgang>
         </Khoi>
       )}
 

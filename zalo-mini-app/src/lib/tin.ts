@@ -256,3 +256,21 @@ export async function layTinNoiBat() {
     .sort((a, b) => THU_HANG[hangHieuLuc(a.t)] - THU_HANG[hangHieuLuc(b.t)] || a.i - b.i)
     .map((x) => x.t);
 }
+
+// DỰ ÁN NỔI BẬT trang chủ — ĐÚNG luật web (src/lib/contentDb.ts getProjectsNoiBat + ProjectSlider sortProjectsByTier, 06/11/2026):
+// bỏ hồ sơ Tra cứu (details.dangThe hoặc chưa có ảnh) · xếp theo cấp Diamond → Gold → Silver → thường, cùng cấp giữ thứ tự mới
+// nhất · trang chủ lấy 8 dự án đầu, còn lại ở "Xem thêm".
+const CAP_DU_AN: Record<string, number> = { diamond: 0, gold: 1, silver: 2, basic: 3 };
+export async function layDuAnNoiBat(soLuong = 8) {
+  const ds = await doc<DuAn & { details: { dangThe?: boolean; tier?: string } | null }>(
+    "projects",
+    `select=${COT_DU_AN},details&status=eq.published&order=published_at.desc.nullslast&limit=200`,
+  );
+  const coAnh = (d: DuAn) => (d.images ?? []).some((s) => s && !/youtu\.?be|\.mp4|\.webm|\.mov/i.test(s));
+  return ds
+    .filter((d) => !d.details?.dangThe && coAnh(d))
+    .map((d, i) => ({ d, i, r: CAP_DU_AN[d.details?.tier ?? "basic"] ?? 3 }))
+    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .slice(0, soLuong)
+    .map((x) => x.d);
+}
