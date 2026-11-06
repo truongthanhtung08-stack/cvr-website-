@@ -274,3 +274,18 @@ export async function layDuAnNoiBat(soLuong = 8) {
     .slice(0, soLuong)
     .map((x) => x.d);
 }
+
+// TRANG DỰ ÁN — đúng thứ tự web (/du-an, chủ dự án 02/11/2026): Dự án nổi bật trước (theo cấp, cùng cấp mới nhất trước) → Tra cứu
+// (hồ sơ dangThe hoặc chưa có ảnh) sau, xếp theo tên A-B-C. Chung luật với layDuAnNoiBat.
+export async function layDuAnTrang() {
+  const ds = await doc<DuAn & { details: { dangThe?: boolean; tier?: string } | null }>(
+    "projects",
+    `select=${COT_DU_AN},details&status=eq.published&order=published_at.desc.nullslast&limit=500`,
+  );
+  const coAnh = (d: DuAn) => (d.images ?? []).some((s) => s && !/youtu\.?be|\.mp4|\.webm|\.mov/i.test(s));
+  const noiBat = ds.filter((d) => !d.details?.dangThe && coAnh(d))
+    .map((d, i) => ({ d, i, r: CAP_DU_AN[d.details?.tier ?? "basic"] ?? 3 }))
+    .sort((a, b) => a.r - b.r || a.i - b.i).map((x) => x.d);
+  const traCuu = ds.filter((d) => d.details?.dangThe || !coAnh(d)).sort((a, b) => a.name.localeCompare(b.name, "vi"));
+  return { noiBat, traCuu };
+}

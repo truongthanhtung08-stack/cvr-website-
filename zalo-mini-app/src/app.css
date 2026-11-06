@@ -403,3 +403,7 @@ html.xem-thu .hang-app { padding-right: 0; }
 .hang-xem-them { display: flex; justify-content: center; padding: 16px 0 8px; }
 .btn-xemthem { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; min-width: 124px; padding: 0 16px; border: 0; border-radius: 999px;
   background-image: linear-gradient(135deg, #2a2a2c 0%, #060606 100%); color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.12); }
+.tieu-de-phan { margin: 0; padding: 14px 16px 0; font-size: 16px; font-weight: 700; color: var(--cl-ink); }
+/* Không ảnh → khung xám + logo mờ (như web, cấm ảnh mẫu — CLAUDE.md luật 13) */
+.anh-trong { aspect-ratio: 4 / 3; background: var(--cl-surface); display: flex; align-items: center; justify-content: center; }
+.anh-trong img { width: 44px !important; height: 44px; aspect-ratio: 1 !important; opacity: .25; object-fit: contain; background: none !important; }

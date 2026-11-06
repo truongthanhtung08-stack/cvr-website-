@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "zmp-ui";
 import { anh, type DuAn } from "../lib/tin";
 import { diaChiDuAn } from "../lib/dinhDang";
+import logoTron from "../assets/logo-tron.svg";
 
 // Thẻ dự án — cùng chuẩn thẻ tin ở dải nổi bật (06/11/2026): ảnh tỷ lệ vàng · tên đủ 2 dòng · loại hình · địa chỉ 1 dòng.
 export default function TheDuAn({ duAn }: { duAn: DuAn }) {
@@ -9,7 +10,7 @@ export default function TheDuAn({ duAn }: { duAn: DuAn }) {
   return (
     <div className="the-tin the-du-an" onClick={() => dieuHuong(`/du-an/${duAn.slug}`)}>
       <div className="anh-the">
-        <img src={anh(duAn.images?.[0])} alt={duAn.name} loading="lazy" />
+        {duAn.images?.[0] ? <img src={anh(duAn.images[0])} alt={duAn.name} loading="lazy" /> : <div className="anh-trong"><img src={logoTron} alt="" /></div>}
         {duAn.status_text && <span className="nhan-hang" style={{ background: "var(--cl-blue)" }}>{duAn.status_text}</span>}
       </div>
       <div className="than-the">

@@ -5,6 +5,7 @@ import { gia, dienTich, diaChi, luc, tomTatTin } from "../lib/dinhDang";
 import { daLuu, doiLuu } from "../lib/daLuu";
 import { tachAnh, tachVideo } from "../lib/media";
 import { theoDoiThe } from "../lib/hienThi";
+import logoTron from "../assets/logo-tron.svg";
 
 // Thẻ tin ẢNH TRÊN · CHỮ DƯỚI (chủ dự án chốt 27/09 — app chạy trên điện thoại).
 // Ảnh vừa phải để nhường chỗ cho tiêu đề + nội dung: hạng · số ảnh · tim trên ảnh;
@@ -38,7 +39,7 @@ export default function TheTin({ tin }: { tin: Tin }) {
     <article ref={the} className={`the-tin hang-${hangHieuLuc(tin)}`} onClick={() => dieuHuong(`/tin/${tin.id}`)}>
       {h && <div className="dai-nhan" style={{ background: h.dai }} aria-hidden />}
       <div className="anh-the">
-        <img src={anh(anhs[0])} alt={tin.title} loading="lazy" />
+        {anhs[0] ? <img src={anh(anhs[0])} alt={tin.title} loading="lazy" /> : <div className="anh-trong"><img src={logoTron} alt="" /></div>}
         {h && <span className="nhan-hang" style={{ background: h.mau }}>{h.ten}</span>}
         {(soAnh > 1 || coVideo) && <span className="so-anh">{coVideo ? "▶ Video · " : ""}{soAnh} ảnh</span>}
         <button
