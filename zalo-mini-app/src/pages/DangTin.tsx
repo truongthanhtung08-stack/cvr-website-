@@ -9,6 +9,7 @@ import { chonAnh, taiAnhLen } from "../lib/taiAnh";
 import { laVideo, tachAnh } from "../lib/media";
 import { useTai } from "../lib/useTai";
 import { layNguoiZalo } from "../lib/zalo";
+import { getAccessToken, getPhoneNumber } from "zmp-sdk";
 import BangGiaMaTran, { TEN_HANG } from "../components/BangGiaMaTran";
 
 const { Option } = Select;
@@ -188,7 +189,8 @@ export default function DangTin() {
     return Math.round(md === "thue" ? g * 1e6 : g * (donVi === "ty" ? 1e9 : 1e6));
   };
 
-  const xacMinhSo = async (buoc: "gui-ma" | "xac-nhan") => {
+  // SỐ ZALO MỘT CHẠM (Zalo getPhoneNumber): Zalo hỏi khách cho chia sẻ số → máy chủ đổi token ra số, coi như đã xác minh.
+  const xacMinhSo = async (buoc: "gui-ma" | "xac-nhan" | "so-zalo") => {
     setLoi(undefined);
     setDangXm(true);
     try {
@@ -198,7 +200,11 @@ export default function DangTin() {
       const r = await fetch("https://coastalland.vn/api/xac-thuc/xac-minh-sdt", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ buoc, sdt, ma: maXm, dangTin: true }),
+        body: JSON.stringify(
+          buoc === "so-zalo"
+            ? { buoc, dangTin: true, tokenSo: (await getPhoneNumber()).token, zaloAccessToken: await getAccessToken() }
+            : { buoc, sdt, ma: maXm, dangTin: true },
+        ),
       });
       const j = (await r.json().catch(() => ({}))) as { ok?: boolean; loi?: string; sdt?: string; doiTaiKhoan?: { access_token: string; refresh_token: string } };
       if (!j.ok) return setLoi(j.loi || "Chưa xác minh được số. Vui lòng thử lại.");
@@ -448,7 +454,8 @@ export default function DangTin() {
           <Text size="small">{ten || "—"} · {sdt}</Text>
         ) : buocXm === "so" ? (
           <>
-            <Input label="Số điện thoại" inputMode="tel" value={sdt} onChange={(e) => setSdt(e.target.value)} />
+            <Button loading={dangXm} onClick={() => xacMinhSo("so-zalo")}>Dùng số điện thoại Zalo để đăng tin</Button>
+            <Input label="Hoặc nhập số khác" inputMode="tel" value={sdt} onChange={(e) => setSdt(e.target.value)} />
             <Button size="small" loading={dangXm} disabled={sdt.replace(/\D/g, "").length < 10} onClick={() => xacMinhSo("gui-ma")}>Nhận mã qua Zalo</Button>
           </>
         ) : (

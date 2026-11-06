@@ -1,27 +1,35 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { AnimationRoutes, App, BottomNavigation, Route, SnackbarProvider, ZMPRouter, useLocation } from "zmp-ui";
 import IconCL from "./components/IconCL";
+
+// TẢI THEO MÀN (chuẩn hiệu suất Zalo: LCP < 2,5 giây, tải trang < 1,5 giây — Chính sách kiểm duyệt mục 5.3): màn đầu (5 tab) nằm sẵn
+// trong gói chính; màn khác chỉ tải khi mở. Khung chờ = trang trắng cùng nền (không nhảy bố cục).
+function cham(nap: () => Promise<{ default: React.ComponentType }>) {
+  const C = lazy(nap);
+  return () => <Suspense fallback={<div style={{ minHeight: "100vh", background: "#fff" }} />}><C /></Suspense>;
+}
 import TrangChu from "./pages/TrangChu";
-import TimKiem from "./pages/TimKiem";
-import DichVu from "./pages/DichVu";
+const TimKiem = cham(() => import("./pages/TimKiem"));
+const DichVu = cham(() => import("./pages/DichVu"));
 import TaiKhoan from "./pages/TaiKhoan";
 import DanhSach from "./pages/DanhSach";
 import ChiTietTin from "./pages/ChiTietTin";
 import DuAnDs from "./pages/DuAnDs";
-import DuAnChiTiet from "./pages/DuAnChiTiet";
-import TinTucDs from "./pages/TinTucDs";
-import BaiVietChiTiet from "./pages/BaiVietChiTiet";
-import BangGia from "./pages/BangGia";
-import DaLuu from "./pages/DaLuu";
-import DaXem from "./pages/DaXem";
-import DangNhap from "./pages/DangNhap";
-import DangTin from "./pages/DangTin";
-import TinCuaToi from "./pages/TinCuaToi";
-import GoiTin from "./pages/GoiTin";
-import HoaDon from "./pages/HoaDon";
-import KhachHang from "./pages/KhachHang";
-import CaiDat from "./pages/CaiDat";
-import NapTien from "./pages/NapTien";
+const DuAnChiTiet = cham(() => import("./pages/DuAnChiTiet"));
+const TinTucDs = cham(() => import("./pages/TinTucDs"));
+const BaiVietChiTiet = cham(() => import("./pages/BaiVietChiTiet"));
+const BangGia = cham(() => import("./pages/BangGia"));
+const DaLuu = cham(() => import("./pages/DaLuu"));
+const DaXem = cham(() => import("./pages/DaXem"));
+const DangNhap = cham(() => import("./pages/DangNhap"));
+const DangTin = cham(() => import("./pages/DangTin"));
+const TinCuaToi = cham(() => import("./pages/TinCuaToi"));
+const GoiTin = cham(() => import("./pages/GoiTin"));
+const HoaDon = cham(() => import("./pages/HoaDon"));
+const KhachHang = cham(() => import("./pages/KhachHang"));
+const CaiDat = cham(() => import("./pages/CaiDat"));
+const TrangTinh = cham(() => import("./pages/TrangTinh"));
+const NapTien = cham(() => import("./pages/NapTien"));
 
 // THANH DƯỚI = ĐÚNG web điện thoại (06/11/2026 "lấy giao diện web trên mobile làm chuẩn"): Trang chủ · Mua bán · Cho thuê · Dự án ·
 // Tài khoản. Đăng tin vào từ ô công cụ trang chủ và trang Tài khoản; mở toàn màn hình, không hiện thanh tab.
@@ -74,6 +82,7 @@ export default function UngDung() {
             <Route path="/hoa-don" element={<HoaDon />} />
             <Route path="/khach-hang" element={<KhachHang />} />
             <Route path="/cai-dat" element={<CaiDat />} />
+            <Route path="/thong-tin/:duong" element={<TrangTinh />} />
             <Route path="/nap-tien" element={<NapTien />} />
           </AnimationRoutes>
           <ThanhDuoi />

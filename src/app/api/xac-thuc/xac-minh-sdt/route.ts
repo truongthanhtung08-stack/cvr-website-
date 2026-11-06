@@ -123,9 +123,32 @@ export async function POST(req: Request) {
   return res;
 }
 
+// SỐ ĐIỆN THOẠI ZALO (Zalo Mini App getPhoneNumber — docs.zaloplatforms.com/docs/MA/api/user/user-information/getPhoneNumber):
+// Mini App gửi token số (dùng 1 lần, hết hạn 2 phút) + access token người dùng; máy chủ đổi ra số qua graph.zalo.me/v2.0/me/info bằng
+// khoá bí mật Zalo App. Số này là số của chính tài khoản Zalo đang dùng, khách vừa bấm đồng ý chia sẻ → coi như ĐÃ XÁC MINH (như nhập
+// đúng mã gửi tới chính số đó), đi tiếp đúng đường "xac-nhan" bên dưới (gộp tài khoản, đánh dấu đã xác minh…).
+async function soTuZalo(accessToken?: string, code?: string): Promise<string | null> {
+  const secret = process.env.ZALO_APP_SECRET;
+  if (!accessToken || !code || !secret) return null;
+  try {
+    const r = await fetch("https://graph.zalo.me/v2.0/me/info", { headers: { access_token: accessToken, code, secret_key: secret } });
+    const j = (await r.json()) as { error?: number; data?: { number?: string } };
+    const so = j.error === 0 ? j.data?.number : undefined;
+    return so ? so.replace(/\D/g, "").replace(/^84/, "0") : null;
+  } catch {
+    return null;
+  }
+}
+
 async function xuLy(req: Request) {
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-  const b = (await req.json().catch(() => ({}))) as { buoc?: string; sdt?: string; ma?: string; dangTin?: boolean };
+  const b = (await req.json().catch(() => ({}))) as { buoc?: string; sdt?: string; ma?: string; dangTin?: boolean; zaloAccessToken?: string; tokenSo?: string };
+  const soZalo = b.buoc === "so-zalo";
+  if (soZalo) {
+    const so = await soTuZalo(b.zaloAccessToken, b.tokenSo);
+    if (!so) return loi("Chưa lấy được số từ Zalo. Vui lòng thử lại.");
+    b.sdt = so;
+  }
   const sdt = chuanHoaSdt(b.sdt ?? "");
   if (!laSdtVN(sdt)) return loi("Số điện thoại chưa đúng (VD: 0905123456).");
 
@@ -161,9 +184,11 @@ async function xuLy(req: Request) {
     return NextResponse.json({ ok: true, quaZalo: true, quaEmail: null });
   }
 
-  if (b.buoc !== "xac-nhan") return loi("Bước không hợp lệ.");
-  const kiem = await kiemMa(sdt, "xac-minh-sdt", b.ma ?? "");
-  if (!kiem.ok) return loi(kiem.loi);
+  if (b.buoc !== "xac-nhan" && !soZalo) return loi("Bước không hợp lệ.");
+  if (!soZalo) {
+    const kiem = await kiemMa(sdt, "xac-minh-sdt", b.ma ?? "");
+    if (!kiem.ok) return loi(kiem.loi);
+  }
 
   let soTinGop = 0;
 
