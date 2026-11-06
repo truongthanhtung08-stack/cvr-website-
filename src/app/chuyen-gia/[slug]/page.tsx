@@ -13,7 +13,7 @@ import { getListings } from "@/lib/listingsDb";
 // Dữ liệu gom từ tin thật, không có bảng hồ sơ riêng và không có chỉ số bịa.
 // ============================================================================
 
-export const revalidate = 60;
+export const revalidate = 3600; // 07/11/2026: 60 → 3600 — tin đổi đã xoá cache theo thẻ "listings"; 60 giây làm mỗi hồ sơ dựng lại mỗi phút.
 
 export async function generateMetadata({
   params,

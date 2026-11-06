@@ -216,6 +216,8 @@ export default function ChiSoGiaPage() {
     const { error } = await createClient()
       .from("site_content")
       .upsert({ key: "chi_so_gia", data: { items: sach } as ChiSoGiaData });
+    // Xoá bản lưu sẵn "noi-dung" ngay (07/11/2026: cache nội dung 1 giờ — không gọi thì trang tin chờ tới 1 giờ mới đổi).
+    if (!error) await fetch("/api/lam-moi", { method: "POST", body: JSON.stringify({ the: "noi-dung" }) }).catch(() => {});
     setMsg(error ? `Lỗi: ${error.message}` : `Đã lưu ${sach.length} dãy số — trang tin hiện ngay.`);
   }
 
