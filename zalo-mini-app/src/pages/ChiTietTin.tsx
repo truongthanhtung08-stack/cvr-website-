@@ -14,6 +14,7 @@ import { chiaSeTin } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
 import { supabase } from "../lib/supabase";
 import { nhungVideo, tachAnh, tachVideo } from "../lib/media";
+import { tachDinhDang } from "../../../src/lib/dinhDangMoTa"; // MỘT bộ đọc đậm / nghiêng với web
 
 // CHI TIẾT TIN — kiểu Mini App Zalo: ảnh · các khối trắng trên nền xám (giá + tiêu đề ·
 // đặc điểm dạng dòng · mô tả thu gọn · tiện ích · dự án · người đăng · tin tương tự) · nút gọi cố định.
@@ -302,16 +303,41 @@ export default function ChiTietTin() {
   );
 }
 
-// Mô tả dài thu gọn 6 dòng, bấm "Xem thêm" mới mở hết (kiểu Zalo).
-// Mô tả sạch ký hiệu (06/11/2026): bỏ ký tự thoát Markdown (\* \-), dấu đầu dòng trang trí (▪︎ * •) thành "• " thống nhất.
-const sachMoTa = (s: string) =>
-  s.replace(/\\([*_#.\-])/g, "$1").replace(/^[ \t​]*[*▪•●]︎?[ \t​]*/gm, "• ");
+// MÔ TẢ = Y HỆT TRANG TIN WEB (RichContent chế độ wysiwyg, 06/11/2026 "theo nội dung tin trên web: xuống dòng, đoạn, ký tự đặc biệt"):
+// giữ nguyên xuống dòng của người đăng, dòng trống = ngắt đoạn (gộp >1 dòng trống về 1), đậm / nghiêng đọc bằng ĐÚNG bộ của web
+// (src/lib/dinhDangMoTa.ts — "5*20" vẫn là dấu *, \* là dấu * thật), ảnh chèn ![](url) hiện ảnh, video chèn bỏ qua (Mini App cấm mở ngoài).
+function DoanMoTa({ text }: { text: string }) {
+  return (
+    <p className="mo-ta-ct">
+      {tachDinhDang(text).map((d, k) =>
+        d.b && d.i ? <strong key={k}><em>{d.t}</em></strong> : d.b ? <strong key={k}>{d.t}</strong> : d.i ? <em key={k}>{d.t}</em> : <React.Fragment key={k}>{d.t}</React.Fragment>,
+      )}
+    </p>
+  );
+}
 
 function MoTa({ noiDung }: { noiDung: string }) {
+  const dong = noiDung.replace(/\r\n/g, "\n").split("\n").map((x) => x.trim());
+  while (dong.length && dong[0] === "") dong.shift();
+  while (dong.length && dong[dong.length - 1] === "") dong.pop();
+  const khoi: React.ReactNode[] = [];
+  let dem: string[] = [];
+  const xa = (k: string) => {
+    const t = dem.join("\n").replace(/^\n+|\n+$/g, "").replace(/\n{3,}/g, "\n\n");
+    dem = [];
+    if (t.trim()) khoi.push(<DoanMoTa key={k} text={t} />);
+  };
+  dong.forEach((d, i) => {
+    const a = d.match(/^!\[[^\]]*\]\(([^)]+)\)$/);
+    if (a) { xa(`t${i}`); khoi.push(<img key={`a${i}`} className="anh-mo-ta" src={anh(a[1])} alt="" loading="lazy" />); return; }
+    if (/^@\[video\]\([^)]*\)$/i.test(d)) { xa(`t${i}`); return; }
+    dem.push(d);
+  });
+  xa("cuoi");
   return (
     <section className="khoi-ct" data-thu-gon="mo-ta">
       <h2 className="muc-tin">Mô tả</h2>
-      <p className="mo-ta-ct">{sachMoTa(noiDung)}</p>
+      {khoi}
     </section>
   );
 }

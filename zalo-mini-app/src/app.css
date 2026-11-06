@@ -830,3 +830,6 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Khối dải trượt trong trang tin (Bất động sản tương tự / đã xem): tên khối thẳng lề với các khối khác, dải thẻ chạy sát mép. */
 .khoi-ct.khoi-truot { padding-left: 0 !important; padding-right: 0 !important; }
 .khoi-ct.khoi-truot > .muc-tin { padding: 0 16px; }
+/* Mô tả như web: mỗi đoạn cách nhau 12px, giữ xuống dòng; ảnh chèn giữa mô tả rộng hết khung. */
+.khoi-ct .mo-ta-ct + .mo-ta-ct, .khoi-ct .mo-ta-ct + .anh-mo-ta, .khoi-ct .anh-mo-ta + .mo-ta-ct { margin-top: 12px; }
+.anh-mo-ta { width: 100%; border-radius: 8px; display: block; }
