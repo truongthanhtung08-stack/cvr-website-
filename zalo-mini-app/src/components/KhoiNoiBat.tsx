@@ -22,11 +22,14 @@ export default function KhoiNoiBat() {
   const dieuHuong = useNavigate();
   const ds = useTai(() => layTinNoiBat(), [], [] as Tin[]);
   const [tab, setTab] = useState(0);
+  // "Mua bán nhà đất | Cho thuê nhà đất" = TAB đổi dải tin tại chỗ (có chuyển động), không rời trang — 06/11/2026 "xem hiệu ứng và chuyển động".
+  const [md, setMd] = useState<"ban" | "thue">("ban");
+  const doiMd = (m: "ban" | "thue") => { if (m === md) return; setMd(m); setDang(0); ray.current?.scrollTo({ left: 0 }); };
   const [dang, setDang] = useState(0);
   const ray = useRef<HTMLDivElement>(null);
   const cham = useRef(0);
 
-  const loc = ds.data.filter(TAB[tab].khop);
+  const loc = ds.data.filter((t) => (md === "thue" ? t.purpose === "thue" : t.purpose !== "thue") && TAB[tab].khop(t));
   const slides = Array.from({ length: SO_SLIDE }, (_, i) => loc.slice(i * MOI_SLIDE, (i + 1) * MOI_SLIDE)).filter((s) => s.length);
 
   const buocThe = () => { const o = ray.current?.firstElementChild as HTMLElement | null; return o ? o.offsetWidth + 10 : 0; };
@@ -56,9 +59,9 @@ export default function KhoiNoiBat() {
       </div>
       {/* Như web (FeaturedListings): 2 đường dẫn "Mua bán nhà đất | Cho thuê nhà đất" dưới tiêu đề — mở danh sách Mua bán / Cho thuê. */}
       <div className="chon-md-kv">
-        <button onClick={() => dieuHuong("/ds/ban")}>Mua bán nhà đất</button>
+        <button className={md === "ban" ? "bat" : ""} onClick={() => doiMd("ban")}>Mua bán nhà đất</button>
         <span />
-        <button onClick={() => dieuHuong("/ds/thue")}>Cho thuê nhà đất</button>
+        <button className={md === "thue" ? "bat" : ""} onClick={() => doiMd("thue")}>Cho thuê nhà đất</button>
       </div>
       {/* Hàng tab Tất cả · Bán đất · Bán nhà riêng… ĐÃ BỎ (chủ dự án 06/11/2026: có Mua bán nhà đất | Cho thuê nhà đất thì bỏ menu dưới) — hiện Tất cả. */}
       {ds.dangTai ? (
@@ -67,7 +70,8 @@ export default function KhoiNoiBat() {
         <>
           <div
             ref={ray}
-            className="ray-slide"
+            key={md}
+            className="ray-slide doi-md"
             onTouchStart={() => { cham.current = Date.now(); }}
             onScroll={(e) => { const b = buocThe(); if (b) setDang(Math.min(slides.length - 1, Math.floor((e.currentTarget.scrollLeft + 1) / (b * MOI_SLIDE)))); }}
           >
@@ -81,7 +85,7 @@ export default function KhoiNoiBat() {
           )}
         </>
       )}
-      <div className="hang-xem-them"><button className="btn-xemthem" onClick={() => dieuHuong(`/ds/${TAB[tab].md}`)}>Xem thêm<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" /></svg></button></div>
+      <div className="hang-xem-them"><button className="btn-xemthem" onClick={() => dieuHuong(`/ds/${md}`)}>Xem thêm<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" /></svg></button></div>
     </section>
   );
 }

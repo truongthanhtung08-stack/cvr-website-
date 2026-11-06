@@ -665,3 +665,10 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* THẺ TRANG CHỦ — ẢNH TỶ LỆ CHUẨN 4:3 (06/11/2026 "khung hình phải đạt chuẩn tỷ lệ và to ra 1 chút"), mọi dải cùng một khung; chữ đủ bên dưới. */
 .o-noi-bat .the-tin .anh-the img, .truot-ngang.hep .anh-the img, .o-noi-bat .anh-trong, .truot-ngang.hep .anh-trong,
 .truot-ngang.hep img:not(.cg-anh) { aspect-ratio: 4 / 3 !important; }
+/* Tab "Mua bán nhà đất | Cho thuê nhà đất" (khối Nổi bật): bên đang chọn chữ đen đậm + gạch chân trượt; bấm có phản hồi; dải tin mới mờ dần vào. */
+.chon-md-kv button { position: relative; padding: 4px 0 !important; transition: color .2s; -webkit-tap-highlight-color: transparent; }
+.chon-md-kv button::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; border-radius: 2px; background: var(--cl-ink); transform: scaleX(0); transition: transform .25s ease; }
+.chon-md-kv button.bat::after { transform: scaleX(1); }
+.chon-md-kv button:active { opacity: .6; }
+.ray-slide.doi-md { animation: hienDan .35s ease; }
+@keyframes hienDan { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
