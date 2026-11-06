@@ -23,6 +23,20 @@ chạy lệnh push. Sửa xong chỉ báo link xem thử + "chưa push". Chỉ k
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
 
+## ✅ 06/11/2026 CHIỀU (phiên 8d8722b3) — PUSH theo lệnh anh, gồm mọi commit 268d6b8 → db29f72 (+ 9ac6e77 phiên khác: nạp tin hàng loạt)
+**Lỗi anh báo hôm nay — đã sửa từ gốc, đã thử cả điện thoại 375px lẫn máy tính (Chrome anh, đăng nhập thật):**
+1. **Đang chọn gói, xem Mẫu tin / Quy định, tắt là nhảy về đầu trang / trang chủ.** Gốc ①: `dynamic()` thiếu `loading` → lần đầu tải mã,
+   cả form bị Suspense thay bằng "Đang tải…" (trang 3.900px → 850px) — sửa TinHienThiMau, XemTruocTin, PhotoViewer, PhotoList. Gốc ②: link
+   Quy định gói tin · Up tin · Đẩy tin mở tab mới (điện thoại / app cài: khung tab phụ có X → về trang chủ) — nay mở bảng tại chỗ
+   (`LienKetQuyDinh`); bỏ mọi link nội bộ `target=_blank` (Xem tin, Bảng quyền lợi). ③ Tắt bảng nổi không `history.back()` nữa (`khoaCuon.ts`, dấu `cvrDu`).
+2. Nút chat Zalo đè thanh các bước — cấm kéo / nhớ vị trí vào 300px đầu trang (`Chatbox.tsx`).
+3. Sửa tin ĐÃ DUYỆT: ẩn ô Nhu cầu + mục Gói (thanh bước 1–6); CSDL chặn đổi Mua bán ↔ Cho thuê (SQL 0072 — anh đã chạy).
+4. Chấm đỏ thêm: tin vừa duyệt / Up được duyệt · Up bị từ chối · nạp tiền thành công (báo một lần, mở mục là tắt — `useSoTinCanXem.ts`).
+5. Dòng đỏ báo thiếu ô tự tắt khi điền xong · Xem trước khi sửa tin: nút "Cập nhật" · câu báo đầu form sửa tin gọn lại.
+6. Lỗi Claude tự tìm ra: đang sửa tin chuyển sang Đăng tin → form mang nội dung tin cũ, bấm Đăng sinh TIN TRÙNG (`KhungDangTin.tsx`).
+**Không thử được:** trả tiền PayOS thật · máy tự gửi duyệt sau nạp · gộp tài khoản · Up / Đẩy / Sửa tin đã duyệt trên điện thoại (tài khoản không có tin đang hiện).
+**Tin thử còn trong tài khoản 0b9e07d6 (anh xoá trong Admin):** f76d39c4 · 5b363d01 · 10e03e22 · 8322b0ee · 99862bfd · ac52b4a6 · eac5d24a · f31d2957 · 3650c745 (đang ẩn).
+
 ## ⏳ 06/11/2026 SÁNG (phiên 69797164) — TRÊN MÁY, CHƯA PUSH (gồm cả 268d6b8 bên dưới) — BUILD QUA 388/388
 **BẢN BUILD (anh hỏi nhiều lần — trả lời ĐÚNG danh sách này, theo AI làm gì):**
 1. Khách sửa tin của mình: bấm "Xem trước" thấy Hiệu lực · Hết hạn thật (268d6b8).
