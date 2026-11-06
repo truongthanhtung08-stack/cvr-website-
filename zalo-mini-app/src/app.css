@@ -649,3 +649,7 @@ html.xem-thu .hang-app { padding-right: 0; }
 .khoi .cham-slide { padding-top: 12px !important; }
 .khoi > .hang-xem-them, .khoi .cham-slide + .hang-xem-them { padding-top: 12px !important; padding-bottom: 0 !important; }
 .khoi > .truot-ngang + .hang-xem-them { padding-top: 8px !important; } /* dải trượt đã có 4px đệm đáy → thẻ → "Xem thêm" đúng 12 */
+/* Dưới ô tìm (06/11/2026): bỏ dải xám ngay dưới đầu trang — ô tìm → tiêu đề khối đầu 24px (10 + 14) thay vì 34; đầu trang dính có đường kẻ
+   mảnh để tách nội dung khi cuộn. */
+.dau-app { border-bottom: 1px solid var(--cl-line); }
+.dau-app + .khoi, .dau-app ~ .khoi:first-of-type { margin-top: 0 !important; padding-top: 14px !important; }
