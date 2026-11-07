@@ -15,7 +15,8 @@ import {
   type Filters,
   type SortKey,
 } from "@/lib/filters";
-import { smartFilter, smartSearch } from "@/lib/smartSearch";
+import { smartFilter, smartSearch, suaChinhTa } from "@/lib/smartSearch";
+import CauSuaGoogle from "@/components/CauSuaGoogle";
 import { nhanDoiHienThi, khoaThe } from "@/lib/nhanDoiHienThi";
 import { locDanhSach } from "@/lib/locDanhSach";
 import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
@@ -74,6 +75,11 @@ export default function SearchClient({
   const coTuKhoa = filters.keyword.trim().length > 0;
   // Có từ khoá mà địa danh chưa về → chưa hiện kết quả (tìm thiếu phường xã ra sai rồi nhảy; máy chủ dựng cũng vậy để khớp)
   const choDiaDanh = coTuKhoa && !coDiaDanh;
+  // SỬA CHÍNH TẢ KIỂU GOOGLE — cùng luật trang Mua bán / Cho thuê (anh 07/11/2026): gõ sai → tìm theo câu đã sửa + dòng "Đang hiển thị kết quả cho"
+  const nguyenVan = params.get("nguyenvan") === "1";
+  const cauSua = useMemo(() => (!nguyenVan && coDiaDanh && filters.keyword.trim() ? suaChinhTa(filters.keyword) : null), [nguyenVan, filters.keyword, coDiaDanh]);
+  const locThat = useMemo(() => (cauSua ? { ...filters, keyword: cauSua } : filters), [cauSua, filters]);
+  const linkNguyenVan = (() => { const sp = new URLSearchParams(params.toString()); sp.set("q", filters.keyword); sp.set("nguyenvan", "1"); return `?${sp.toString()}`; })();
 
 
   // Không có tin khớp chặt (câu lạ, hoặc trống) → dùng chung luật nới dần + câu nói rõ của trang Mua bán / Cho thuê
@@ -82,8 +88,8 @@ export default function SearchClient({
   // Cho thuê — ý khách (loại hình → nơi → giá…), xếp theo mức khớp. Câu không nói mục đích → cả hai mục (theoMuc = false)
   const chung = useMemo(() => {
     if (choDiaDanh) return null;
-    return locDanhSach(items.filter(dungMuc), itemsHetHan.filter(dungMuc), purpose, filters, sort, 1, undefined, items, !!mode);
-  }, [choDiaDanh, items, itemsHetHan, purpose, filters, sort, mode, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
+    return locDanhSach(items.filter(dungMuc), itemsHetHan.filter(dungMuc), purpose, locThat, sort, 1, undefined, items, !!mode);
+  }, [choDiaDanh, items, itemsHetHan, purpose, locThat, sort, mode, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
   const results = useMemo(() => (choDiaDanh || !chung ? [] : chung.ketQua), [choDiaDanh, chung]);
   // Tra cứu nhanh: tin nào thuộc tầng nào + khớp những chữ gì (để bôi đậm)
   // Kết quả đã hiện → tắt vạch xanh "đang tìm" chung (lọc tại chỗ nên có ngay)
@@ -111,6 +117,7 @@ export default function SearchClient({
       </div>
 
       {/* bỏ hàng chip lặp lại các trường (anh 07/11/2026: "không cần list ra như vậy" — trường Loại BĐS đã ghi loại hình CHA) */}
+      {cauSua && <CauSuaGoogle cauSua={cauSua} goc={filters.keyword} linkNguyenVan={linkNguyenVan} />}
 
       {/* Tổng kết + sắp xếp + xoá lọc.
           id="ket-qua": bấm Tìm / Enter / chọn gợi ý là cuộn thẳng xuống đây. */}

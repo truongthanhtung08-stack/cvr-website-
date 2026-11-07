@@ -38,6 +38,7 @@ import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { TinGoiY } from "@/lib/searchHints";
 import LuuTimKiem from "./LuuTimKiem";
 import { boDuoiThang } from "@/lib/thang";
+import CauSuaGoogle from "@/components/CauSuaGoogle";
 
 export default function ListingBrowser({
   heading,
@@ -448,22 +449,7 @@ export default function ListingBrowser({
           trống ngang giữa tiêu đề và danh sách tin. */}
       {/* id="ket-qua": mốc để bấm Tìm / Enter / chọn gợi ý là CUỘN THẲNG xuống đây,
           khách thấy trang chạy ngay cả khi kết quả không đổi. scroll-mt bù header. */}
-      {cauSua && (
-        <div className="mt-4 text-[15px] leading-relaxed">
-          <p className="text-cvr-ink">
-            Đang hiển thị kết quả cho{" "}
-            <span className="text-cvr-blue-ink">
-              {cauSua.split(/(\s+)/).map((w, i) => {
-                const goc = filters.keyword.split(/(\s+)/)[i];
-                return goc !== undefined && goc === w ? w : <b key={i}><i>{w}</i></b>;
-              })}
-            </span>
-          </p>
-          <p className="text-[13px] text-cvr-muted">
-            Tìm kiếm thay thế cho <a href={linkNguyenVan} className="text-cvr-blue-ink hover:underline">{filters.keyword}</a>
-          </p>
-        </div>
-      )}
+      {cauSua && <CauSuaGoogle cauSua={cauSua} goc={filters.keyword} linkNguyenVan={linkNguyenVan} />}
       <div id="ket-qua" className="mt-4 flex scroll-mt-20 flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:scroll-mt-24">
         <div className="min-w-0">
           {trangChu || nested

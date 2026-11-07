@@ -305,10 +305,19 @@ export function suaChinhTa(raw: string): string | null {
   if (!daCoDiaDanh()) return null;
   const td = tuDien();
   let doi = false;
-  const kq = raw.split(/(\s+)/).map((tok) => {
+  // CHỮ NẰM TRONG TÊN NƠI không đặt lại dấu theo chữ nhà đất (anh 07/11/2026: "ngũ hành sơn" từng thành "ngủ hành sơn" vì "ngủ" của phòng ngủ)
+  const nTok = raw.split(/(\s+)/).map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, ""));
+  const viTriChu = nTok.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
+  const trongTenNoi = new Set<number>();
+  const noiSan = cumNoi();
+  for (let a = 0; a < viTriChu.length; a++) for (let k = Math.min(4, viTriChu.length - a); k >= 2; k--) {
+    const ds = viTriChu.slice(a, a + k);
+    if (noiSan.has(ds.map((i) => nTok[i]).join(" "))) { ds.forEach((i) => trongTenNoi.add(i)); break; }
+  }
+  const kq = raw.split(/(\s+)/).map((tok, viTri) => {
     const n = normalizeVi(tok).replace(/[^a-z0-9]/g, "");
     // CHỮ NHÀ ĐẤT GÕ SAI DẤU ("đât" → "đất", "gân" → "gần", 07/11/2026): chỉ chữ trong từ điển nhà đất (không đụng tên nơi — "hóa"/"hòa")
-    const dauDung = CHU_NHA_DAT.get(n);
+    const dauDung = trongTenNoi.has(viTri) ? undefined : CHU_NHA_DAT.get(n);
     if (dauDung && normalizeVi(tok) !== tok.toLowerCase() && tok.toLowerCase() !== dauDung) { doi = true; return dauDung; }
     if (n.length < 4 || /\d/.test(n) || td.has(n)) return tok; // chữ ngắn (sun, an…) dễ đoán nhầm — "sun cosmo" thành "sung"
     if (/[/\-]/.test(tok)) return tok; // "triệu/tháng", "2-3" — khách cố ý viết liền bằng dấu, không phải gõ sai (01/11/2026)
@@ -395,7 +404,9 @@ export function suaChinhTa(raw: string): string | null {
   // CHỮ GÕ LẶP LIỀN NHAU ("đất nền nen hòa xuân") → bỏ chữ lặp, như Google (07/11/2026); số thì giữ ("2 2" hiếm, không đoán)
   for (let i = tu.length - 1; i > 0; i--) {
     const a = normalizeVi(tu[i]), b = normalizeVi(tu[i - 1]);
-    if (a && a === b && !/\d/.test(a)) { tu.splice(i, 1); doi = true; }
+    // hai chữ CÙNG CÓ DẤU mà khác dấu là hai chữ khác nhau ("phòng ngủ Ngũ Hành Sơn") — không phải gõ lặp
+    const khacDau = normalizeVi(tu[i]) !== tu[i].toLowerCase() && normalizeVi(tu[i - 1]) !== tu[i - 1].toLowerCase() && tu[i].toLowerCase() !== tu[i - 1].toLowerCase();
+    if (a && a === b && !/\d/.test(a) && !khacDau) { tu.splice(i, 1); doi = true; }
   }
   // chữ chỉ cấp gõ không dấu cũng đặt dấu khi câu đằng nào cũng sửa ("quan cẩm lệ" → "quận cẩm lệ", "thanh pho" → "thành phố")
   if (doi) for (let i = 0; i < tu.length; i++) {
