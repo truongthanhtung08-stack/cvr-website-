@@ -299,6 +299,14 @@ export default function FilterBar({
   // đang giữ một bước lịch sử riêng (nút ← đóng màn tìm) → lùi bỏ bước đó trước rồi mới sang trang. Câu vừa gõ đi theo sang trang mới.
   const diKetQua = (url: string, cau: string) => {
     try { if (cau) sessionStorage.setItem("cvr-cau:" + url.split("?")[0], cau); } catch { /* bỏ qua */ }
+    // ĐÍCH TRÙNG TRANG ĐANG ĐỨNG (anh 07/11/2026: "bấm search, ra bảng, bấm tiếp — không search được"): đi tới cùng địa chỉ thì trang
+    // không đổi gì → vẫn chạy tìm: báo khối kết quả + cuộn tới kết quả, như bấm Tìm
+    const giai = (u: string) => { try { return decodeURIComponent(u).replace(/\/$/, ""); } catch { return u; } };
+    if (giai(url) === giai(window.location.pathname + window.location.search)) {
+      window.dispatchEvent(new Event("cvr-tim"));
+      cuonToiKetQua();
+      return;
+    }
     boQuaLui();
     const st = (history.state ?? {}) as Record<string, unknown>;
     if (dangLui.current) { dangLui.current = url; return; } // gọi lặp (Enter + gửi form) trong lúc đang lùi: chỉ đổi đích, không lùi thêm
