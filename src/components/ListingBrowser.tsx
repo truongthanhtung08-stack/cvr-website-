@@ -381,7 +381,9 @@ export default function ListingBrowser({
   const doiBoLoc = (nf: Filters) => {
     const doiTruong = nf.keyword === filtersSong.keyword || !nf.keyword.trim();
     if (doiTruong) {
-      const f2 = hieu && nf.keyword === filtersSong.keyword ? { ...nf, keyword: hieu.keyword.trim() } : nf;
+      // GIỮ NGUYÊN CÂU KHÁCH GÕ trong ô và trên địa chỉ, như Google (07/11/2026: câu đọc hết thành trường — "đất giá rẻ hòa xuân" — thì
+      // phần chữ còn lại rỗng, ô tìm bị xoá trắng). Trường đọc từ câu đã nằm trong nf; câu đổi theo trường đã có capNhatCau (lỗi 7)
+      const f2 = nf;
       const dich = urlTheoTruong(f2);
       if (dich) {
         choDi.current = f2;

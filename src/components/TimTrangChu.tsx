@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { applyFilters, emptyFilters, filtersToParams, normalizeVi, type Filters, type LocationSel } from "@/lib/filters";
 import type { Suggestion } from "@/lib/suggest";
 import { docMucDich, parseQuery, suaChinhTa } from "@/lib/smartSearch";
+import { cauLuu, yCau, lichSuGon } from "@/lib/lichSuTim";
 import type { CauGoiY, TinDem } from "@/lib/goiYTrangChu";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import { thuHepDuAn, type DuAnLoc } from "@/lib/thuHepDuAn";
@@ -401,7 +402,9 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
 
   // LỊCH SỬ THEO MỤC (chủ dự án 17/10/2026: menu Dự án mà vẫn hiện câu tìm nhà đất): lưu kèm mục lúc tìm
   const luu = (s: Suggestion) => {
-    const next = [{ ...s, muc } as Suggestion, ...ganDay.filter((x) => x.label !== s.label)].slice(0, 12);
+    // lưu câu đã sửa đúng, cùng ý chỉ một dòng (lib/lichSuTim — một luật mọi ô tìm)
+    const s2 = { ...s, label: cauLuu(s.label), ...(s.keyword ? { keyword: cauLuu(s.keyword) } : {}), muc } as Suggestion;
+    const next = [s2, ...ganDay.filter((x) => yCau(x.label) !== yCau(s2.label))].slice(0, 12);
     setGanDay(next);
     try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* bỏ qua */ }
   };
@@ -572,7 +575,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     for (const d of nguon) if (normalizeVi(coMucDich(d.nhan, d.muc)) !== normalizeVi(dau) || d.muc !== muc)
       cauNhuCau.push({ nhan: coMucDich(d.nhan, d.muc), sub: d.muc === "duan" && muc !== "duan" ? "Dự án" : "", muc: d.muc, loai: true, href: d.href });
   }
-  const ganDayHien = kw ? [] : ganDay.filter((x) => mucCua(x) === muc).slice(0, 3);
+  const ganDayHien = kw ? [] : lichSuGon(ganDay.filter((x) => mucCua(x) === muc)).slice(0, 3);
   // lọc danh bạ dự án theo trường đã chọn — chỉ khi tab Dự án và lựa chọn đổi (không lọc lại mỗi chữ gõ)
   const locDuAn = useMemo(() => (muc === "duan" && duAnLoc ? thuHepDuAn(duAnLoc, boLoc) : null), [muc, duAnLoc, boLoc]);
   // Tên dự án gợi ý ở MỌI mục (khách hay gõ tên dự án mà không chuyển sang mục Dự án)
