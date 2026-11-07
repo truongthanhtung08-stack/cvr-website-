@@ -351,10 +351,10 @@ function MobileMenu({
           {user && (
             // Ảnh đại diện 40px + tên 16px đậm + dòng phụ "Thành viên" — CÙNG khối tên trong menu ảnh đại diện máy tính (25/10/2026)
             <Link href="/tai-khoan" onClick={onClose} className="mb-4 flex min-w-0 items-center gap-3">
-              <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-10 w-10 shrink-0 bg-white/15 text-[15px] text-white ring-1 ring-white/20" />
+              <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-10 w-10 shrink-0 bg-white/10 text-[15px] text-[#e8e8ed] ring-1 ring-white/15" />
               <span className="min-w-0">
-                <span className="block break-words text-[16px] font-semibold leading-tight text-white">{displayName(user)}</span>
-                {lienHeTaiKhoan(user).length ? lienHeTaiKhoan(user).map((x) => <span key={x} className="mt-0.5 block break-all text-[13px] leading-tight text-white/55">{x}</span>) : <span className="mt-0.5 block text-[13px] leading-tight text-white/55">Thành viên</span>}
+                <span className="block break-words text-[17px] font-medium leading-tight text-[#e8e8ed]">{displayName(user)}</span>
+                {lienHeTaiKhoan(user).length ? lienHeTaiKhoan(user).map((x) => <span key={x} className="mt-0.5 block break-all text-[14px] leading-tight text-[#a1a1a6]">{x}</span>) : <span className="mt-0.5 block text-[14px] leading-tight text-[#a1a1a6]">Thành viên</span>}
               </span>
             </Link>
           )}
@@ -396,10 +396,10 @@ function MobileMenu({
                   <Link
                     href={item.href}
                     onClick={onClose}
-                    className="flex min-h-[52px] flex-1 items-center gap-3.5 text-[18px] font-medium text-white"
+                    className="flex min-h-[44px] flex-1 items-center gap-4 text-[17px] font-normal text-[#e8e8ed]"
                   >
                     {item.icon && (
-                      <BieuTuong ten={item.icon} className="h-6 w-6 shrink-0 text-white/75" />
+                      <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-white/60" />
                     )}
                     {item.label}
                   </Link>
@@ -408,7 +408,7 @@ function MobileMenu({
                     onClick={() => setExpanded(expanded === item.label ? null : item.label)}
                     aria-expanded={expanded === item.label}
                     aria-label={`${expanded === item.label ? "Thu gọn" : "Mở rộng"} ${item.label}`}
-                    className="-mr-2 flex h-[52px] w-12 shrink-0 items-center justify-center"
+                    className="-mr-2 flex h-[44px] w-12 shrink-0 items-center justify-center"
                   >
                     <svg
                       className={`h-4 w-4 text-white/50 transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
@@ -429,15 +429,15 @@ function MobileMenu({
                   {/* pl-9 = 22px icon + gap-3.5 → danh mục con thẳng hàng với CHỮ của mục cha */}
                   {/* overflow-hidden + min-h-0: gập là 0px thật — phần đệm nằm trong khối con, các dòng menu cách ĐỀU nhau (07/11/2026) */}
                   <div className="min-h-0 overflow-hidden">
-                  <div className="pb-3 pl-[38px]">
+                  <div className="pb-2 pl-9">
                     {item.children.map((child) => (
                       <div key={child.label}>
-                        <div className="py-3">
+                        <div className="py-1.5">
                           {child.href ? (
                             <Link
                               href={child.href}
                               onClick={onClose}
-                              className="block text-[16px] font-semibold text-white/90 transition-colors active:text-white"
+                              className="block text-[16px] font-normal text-[#c7c7cc] transition-colors active:text-white"
                             >
                               {child.label}
                             </Link>
@@ -447,13 +447,13 @@ function MobileMenu({
                             </p>
                           )}
                           {child.children?.length ? (
-                            <div className="mt-2.5 space-y-3.5 border-l border-white/15 pl-3.5">
+                            <div className="mt-1.5 space-y-2 border-l border-white/10 pl-3.5">
                               {child.children.map((grandChild) => (
                                 <Link
                                   key={grandChild.label}
                                   href={grandChild.href ?? "#"}
                                   onClick={onClose}
-                                  className="block text-[16px] font-medium text-white/75 transition-colors active:text-white"
+                                  className="block text-[15px] font-normal text-[#a1a1a6] transition-colors active:text-white"
                                 >
                                   {grandChild.label}
                                 </Link>
@@ -471,10 +471,10 @@ function MobileMenu({
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="flex min-h-[52px] items-center gap-3.5 text-[18px] font-medium text-white"
+                className="flex min-h-[44px] items-center gap-4 text-[17px] font-normal text-[#e8e8ed]"
               >
                 {item.icon && (
-                  <BieuTuong ten={item.icon} className="h-6 w-6 shrink-0 text-white/75" />
+                  <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-white/60" />
                 )}
                 {item.label}
               </Link>
@@ -490,8 +490,8 @@ function MobileMenu({
         <div className={`mt-5 space-y-1 border-white/10 pt-3 ${user ? "border-t" : "max-lg:hidden lg:border-t"}`}>
           {/* Đã đăng nhập: mục tài khoản còn lại — cùng kiểu hàng với Tin đã lưu · Đăng xuất */}
           {user && TAI_KHOAN_PHU.map((l) => (
-            <Link key={l.href} href={l.href} onClick={onClose} className="flex min-h-[52px] items-center gap-3.5 text-[16px] font-medium text-white/85">
-              <BieuTuong ten={l.icon} className="h-6 w-6 shrink-0 text-white/60" />
+            <Link key={l.href} href={l.href} onClick={onClose} className="flex min-h-[44px] items-center gap-4 text-[16px] font-normal text-[#c7c7cc]">
+              <BieuTuong ten={l.icon} className="h-5 w-5 shrink-0 text-white/55" />
               {l.label}
             </Link>
           ))}
@@ -499,18 +499,18 @@ function MobileMenu({
           <Link
             href="/tin-luu"
             onClick={onClose}
-            className="flex min-h-[52px] items-center gap-3.5 text-[16px] font-medium text-white/85 max-lg:hidden"
+            className="flex min-h-[44px] items-center gap-4 text-[16px] font-normal text-[#c7c7cc] max-lg:hidden"
           >
-            <BieuTuong ten="tim" className="h-6 w-6 shrink-0 text-white/60" />
+            <BieuTuong ten="tim" className="h-5 w-5 shrink-0 text-white/55" />
             Tin đã lưu
           </Link>
           {user && (
             <button
               type="button"
               onClick={() => { onLogout(); onClose(); }}
-              className="flex min-h-[52px] w-full items-center gap-3.5 text-left text-[16px] font-medium text-white/60"
+              className="flex min-h-[44px] w-full items-center gap-4 text-left text-[16px] font-normal text-[#a1a1a6]"
             >
-              <BieuTuong ten="dangXuat" className="h-6 w-6 shrink-0 text-white/45" />
+              <BieuTuong ten="dangXuat" className="h-5 w-5 shrink-0 text-white/45" />
               Đăng xuất
             </button>
           )}
