@@ -1587,8 +1587,9 @@ export function LocationPanel({
   // NƠI ĐÃ CHỌN LÊN ĐẦU, TÔ XANH (chủ dự án 01/11/2026): cập nhật thứ tự ngay khi chọn.
   // CHỐT THỨ TỰ lúc mở bảng / đổi tầng (07/11/2026: bấm chọn tỉnh là dòng nhảy lên đầu ngay dưới ngón tay — bấm tiếp trúng tỉnh khác)
   const khoaTang = `${mode}|${prov}|${dist}`;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ tính lại khi đổi tầng
-  const dauTang = useMemo(() => new Set(list.filter(daChon)), [khoaTang]);
+  // CHỌN LÀ LÊN ĐẦU NGAY, CHỮ XANH (anh 08/11/2026, nói 2 ngày): xếp lại mỗi lần chọn / bỏ — mọi tầng, cả hai hệ
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- tính lại khi đổi tầng hoặc đổi nơi đã chọn
+  const dauTang = useMemo(() => new Set(list.filter(daChon)), [khoaTang, locations]);
   const xepLen = nq ? filtered : [...filtered.filter((x) => dauTang.has(x)), ...filtered.filter((x) => !dauTang.has(x))];
   const nhomTinhCu = false as boolean // bỏ nhóm tỉnh cũ theo tỉnh mới (07/11/2026: lồng hai tầng khách không hiểu) — danh sách phẳng
     ? [...new Set(list.map(newProvinceOf))]
