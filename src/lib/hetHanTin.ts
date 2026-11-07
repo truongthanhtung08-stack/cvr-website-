@@ -133,12 +133,8 @@ export async function quetTinHetHan(
         }
         hanBasic = await hanChuongTrinh(admin, tin, bill);
       }
-      // KHÁCH CHỌN GÓI NÀO TÍNH ĐÚNG GÓI ĐÓ, ĐÚNG NGÀY (anh 07/11/2026): hạn Basic khách đã chọn và được GHI SẴN (han_basic) thì hết VIP về
-      // Basic tới đúng hạn đó — tin 9A5DA44A chọn Basic 10 ngày (tới 10/11) bị hạ ngày 07/11 vì dòng này bỏ qua hạn đã ghi.
-      // Khách tự UP tin (nâng gói, /api/admin/nang-goi) thì đường đó đã xoá han_basic → một hạn theo luật 01/11/2026, không đụng.
-      // Chỉ bỏ hạn Basic SUY RA theo chương trình (hanChuongTrinh) khi khách chọn gói thường.
-      const coHanGhi = typeof tin.details?.han_basic === "string" || Number(tin.details?.sau_vip_con_lai_ms ?? 0) > 0;
-      if (!chonKhuyenMai(tin.details) && !coHanGhi) hanBasic = NaN;
+      // Khách chọn GÓI THƯỜNG (không chương trình): hết gói là hết hạn, không về Basic cũ (chủ dự án 01/11/2026: nâng = đăng gói mới)
+      if (!chonKhuyenMai(tin.details)) hanBasic = NaN;
       if (tin.tier !== "basic" && Number.isFinite(hanBasic) && hanBasic > bayGio.getTime()) {
         const { sau_vip_con_lai_ms: _bo1, han_basic: _bo2, ...giu } = tin.details ?? {};
         void _bo1; void _bo2;
@@ -235,7 +231,7 @@ export async function quetTinHetHan(
     // (cùng điều kiện hạ VIP ở bước 1; 05/11/2026). Tới lúc kỳ Basic sắp hết thì nhắc như thường.
     const canNhac = ((sapHet ?? []) as Tin[]).filter((t) => {
       const hb = Date.parse(String((t.details as { han_basic?: string } | null)?.han_basic ?? ""));
-      return !(t.tier !== "basic" && Number.isFinite(hb) && hb > Date.parse(t.tier_expires_at)); // có hạn Basic ghi sẵn → hết VIP vẫn hiện, không nhắn "sắp hết hạn" (cùng luật dòng ~140)
+      return !(t.tier !== "basic" && chonKhuyenMai(t.details) && Number.isFinite(hb) && hb > Date.parse(t.tier_expires_at));
     });
     daNhac = await nhanTheoKhach(admin, canNhac, "nhac_het_han", moc24h, (ds, chu) => {
       const t = ds[0];
