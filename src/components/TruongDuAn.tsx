@@ -25,7 +25,7 @@ export const tomTatLoaiDuAn = (ds: string[] = []) =>
 
 /** dem: số dự án của từng nhóm theo dữ liệu thật (trang Dự án) → chỉ hiện nhóm CÓ dự án, kèm số; không truyền → đủ danh mục */
 export function PanelLoaiDuAn({ value = [], onChange, dem }: { value?: string[]; onChange: (v: string[]) => void; onApply: () => void; dem?: (slug: string) => number }) {
-  const ds = dem ? projectCategories.filter((c) => dem(c.slug) > 0 || value.includes(c.slug)) : projectCategories;
+  const ds = projectCategories; // luôn đủ lựa chọn, không ẩn mục chưa có dự án (anh 07/11/2026)
   // CÙNG LOGIC "Loại BĐS" Mua bán (chủ dự án 20/10/2026): chưa chọn = TẤT CẢ; bấm "Tất cả" = bỏ lọc; chọn đủ mọi loại = về "Tất cả"
   const tatCa = ds.map((c) => c.slug);
   const doiLoai = (s: string, on: boolean) => {
@@ -42,7 +42,7 @@ export function PanelLoaiDuAn({ value = [], onChange, dem }: { value?: string[];
             <label key={c.slug} className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-cvr-ink transition hover:bg-black/5">
               <input type="checkbox" checked={on} onChange={() => doiLoai(c.slug, on)} className="h-4 w-4 shrink-0 accent-cvr-blue" />
               <span className="flex-1">{c.label}</span>
-              {dem && <span className="text-xs text-cvr-faint">{dem(c.slug)}</span>}
+              {/* bỏ số đếm cạnh lựa chọn (anh 07/11/2026: kết quả do dữ liệu quyết định) */}
             </label>
           );
         })}
@@ -109,7 +109,7 @@ export function PanelChuDauTu({ value = "", ds, onChange, onApply, hienSan = fal
  *  lib/thuHepDuAn CAY_LOAI_DU_AN). Cùng cách chọn bảng Loại BĐS Mua bán: bấm nhóm = cả nhóm, bấm loại con = loại đó. Chỉ hiện loại CÓ
  *  dự án thật (dem — theo các trường khác đã chọn), kèm số. value = f.types (cùng trường loại hình của bộ lọc chung). */
 export function PanelLoaiBdsDuAn({ value = [], onChange, dem }: { value?: string[]; onChange: (v: string[]) => void; dem: (o: string) => number }) {
-  const cay = CAY_LOAI_DU_AN.map((g) => ({ ...g, items: g.items.filter((o) => dem(o) > 0 || value.includes(o)) })).filter((g) => g.items.length > 0);
+  const cay = CAY_LOAI_DU_AN; // luôn đủ lựa chọn (anh 07/11/2026)
   // tick loại nào GIỮ loại đó — bỏ quy tắc "tick đủ mọi loại = Tất cả": nơi chỉ có MỘT loại (Cẩm Lệ: chỉ Căn hộ) thì tick là bị tự bỏ
   // tick, khách không chọn được (ảnh chủ dự án 01/11/2026)
   const dat = (next: string[]) => onChange(next);
@@ -132,7 +132,7 @@ export function PanelLoaiBdsDuAn({ value = [], onChange, dem }: { value?: string
                 <label key={o} className="flex cursor-pointer items-center gap-2.5 rounded-lg py-1.5 pl-8 pr-2 text-sm text-cvr-ink/80 transition hover:bg-black/5">
                   <input type="checkbox" checked={on} onChange={() => dat(on ? value.filter((x) => x !== o) : [...value, o])} className="h-4 w-4 shrink-0 accent-cvr-blue" />
                   <span className="flex-1 truncate">{tenLoaiHinh(o)}</span>
-                  <span className="shrink-0 text-xs text-cvr-faint">{dem(o)}</span>
+                  {/* bỏ số đếm cạnh lựa chọn (anh 07/11/2026: kết quả do dữ liệu quyết định) */}
                 </label>
               );
             })}

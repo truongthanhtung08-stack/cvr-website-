@@ -176,17 +176,44 @@ function noiTiepTheoNoiDung(cau: string, md: "ban" | "thue", tin: Listing[]): st
   return [...dem].filter(([k, n]) => n >= 2 && !/^\p{L}{1,2}$/u.test(k.split(" ").pop() ?? "")).sort((a, b) => b[1] - a[1]).map(([k]) => k);
 }
 
+/** ĐẶT DẤU chữ khách gõ không dấu THEO CỤM có trong bộ từ (loại hình, đặc điểm, địa danh…), cụm dài khớp trước: "chung cu gia re hue"
+ *  → "chung cư giá rẻ huế", "gia lai" vẫn là "gia lai" của Gia Lai (không thành "giá lai"). Chữ đã có dấu giữ nguyên như khách gõ. */
+export function datDau(cau: string, boTu: string[]): string {
+  const bang = new Map<string, string>();
+  // chữ nối hay gõ không dấu (đứng một mình) — đặt dấu theo cụm ở trên trước, không khớp cụm mới tới chữ lẻ
+  for (const c of ["dưới", "trên", "tại", "gần", "giá", "rẻ", "từ", "đến", "ở", "mới", "đường", "phường", "xã"]) bang.set(normalizeVi(c), c);
+  for (const c of [...CUM_CO_DINH, ...boTu]) { const k = normalizeVi(c).replace(/[^a-z0-9]+/g, " ").trim(); if (k && !bang.has(k)) bang.set(k, thuong(c.trim())); }
+  const tu = cau.split(/\s+/).filter(Boolean);
+  const ra: string[] = [];
+  for (let i = 0; i < tu.length;) {
+    let khop = 0;
+    for (let k = Math.min(4, tu.length - i); k >= 1; k--) {
+      const doan = tu.slice(i, i + k);
+      if (doan.every((w) => coDau(w))) continue; // cả đoạn khách đã đặt dấu → giữ nguyên
+      const co = bang.get(normalizeVi(doan.join(" ")).replace(/[^a-z0-9]+/g, " ").trim());
+      const coTu = co?.split(" ") ?? [];
+      // chữ khách ĐÃ đặt dấu phải trùng đúng chữ của cụm ("gia rẻ" → "giá rẻ"); lệch dấu thì không ghép (giữ ý khách)
+      if (co && coTu.length === k && doan.every((w, j) => !coDau(w) || thuong(w) === coTu[j])) { ra.push(co); khop = k; break; }
+    }
+    if (!khop) { ra.push(tu[i]); khop = 1; }
+    i += khop;
+  }
+  return ra.join(" ");
+}
+
 export function goiYGoTiep(raw: string, md: "ban" | "thue", tin: Listing[], boTu: string[], toiDa = 6, ds: DuAnLoc[] = []): DongGoiY[] {
   const ra: DongGoiY[] = [];
+  // GỢI Ý CHUẨN GOOGLE (anh 07/11/2026): mọi dòng = ĐÚNG CHỮ, ĐÚNG THỨ TỰ khách gõ (đặt dấu nếu gõ không dấu) + phần nối tiếp —
+  // không đảo thành "câu đã hiểu" ("chung cư tại huế giá rẻ"), không chêm "tại". Bộ lọc vẫn đọc ý câu thành trường khi tìm.
   const them = (nhan: string) => {
-    const x = thuongVi(nhan);
+    const x = datDau(thuongVi(nhan), boTu);
     if (x && !ra.some((d) => normalizeVi(d.nhan) === normalizeVi(x))) ra.push({ nhan: x, muc: md, href: hrefGoiY(md, x) });
   };
   // CÂU ĐÃ HIỂU đứng đầu khi máy nhận ra từ 2 phần trở lên và câu ghép khác câu khách gõ (khách đã gõ xong chữ cuối)
   // chữ cuối là SỐ + ĐƠN VỊ đã trọn ("2pn", "70m2", "4 tỷ") cũng là câu đã gõ xong — không đợi dấu cách (01/11/2026)
   const soTron = /\d\s*(pn|m2|m²|tỷ|ty|triệu|trieu|tr)$/i.test(raw.trim()) && !chuChuaHieu(raw);
   const hieuCau = /\s$/.test(raw) || soTron || goTiep(raw, boTu)[0] === raw.trim() ? cauDaHieu(raw, md, ds) : null;
-  if (hieuCau && (hieuCau.soPhan >= 2 || / tại /.test(` ${hieuCau.cau} `)) && normalizeVi(hieuCau.cau) !== normalizeVi(raw)) them(hieuCau.cau);
+  void hieuCau; // không đưa "câu đã hiểu" (đảo thứ tự) lên đầu gợi ý nữa — chuẩn Google (07/11/2026)
   // "3 phòng trọ" không phải cách nói (số + phòng = phòng ngủ)
   const cacCau = goTiep(raw, boTu).map(thuongVi).filter((c) => c && !/\d+ phòng trọ$/.test(c));
   // chữ lạ ngắn ("sân") goTiep bỏ đi — vẫn giữ nguyên chữ khách gõ để dò trong nội dung tin
@@ -245,7 +272,7 @@ export function goiYGoTiep(raw: string, md: "ban" | "thue", tin: Listing[], boTu
     // câu đã đọc được (chữ lạ, nếu có, là cụm trọn — vẫn dò trong nội dung khi tìm) → nối tiếp phần còn thiếu theo dữ liệu
     them(chinh);
     // mỗi dòng nối tiếp đọc lại thành CÂU ĐÃ HIỂU ("sơn trà" + căn hộ → "căn hộ tại sơn trà, đà nẵng")
-    for (const k of noiTiepTheoDuLieu(chinh, md, tin).slice(0, toiDa)) { const h = cauDaHieu(`${chinh} ${k}`, md, ds); them(h.soPhan >= 2 ? h.cau : `${chinh} ${k}`); }
+    for (const k of noiTiepTheoDuLieu(chinh, md, tin).slice(0, toiDa)) them(`${chinh} ${k}`); // nối tiếp sau đúng câu khách gõ
   } else if (laCuoi) {
     const nd = noiTiepTheoNoiDung(laCuoi, md, tin);
     for (const c of nd.slice(0, toiDa)) them([...dau.slice(0, dau.length - nLa), c].join(" "));
@@ -381,7 +408,9 @@ export function cauDaHieu(raw: string, md: "ban" | "thue" | "duan", ds: DuAnLoc[
   // 2. địa danh — phường/xã kèm quận cũ (nếu khách nói) và tỉnh; tên tỉnh cũ ghi cả tỉnh mới: "tại quảng bình (nay quảng trị)"
   const l = f.locations[0];
   const tinhCu = l && !l.ward && !l.district ? provincesOld.find((x) => normalizeVi(x.name) !== normalizeVi(l.province) && newProvinceOf(x.name) === l.province && nq.includes(` ${normalizeVi(x.name)} `))?.name : undefined;
-  if (l) them(tinhCu ? `tại ${tinhCu} (nay ${l.province})` : `tại ${[l.ward, l.district, l.province].filter(Boolean).map((x) => boCapNoi(x!)).filter((x, i, a) => a.indexOf(x) === i).join(", ")}`);
+  // KHÔNG ghi "(nay …)" (anh 07/11/2026: "không cần nay là hay gì cả, làm chuẩn"): gõ tên tỉnh cũ → gợi ý ghi thẳng TÊN TỈNH HIỆN NAY
+  void tinhCu;
+  if (l) them(`tại ${[l.ward, l.district, l.province].filter(Boolean).map((x) => boCapNoi(x!)).filter((x, i, a) => a.indexOf(x) === i).join(", ")}`);
   if (md !== "duan") {
     // giá rồi diện tích — đúng thứ tự trường dưới ô tìm, trái qua phải (01/11/2026). Giá: một mức ("khoảng 3 tỷ", "10 triệu/tháng") · khoảng ("2 – 3 tỷ") · dưới · trên
     const chuGia = (ty: number) => (ty >= 1 ? `${Math.round(ty * 100) / 100} tỷ` : `${Math.round(ty * 1000)} triệu`);
@@ -390,6 +419,8 @@ export function cauDaHieu(raw: string, md: "ban" | "thue" | "duan", ds: DuAnLoc[
       : p.priceMinTy != null && p.priceMaxTy != null ? `${chuGia(p.priceMinTy)} – ${chuGia(p.priceMaxTy)}`
       : p.priceMaxTy != null ? `dưới ${chuGia(p.priceMaxTy)}` : p.priceMinTy != null ? `trên ${chuGia(p.priceMinTy)}` : "");
     them(f.areaMin != null && f.areaMax != null ? `khoảng ${Math.round(f.areaMax / 1.15)} m²` : f.areaMax != null ? `dưới ${f.areaMax} m²` : f.areaMin != null ? `trên ${f.areaMin} m²` : "");
+    // "giá rẻ" khách gõ phải còn trong câu gợi ý (07/11/2026: "chung cu gia rẻ huế" → gợi ý mất "giá rẻ")
+    them(/ gia re /.test(nq) ? "giá rẻ" : "");
   }
   // 6. chủ đầu tư · 7. dự án
   them(cdt && !(duAn && normalizeVi(duAn.chuDauTu || "") === normalizeVi(cdt)) ? `của ${cdt}` : "");

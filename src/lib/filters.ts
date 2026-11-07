@@ -23,7 +23,7 @@ export const saleTypeGroups: TypeGroup[] = [
   { label: "Căn hộ, chung cư", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"] }, // tên nhóm = tên cha trên menu (chủ dự án 29/10/2026)
   { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
   // "Đất khác" = mọi loại đất ngoài đất nền (nông nghiệp, vườn, trang trại…) — chủ dự án 30/10/2026; trước là "Đất nông nghiệp"
-  { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất khác"] },
+  { label: "Đất", items: ["Đất khác", "Đất nền / Đất nền dự án"] }, // thứ tự = form đăng tin: Đất · Đất nền (07/11/2026)
   // "Trang trại / Khu nghỉ dưỡng" (D18) tách thành "Homestay / Farmstay" + "Khu nghỉ dưỡng" (chủ dự án 29/10/2026, D24)
   { label: "BĐS nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel", "Homestay / Farmstay", "Khu nghỉ dưỡng"] },
   { label: "BĐS công nghiệp", items: ["Đất công nghiệp", "Kho / Nhà xưởng"] },
@@ -547,7 +547,8 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
       const phanCap = tachDiaChiCap(noi);  // giữ cấp: "tp. quang ngai"
       const coTen = (ten: string) => {
         const t = chuanTen(ten);
-        return !!t && phan.some((x) => x === t || x.includes(t));
+        // KHỚP NGUYÊN CHỮ, không "chứa chuỗi" (lỗi 8, 07/11/2026: "hue" nằm trong "khue trung" → tin Cẩm Lệ, Đà Nẵng lọt trang Bán đất Huế)
+        return !!t && phan.some((x) => x === t || ` ${x} `.includes(` ${t} `));
       };
       const inArea = f.locations.some((l) => {
         if (!tenTinhTuongDuong(l.province).some(coTen)) return false;

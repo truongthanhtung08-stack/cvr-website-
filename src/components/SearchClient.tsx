@@ -7,7 +7,6 @@ import PhanTrang from "@/components/PhanTrang";
 import { useSearchParams } from "next/navigation";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
-import ActiveFilters from "@/components/ActiveFilters";
 import { featuredListings, type Listing } from "@/lib/data";
 import {
   sortListings,
@@ -44,14 +43,15 @@ export default function SearchClient({
   const mode = params.get("mode") ?? "";
   // Tab đã chọn ở Hero → danh mục loại hình + nguồn tin theo mục đích.
   const purpose: "ban" | "thue" = mode === "Cho thuê" ? "thue" : "ban";
+  // CÂU KHÔNG NÓI MỤC ĐÍCH (không có mode) → lấy CẢ tin bán lẫn tin cho thuê (anh 07/11/2026: "ra cả 2")
+  const dungMuc = (l: { purpose?: string | null }) => !mode || (l.purpose ?? "ban") === purpose;
 
   const [filters, setFilters] = useState<Filters>(() => filtersFromParams(params));
-  const [sort, setSort] = useState<SortKey>("moi");
+  const [sort] = useState<SortKey>("moi"); // không còn ô xếp (07/11/2026): có câu tìm thì xếp theo mức độ khớp
   const [page, setPage] = useState(1);
   const moiTrang = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026)
   // Đổi bộ lọc / sắp xếp → luôn quay về trang 1
   const changeFilters = (f: Filters) => { setFilters(f); setPage(1); };
-  const changeSort = (s: SortKey) => { setSort(s); setPage(1); };
   // Bấm sang trang khác → hiện NGAY từ tin đầu tiên của trang đó
   const goPage = (p: number) => { setPage(p); window.scrollTo({ top: 0 }); };
 
@@ -59,8 +59,8 @@ export default function SearchClient({
   // nên tách riêng để lọc giá đúng đơn vị. Trong mỗi mục đích: KHÔNG giới hạn khu vực.
   // + NHÂN ĐÔI HIỂN THỊ của CVR Diamond (bản kèm dạng CVR Basic — nhanDoiHienThi.ts)
   const base = useMemo(
-    () => nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose)),
-    [items, purpose],
+    () => nhanDoiHienThi(items.filter(dungMuc)),
+    [items, purpose, mode], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // ── TÌM KIẾM THÔNG MINH (tài liệu "Hệ thống bộ lọc và tìm kiếm thông minh") ──
@@ -78,13 +78,13 @@ export default function SearchClient({
   const choDiaDanh = coTuKhoa && !coDiaDanh;
 
   const ketQuaHetHan = useMemo(() => {
-    const goc = itemsHetHan.filter((l) => (l.purpose ?? "ban") === purpose);
+    const goc = itemsHetHan.filter(dungMuc);
     if (goc.length === 0) return [];
     const khop = smartFilter(goc, { ...filters, keyword: "" }).filter((h) => h.tier === 1).map((h) => h.item);
     return coTuKhoa
       ? smartSearch(khop, filters.keyword).hits.filter((h) => h.tier === 1).map((h) => h.item)
       : sortListings(khop, sort);
-  }, [itemsHetHan, purpose, filters, coTuKhoa, sort, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [itemsHetHan, purpose, mode, filters, coTuKhoa, sort, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Không có tin khớp chặt (câu lạ, hoặc trống) → dùng chung luật nới dần + câu nói rõ của trang Mua bán / Cho thuê
   // (chủ dự án 21/10/2026: không bao giờ 0 kết quả, nhưng gợi ý vô lý là tệ nhất)
@@ -122,12 +122,7 @@ export default function SearchClient({
         <FilterBar value={filters} onChange={changeFilters} purpose={purpose} hintItems={items} />
       </div>
 
-      {/* Chip bộ lọc đang áp dụng */}
-      {active && (
-        <div className="mt-3">
-          <ActiveFilters value={filters} onChange={changeFilters} />
-        </div>
-      )}
+      {/* bỏ hàng chip lặp lại các trường (anh 07/11/2026: "không cần list ra như vậy" — trường Loại BĐS đã ghi loại hình CHA) */}
 
       {/* Tổng kết + sắp xếp + xoá lọc.
           id="ket-qua": bấm Tìm / Enter / chọn gợi ý là cuộn thẳng xuống đây. */}
@@ -135,30 +130,7 @@ export default function SearchClient({
         <p className="text-sm text-cvr-body">
           {choDiaDanh ? null : active ? <><span className="font-bold text-cvr-ink">{results.filter((l) => !l.banSao).length}</span> bất động sản phù hợp</> : "Tin mua bán, cho thuê nhà đất mới nhất"}
         </p>
-        <div className="flex items-center gap-3">
-          {active && (
-            <button
-              type="button"
-              onClick={() => changeFilters(emptyFilters())}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-cvr-line px-3 py-1.5 text-xs font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              Xoá lọc
-            </button>
-          )}
-          <select
-            aria-label="Sắp xếp"
-            value={sort}
-            onChange={(e) => changeSort(e.target.value as SortKey)}
-            className="h-9 rounded-lg border border-cvr-line bg-white px-3 text-xs text-cvr-ink outline-none transition focus:border-cvr-ink"
-          >
-            <option value="moi">Mới nhất</option>
-            <option value="gia-tang">Giá thấp → cao</option>
-            <option value="gia-giam">Giá cao → thấp</option>
-            <option value="dt-giam">Diện tích lớn nhất</option>
-            {purpose === "ban" && <option value="gia-m2">Giá/m² thấp nhất</option>}
-          </select>
-        </div>
+        {/* bỏ nút "Xoá lọc" và ô xếp "Mới nhất" (anh 07/11/2026: "không cần") — kết quả xếp tin khớp chính xác nhất lên trên */}
       </div>
 
       {/* Kết quả — 8 tin/trang, có phân trang 1,2,3… */}

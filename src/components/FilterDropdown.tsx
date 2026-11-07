@@ -163,7 +163,12 @@ export default function FilterDropdown({
     const m = 8;
     const conDuoi = document.documentElement.scrollHeight - (r.bottom + window.scrollY) - m;
     const openUp = conDuoi < 260 && r.top - 72 > conDuoi;
-    const maxH = Math.round(window.innerHeight * 0.7);
+    // BẢNG VỪA TRỌN MÀN HÌNH (anh 07/11/2026: "bấm chọn nó xê dịch"): cao tối đa = phần màn hình còn lại dưới trường lọc, trừ thanh dưới
+    // điện thoại — nút Tìm ở đáy bảng luôn thấy, không phải kéo trang (trước: 70% màn hình → máy thấp đáy bảng lọt dưới mép, phải kéo trang)
+    const thanh = document.querySelector('nav[aria-label="Điều hướng nhanh"]') as HTMLElement | null;
+    const rThanh = thanh?.getBoundingClientRect();
+    const caoThanh = rThanh && rThanh.height > 0 && getComputedStyle(thanh!).display !== "none" ? Math.max(0, window.innerHeight - rThanh.top) : 0; // thanh cố định ở đáy (đang ẩn khi cuộn thì vẫn tính chỗ của nó)
+    const maxH = Math.max(220, Math.round(Math.min(window.innerHeight * 0.7, window.innerHeight - r.bottom - m - caoThanh - 8)));
     const vert = openUp ? { top: r.top + window.scrollY - m, len: true } : { top: r.bottom + window.scrollY + m };
     // Màn hẹp (điện thoại): bảng rộng gần hết màn, chừa 8px hai bên — không tràn ra ngoài
     const hep = window.innerWidth < 640;
@@ -377,27 +382,34 @@ export default function FilterDropdown({
 export function PanelActions({
   onReset,
   onApply,
+  chuNut = "Tìm",
+  tatDatLai = false,
 }: {
   onReset: () => void;
   onApply: () => void;
+  chuNut?: string;
+  /** chưa chọn gì → nút Đặt lại mờ, không bấm được (chuẩn chung: không có gì để đặt lại) */
+  tatDatLai?: boolean;
 }) {
   return (
-    <div className="mt-3 grid grid-cols-2 gap-3 border-t border-cvr-line pt-3">
-      {/* MỘT KIỂU cho mọi bảng lọc (khu vực, loại hình, giá, diện tích, lọc thêm): HAI NÚT BẰNG NHAU chia đôi hàng —
-          Đặt lại (viền) · Áp dụng (xanh), cao 36 như máy tính (chủ dự án 07/11/2026: "nút có cần phải to như vậy không") */}
+    // THANH ĐÁY BẢNG LỌC (anh 07/11/2026): hai nút BẰNG CỠ NHAU (cao 32, rộng 92), cùng màu xanh — "↻ Đặt lại" viền, "Tìm" nền.
+    // Một kiểu cho mọi bảng lọc.
+    <div className="mt-3 flex items-center justify-end gap-5 border-t border-cvr-line pt-3">
       <button
         type="button"
         onClick={onReset}
-        className="h-9 rounded-xl border border-cvr-line bg-white text-[13px] font-semibold text-cvr-ink transition hover:bg-black/[0.03] active:scale-[0.98]"
+        disabled={tatDatLai}
+        className="flex h-8 w-[92px] disabled:cursor-default disabled:opacity-40 items-center justify-center gap-1 rounded-lg border border-cvr-blue text-[13px] font-semibold text-cvr-blue-ink transition hover:bg-cvr-blue/5 active:bg-cvr-blue/10"
       >
+        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg>
         Đặt lại
       </button>
       <button
         type="button"
         onClick={onApply}
-        className="h-9 rounded-xl bg-cvr-blue text-[13px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-[0.98]"
+        className="h-8 w-[92px] rounded-lg bg-cvr-blue text-[13px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-[0.98]"
       >
-        Áp dụng
+        {chuNut}
       </button>
     </div>
   );

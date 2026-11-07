@@ -196,6 +196,13 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // là của CÂU CŨ ("cho thuê căn hộ đà nẵng" → gõ "bán căn hộ nha trang" Enter ra Đà Nẵng). Chỉ trường khách tự bấm chọn mới đi kèm câu.
   const [khachChon, setKhachChon] = useState(false);
   const setLocKhach = (f: Filters) => { setKhachChon(true); setLoc(f); };
+  // BẤM NÚT ĐÁY BẢNG CHỌN → TÌM SAU KHI BỘ LỌC MỚI ĐÃ VÀO (bảng Khu vực nháp đưa bộ lọc vào đúng lúc bấm — gọi tim ngay thì tim còn đọc
+  // bộ lọc cũ, 07/11/2026). Đếm lên mỗi lần bấm, hiệu ứng chạy sau lần vẽ lại.
+  const [henTim, setHenTim] = useState(0);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chạy khi khách bấm nút đáy
+    if (henTim) tim(tuKhoa);
+  }, [henTim]);
   const [dangTim, setDangTim] = useState(false);
   const [chon, setChon] = useState(-1); // dòng gợi ý đang chọn bằng phím ↑ ↓ (máy tính) // vừa bấm tìm, đang chờ trang kết quả
   const router = useRouter();
@@ -472,6 +479,12 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
       p.set("mode", mb === "thue" ? "Cho thuê" : "Mua bán");
       return den(`${mb === "thue" ? "/cho-thue" : "/mua-ban"}?${p.toString()}`);
     }
+    // CÂU CHUNG CHUNG (không nói mua / bán / thuê / dự án), khách không tự chọn trường → TRANG TÌM CHUNG cả bán lẫn cho thuê, tin khớp chính
+    // xác nhất lên trên (anh 07/11/2026: "ra cả 2", "theo dữ liệu, cái nào chính xác thì để lên trên") — không tự gán "bán" theo tab
+    if (kw && !n && !mucGhiDe && muc !== "duan" && !mucDichCau(kw, dsDa)) {
+      // trường đọc từ câu (khu vực · loại · giá…) điền sẵn như mọi ô tìm — cùng bộ đọc locTuCau
+      return den(`/tim-kiem?${filtersToParams({ ...locTuCau(kw, "ban"), keyword: kw }).toString()}`);
+    }
     const loc = n ? [n.loc] : [];
     const chu = n ? n.tuKhoa ?? "" : kw;
     if (muc === "duan") {
@@ -538,7 +551,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const kwHieu = kw ? suaChinhTa(kw) ?? kw : "";
   // GỢI Ý THEO DỮ LIỆU THẬT (máy chủ đếm tin — lib/goiYThat): chỉ câu có tin, giá và nơi thực tế (chủ dự án 21/10/2026)
   // ĐỦ 3 MỤC (01/11/2026): máy chủ trả gợi ý Mua bán · Cho thuê · Dự án, mục của tab đang đứng trước
-  const goiYThatDs = useGoiYThat(kwHieu, muc);
+  // MỘT CƠ CHẾ cả điện thoại lẫn máy tính (anh 07/11/2026: "cơ chế ra kết quả giống nhau hết"): câu chung chung → gợi ý cả bán lẫn cho thuê
+  const goiYThatDs = useGoiYThat(kwHieu, muc, false, true);
   // Chỉ hiện lịch sử ĐÚNG mục đang chọn; câu cũ chưa gắn mục thì đoán theo chữ (có "thuê" → Cho thuê, còn lại → Mua bán)
   const mucCua = (x: Suggestion): Muc => (x as Suggestion & { muc?: Muc }).muc ?? (/ thue /.test(` ${normalizeVi(x.label)} `) ? "thue" : "ban");
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "Gợi ý phổ biến" khi chưa gõ)
@@ -548,12 +562,15 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // dòng đầu là đúng câu khách gõ; sau đó mục đích + loại hình + khu vực + đặc điểm, không nói mua/thuê thì có cả hai.
   // Không lặp lại nguyên câu khách gõ thành một dòng gợi ý (chủ dự án 21/10/2026: "gợi ý thừa") — Enter là tìm đúng câu đó.
   // Máy chủ chưa trả (mạng chậm, lỗi) → gợi ý theo ý câu ở máy khách làm dự phòng.
+  // GỢI Ý GIỮ MỤC ĐÍCH (cùng luật ô tìm trang kết quả — 07/11/2026: tab Mua bán mà gợi ý "chung cư tại huế" thiếu chữ "bán")
+  const coMucDich = (nhan: string, m: string) => /^(ban|mua|cho thue|thue|can mua|can thue|du an)/.test(normalizeVi(nhan)) ? nhan : m === "thue" ? `cho thuê ${nhan}` : m === "ban" ? `bán ${nhan}` : nhan;
   if (kw) {
     const dau = kwHieu.replace(/\s+/g, " ").trim();
     const nguon = goiYThatDs ?? (muc === "duan" ? [] : goiYTheoY(dau, mb, dsDuAn));
     // dòng của MỤC KHÁC ghi rõ mục ("căn hộ · Cho thuê") và vẫn giữ dù trùng chữ khách gõ — đó là lối sang mục đó (trang tổng nối 3 mục, 01/11/2026)
-    for (const d of nguon) if (normalizeVi(d.nhan) !== normalizeVi(dau) || d.muc !== muc)
-      cauNhuCau.push({ nhan: d.nhan, sub: d.muc === muc ? "" : (TABS.find((x) => x.muc === d.muc)?.nhan ?? ""), muc: d.muc, loai: true, href: d.href });
+    // mỗi dòng có chữ mục đích (bán / cho thuê) nên không trùng câu khách gõ — giữ cả; chỉ dòng Dự án ghi nhãn mục
+    for (const d of nguon) if (normalizeVi(coMucDich(d.nhan, d.muc)) !== normalizeVi(dau) || d.muc !== muc)
+      cauNhuCau.push({ nhan: coMucDich(d.nhan, d.muc), sub: d.muc === "duan" && muc !== "duan" ? "Dự án" : "", muc: d.muc, loai: true, href: d.href });
   }
   const ganDayHien = kw ? [] : ganDay.filter((x) => mucCua(x) === muc).slice(0, 3);
   // lọc danh bạ dự án theo trường đã chọn — chỉ khi tab Dự án và lựa chọn đổi (không lọc lại mỗi chữ gõ)
@@ -578,7 +595,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // KHÔNG tải sẵn trang đích khi mở màn tìm (chủ dự án 17/10/2026: Vercel phải nằm trong gói $20) — trang không có sẵn
   // trong bộ nhớ đệm thì mỗi lần tải sẵn là một lần chạy máy chủ. Bấm tìm đã có thanh chạy báo đang tìm.
   // CÁCH A (chủ dự án 20/10/2026): mỗi trường chọn xong bấm "Áp dụng" là TÌM LUÔN — đồng bộ Mua bán / Cho thuê / Dự án
-  const hangLoc = (gon: boolean, chi?: string[]) => <TruongLocTrangChu muc={muc} value={boLoc} onChange={setLocKhach} onXong={() => tim(tuKhoa)} gon={gon} chi={chi} nhanXem={nhanTim} soLoai={soLoai} duAn={muc === "duan" ? duAnLoc ?? undefined : undefined} />;
+  const hangLoc = (gon: boolean, chi?: string[]) => <TruongLocTrangChu muc={muc} value={boLoc} onChange={setLocKhach} onXong={() => setHenTim((x) => x + 1)} gon={gon} chi={chi} nhanXem={nhanTim} soLoai={soLoai} duAn={muc === "duan" ? duAnLoc ?? undefined : undefined} />;
   // Điện thoại: hai trường chính là THẺ gọn dưới thẻ tìm; các trường còn lại nằm trong thẻ tìm
   // ĐỦ 5 TRƯỜNG (chủ dự án 17/10/2026: gõ từ khoá không bảo đảm chính xác 100%) trên MỘT HÀNG MENU CHẠY NGANG
   // ngay dưới ô gõ ("1 cái menu chạy phía dưới") — không xếp thẻ chồng bên dưới
@@ -835,18 +852,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             <div className={dangGo ? "sticky top-0 z-10 -mx-5 -mt-3 shrink-0 border-b border-[#e0e0e0] bg-white px-2 pb-2 pt-1" : "shrink-0"}>
             {/* 3 MỤC Mua bán · Cho thuê · Dự án Ở TRÊN Ô GÕ như cũ, ba ô đều nhau, thẳng lề với ô gõ (chủ dự án 01/11/2026: trang chủ là bộ lọc
                 TỔNG — không có hàng trường lọc, bấm gợi ý là sang thẳng trang con) */}
-            {dangGo && (
-              <div role="tablist" className="mb-1 grid grid-cols-3 pl-10 pr-1">
-                {TABS.map((t) => (
-                  <button key={t.muc} type="button" role="tab" aria-selected={muc === t.muc} onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
-                    className={`relative py-2.5 text-[15px] font-semibold transition-colors ${muc === t.muc ? "text-cvr-ink" : "text-cvr-muted"}`}>
-                    {t.nhan}
-                    {muc === t.muc && <span className="absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-cvr-blue" />}
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* BỎ HÀNG TAB Mua bán · Cho thuê · Dự án trên màn tìm điện thoại (anh 07/11/2026: "bỏ qua việc khách chọn mục đích"): mục đích đọc từ
+                câu gõ; câu chung chung → gợi ý cả bán lẫn cho thuê, bấm tìm ra trang tìm chung. Máy tính giữ nguyên. */}
             {/* ĐANG GÕ: nút ← quay lại đứng CẠNH ô gõ, giống màn tìm Mua bán / Cho thuê / Dự án (chủ dự án 18/10/2026: bỏ nút ×) */}
             <div className={dangGo ? "flex items-center gap-1" : ""}>
             {dangGo && <button type="button" aria-label="Quay lại" onMouseDown={(e) => e.preventDefault()} onClick={dongMo} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"><svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg></button>}

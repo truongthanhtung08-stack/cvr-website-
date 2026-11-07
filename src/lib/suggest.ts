@@ -63,8 +63,8 @@ for (const p of provinces) {
 // rất nhiều người mua vẫn tìm theo tên cũ. Ghi kèm tên mới để họ biết nay gọi là gì.
 for (const o of oldProvinces) {
   if (o.name === o.newName) continue;
-  const nhan = `${o.name} (nay là ${o.newName})`;
-  ENTRIES.push({ label: nhan, kind: "Khu vực", province: o.name, norm: toNorm(nhan), primary: toNorm(o.name) });
+  // gõ TÊN CŨ → gợi ý TÊN TỈNH HIỆN NAY, không ghi "(nay là …)" (anh 07/11/2026: "không cần nay là hay gì cả"). Vẫn khớp khi gõ tên cũ.
+  ENTRIES.push({ label: o.newName, kind: "Khu vực", province: o.newName, norm: toNorm(o.name), primary: toNorm(o.name) });
 }
 
 // 1B) Khu vực theo ĐƠN VỊ HÀNH CHÍNH MỚI — 2 cấp: Tỉnh/Thành phố → Phường/Xã.

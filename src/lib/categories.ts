@@ -63,17 +63,20 @@ export const saleCategories: Category[] = [
     types: ["Shophouse / Nhà phố thương mại"],
   },
   {
-    slug: "dat-nen-du-an", label: "Đất nền, đất nền dự án", // menu con của Đất (chủ dự án 30/10/2026); H1, tiêu đề Google giữ nguyên
-    h1: "Bán đất nền dự án", tuKhoa: "Bán đất nền", title: `Bán đất nền dự án`,
-    desc: `Mua bán đất nền dự án — pháp lý rõ ràng, giá theo từng phân khu.`,
-    types: ["Đất nền / Đất nền dự án"],
-  },
-  {
     // Con của nhóm Đất (chủ dự án 29/10/2026): đất nông nghiệp, đất vườn, đất trang trại — loại con ở ô "Loại đất"
-    slug: "dat-nong-nghiep", label: "Các loại đất khác", // chủ dự án 30/10/2026 — giữ địa chỉ trang
+    // THỨ TỰ = form đăng tin: Đất · Đất nền (07/11/2026)
+    slug: "dat-nong-nghiep", label: "Đất", // "Đất" = các loại đất khác (anh 05/11/2026) — giữ địa chỉ trang
     h1: "Bán đất nông nghiệp", title: `Bán đất nông nghiệp, đất vườn, đất trang trại`,
     desc: `Mua bán đất nông nghiệp, đất vườn, đất trang trại.`,
     types: ["Đất khác"],
+  },
+  {
+    // TÊN MỤC = MỘT NGUỒN cho menu ≡, form đăng tin, bộ lọc, trang tin, đường dẫn trang (anh 05/11 + 07/11/2026: "đổi loại hình ở menu tổng thì
+    // mọi thứ phải đổi theo"). H1, tiêu đề Google giữ nguyên.
+    slug: "dat-nen-du-an", label: "Đất nền",
+    h1: "Bán đất nền dự án", tuKhoa: "Bán đất nền", title: `Bán đất nền dự án`,
+    desc: `Mua bán đất nền dự án — pháp lý rõ ràng, giá theo từng phân khu.`,
+    types: ["Đất nền / Đất nền dự án"],
   },
   {
     slug: "dat", label: "Đất",
@@ -252,7 +255,8 @@ export type NhanhMenu = { label: string; cha: Category; con: Category[] };
 export function cayLoaiHinh(muc: "ban" | "thue"): NhanhMenu[] {
   const ds = muc === "thue" ? rentCategories : saleCategories;
   return typeGroupsFor(muc).flatMap((g) => {
-    const cats = ds.filter((c) => g.items.includes(c.types[0]));
+    // thứ tự con = thứ tự loại hình trong nhóm (cây chung filters.ts) — menu ≡, form đăng tin, bộ lọc xếp giống nhau (07/11/2026)
+    const cats = ds.filter((c) => g.items.includes(c.types[0])).sort((a, b) => g.items.indexOf(a.types[0]) - g.items.indexOf(b.types[0]));
     const cha = nhomPseo(muc).find((n) => n.label === g.label) ?? cats.find((c) => g.items.every((t) => c.types.includes(t))) ?? cats[0];
     if (!cha) return [];
     return [{ label: g.label === "Khác" ? cha.label : g.label, cha, con: cats.filter((c) => c !== cha) }];
@@ -269,7 +273,8 @@ export function cayLoaiHinh(muc: "ban" | "thue"): NhanhMenu[] {
 // (mã chọn "<loại hình>::<loại đất>" — tachChonLoaiHinh tách ra). Đặc điểm của loại nằm ở mục Đặc điểm ngay dưới.
 export const TACH_CHON = "::";
 const DAT_NEN = "Đất nền / Đất nền dự án";
-const TEN_CHON: Record<string, string> = { "Đất khác": "Đất", [DAT_NEN]: "Đất nền", [`${DAT_NEN}${TACH_CHON}Đất nền dự án`]: "Đất nền dự án" };
+// tên của loại hình lấy từ TÊN MỤC MENU (saleCategories / rentCategories) — ở đây chỉ còn mục chọn ghép loại đất "Đất nền dự án"
+const TEN_CHON: Record<string, string> = { [`${DAT_NEN}${TACH_CHON}Đất nền dự án`]: "Đất nền dự án" };
 const THU_TU_CHON: Record<string, string[]> = { "Đất": ["Đất khác", DAT_NEN, `${DAT_NEN}${TACH_CHON}Đất nền dự án`] };
 export function tachChonLoaiHinh(v: string): { type: string; loaiCon: string } {
   const [type, loaiCon = ""] = v.split(TACH_CHON);

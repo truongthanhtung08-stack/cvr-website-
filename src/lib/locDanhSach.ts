@@ -293,7 +293,9 @@ export function locDanhSach(
     && (!search.hits.some((h) => h.tier <= 2) || !coNoiDung);
   // CÂU GHI (chủ dự án 21/10/2026 duyệt mẫu): "Bất động sản bạn tìm chưa có sẵn. Gợi ý …:" — phần sau ghi đúng nhóm tin đang hiện
   const CHUA_CO = "Bất động sản bạn tìm chưa có sẵn.";
-  const noiNoi = noiChon ? (noiChon.ward ?? noiChon.district ?? noiChon.province).replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thành phố|Thị xã)\s+/i, "") : tinhChon.size === 1 ? [...tinhChon][0] : "";
+  // "gần X nhất" CHỈ khi khách chọn đúng MỘT nơi (lỗi 21, 07/11/2026: chọn "Huế +2" mà câu ghi "gần Đakrông nhất" — lấy nơi đầu danh sách)
+  const motNoi = filters.locations.length === 1;
+  const noiNoi = !motNoi ? "" : noiChon ? (noiChon.ward ?? noiChon.district ?? noiChon.province).replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thành phố|Thị xã)\s+/i, "") : tinhChon.size === 1 ? [...tinhChon][0] : "";
   const tenLoai = (l: Listing) => l.type.split(/\s*[/,]\s*/)[0].toLowerCase().replace(/^(cho thuê|thuê|bán)\s+/, "");
   if (khongHieu) {
     duPhong = theoCap(conHan).slice(0, TOI_DA_GOI_Y);

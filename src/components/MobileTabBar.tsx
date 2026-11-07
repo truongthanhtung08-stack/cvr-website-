@@ -11,9 +11,10 @@ import { useSoViecKhach, tongSoViec } from "@/lib/useSoTinCanXem";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { ZALO_OA_URL } from "@/lib/lienHe";
 
-// Trang có thanh dưới CHẾ ĐỘ NGƯỜI MUA (có nút Chat) — Chatbox ẩn nút chat nổi trên điện thoại ở các trang này (07/11/2026)
+// Trang có thanh dưới (người mua có nút Tin nhắn; khu Tài khoản thì nút chat nổi đè thẻ "Số dư ví" — lỗi 23) — Chatbox ẩn nút
+// chat nổi trên điện thoại ở mọi trang có thanh dưới (07/11/2026)
 export function coThanhChat(pathname: string) {
-  return !HIDDEN_PREFIXES.some((p) => pathname.startsWith(p)) && !pathname.startsWith("/tai-khoan");
+  return !HIDDEN_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
 // ── Thanh tab DƯỚI CÙNG — chỉ hiện trên điện thoại/tablet (< lg). Desktop KHÔNG đổi gì.
@@ -242,7 +243,8 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
     let dung = 0;
     let dangVuot = false;
     const hen = () => { clearTimeout(dung); dung = window.setTimeout(() => { dangVuot = false; setAnKhiCuon(false); }, 350); };
-    const vuot = () => { dangVuot = true; setAnKhiCuon(true); hen(); };
+    // vuốt trong bảng chọn của bộ lọc không tính — thanh đứng yên (anh 07/11/2026: cuộn trong bảng mà thanh dưới trượt ẩn / hiện)
+    const vuot = (e: Event) => { if ((e.target as Element | null)?.closest?.("[data-cuon-bang]")) return; dangVuot = true; setAnKhiCuon(true); hen(); };
     const cuon = () => { if (dangVuot) hen(); };
     window.addEventListener("scroll", cuon, { passive: true });
     window.addEventListener("touchmove", vuot, { passive: true });

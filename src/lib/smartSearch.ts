@@ -110,7 +110,7 @@ function diaGioi(): NoiDG[] {
   for (const p of provincesNew) ds.push({ norm: normalizeVi(p.name), ten: [], place: { province: p.name, label: p.name } });
   for (const p of provincesOld) {
     const moi = newProvinceOf(p.name);
-    if (normalizeVi(moi) !== normalizeVi(p.name)) ds.push({ norm: normalizeVi(p.name), ten: [], place: { province: moi, label: `${p.name} (nay thuộc ${moi})` } });
+    if (normalizeVi(moi) !== normalizeVi(p.name)) ds.push({ norm: normalizeVi(p.name), ten: [], place: { province: moi, label: moi } }); // không ghi "(nay thuộc …)" (07/11/2026)
   }
   for (const x of ds) x.ten = x.norm.split(" ");
   return ds.sort((a, b) => b.norm.length - a.norm.length);

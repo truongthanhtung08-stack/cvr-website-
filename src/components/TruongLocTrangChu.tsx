@@ -1,15 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
-import { LocationPanel, ProjectPanel, RangePanel, Chip, SwitchRow, NutXem, DaChon, loaiTheoCha, nhanLoai, nhanNoi } from "@/components/FilterBar";
+import { LocationPanel, ProjectPanel, RangePanel, Chip, SwitchRow, NutXem, DaChon, loaiTheoCha, nhanLoai, nhanNoi, tenLoai } from "@/components/FilterBar";
 import { PanelLoaiBdsDuAn, PanelLocThemDuAn, PanelChuDauTu } from "@/components/TruongDuAn";
 import { CAY_LOAI_DU_AN, dsTinhTrang, thuHepDuAn, type DuAnLoc } from "@/lib/thuHepDuAn";
 import { coTruongKhacLoai, demLoaiTu } from "@/lib/thuHepTin";
 import {
   typeGroupsFor, priceRangesFor, areaRangesFor, bedroomOptions, priceRangeText, areaRangeText,
-  directionOptions, legalOptions, furnishingOptions, tenLoaiHinh, type Filters,
+  directionOptions, legalOptions, furnishingOptions, type Filters,
 } from "@/lib/filters";
 
 // ============================================================================
@@ -22,6 +22,13 @@ import {
 // ============================================================================
 
 export { locTuCau } from "@/lib/locTuCau";
+
+// KHU VỰC = CHỌN NHIỀU → NHÁP (anh 07/11/2026: "chưa Áp dụng thì sao lại search"): tick / bỏ tick / Đặt lại chỉ đổi nháp trong bảng,
+// bấm nút đáy mới đưa vào bộ lọc. Đóng bảng không bấm = bỏ nháp (bảng mở lại dựng mới từ bộ lọc). Cùng luật thanh lọc trang kết quả.
+function BangKhuVucNhap({ dau, nhanXem, onApDung }: { dau: Filters["locations"]; nhanXem: string; onApDung: (l: Filters["locations"]) => void }) {
+  const [nhap, setNhap] = useState(dau);
+  return <><LocationPanel locations={nhap} onChange={setNhap} onClose={() => onApDung(nhap)} onApDung={() => onApDung(nhap)} onDatLai={() => setNhap([])} /></>;
+}
 
 export default function TruongLocTrangChu({
   muc, value: f, onChange, onXong, gon = false, seg = false, the = false, chi, nhanXem = "Tìm kiếm", soLoai, duAn,
@@ -67,8 +74,8 @@ export default function TruongLocTrangChu({
   );
 
   const khuVuc = hien("kv") && (
-    <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="kv" label="Khu vực" giuCo summary={nhanNoi(f.locations)} active={f.locations.length > 0} panelClassName="w-96" className={cls}>
-      {({ close }) => <><LocationPanel locations={f.locations} onChange={(locations) => set({ locations, project: "" })} />{loiRa(close, () => set({ locations: [], project: "" }))}</>}
+    <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="kv" label={seg || the ? "Khu vực" : "Toàn quốc"} tieuDe="Khu vực" giuCo summary={nhanNoi(f.locations)} active={f.locations.length > 0} panelClassName="w-96" className={cls}>
+      {({ close }) => <BangKhuVucNhap dau={f.locations} nhanXem={nhanXem} onApDung={(locations) => { onChange({ ...f, locations, project: "" }); xong(close); }} />}
     </FilterDropdown>
   );
 
@@ -108,12 +115,12 @@ export default function TruongLocTrangChu({
             <div>
               <DaChon muc={loaiTheoCha(f.types, nhom).map((g) => ({ nhan: g.nhan, bo: () => set({ types: f.types.filter((y) => !g.cac.includes(y)) }) }))} macDinh="Tất cả loại nhà đất" />
               <div className="space-y-1.5 pr-1">
-                {nhom.map((g0) => ({ ...g0, items: g0.items.filter((x) => !demLoai || demLoai(x) > 0 || f.types.includes(x)) })).filter((g) => g.items.length > 0).map((g) => {
+                {nhom.map((g0) => ({ ...g0, du: g0.items })).map((g) => { /* luôn đủ lựa chọn (anh 07/11/2026) */
                   const ca = g.items.every((t) => f.types.includes(t));
                   return (
                     <div key={g.label}>
                       <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">
-                        <input type="checkbox" checked={ca} onChange={() => set({ types: ca ? f.types.filter((t) => !g.items.includes(t)) : [...new Set([...f.types, ...g.items])] })} className="h-4 w-4 shrink-0 accent-cvr-blue" />
+                        <input type="checkbox" checked={ca} onChange={() => set({ types: ca ? f.types.filter((t) => !g.du.includes(t)) : [...new Set([...f.types, ...g.du])] })} className="h-4 w-4 shrink-0 accent-cvr-blue" />
                         {g.label}
                       </label>
                       {g.items.length > 1 && g.items.map((t) => {
@@ -121,8 +128,8 @@ export default function TruongLocTrangChu({
                         return (
                           <label key={t} className="flex cursor-pointer items-center gap-2.5 rounded-lg py-1.5 pl-8 pr-2 text-sm text-cvr-ink/80 transition hover:bg-black/5">
                             <input type="checkbox" checked={on} onChange={() => set({ types: on ? f.types.filter((x) => x !== t) : [...f.types, t] })} className="h-4 w-4 shrink-0 accent-cvr-blue" />
-                            <span className="flex-1 truncate">{tenLoaiHinh(t)}</span>
-                            {demLoai && <span className="shrink-0 text-xs text-cvr-faint">{demLoai(t)}</span>}
+                            <span className="flex-1 truncate">{tenLoai(t)}</span>
+                            {/* bỏ số đếm cạnh lựa chọn (anh 07/11/2026: kết quả do dữ liệu quyết định) */}
                           </label>
                         );
                       })}

@@ -74,5 +74,14 @@ export async function GET(req: Request) {
   // trên ô tìm (chủ dự án 01/11/2026); gõ tên dự án (kể cả gõ đầu tên) → Dự án
   const mucCau = noiDuAn ? "duan" : docMucDich(hoan, (nq) => !!timDuAnTrongCau(nq, dsLoc));
   const mucTim = mucCau ?? tab;
+  // CÂU CHUNG CHUNG (không nói mua / bán / thuê / dự án) ở trang tổng, tab Mua bán hoặc Cho thuê → gợi ý CẢ HAI mục (anh 07/11/2026:
+  // "ra cả 2"), mục có nhiều dòng khớp dữ liệu hơn đứng trước, xen kẽ từng dòng — không tự gán "bán"
+  if (!mucCau && tab !== "duan") { // trang tổng: câu chung chung luôn ra cả hai mục (cơ chế chung)
+    const ban = goiYGoTiep(qDoc, "ban", tin, boTu, 3, dsLoc);
+    const thue = goiYGoTiep(qDoc, "thue", tin, boTu, 3, dsLoc);
+    const [a, b] = thue.length > ban.length ? [thue, ban] : [ban, thue];
+    const xen = Array.from({ length: Math.max(a.length, b.length) }, (_, i) => [a[i], b[i]]).flat().filter(Boolean);
+    return NextResponse.json(xen.slice(0, 6), cache);
+  }
   return NextResponse.json(mucTim === "duan" ? goiYGoTiepDuAn(qDoc, dsLoc, boTu, motChu ? 4 : 6) : goiYGoTiep(qDoc, mucTim, tin, boTu, motChu ? 4 : 6, dsLoc), cache);
 }

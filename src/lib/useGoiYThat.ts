@@ -8,9 +8,9 @@ import type { DongGoiY, MucGoiY } from "@/lib/goiYTheoY";
 const nho = new Map<string, DongGoiY[]>();
 
 /** trangCon: ô tìm của trang Mua bán / Cho thuê / Dự án — trang đã có mục đích; câu không nói mục đích thì chỉ gợi ý mục của trang */
-export function useGoiYThat(cau: string, muc: MucGoiY, trangCon = false): DongGoiY[] | null {
+export function useGoiYThat(cau: string, muc: MucGoiY, trangCon = false, caHai = false): DongGoiY[] | null {
   const q = cau.replace(/\s+/g, " ").trim();
-  const khoa = `${muc}|${trangCon ? 1 : 0}|${q}`;
+  const khoa = `${muc}|${trangCon ? 1 : 0}|${caHai ? 1 : 0}|${q}`;
   const [ds, setDs] = useState<DongGoiY[] | null>(() => nho.get(khoa) ?? []);
   useEffect(() => {
     if (q.length < 2) { setDs([]); return; }
@@ -18,12 +18,12 @@ export function useGoiYThat(cau: string, muc: MucGoiY, trangCon = false): DongGo
     if (co) { setDs(co); return; }
     const hoan = new AbortController();
     const hen = window.setTimeout(() => {
-      fetch(`/api/goi-y/that?q=${encodeURIComponent(q)}&md=${muc}${trangCon ? "&tc=1" : ""}`, { signal: hoan.signal })
+      fetch(`/api/goi-y/that?q=${encodeURIComponent(q)}&md=${muc}${trangCon ? "&tc=1" : ""}${caHai ? "&ca=1" : ""}`, { signal: hoan.signal })
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
         .then((kq: DongGoiY[]) => { nho.set(khoa, kq); setDs(kq); })
         .catch((e: unknown) => { if ((e as Error)?.name !== "AbortError") setDs(null); });
     }, 120); // chờ ngừng gõ 0,12 s (01/11/2026: gợi ý phải theo kịp tốc độ gõ) — vẫn không gọi mỗi phím
     return () => { window.clearTimeout(hen); hoan.abort(); };
-  }, [khoa, q, muc, trangCon]);
+  }, [khoa, q, muc, trangCon, caHai]);
   return ds;
 }

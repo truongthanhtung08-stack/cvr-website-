@@ -97,7 +97,10 @@ export function duongDanTuCau(mucTab: "ban" | "thue", raw: string): string | nul
   };
   let loai = "";
   if (p.types.length) {
-    const slugs = new Set(p.types.map((t) => LOAI[t]?.[muc]));
+    // Câu nói rõ "ĐẤT NỀN" → trang Đất nền (dat-nen-du-an), không phải cả nhóm Đất (07/11/2026: "bán đất nền tại huế" ra trang "Bán đất Huế"
+    // trong khi trường lọc đọc là Đất nền). "đất" trần vẫn về trang nhóm Đất.
+    const datNen = muc === "ban" && / dat nen /.test(nq);
+    const slugs = new Set(p.types.map((t) => (t === "Đất nền" && datNen ? "dat-nen-du-an" : LOAI[t]?.[muc])));
     if (slugs.size !== 1 || slugs.has(undefined)) return null;
     loai = [...slugs][0]!;
   } else if (/ nha /.test(nq) && !/ nha dat /.test(nq)) {

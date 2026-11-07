@@ -341,7 +341,7 @@ export default function ProjectsBrowser({
   const chipLoc = (
     <FilterDropdownGroup>
       <FilterDropdown label="Toàn quốc" tieuDe="Khu vực" giuCo summary={nhanNoi(boLoc.locations)} active={boLoc.locations.length > 0} panelClassName="w-96" className="shrink-0 sm:min-w-0 sm:flex-1" onMo={moNhapDa}>
-        {({ close }) => <><LocationPanel locations={gD.locations} onChange={(locations) => setND((b) => ({ ...b, locations, project: "" }))} onClose={() => apDungDa(close)} /><NutXem nhan={nhanXemDuAn} onClick={() => apDungDa(close)} onReset={() => setND((b) => ({ ...b, locations: [], project: "" }))} /></>}
+        {({ close }) => <><LocationPanel locations={gD.locations} onChange={(locations) => setND((b) => ({ ...b, locations, project: "" }))} onClose={() => apDungDa(close)} onApDung={() => apDungDa(close)} onDatLai={() => setND((b) => ({ ...b, locations: [], project: "" }))} /></>}
       </FilterDropdown>
       {/* LOẠI HÌNH = CÂY LOẠI HÌNH BẤT ĐỘNG SẢN cha – con (chủ dự án 01/11/2026), chỉ loại có dự án thật, kèm số */}
       <FilterDropdown label="Loại hình" summary={nhanLoaiDa} active={boLoc.types.length > 0 || !!boLoc.loaiDuAn?.length} panelClassName="w-72" className="shrink-0 sm:min-w-0 sm:flex-1" onMo={moNhapDa}>
