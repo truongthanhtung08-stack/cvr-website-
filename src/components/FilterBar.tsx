@@ -253,9 +253,11 @@ export default function FilterBar({
     };
   }, [sugOpen, overlay]);
 
+  // LỊCH SỬ LƯU CÂU ĐÃ SỬA ĐÚNG, CÙNG Ý CHỈ MỘT DÒNG (07/11/2026: "dat nen nen hoa xuân", "đát nên hoa xuan"… là 5 dòng cùng một ý)
+  const yCau = (label: string) => normalizeVi(suaChinhTa(label) ?? label).replace(/[^a-z0-9]+/g, " ").trim();
   const pushRecent = (s: Suggestion) => {
     setRecent((prev) => {
-      const next = [s, ...prev.filter((x) => x.label !== s.label)].slice(0, 6);
+      const next = [s, ...prev.filter((x) => yCau(x.label) !== yCau(s.label))].slice(0, 6);
       try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* noop */ }
       return next;
     });
@@ -276,7 +278,8 @@ export default function FilterBar({
   // Trước đây chỉ lưu khi bấm vào một dòng gợi ý — mà phần lớn người dùng gõ
   // xong là bấm Tìm luôn, nên lịch sử gần như trống.
   const luuTuKhoaDaGo = () => {
-    const kw = f.keyword.trim();
+    const go = f.keyword.trim();
+    const kw = suaChinhTa(go) ?? go; // lưu câu đã sửa đúng, như Google lưu "đất nền hòa xuân" chứ không lưu chữ gõ sai
     if (kw.length >= 2) pushRecent({ label: kw, kind: "Gợi ý", sub: "Từ khoá đã tìm", keyword: kw });
   };
 
@@ -495,7 +498,13 @@ export default function FilterBar({
   const typed = f.keyword.trim().length > 0;
   // Panel: đang gõ → cụm khớp chữ gõ; CHẠM VÀO Ô CHƯA GÕ → lịch sử tìm + gợi ý phổ biến của đúng mục
   // (chủ dự án 17/10/2026: "Airbnb chỉ cần bấm vào là nó hiện thông minh về gợi ý").
-  const recentShown = recent.slice(0, 5); // hiện 5 mục gần nhất (trước chỉ 3)
+  // lịch sử cũ (lưu trước khi sửa) cũng hiện theo câu đã sửa, cùng ý chỉ một dòng — không lặp lại "đát nên hoa xuan" (07/11/2026)
+  const recentShown = useMemo(() => {
+    const thay = new Set<string>();
+    return recent.map((r) => { const l = suaChinhTa(r.label) ?? r.label; return { ...r, label: l, keyword: r.keyword ? l : r.keyword }; })
+      .filter((r) => { const k = normalizeVi(r.label).replace(/[^a-z0-9]+/g, " ").trim(); if (thay.has(k)) return false; thay.add(k); return true; })
+      .slice(0, 5);
+  }, [recent, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: sửa lại khi địa danh về
 
   // ── LOẠI DẦN GỢI Ý LẠC ĐỀ ────────────────────────────────────────────────
   // Câu đã nêu RÕ mục đích (mua bán / cho thuê / dự án) hoặc loại hình → bỏ các
