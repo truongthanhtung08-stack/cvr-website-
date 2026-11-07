@@ -1589,9 +1589,13 @@ export function LocationPanel({
   // NƠI ĐÃ CHỌN LÊN ĐẦU, TÔ XANH (chủ dự án 01/11/2026): cập nhật thứ tự ngay khi chọn.
   // CHỐT THỨ TỰ lúc mở bảng / đổi tầng (07/11/2026: bấm chọn tỉnh là dòng nhảy lên đầu ngay dưới ngón tay — bấm tiếp trúng tỉnh khác)
   const khoaTang = `${mode}|${prov}|${dist}`;
-  // CHỌN LÀ LÊN ĐẦU NGAY, CHỮ XANH (anh 08/11/2026, nói 2 ngày): xếp lại mỗi lần chọn / bỏ — mọi tầng, cả hai hệ
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- tính lại khi đổi tầng hoặc đổi nơi đã chọn
-  const dauTang = useMemo(() => new Set(list.filter(daChon)), [khoaTang, locations]);
+  // CHỌN LÀ LÊN ĐẦU NGAY, CHỮ XANH (anh 08/11/2026, nói 2 ngày) — mọi tầng, cả hai hệ. BỎ CHỌN THÌ DÒNG ĐỨNG YÊN tại chỗ tới khi đổi tầng /
+  // mở lại bảng (anh 08/11/2026: bỏ Bình Thuận là dòng nhảy đi, bấm tiếp trúng An Giang dưới ngón tay)
+  const dauRef = useRef<{ khoa: string; ds: Set<string> }>({ khoa: "", ds: new Set() });
+  const dangChon = list.filter(daChon);
+  if (dauRef.current.khoa !== khoaTang) dauRef.current = { khoa: khoaTang, ds: new Set(dangChon) };
+  else dangChon.forEach((x) => dauRef.current.ds.add(x));
+  const dauTang = dauRef.current.ds;
   const xepLen = nq ? filtered : [...filtered.filter((x) => dauTang.has(x)), ...filtered.filter((x) => !dauTang.has(x))];
   const nhomTinhCu = false as boolean // bỏ nhóm tỉnh cũ theo tỉnh mới (07/11/2026: lồng hai tầng khách không hiểu) — danh sách phẳng
     ? [...new Set(list.map(newProvinceOf))]
