@@ -31,7 +31,7 @@ import {
   type SortKey,
 } from "@/lib/filters";
 import { coTruongKhacLoai, demLoaiTu } from "@/lib/thuHepTin";
-import { TIER_LABEL, suaChinhTa } from "@/lib/smartSearch";
+import { suaChinhTa } from "@/lib/smartSearch";
 import { khoaThe } from "@/lib/nhanDoiHienThi";
 import { locDanhSach, soTinMoiTrang, PER_PAGE, type KetQuaLoc } from "@/lib/locDanhSach";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
@@ -550,12 +550,8 @@ export default function ListingBrowser({
         <div key={khoaKetQua} className={`${khoaKetQua !== khoaKetQuaDau.current ? "anim-ket-qua " : ""}lg:col-span-3`}>
           {pageItems.length > 0 ? (
             <>
-              {/* Nhãn TẦNG kết quả — cho biết nhóm tin đang xem khớp tới đâu */}
-              {(active || coTuKhoa) && (() => {
-                const t = kq?.tangDau ?? 1;
-                if (kq?.thongBao) return <p className="mb-3 text-sm font-medium text-cvr-body">{kq.thongBao}</p>;
-                return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
-              })()}
+              {/* không ghi nhãn "tương tự" — xếp theo độ chính xác (anh 07/11/2026); chỉ còn câu báo khi không có tin */}
+              {(active || coTuKhoa) && kq?.thongBao && <p className="mb-3 text-sm font-medium text-cvr-body">{kq.thongBao}</p>}
               {/* MOBILE (< 640px): LUÔN thẻ dọc — ảnh trên, nội dung dưới (thuần CSS,
                   không phụ thuộc JS → chắc chắn đúng trên mọi máy) */}
               {/* Tràn sát 2 mép màn hình, khe xám giữa các thẻ — hạn chế viền trắng (chủ dự án 09/10/2026);

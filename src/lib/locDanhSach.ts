@@ -295,40 +295,36 @@ export function locDanhSach(
     && (!search.hits.some((h) => h.tier <= 2) || !coNoiDung);
   // CÂU GHI (chủ dự án 21/10/2026 duyệt mẫu): "Bất động sản bạn tìm chưa có sẵn. Gợi ý …:" — phần sau ghi đúng nhóm tin đang hiện
   const CHUA_CO = "Bất động sản bạn tìm chưa có sẵn.";
-  const tenLoai = (l: Listing) => l.type.split(/\s*[/,]\s*/)[0].toLowerCase().replace(/^(cho thuê|thuê|bán)\s+/, "");
+  // CÓ TIN KHỚP ĐƯỢC MỘT PHẦN (loại hình / nơi) → CHỈ XẾP THEO ĐỘ CHÍNH XÁC, KHÔNG GHI GÌ. Chỉ khi KHÔNG có dữ liệu nào khớp (câu không
+  // hiểu, khác cả loại) mới ghi "Bất động sản tương tự" (anh 07/11/2026)
+  const TUONG_TU = "Bất động sản tương tự";
   if (khongHieu) {
     duPhong = theoCap(conHan).slice(0, TOI_DA_GOI_Y);
-    thongBao = `${CHUA_CO} Gợi ý tin mới đăng:`;
+    thongBao = TUONG_TU;
     ketQua = duPhong;
   } else if (!ketQua.length) {
     // GỢI Ý khi không tin nào khớp hết: tin khớp được NHIỀU TRƯỜNG CÒN LẠI hơn đứng trước, theo thứ bậc giá → diện tích → phòng ngủ →
     // hướng → pháp lý → nội thất → đặc điểm (chủ dự án 01/11/2026).
     const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, k: diemGoiY(l), nd: noiDung(l) })).sort((a, b) => b.k - a.k || b.nd - a.nd || a.i - b.i).map((x) => x.l);
-    const gan = " tương tự";
     if (filters.types.length) {
       const cungLoai = conHan.filter(dungLoai);
       if (cungLoai.length) {
-        duPhong = ganTruoc(cungLoai).slice(0, TOI_DA_GOI_Y); // cùng loại ở nơi khác
-        thongBao = `${CHUA_CO} Gợi ý ${(parseQuery(kwGoc).types[0] ?? filters.types[0].split(/\s*[/,]\s*/)[0]).toLowerCase()}${gan}:`;
+        duPhong = ganTruoc(cungLoai).slice(0, TOI_DA_GOI_Y); // cùng loại ở nơi khác — vẫn là kết quả theo độ chính xác
       } else {
+        // không có tin nào cùng loại → loại gần nghĩa: đây mới là "tương tự"
         const gn = loaiGanNghia(filters.types);
         duPhong = (gn.length ? ganTruoc(conHan.filter((l) => gn.some((g) => normalizeVi(l.type).includes(g)))) : []).slice(0, TOI_DA_GOI_Y);
-        const cacLoai = [...new Set(duPhong.map(tenLoai))].slice(0, 3).join(", ");
-        thongBao = duPhong.length ? `${CHUA_CO} Gợi ý ${cacLoai}${gan}:` : CHUA_CO;
+        thongBao = duPhong.length ? TUONG_TU : CHUA_CO;
       }
     } else {
-      duPhong = ganTruoc(conHan).slice(0, TOI_DA_GOI_Y); // chỉ nói nơi chốn mà nơi đó chưa có tin → nơi gần nhất
-      thongBao = `${CHUA_CO} Gợi ý bất động sản${gan}:`;
+      duPhong = ganTruoc(conHan).slice(0, TOI_DA_GOI_Y); // chỉ nói nơi chốn mà nơi đó chưa có tin → nơi gần nhất, xếp theo độ chính xác
     }
     // CÓ TIN NỘI DUNG KHỚP chữ khách tìm (tên nơi, dự án — "hòa xuân" → tin dự án Nam Hòa Xuân) → đó là KẾT QUẢ theo mức độ khớp,
     // không báo "chưa có sẵn" (anh 07/11/2026: "có mà sao lại chưa có")
     if (duPhong.some((l) => noiDung(l) > 0)) thongBao = undefined;
     ketQua = duPhong;
-  } else if (!khopDu.length && !chuTrong.length && (filters.types.length || filters.locations.length) && !ketQua.some((l) => noiDung(l) > 0)) {
-    // Không tin nào khớp đúng, chỉ có gợi ý (cùng loại, nơi gần) → cùng câu ghi
-    const loai = filters.types.length ? (parseQuery(kwGoc).types[0] ?? filters.types[0].split(/\s*[/,]\s*/)[0]).toLowerCase() : "bất động sản";
-    thongBao = `${CHUA_CO} Gợi ý ${loai} tương tự:`;
   }
+  // Không tin nào khớp đủ nhưng có tin cùng loại / nơi gần → vẫn là kết quả theo độ chính xác, không ghi gì (anh 07/11/2026)
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));
   for (const l of goiYHetHan) tierById.set(l.id, 3);
   for (const l of duPhong) tierById.set(l.id, 3);
@@ -382,11 +378,6 @@ export function locDanhSach(
     // luôn đi cùng nhau (trước đây tin rẻ mà xa trung tâm vẫn tầng 1, tin trung tâm không rẻ tầng 2 lại đứng trên)
     const caoNhat = Math.max(0, ...dau.map((x) => diemY(x.l)));
     if (caoNhat > 0) for (const x of dau) tierById.set(x.l.id, diemY(x.l) === caoNhat ? 1 : 2);
-  }
-  // Có tin hiện mà KHÔNG tin nào khớp trọn câu ("sun ponte" ở Mua bán: chỉ có tin gần dự án) → vẫn nói rõ, cùng câu ghi đã duyệt
-  if (coTuKhoa && !thongBao && ketQua.length && !ketQua.some((l) => tierById.get(l.id) === 1)) {
-    const loai = filters.types.length ? (parseQuery(kwGoc).types[0] ?? filters.types[0].split(/\s*[/,]\s*/)[0]).toLowerCase() : "bất động sản";
-    thongBao = `${CHUA_CO} Gợi ý ${loai} tương tự:`;
   }
 
   // Đếm theo tỉnh: cùng bộ lọc đang chọn (loại hình, giá…), chỉ bỏ khu vực — lỗi 20/10/2026: "Bán condotel Đà Nẵng

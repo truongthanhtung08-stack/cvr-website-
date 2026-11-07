@@ -14,7 +14,7 @@
 // ============================================================================
 
 import { applyFilters, emptyFilters, normalizeVi, quaNoiDung, DAC_DIEM, type Filters } from "@/lib/filters";
-import { provinces, newProvinceOf } from "@/lib/locations";
+import { provinces, newProvinceOf, soLaMaCuoi } from "@/lib/locations";
 // Tỉnh khách nói (có thể là tên CŨ: "hội an" → Quảng Nam) có chứa tỉnh của nơi tìm được (tên MỚI: Đà Nẵng) không
 const cungTinh = (tinh: string[], p: string) => tinh.some((t) => t === p || newProvinceOf(t) === p);
 import { daCoDiaDanh, provincesNew, provincesOld } from "@/lib/diaDanhNguon";
@@ -97,6 +97,19 @@ function diaGioi(): NoiDG[] {
       ds.push({ norm: normalizeVi(d.name), ten: [], place: { province: p.name, district: d.name, label: `${d.name}, ${p.name}` } });
     }
   }
+  // PHƯỜNG CŨ HƠN (danh mục 30/06/2025, gồm cả tên đã gộp trước đó như "Hải Châu I", "Hải Châu II"): tin và khách vẫn ghi tên này
+  // (anh 07/11/2026: "phải đọc chính xác địa chỉ") — thêm nơi chưa có trong bảng trên
+  const daCo = new Set(ds.map((x) => `${x.place.province}|${normalizeVi(x.place.district ?? "")}|${x.norm}`));
+  for (const p of provincesOld) {
+    const moi = newProvinceOf(p.name);
+    for (const d of p.districts) for (const w of d.wards) {
+      const ten = w.replace(/^(Phường|Xã|Thị trấn)\s+/i, "").replace(/\s*\(.*\)\s*$/, "").trim();
+      const k = `${moi}|${normalizeVi(d.name)}|${normalizeVi(ten)}`;
+      if (daCo.has(k)) continue;
+      daCo.add(k);
+      ds.push({ norm: normalizeVi(ten), ten: [], place: { province: moi, district: d.name, ward: ten, label: `${ten}, ${d.name}, ${moi}` } });
+    }
+  }
   // PHƯỜNG XÃ MỚI (sau sáp nhập 2025) — trước đây bảng chỉ có phường xã CŨ nên "Hải Vân" (phường mới của Đà Nẵng) không có,
   // máy dò gần đúng ra "Hải Tân, Hải Dương" (rà 21/10/2026, ảnh chủ dự án). Lọc theo phường mới dùng đúng tên đầy đủ "Phường Hải Vân".
   for (const p of provincesNew) {
@@ -112,6 +125,8 @@ function diaGioi(): NoiDG[] {
     const moi = newProvinceOf(p.name);
     if (normalizeVi(moi) !== normalizeVi(p.name)) ds.push({ norm: normalizeVi(p.name), ten: [], place: { province: moi, label: moi } }); // không ghi "(nay thuộc …)" (07/11/2026)
   }
+  // tên có số La Mã cuối ("Hải Châu I") → khách gõ "hải châu 1" cũng khớp (soLaMaCuoi — cùng luật bộ so khu vực)
+  for (const x of ds) x.norm = soLaMaCuoi(x.norm);
   for (const x of ds) x.ten = x.norm.split(" ");
   return ds.sort((a, b) => b.norm.length - a.norm.length);
   })();
@@ -285,6 +300,9 @@ export function suaChinhTa(raw: string): string | null {
     if (/[/\-]/.test(tok)) return tok; // "triệu/tháng", "2-3" — khách cố ý viết liền bằng dấu, không phải gõ sai (01/11/2026)
     // CHỮ ĐANG GÕ DỞ (là phần đầu của một chữ có thật: "thiế" → "thiết") thì không sửa — "phan thiế" từng thành "phan thiện"
     for (const w of td) if (w.length > n.length && w.startsWith(n)) return tok;
+    // GÕ THỪA CHỮ LẶP ("xuaan", "nhaa"): bỏ chữ lặp mà ra chữ có thật → lấy chữ đó, xét TRƯỚC tách chữ dính ("xuaan" từng thành "xùa án")
+    const boLap = n.replace(/(.)\1+/g, "$1");
+    if (boLap !== n && td.has(boLap)) { doi = true; return coDau(boLap); }
     // HAI CHỮ DÍNH LIỀN (quên dấu cách): "tạiphan" → "tại phan", "canho" → "căn hộ"
     for (let k = 2; k <= n.length - 2; k++) {
       if (td.has(n.slice(0, k)) && td.has(n.slice(k))) { doi = true; return `${coDau(n.slice(0, k))} ${coDau(n.slice(k))}`; }
@@ -360,9 +378,16 @@ export function suaChinhTa(raw: string): string | null {
     }
   }
   if (doi) for (const [i, ds] of chiDatDau) tu.splice(i, ds.length, ...ds);
+  // chữ chỉ cấp gõ không dấu cũng đặt dấu khi câu đằng nào cũng sửa ("quan cẩm lệ" → "quận cẩm lệ", "thanh pho" → "thành phố")
+  if (doi) for (let i = 0; i < tu.length; i++) {
+    const t = tu[i].toLowerCase();
+    if (t === "thanh" && normalizeVi(tu[i + 1] ?? "") === "pho") { tu[i] = "thành"; tu[i + 1] = "phố"; i++; continue; }
+    const cap: Record<string, string> = { phuong: "phường", xa: "xã", quan: "quận", huyen: "huyện" };
+    if (cap[t]) tu[i] = cap[t];
+  }
   return doi ? tu.join(" ") : null;
 }
-const CHU_CAP = new Set(["phuong", "xa", "quan", "huyen", "thi", "tran", "tinh", "thanh", "pho", "tp", "dac", "khu"]);
+const CHU_CAP = new Set(["phuong", "xa", "quan", "huyen", "tp"]); // "thanh", "pho"… nằm trong tên nơi (Thanh Khê) — không chặn
 const TEN_TINH_KHOA = new Set(TINH.map(([t]) => normalizeVi(t).replace(/[^a-z0-9]+/g, " ").trim()));
 const TU_NHA_DAT = new Set(["ban", "mua", "nha", "dat", "thue", "cho", "can", "ho", "gia", "tai", "duoi", "tren", "gan", "phong", "view"]);
 // Tên nơi (bỏ chữ cấp) → chữ đúng dấu, viết thường; dựng một lần
@@ -629,7 +654,7 @@ function phanTichCau(raw: string): ParsedQuery {
     if (!ten || normalizeVi(raw) === raw.normalize("NFC").toLowerCase()) return true;
     const chuan = (s: string) => s.normalize("NFC").toLowerCase().replace(/o([àáảãạ])/g, (_, x) => ({ "à": "òa", "á": "óa", "ả": "ỏa", "ã": "õa", "ạ": "ọa" } as Record<string, string>)[x])
       .replace(/u([ỳýỷỹỵ])/g, (_, x) => ({ "ỳ": "ùy", "ý": "úy", "ỷ": "ủy", "ỹ": "ũy", "ỵ": "ụy" } as Record<string, string>)[x]);
-    const ma = chuan(ten.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, ""));
+    const ma = soLaMaCuoi(chuan(ten.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "")));
     return ` ${chuan(raw).replace(/[^\p{L}\p{N}]+/gu, " ")} `.includes(` ${ma} `);
   };
   const place = place0 && dungDau(place0.ward ?? place0.district) ? place0 : null;

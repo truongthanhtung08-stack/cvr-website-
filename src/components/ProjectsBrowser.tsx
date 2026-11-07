@@ -11,7 +11,7 @@ import AnhChay from "@/components/AnhChay";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
 import Highlight from "@/components/Highlight";
-import { chuChuaHieu, searchAny, TIER_LABEL } from "@/lib/smartSearch";
+import { chuChuaHieu, searchAny } from "@/lib/smartSearch";
 import { locTuCau } from "@/lib/locTuCau";
 import { cuonToiKetQua } from "@/lib/scroll";
 import dynamic from "next/dynamic";
@@ -626,11 +626,8 @@ export default function ProjectsBrowser({
       <div className={`mt-4 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
         {/* ── Cột chính: thẻ dự án ngang ── */}
         <div className="lg:col-span-2">
-          {/* Nhãn TẦNG kết quả — giống trang Mua bán / Cho thuê */}
-          {hasActive && pageItems.length > 0 && "noiBat" in pageItems[0] && (() => {
-            const t = tierBySlug.get(pageItems[0].noiBat.slug) ?? 1;
-            return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
-          })()}
+          {/* CÙNG LUẬT CẢ HỆ THỐNG (anh 07/11/2026): có dự án khớp → chỉ xếp theo độ chính xác, không ghi gì; KHÔNG dự án nào khớp mới ghi */}
+          {hasActive && soDuAnKhop === 0 && pageItems.length > 0 && <p className="mb-3 text-sm font-medium text-cvr-body">Dự án tương tự</p>}
           <div id="noi-bat" className="reveal is-visible cards-stagger flex scroll-mt-24 flex-col gap-5" onClickCapture={() => ghiTrang(current, window.scrollY)}>
             {pageItems.map((x) =>
               "noiBat" in x

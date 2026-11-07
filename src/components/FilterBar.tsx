@@ -553,9 +553,14 @@ export default function FilterBar({
   // Ô TÌM PHẢI HƠN CHỌN TRƯỜNG (chủ dự án 01/11/2026, ảnh trang Dự án gõ "Căn ho" chỉ ra một tên dự án): gõ là đọc TỈNH THÀNH · LOẠI
   // HÌNH · MỤC ĐÍCH (gợi ý máy chủ — "Dự án căn hộ chung cư tại…", dự án đúng loại, Bán / Cho thuê), rồi mới đến dự án khớp tên theo
   // các trường đang chọn (goiYRieng), không lặp
+  // ĐANG GÕ → CÂU ĐÃ TÌM TRƯỚC ĐÂY bắt đầu bằng chữ đang gõ lên ĐẦU, biểu tượng đồng hồ, như Google (anh 07/11/2026: "nhận từ cũ tao gõ")
+  const goDau = normalizeVi(f.keyword.trim());
+  const ganDayKhop = typed ? recent.filter((r) => { const n = normalizeVi(r.label); return n.startsWith(goDau) && n !== goDau; }).slice(0, 3) : [];
+  const goiYGo = goiYRieng && mucGoiY === "duan" ? [...bacThang, ...goiYRieng(kwHoan).filter((s) => !bacThang.some((b) => b.href === s.href || b.label === s.label))] : bacThang;
   const panelItems: Suggestion[] = typed
-    ? (goiYRieng && mucGoiY === "duan" ? [...bacThang, ...goiYRieng(kwHoan).filter((s) => !bacThang.some((b) => b.href === s.href || b.label === s.label))] : bacThang)
+    ? [...ganDayKhop, ...goiYGo.filter((s) => !ganDayKhop.some((r) => normalizeVi(r.label) === normalizeVi(s.label)))]
     : recentShown; // tên dự án (chữ Anh) không qua sửa chính tả
+  const soLichSu = typed ? ganDayKhop.length : recentShown.length; // số dòng đầu là lịch sử (đồng hồ, có nút xoá)
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
   // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
   // phải nói đã hiểu gì và gợi ý theo đúng tiêu chí đó.
@@ -942,7 +947,7 @@ export default function FilterBar({
           >
             <span className="flex w-5 shrink-0 justify-center text-cvr-muted">
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d={!typed && i < recentShown.length ? ICON_CLOCK : ICON_SEARCH} />
+                <path strokeLinecap="round" strokeLinejoin="round" d={i < soLichSu ? ICON_CLOCK : ICON_SEARCH} />
               </svg>
             </span>
             <span className="min-w-0 flex-1 break-words"><HighlightLabel label={s.label} q={typed ? f.keyword : ""} /></span>
@@ -960,7 +965,7 @@ export default function FilterBar({
             </svg>
           </button>
           {/* × — XOÁ RIÊNG dòng lịch sử này (chỉ hiện với mục "Tìm kiếm gần đây") */}
-          {!typed && i < recentShown.length && (
+          {i < soLichSu && (
             <button
               type="button"
               aria-label={`Xoá "${s.label}" khỏi lịch sử`}

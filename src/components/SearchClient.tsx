@@ -16,7 +16,7 @@ import {
   type Filters,
   type SortKey,
 } from "@/lib/filters";
-import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
+import { smartFilter, smartSearch } from "@/lib/smartSearch";
 import { nhanDoiHienThi, khoaThe } from "@/lib/nhanDoiHienThi";
 import { locDanhSach } from "@/lib/locDanhSach";
 import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
@@ -72,7 +72,6 @@ export default function SearchClient({
   const locHits = useMemo(() => smartFilter(base, { ...filters, keyword: "" }), [base, filters, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
   const loc = useMemo(() => locHits.map((h) => h.item), [locHits]);
   const search = useMemo(() => smartSearch(loc, filters.keyword), [loc, filters.keyword, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
-  const filterTierById = useMemo(() => new Map(locHits.map((h) => [h.item.id, h.tier])), [locHits]);
   const coTuKhoa = filters.keyword.trim().length > 0;
   // Có từ khoá mà địa danh chưa về → chưa hiện kết quả (tìm thiếu phường xã ra sai rồi nhảy; máy chủ dựng cũng vậy để khớp)
   const choDiaDanh = coTuKhoa && !coDiaDanh;
@@ -139,13 +138,7 @@ export default function SearchClient({
           {/* Nhãn TẦNG KẾT QUẢ — hiện đúng chất lượng khớp của nhóm tin đang xem
               (khớp 100% · gần đúng · liên quan). Không gõ từ khoá thì không hiện. */}
           {chung?.thongBao && <p className="mb-3 text-sm font-medium text-cvr-body">{chung.thongBao}</p>}
-          {!chung?.thongBao && (coTuKhoa || active) && pageItems.length > 0 && (() => {
-            // Tầng hiển thị = tầng THẤP HƠN giữa (khớp từ khoá) và (khớp bộ lọc)
-            const a = coTuKhoa ? hitById.get(pageItems[0].id)?.tier ?? 3 : 1;
-            const b = filterTierById.get(pageItems[0].id) ?? 1;
-            const t = Math.max(a, b) as 1 | 2 | 3;
-            return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
-          })()}
+          
 
           <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {pageItems.map((item) => (
