@@ -5,7 +5,6 @@ import "./globals.css";
 import { getHeroBanners } from "@/lib/siteContent";
 import { asset } from "@/lib/asset";
 import Chatbox from "@/components/Chatbox";
-import CompareBar from "@/components/CompareBar";
 import MobileTabBar from "@/components/MobileTabBar";
 import BanPhimAo from "@/components/BanPhimAo";
 import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
@@ -217,7 +216,6 @@ export default function RootLayout({
         {/* Vạch xanh "đang tìm" chung cả web: bấm tìm → chạy tới khi kết quả hiện */}
         <VachTim />
         {children}
-        <CompareBar />
         <Chatbox />
         <MobileTabBar />
         <DoThanhDay />
