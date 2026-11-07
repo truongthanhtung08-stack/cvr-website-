@@ -1454,8 +1454,8 @@ export function LocationPanel({
           if (l.cu || (tu === "moi" && l.province === moi)) them(l); // đang ở hệ mới: tên tỉnh mới = cả tỉnh mới
           else if (oldNamesOf(moi).every((p) => chon.has(p))) them({ province: moi });
           else {
-            // CHỈ ĐỂ HIỆN (một lựa chọn hai cách xem): tỉnh cũ thiếu phần → tick đúng các phường MỚI gộp từ tỉnh cũ đó — vào tỉnh mới là thấy
-            // phần nào đã chọn (Bắc Ninh cũ trong Bắc Ninh mới), không cần chữ giải thích
+            // CHỈ ĐỂ HIỆN, ĐỒNG BỘ THEO BẢNG SÁP NHẬP (anh 08/11/2026: "2 hệ phải đồng bộ"): tỉnh cũ thiếu phần → tỉnh mới "–", bên trong tick
+            // đúng các phường mới gộp từ tỉnh cũ đó (An Giang cũ trong An Giang mới; Kiên Giang để trống)
             const ws = wardsOfNew(moi).filter((w) => choCuCua(moi, w).some((c) => chuanTen(c.tinh) === chuanTen(l.province)));
             if (ws.length) ws.forEach((w) => them({ province: moi, ward: w }));
             else them(l.province === moi ? { province: moi, cu: true } : { province: l.province });
@@ -1606,7 +1606,7 @@ export function LocationPanel({
     const phan = motPhan(name);
     const doiTick = () => {
       if (level === "ward") return doiPhuong(name);
-      if (phan) return onChange(locations.filter((l) => (level === "province" ? !cungTinh(l, name) : !cungQuan(l, prov, name)))); // ô có dấu "–" (chọn một phần) bấm = GỠ cả tỉnh khỏi hàng đã chọn (anh 07/11/2026: "xoá là gỡ")
+      if (phan) return onChange(locations.filter((l) => (level === "province" ? !cungTinh(l, name) : !cungQuan(l, prov, name)))); // ô có dấu "–" (chọn một phần) bấm = BỎ CHỌN cả nơi đó (anh 07/11 + 08/11/2026)
       if (on) return onChange(locations.filter((l) => (level === "province" ? !cungTinh(l, name) : !cungQuan(l, prov, name))));
       if (level === "province") { if (!full) onChange([...locations, { province: name }]); return; }
       const conLai = locations.filter((l) => !(cungTinh(l, prov) && !l.district && !l.ward));
