@@ -308,26 +308,8 @@ export default function ListingBrowser({
   const current = kq?.trangHienTai ?? 1;
   const provinces = kq?.khuVuc ?? [];
   const coTuKhoa = filters.keyword.trim().length > 0;
-  // DÒNG PHÂN CÁCH TẦNG (17/10/2026): ít tin khớp đủ thì web thêm tin gần đúng ngay sau — phải có dòng báo
-  // trước tin gần đúng đầu tiên, nếu không khách tưởng tìm sai (vd tìm Quảng Trị lại thấy Đà Nẵng).
-  const dongTang = (item: Listing, i: number) => {
-    // Chủ dự án 17/10/2026: "1 tin thì ra 1 tin! Muốn gợi ý thì có câu gợi ý ở những địa phương khác".
-    // Nhóm: 0 = khớp đủ · 1 = gợi ý cùng tỉnh đang chọn · 2 = gợi ý ở địa phương khác. Đổi nhóm → một dòng tiêu đề.
-    const tinhChon = kq?.tinhHieu ?? filters.locations.map((x) => x.province);
-    const nhom = (l: Listing) => {
-      if ((kq?.tangTheoId?.[l.id] ?? 1) === 1) return 0;
-      const tinh = l.location.split(",").pop()?.trim() ?? "";
-      return tinhChon.length > 0 && !tinhChon.includes(tinh) ? 2 : 1;
-    };
-    const n = nhom(item);
-    if (i === 0 || n === 0 || n === nhom(pageItems[i - 1])) return null;
-    const tieuDe = "Bất động sản tương tự"; // anh 07/11/2026: bỏ chữ "gợi ý"
-    return (
-      <p key={`tang-${item.id}`} className="col-span-full mt-3 border-t border-cvr-line px-4 pb-1 pt-5 text-[15px] font-semibold text-cvr-ink sm:px-0">
-        {tieuDe}
-      </p>
-    );
-  };
+  // KHÔNG CHÈN DÒNG "Bất động sản tương tự" GIỮA DANH SÁCH (anh 07/11/2026: có kết quả thì không ghi tương tự) — danh sách xếp liền theo độ
+  // chính xác; không tin nào đúng thì nhãn ở ĐẦU danh sách (TIER_LABEL) đã nói
   const active = hasActiveFilters(filters);
   // TỪ KHOÁ CHUẨN (chủ dự án 17/10/2026: gõ câu thì phải hiện Huế · Căn hộ · Dưới 2 tỷ, không phải câu thô):
   // ô tìm giữ nguyên câu khách gõ; trường lọc + thẻ bên dưới hiện đúng tiêu chí máy đã hiểu.
@@ -579,7 +561,7 @@ export default function ListingBrowser({
               {/* Tràn sát 2 mép màn hình, khe xám giữa các thẻ — hạn chế viền trắng (chủ dự án 09/10/2026);
                   24/10/2026: khe 10px xám vừa (#e5e5ea — đậm hơn làm chìm dải màu 1px trên thẻ VIP) cho rõ từng tin, thẻ vẫn vuông (cùng chuẩn trang chủ) */}
               <div className="reveal is-visible cards-stagger -mx-4 grid grid-cols-1 gap-2.5 bg-[#e5e5ea] sm:hidden">
-                {pageItems.flatMap((item, i) => [dongTang(item, i), (
+                {pageItems.flatMap((item, i) => [(
                   // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
                   item.hetHan
                     ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={cumDam} />
@@ -591,7 +573,7 @@ export default function ListingBrowser({
               {/* 24/10/2026 (chủ dự án): mỗi tin là khối bo góc 12px, không viền, NỀN TRẮNG như trang chủ máy tính (bóng nhẹ để tách khỏi nền trang),
                   cách nhau 20px — cùng kiểu các khối lọc bên phải */}
               <div className="reveal is-visible cards-stagger hidden sm:flex sm:flex-col sm:gap-5">
-                {pageItems.flatMap((item, i) => [dongTang(item, i), (
+                {pageItems.flatMap((item, i) => [(
                   item.hetHan
                     ? <PropertyCard key={khoaThe(item)} item={item} layout="list" showTime terms={cumDam} />
                     : <div key={khoaThe(item)} className="overflow-hidden rounded-xl bg-white shadow-lux"><TheTinMobile item={item} terms={cumDam} pc uuTien={i === 0} /></div>

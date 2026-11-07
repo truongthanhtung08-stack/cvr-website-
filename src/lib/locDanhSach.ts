@@ -1,8 +1,9 @@
 import type { Listing } from "@/lib/data";
-import { sortListings, applyFilters, emptyFilters, normalizeVi, matchType, dacDiemOptions, type Filters, type SortKey } from "@/lib/filters";
+import { sortListings, applyFilters, emptyFilters, normalizeVi, matchType, dacDiemOptions, typeGroupsFor, type Filters, type SortKey } from "@/lib/filters";
 import { smartFilter, smartSearch, parseQuery, coKhopTieuChi, chuChuaHieu } from "@/lib/smartSearch";
 import { nhanDoiHienThi } from "@/lib/nhanDoiHienThi";
 import { locTuCau } from "@/lib/locTuCau";
+import { choCuCua } from "@/lib/locations";
 import { tierRank } from "@/lib/packages";
 
 // ============================================================================
@@ -174,7 +175,14 @@ export function locDanhSach(
   const coGia = filters.priceMin != null || filters.priceMax != null;
   // Tin có ĐẶC ĐIỂM khách gõ (biển, sông…) — từ khoá còn lại sau khi đã tách câu thành bộ lọc
   const coDacDiem = new Set(coTuKhoa ? search.hits.filter((h) => h.tier <= 2).map((h) => h.item.id) : []); // khớp chặt, không tính khớp lỏng 1 chữ
-  const dungLoai = (l: Listing) => filters.types.length === 0 || filters.types.some((t) => matchType(l.type, t));
+  const dungLoaiCon = (l: Listing) => filters.types.length === 0 || filters.types.some((t) => matchType(l.type, t));
+  // CÙNG CHA (anh 07/11/2026, cây loại hình cha – con): khách nói "đất nền" → tương tự gồm cả loại con khác của Đất (đất khác…), xếp sau
+  // đúng loại con. Loại khác cha (nhà, căn hộ) vẫn không vào (chốt 21/10/2026)
+  const loaiCungCha = new Set(typeGroupsFor(purpose).filter((g) => g.items.some((x) => filters.types.includes(x))).flatMap((g) => g.items));
+  const dungLoai = (l: Listing) => dungLoaiCon(l) || [...loaiCungCha].some((t) => matchType(l.type, t));
+  // phường HỆ MỚI không kèm quận → quận CŨ của nó theo bảng sáp nhập (Phường Hòa Xuân → Cẩm Lệ): tin cùng quận cũ là nơi gần nhất
+  const quanCuCua = sauChon.filter((x) => x.ward && !x.district).flatMap((x) =>
+    [...new Set(choCuCua(x.province, x.ward!).map((c) => `${c.tinh}|${c.quan}`))].map((k) => ({ province: k.split("|")[0], district: k.split("|")[1] })));
   // XẾP THEO ĐÚNG 9 BẬC (chủ dự án 01/11/2026 — bảng ô search dùng chung, "kết quả sắp xếp theo dữ liệu, ưu tiên theo CHA – CON"):
   //   THEO THỨ TỰ CÁC TRƯỜNG DƯỚI Ô TÌM, TRÁI QUA PHẢI (chủ dự án 01/11/2026): mục đích = 3 tab · Toàn quốc: tỉnh/thành phố (bắt buộc) →
   //   quận/huyện, phường/xã · Loại BĐS (bắt buộc) · Giá · Diện tích · 6 chủ đầu tư, 7 dự án (tin ghi đúng dự án khách gõ) · 8 Lọc thêm: phòng ngủ → hướng → pháp lý → nội thất →
@@ -201,10 +209,10 @@ export function locDanhSach(
     const dungTinh = tinhChon.size === 0 || tinhChon.has(l.location.split(",").pop()?.trim() ?? "");
     const dungSau = sauChon.length > 0 && applyFilters([l], { ...emptyFilters(), locations: sauChon }).length > 0;
     // không có tin đúng PHƯỜNG thì tin cùng QUẬN/HUYỆN chứa phường đó ("hòa xuân" → Cẩm Lệ) đứng trước nơi khác trong tỉnh
-    const quanChon = sauChon.filter((x) => x.ward && x.district).map((x) => ({ province: x.province, district: x.district }));
+    const quanChon = [...sauChon.filter((x) => x.ward && x.district).map((x) => ({ province: x.province, district: x.district })), ...quanCuCua];
     const dungQuan = quanChon.length > 0 && applyFilters([l], { ...emptyFilters(), locations: quanChon }).length > 0;
-    // địa danh (tỉnh → phường → quận chứa phường) → loại hình → các bậc con
-    return (dungTinh ? 65536 : 0) + (dungSau ? 32768 : 0) + (dungQuan ? 16384 : 0) + (dungLoai(l) ? 8192 : 0) + diemCon(l);
+    // địa danh (tỉnh → phường → quận chứa phường) → loại hình (đúng loại con trước loại cùng cha) → các bậc con
+    return (dungTinh ? 65536 : 0) + (dungSau ? 32768 : 0) + (dungQuan ? 16384 : 0) + (dungLoai(l) ? 8192 : 0) + (dungLoaiCon(l) ? 4096 : 0) + diemCon(l);
   };
   // GỢI Ý TƯƠNG TỰ THEO NỘI DUNG, KHÔNG THEO GẦN / XA (anh 07/11/2026: "gợi ý là tương tự = nội dung, ý định khách cần tìm"): sau các trường,
   // tin có NỘI DUNG khớp chữ khách gõ (tên nơi, dự án, mô tả — "hòa xuân" → tin dự án Nam Hòa Xuân) đứng trước; cùng mức giữ thứ tự cấp tin

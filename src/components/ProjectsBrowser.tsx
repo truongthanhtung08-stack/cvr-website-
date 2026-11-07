@@ -632,13 +632,10 @@ export default function ProjectsBrowser({
             return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
           })()}
           <div id="noi-bat" className="reveal is-visible cards-stagger flex scroll-mt-24 flex-col gap-5" onClickCapture={() => ghiTrang(current, window.scrollY)}>
-            {pageItems.map((x, i) =>
+            {pageItems.map((x) =>
               "noiBat" in x
                 ? <Fragment key={x.noiBat.slug}>
-                    {/* nhãn tầng trước dự án gợi ý đầu tiên (dự án đầu trang đã có nhãn ở trên) */}
-                    {i > 0 && laGoiY(x.noiBat) && !("noiBat" in pageItems[i - 1] && laGoiY((pageItems[i - 1] as { noiBat: Project }).noiBat)) && (
-                      <p className="text-sm font-medium text-cvr-body">{TIER_LABEL[tierBySlug.get(x.noiBat.slug) ?? 2]}</p>
-                    )}
+                    {/* không chèn nhãn "tương tự" giữa danh sách (anh 07/11/2026: có kết quả thì không ghi tương tự) */}
                     {theDuAnWeb(x.noiBat)}
                   </Fragment>
                 : <Fragment key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu), true)}</Fragment>,
