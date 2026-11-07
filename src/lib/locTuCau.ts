@@ -2,6 +2,7 @@
 // nạp chéo hai component (FilterBar ↔ TruongLocTrangChu) — nạp chéo làm trang chủ không chạy được.
 import { typeGroupsFor, normalizeVi, emptyFilters, type Filters } from "@/lib/filters";
 import { docDienTich, docLocThem, parseQuery } from "@/lib/smartSearch";
+import { phuongMoiCua } from "@/lib/locations";
 
 // Nhãn loại hình của bộ tách câu → loại hình của bộ lọc (cùng nguồn typeGroupsFor)
 function loaiTuNhan(nhan: string, nq: string, mb: "ban" | "thue"): string[] {
@@ -26,7 +27,11 @@ export function locTuCau(cau: string, mb: "ban" | "thue"): Filters {
   const p = parseQuery(cau);
   const nq = ` ${normalizeVi(cau).replace(/[^a-z0-9]+/g, " ")} `;
   const pl = p.place;
-  if (pl) f.locations = [{ province: pl.province, district: pl.district, ward: pl.ward }];
+  // PHƯỜNG ĐỌC THEO HỆ MỚI (07/11/2026: "bán đất nền hòa xuân" đọc thành Hòa Xuân, quận Cẩm Lệ (hệ cũ) → tin ghi "Phường Hòa Xuân, Đà Nẵng"
+  // không còn chữ Cẩm Lệ nên lọt hết, báo "chưa có sẵn"). Phường cũ có trong bảng sáp nhập → quy về phường mới 2 cấp như cả web đang dùng.
+  const moi = pl?.ward && pl.district ? phuongMoiCua(pl.province, pl.district, pl.ward) : null;
+  if (moi) f.locations = [{ province: moi.tinh, ward: moi.phuong }];
+  else if (pl) f.locations = [{ province: pl.province, district: pl.district, ward: pl.ward }];
   else if (p.places[0]) f.locations = [{ province: p.places[0] }];
   // Loại CHỈ CÓ Ở MỤC KIA ("văn phòng", "mặt bằng" chỉ có ở Cho thuê) → tra cả mục kia; trước đây bị ép sang loại gần chữ nhất
   // ("mặt bằng" → Nhà mặt phố) — 01/11/2026
