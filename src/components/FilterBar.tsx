@@ -1453,7 +1453,13 @@ export function LocationPanel({
           const chon = new Set(ls.filter((x) => !x.district && !x.ward).map((x) => x.province));
           if (l.cu || (tu === "moi" && l.province === moi)) them(l); // đang ở hệ mới: tên tỉnh mới = cả tỉnh mới
           else if (oldNamesOf(moi).every((p) => chon.has(p))) them({ province: moi });
-          else them(l.province === moi ? { province: moi, cu: true } : { province: l.province });
+          else {
+            // CHỈ ĐỂ HIỆN (một lựa chọn hai cách xem): tỉnh cũ thiếu phần → tick đúng các phường MỚI gộp từ tỉnh cũ đó — vào tỉnh mới là thấy
+            // phần nào đã chọn (Bắc Ninh cũ trong Bắc Ninh mới), không cần chữ giải thích
+            const ws = wardsOfNew(moi).filter((w) => choCuCua(moi, w).some((c) => chuanTen(c.tinh) === chuanTen(l.province)));
+            if (ws.length) ws.forEach((w) => them({ province: moi, ward: w }));
+            else them(l.province === moi ? { province: moi, cu: true } : { province: l.province });
+          }
         }
       }
     }
@@ -1556,6 +1562,12 @@ export function LocationPanel({
   const phuongCua = (w: string): LocationSel => (isNew ? { province: prov, ward: w } : { province: prov, district: dist, ward: w });
   const doiPhuong = (w: string) => {
     const sel = phuongCua(w);
+    // đang chọn CẢ TỈNH / CẢ QUẬN mà bỏ một phường → còn lại mọi phường khác
+    if (caTinhDangXem || caQuanDangXem) {
+      const conLai = locations.filter((l) => !laToanBo(l) && !caTinh(l, prov));
+      onChange([...conLai, ...wardList.filter((x) => x !== w).map(phuongCua)]);
+      return;
+    }
     const daChon = locations.some((l) => cungNoi(l, sel));
     let next = daChon ? locations.filter((l) => !cungNoi(l, sel)) : [...locations.filter((l) => !laToanBo(l)), sel];
     const conPhuong = next.some((l) => l.province === prov && (isNew || l.district === dist) && !!l.ward);
@@ -1568,10 +1580,13 @@ export function LocationPanel({
   const motPhan = (name: string) => level === "province"
     ? !locations.some((l) => caTinh(l, name)) && locations.some((l) => cungTinh(l, name))
     : level === "district" && !locations.some((l) => cungQuan(l, prov, name) && !l.ward) && locations.some((l) => cungQuan(l, prov, name));
+  // đã chọn CẢ TỈNH (hoặc cả quận cũ) → mọi quận / phường bên trong hiện ✓ (vào trong không thấy trống)
+  const caTinhDangXem = !!prov && locations.some((l) => caTinh(l, prov));
+  const caQuanDangXem = !!dist && locations.some((l) => cungQuan(l, prov, dist) && !l.ward);
   const daChon = (name: string) =>
     level === "province" ? locations.some((l) => cungTinh(l, name))
-      : level === "district" ? locations.some((l) => cungQuan(l, prov, name))
-      : locations.some((l) => cungNoi(l, phuongCua(name)));
+      : level === "district" ? caTinhDangXem || locations.some((l) => cungQuan(l, prov, name))
+      : caTinhDangXem || caQuanDangXem || locations.some((l) => cungNoi(l, phuongCua(name)));
   const pick = (name: string) => (level === "province" ? chonTinh(name) : level === "district" ? chonQuan(name) : doiPhuong(name));
   // NƠI ĐÃ CHỌN LÊN ĐẦU, TÔ XANH (chủ dự án 01/11/2026): cập nhật thứ tự ngay khi chọn.
   // CHỐT THỨ TỰ lúc mở bảng / đổi tầng (07/11/2026: bấm chọn tỉnh là dòng nhảy lên đầu ngay dưới ngón tay — bấm tiếp trúng tỉnh khác)
