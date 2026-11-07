@@ -391,7 +391,11 @@ export function filtersFromParams(params: URLSearchParams): Filters {
       .split(";")
       .map((s) => s.split("/").map((x) => x.trim()))
       .filter((a) => a[0])
-      .map((a) => ({ province: a[0], district: a[1] || undefined, ward: a[2] || undefined }))
+      // PHƯỜNG/XÃ KHÔNG QUẬN (hệ mới 2 cấp) ghi "Tỉnh//Phường"; link cũ ghi "Tỉnh/Phường X" (2 phần, phần 2 có chữ cấp phường/xã) → vẫn là
+      // PHƯỜNG, không phải quận (anh 07/11/2026: "nha dat quy nhon" đọc thành Phường Quy Nhơn mà trường chỉ ghi "Gia Lai")
+      .map((a) => (a.length === 2 && /^(Phường|Xã|Thị trấn|Đặc khu)\s/i.test(a[1])
+        ? { province: a[0], ward: a[1] }
+        : { province: a[0], district: a[1] || undefined, ward: a[2] || undefined }))
       .slice(0, MAX_LOCATIONS);
   } else {
     const tinh = params.get("tinh");
@@ -445,7 +449,8 @@ export function filtersFromParams(params: URLSearchParams): Filters {
 export function filtersToParams(f: Filters): URLSearchParams {
   const p = new URLSearchParams();
   if (f.locations.length) {
-    p.set("kv", f.locations.map((l) => [l.province, l.district, l.ward].filter(Boolean).join("/")).join(";"));
+    // phường không kèm quận → "Tỉnh//Phường" (giữ chỗ quận trống) — đọc lại không lẫn phường thành quận
+    p.set("kv", f.locations.map((l) => (l.ward && !l.district ? `${l.province}//${l.ward}` : [l.province, l.district, l.ward].filter(Boolean).join("/"))).join(";"));
   }
   if (f.project) p.set("duan", f.project);
   if (f.types.length) p.set("loai", f.types.join(","));

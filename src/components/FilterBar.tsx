@@ -4,6 +4,7 @@ import { useDiaDanh } from "@/lib/useDiaDanh";
 import { duongDanCau, goiYTheoY } from "@/lib/goiYTheoY";
 import { useGoiYThat } from "@/lib/useGoiYThat";
 import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
+import { daCoDiaDanh, napDiaDanh } from "@/lib/diaDanhNguon";
 import { startTransition, useContext, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNutQuayLai } from "@/lib/khoaCuon";
 import { useRouter } from "next/navigation";
@@ -201,7 +202,10 @@ export default function FilterBar({
   const [overlay, setOverlay] = useState(false); // MOBILE: chạm ô → mở trang tìm TOÀN MÀN HÌNH kiểu Google
   // Nút Quay lại điện thoại đóng màn tìm, không rời trang (hàm chung, 22/10/2026). Mọi lối đóng để CHUYỂN TRANG gọi
   // boQuaLui() trước (tự lùi lúc trang mới đang vào có thể đá khách về trang cũ).
-  const boQuaLui = useNutQuayLai(overlay, () => setOverlay(false));
+  // ĐÓNG MÀN TÌM: ẩn THẲNG trên trang rồi mới báo React (anh 07/11/2026: bấm ‹ 5 lần không thoát) — màn tìm mở bằng cách gỡ lớp "hidden" trực
+  // tiếp (moTimDt); nếu lượt cập nhật mở (startTransition) bị bỏ, React tưởng màn vẫn đóng → setOverlay(false) không vẽ lại, màn tìm kẹt
+  const dongMan = () => { const m = document.querySelector<HTMLElement>("[data-man-tim]"); if (m) { m.classList.add("hidden"); m.classList.remove("flex"); } setOverlay(false); };
+  const boQuaLui = useNutQuayLai(overlay, () => dongMan());
   // Điện thoại (đo sau khi trang mở — máy chủ dựng như máy tính, không lệch HTML)
   const [laDt, setLaDt] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc cỡ màn hình một lần khi trang mở
@@ -323,9 +327,10 @@ export default function FilterBar({
   const dangLui = useRef("");
   const [dangTim, setDangTim] = useState(false);
   // cauMoi: câu khách vừa BẤM (gợi ý / tìm kiếm gần đây chỉ có chữ) — đọc lại câu như gõ + Enter, kể cả trùng câu đã tìm (07/11/2026)
-  const chayTim = (next?: Filters, luu = true, cauMoi?: string) => {
+  // boQuaCau: tìm theo TRƯỜNG vừa chọn, KHÔNG đọc lại câu trong ô (câu cũ từng đè lên trường mới — anh 07/11/2026)
+  const chayTim = (next?: Filters, luu = true, cauMoi?: string, boQuaCau = false) => {
     setSugOpen(false);
-    setOverlay(false);
+    dongMan();
     setActiveIdx(-1);
     if (luu) luuTuKhoaDaGo();
     setDangTim(true);
@@ -334,10 +339,12 @@ export default function FilterBar({
     window.dispatchEvent(new Event("cvr-tim"));
     const kw = (cauMoi ?? f.keyword).trim();
     // câu mới phải đọc lại: câu chưa tìm, hoặc khách vừa bấm chọn một câu (trường đã đổi khác câu thì câu bấm vào làm chủ — lỗi 15, 17)
-    const docCau = cauMoi != null || kw !== daTim;
+    const docCau = !boQuaCau && (cauMoi != null || kw !== daTim);
     // TÊN DỰ ÁN CHƯA NẠP (khách gõ nhanh rồi Enter ngay — danh sách nạp khi bắt đầu gõ): chờ nạp xong rồi mới đọc mục đích, không thì gõ
     // trọn tên dự án vẫn ở lại Mua bán / Cho thuê (02/11/2026)
-    if (!next && kw && dsDuAnDaNap() === null) { void napDsDuAn().then(() => chayTim(next, false, cauMoi)); return; }
+    if (!next && kw && dsDuAnDaNap() === null) { void napDsDuAn().then(() => chayTim(next, false, cauMoi, boQuaCau)); return; }
+    // ĐỊA DANH CHƯA NẠP (trình duyệt nạp sau): chờ xong mới đọc câu — không thì "can ho nhu hanh son" mất Ngũ Hành Sơn (07/11/2026)
+    if (!next && kw && !daCoDiaDanh()) { void napDiaDanh().then(() => chayTim(next, luu, cauMoi, boQuaCau)); return; }
     const dsDa = dsDuAnDaNap() ?? dsDuAn;
     // CÂU NÓI MỤC ĐÍCH KHÁC TAB ĐANG ĐỨNG → SANG ĐÚNG TAB (chủ dự án 02/11/2026: "đứng ở Mua bán gõ cho thuê phải đổi qua Cho thuê",
     // Mua bán · Cho thuê · Dự án như nhau). DÙNG CHUNG bộ đọc mục đích của ô tìm trang chủ (docMucDich + gõ trọn tên dự án = Dự án,
@@ -392,7 +399,7 @@ export default function FilterBar({
   // Mua bán / Cho thuê: khu vực · loại hình · giá · phòng ngủ · lọc thêm, cả câu giữ làm từ khoá (vòng 2 dò nội dung)
   // Dự án: khu vực · loại hình (cùng cây loại hình), phần chưa đọc được (tên dự án, chủ đầu tư…) làm từ khoá
   const apDungCau = (cau: string) => {
-    setSugOpen(false); setOverlay(false); setActiveIdx(-1);
+    setSugOpen(false); dongMan(); setActiveIdx(-1);
     setDaTim(cau);
     // Ô tìm HIỆN ĐÚNG CÂU VỪA TÌM (01/11/2026): Dự án đọc hết câu vào trường thì từ khoá còn lại rỗng → ô từng hiện lại câu CŨ từ trang
     // chủ, gõ tiếp bị nối vào câu cũ ("căn hộ sơn tràcăn hộ sơn trà")
@@ -500,8 +507,11 @@ export default function FilterBar({
     } catch { /* bỏ qua */ }
     const u = new URL(window.location.href);
     if (u.searchParams.has("q")) {
-      u.searchParams.delete("q");
-      filtersToParams({ ...f, keyword: "" }).forEach((v, k) => { if (!u.searchParams.has(k)) u.searchParams.set(k, v); });
+      // ghi lại địa chỉ ĐÚNG THEO CÁC TRƯỜNG ĐANG CHỌN (anh 07/11/2026: chọn An Giang + Bắc Ninh, ô trống, mà địa chỉ giữ kv=Đà Nẵng — trước đây
+      // chỉ thêm tham số còn thiếu, không thay khu vực cũ). Giữ mode / sapxep.
+      const giu = ["mode", "sapxep"].map((k) => [k, u.searchParams.get(k)] as const);
+      u.search = filtersToParams({ ...f, keyword: "" }).toString();
+      giu.forEach(([k, v]) => { if (v) u.searchParams.set(k, v); });
       window.history.replaceState(window.history.state, "", u);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chạy khi ô vừa bị xoá trống
@@ -590,7 +600,7 @@ export default function FilterBar({
   const applySuggestion = (s: Suggestion) => {
     pushRecent(s);
     setSugOpen(false);
-    setOverlay(false);
+    dongMan();
     setActiveIdx(-1);
     // GỢI Ý CÂU CHO CHÍNH TRANG ĐANG ĐỨNG (/mua-ban?q=…, /du-an?q=…): đổi địa chỉ thôi thì trang không đọc lại (chỉ đọc địa chỉ lúc
     // mở) — danh sách đứng yên, bấm "không có tác dụng gì" (01/11/2026). Đọc câu đổ thẳng vào các trường lọc tại chỗ.
@@ -691,7 +701,7 @@ export default function FilterBar({
   // CƠ CHẾ CHỌN TRƯỜNG (chủ dự án, đã chốt): trường CHỌN MỘT (giá, diện tích, chủ đầu tư, dự án, tình trạng) bấm chọn là TỰ TÌM;
   // trường CHỌN NHIỀU (khu vực, loại hình, lọc thêm) tick xong bấm ÁP DỤNG là TỰ TÌM — hiện ra kết quả.
   // Đổi trường xong: câu cũ trong ô không còn là "câu đã tìm" — Enter / bấm lại câu đó thì đọc lại câu (lỗi 15, 07/11/2026)
-  const xongTruong = (close: () => void) => { close(); chayTim(); setDaTim(""); };
+  const xongTruong = (close: () => void) => { close(); chayTim(undefined, true, undefined, true); setDaTim(""); };
   // TRƯỜNG CHỌN NHIỀU = BẢN NHÁP (chủ dự án 07/11/2026, tệp yêu cầu 03/11 mục 2: "trường nào chọn mà có nhiều trường, chỉ search khi bấm
   // Áp dụng"): tick / bỏ tick / Đặt lại trong bảng chỉ ghi vào nháp — kết quả, địa chỉ trang KHÔNG đổi. Bấm Áp dụng mới đưa nháp vào bộ
   // lọc và tìm MỘT lần. Đóng bảng không Áp dụng → bỏ nháp. (Trước: mỗi cú tick đổi kết quả, tick trọn một nhóm là trang nhảy ngay.)
@@ -702,8 +712,11 @@ export default function FilterBar({
   const apDungNhap = (close: () => void) => {
     const n = nhap;
     close();
-    if (n) onChange(capNhatCau(n));
-    chayTim(onSearch && n ? n : undefined); // trang chủ tìm bằng bộ lọc truyền thẳng (bộ lọc của trang chưa kịp cập nhật)
+    const moi = n ? capNhatCau(n) : null;
+    if (moi) onChange(moi);
+    // TÌM ĐÚNG THEO TRƯỜNG VỪA CHỌN (anh 07/11/2026: chọn An Giang + Bắc Ninh, bấm Tìm mà nhảy về Đà Nẵng): truyền thẳng bộ lọc mới — không
+    // để chayTim đọc lại CÂU CŨ trong ô ("nhà đất đà nẵng") rồi câu cũ đè lên trường mới
+    chayTim(onSearch && moi ? moi : undefined, true, undefined, true);
     setDaTim("");
   };
   const loiRaNhap = (close: () => void, datLai: () => void) => <NutXem nhan={chuXem} onClick={() => apDungNhap(close)} onReset={datLai} />;
@@ -1186,7 +1199,7 @@ export default function FilterBar({
           <button
             type="button"
             aria-label="Đóng tìm kiếm"
-            onClick={() => { setOverlay(false); setActiveIdx(-1); }}
+            onClick={() => { dongMan(); setActiveIdx(-1); }}
             className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
           >
             <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>

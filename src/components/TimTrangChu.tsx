@@ -3,6 +3,7 @@ import { useDiaDanh } from "@/lib/useDiaDanh";
 import { duongDanCau, goiYTheoY } from "@/lib/goiYTheoY";
 import { useGoiYThat } from "@/lib/useGoiYThat";
 import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
+import { daCoDiaDanh, napDiaDanh } from "@/lib/diaDanhNguon";
 import { batDauTim } from "@/components/VachTim";
 import { startTransition, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
@@ -438,6 +439,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     const kw = cau.trim();
     // TÊN DỰ ÁN CHƯA NẠP (gõ nhanh rồi Enter ngay): chờ nạp xong rồi mới đọc mục đích — không thì gõ trọn tên dự án không sang Dự án (02/11/2026)
     if (kw && !n && dsDuAnDaNap() === null) { void napDsDuAn().then(() => tim(cau, n, mucGhiDe)); return; }
+    // ĐỊA DANH CHƯA NẠP (trình duyệt nạp sau): chờ xong mới đọc câu — không thì "can ho nhu hanh son" mất Ngũ Hành Sơn (07/11/2026)
+    if (kw && !n && !daCoDiaDanh()) { void napDiaDanh().then(() => tim(cau, n, mucGhiDe)); return; }
     const dsDa = dsDuAnDaNap() ?? dsDuAn;
     // MỤC ĐÍCH ĐỌC NGAY TỪ CÂU lúc bấm Tìm / Enter (01/11/2026: gõ "dự án căn hộ đà nẵng" Enter nhanh → tab chưa kịp đổi theo câu
     // (đổi sau một nhịp) nên đi sang Cho thuê) — câu nói rõ mục đích thì theo câu, không thì theo tab đang đứng

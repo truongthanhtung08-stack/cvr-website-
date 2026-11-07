@@ -1,6 +1,7 @@
 "use client";
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
+import { cauDaHieu } from "@/lib/locTuCau";
 import { batDauTim, xongTim } from "@/components/VachTim";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
@@ -258,6 +259,8 @@ export default function ListingBrowser({
   // khách bấm "Tìm kiếm thay thế cho …" (?nguyenvan=1) thì tìm đúng nguyên chữ đã gõ.
   const nguyenVan = params.get("nguyenvan") === "1";
   const cauSua = useMemo(() => (!nguyenVan && filters.keyword.trim() ? suaChinhTa(filters.keyword) : null), [nguyenVan, filters.keyword, coDiaDanh]);
+  // DÒNG GOOGLE viết từ CÁI WEB ĐÃ HIỂU (loại hình, nơi — anh 07/11/2026), không phải câu sửa từng chữ
+  const cauHien = useMemo(() => (!nguyenVan && coDiaDanh && filters.keyword.trim() ? cauDaHieu(filters.keyword, purpose) : null), [nguyenVan, filters.keyword, coDiaDanh, purpose]); // eslint-disable-line react-hooks/exhaustive-deps
   const locThat = cauSua ? { ...filters, keyword: cauSua } : filters;
   const linkNguyenVan = (() => { const sp = new URLSearchParams(params.toString()); sp.set("q", filters.keyword); sp.set("nguyenvan", "1"); return `?${sp.toString()}`; })();
   const yeuCau = JSON.stringify({ boLoc: locThat, sapXep: sort, trang: page, moiTrang, chiId, boQuaId, banDo: mapMode, matSo: true });
@@ -400,13 +403,14 @@ export default function ListingBrowser({
       setTuKhoaDaTim(conLai);
       setFilters(moi);
       const u = new URL(window.location.href);
-      if (u.searchParams.has("q")) {
-        const giu = ["mode", "sapxep"].map((k) => [k, u.searchParams.get(k)] as const);
-        u.search = filtersToParams(moi).toString();
-        giu.forEach(([k, v]) => { if (v) u.searchParams.set(k, v); });
-        boCau.current = { cau: filtersSong.keyword, url: u.href };
-        thayCauCu();
-      }
+      const coCau = u.searchParams.has("q");
+      const giu = ["mode", "sapxep"].map((k) => [k, u.searchParams.get(k)] as const);
+      u.search = filtersToParams(moi).toString();
+      giu.forEach(([k, v]) => { if (v) u.searchParams.set(k, v); });
+      if (coCau) { boCau.current = { cau: filtersSong.keyword, url: u.href }; thayCauCu(); }
+      // ĐỊA CHỈ LUÔN THEO TRƯỜNG MỚI (anh 07/11/2026: chọn An Giang + Bắc Ninh bấm Tìm — danh sách đổi mà địa chỉ vẫn Đà Nẵng, tải lại / Quay lại
+      // là về Đà Nẵng): trước đây chỉ ghi khi địa chỉ còn ?q=
+      else if (u.href !== window.location.href) window.history.replaceState(window.history.state, "", u.href);
       return;
     }
     if (nf.keyword !== filtersSong.keyword) boCau.current = null; // khách gõ câu mới → câu mới làm chủ địa chỉ
@@ -449,7 +453,7 @@ export default function ListingBrowser({
           trống ngang giữa tiêu đề và danh sách tin. */}
       {/* id="ket-qua": mốc để bấm Tìm / Enter / chọn gợi ý là CUỘN THẲNG xuống đây,
           khách thấy trang chạy ngay cả khi kết quả không đổi. scroll-mt bù header. */}
-      {cauSua && <CauSuaGoogle cauSua={cauSua} goc={filters.keyword} linkNguyenVan={linkNguyenVan} />}
+      {cauHien && <CauSuaGoogle cauSua={cauHien} goc={filters.keyword} linkNguyenVan={linkNguyenVan} />}
       <div id="ket-qua" className="mt-4 flex scroll-mt-20 flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:scroll-mt-24">
         <div className="min-w-0">
           {trangChu || nested

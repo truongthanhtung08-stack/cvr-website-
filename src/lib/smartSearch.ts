@@ -195,7 +195,32 @@ function cayCua(tinhMoi: string, chiTinhCu?: string): MucCay[] {
   _cay.set(khoa, ra);
   return ra;
 }
-function docDiaChiCay(nq: string, tinh: string | null, goc = ""): PlaceHit | null {
+// KHÁCH GÕ "XÃ / PHƯỜNG …" MÀ KHÔNG KÈM TỈNH ("xã cát tiên", "phường quảng trị", anh 07/11/2026: địa chỉ phải đọc được): tìm đúng tên
+// phường / xã MỚI đó trong cả nước → trả tỉnh của nó (một tỉnh → tỉnh đó; nhiều tỉnh → tỉnh web đang phục vụ trước) và VỊ TRÍ CUỐI của tên
+// trong câu (để biết tên tỉnh trong câu có phải chính là tên xã: "phường quảng trị" là phường, không phải tỉnh Quảng Trị).
+function tinhTheoTenXa(nq: string, goc = ""): { tinh: string; tu: string } | null {
+  if (!daCoDiaDanh()) return null;
+  const s = ` ${nq.replace(/[^a-z0-9]+/g, " ").trim()} `;
+  if (!/ (phuong|xa|thi tran|dac khu) /.test(s)) return null;
+  const chuDau = (t: string) => t.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  const goDau = ` ${chuDau(goc)} `;
+  const ung: { tinh: string; tu: string; dai: number; dau: boolean }[] = [];
+  for (const p of provincesNew) for (const w of p.wards) {
+    const cap = normalizeVi(w.match(CAP_TEN)?.[1] ?? "");
+    const ten = normalizeVi(w.replace(CAP_TEN, "")).replace(/[^a-z0-9]+/g, " ").trim();
+    if (!cap || !ten) continue;
+    const i = s.lastIndexOf(` ${cap} ${ten} `);
+    if (i >= 0) ung.push({ tinh: p.name, tu: `${cap} ${ten}`, dai: ten.length, dau: goDau.includes(` ${chuDau(w)} `) });
+  }
+  if (!ung.length) return null;
+  const dai = Math.max(...ung.map((x) => x.dai));
+  let tot = ung.filter((x) => x.dai === dai);
+  if (tot.some((x) => x.dau)) tot = tot.filter((x) => x.dau); // đúng dấu khách gõ trước (Phù Cát ≠ Phú Cát)
+  const tinhs = [...new Set(tot.map((x) => x.tinh))];
+  const chon = tinhs.length === 1 ? tinhs[0] : tinhs.find((t) => TINH_WEB.has(t)) ?? tinhs[0];
+  return { tinh: chon, tu: tot.find((x) => x.tinh === chon)!.tu };
+}
+function docDiaChiCay(nq: string, tinh: string | null, goc = "", khongCatTinh = false): PlaceHit | null {
   // câu khách gõ CÓ DẤU → tên trùng chữ khác dấu (Cẩm Giang · Cẩm Giàng, Đồng Tiến · Đông Tiến) chọn đúng tên khách gõ
   const goDau = goc && normalizeVi(goc) !== goc.normalize("NFC").toLowerCase() ? ` ${goc.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ")} ` : "";
   const dau = (m: MucCay) => {
@@ -208,7 +233,7 @@ function docDiaChiCay(nq: string, tinh: string | null, goc = ""): PlaceHit | nul
   // phần địa chỉ ĐỨNG TRƯỚC tên tỉnh (tên tỉnh không được khớp nhầm thành phường: "hà nội" ≠ phường Hà …)
   let truoc = s;
   let tinhCu: string | undefined;
-  if (tinh) {
+  if (tinh && !khongCatTinh) {
     tenTinhTrongCau(nq);
     let cuoi = -1, ten = "";
     for (const [n, t] of _tenTinh ?? []) { if (t !== tinh) continue; const i = s.lastIndexOf(` ${n} `); if (i > cuoi || (i === cuoi && n.length > ten.length)) { cuoi = i; ten = n; } }
@@ -228,6 +253,9 @@ function docDiaChiCay(nq: string, tinh: string | null, goc = ""): PlaceHit | nul
     // tên CHỈ LÀ SỐ ("Phường 14", "Quận 3") chỉ nhận khi khách gõ kèm chữ cấp — "3 phòng ngủ" không phải Quận 3
     let khop = muc.filter((m) => truoc.includes(` ${m.n} `) && (!/^\d+$/.test(m.n) || capTruoc(m.n) !== null)).sort((a, b) => Number(dau(b)) - Number(dau(a)));
     if (!khop.length) return null;
+    // khách gõ CÓ DẤU mà có tên khớp ĐÚNG DẤU → chỉ xét các tên đó ("Sơn Hạ" là xã mới, không phải huyện cũ "Sơn Hà"; "Ba Tô" ≠ "Ba Tơ")
+    const dungDauGo = khop.filter(dau);
+    if (goDau && dungDauGo.length) khop = dungDauGo;
     // VỊ TRÍ chữ trong câu — tên phường không được CHỒNG lên tên quận đã khớp ("sơn phú định hóa" không thành "phú đình")
     const tok = truoc.trim().split(" ");
     const vt = (n: string) => { const w = n.split(" "); const r: number[] = []; for (let i = 0; i + w.length <= tok.length; i++) if (tok.slice(i, i + w.length).join(" ") === n) r.push(i); return r; };
@@ -488,7 +516,7 @@ export function suaChinhTa(raw: string): string | null {
     const n = normalizeVi(tok).replace(/[^a-z0-9]/g, "");
     // CHỮ NHÀ ĐẤT GÕ SAI DẤU ("đât" → "đất", "gân" → "gần", 07/11/2026): chỉ chữ trong từ điển nhà đất (không đụng tên nơi — "hóa"/"hòa")
     if (trongTenNoi.has(viTri)) return tok; // chữ thuộc tên nơi: giữ nguyên như khách gõ
-    const dauDung = CHU_NHA_DAT.get(n);
+    const dauDung = MO_HO.has(n) ? undefined : CHU_NHA_DAT.get(n);
     if (dauDung && normalizeVi(tok) !== tok.toLowerCase() && tok.toLowerCase() !== dauDung) { doi = true; return dauDung; }
     if (n.length < 4 || /\d/.test(n) || td.has(n)) return tok; // chữ ngắn (sun, an…) dễ đoán nhầm — "sun cosmo" thành "sung"
     if (/[/\-]/.test(tok)) return tok; // "triệu/tháng", "2-3" — khách cố ý viết liền bằng dấu, không phải gõ sai (01/11/2026)
@@ -518,7 +546,7 @@ export function suaChinhTa(raw: string): string | null {
   const daCum = new Set<number>(); // vị trí chữ đã khớp cụm nhà đất quen
   const noiTu = viTriTenNoi(nt); // chữ thuộc tên nơi (cả nước) — cụm nhà đất không ghép đè lên
   for (let i = 0; i + 1 < nt.length; i++) {
-    if (noiTu.has(i) || noiTu.has(i + 1)) continue;
+    if (noiTu.has(i) && noiTu.has(i + 1)) continue; // cả hai chữ thuộc tên nơi mới bỏ ("can ho son tra": "căn hộ" thắng "Hồ Sơn")
     let khop = CUM_QUEN.has(`${nt[i]} ${nt[i + 1]}`) ? `${nt[i]} ${nt[i + 1]}` : "";
     if (!khop) {
       for (const c of CUM_QUEN.keys()) {
@@ -526,7 +554,8 @@ export function suaChinhTa(raw: string): string | null {
         // chữ gõ là CHỮ CÓ NGHĨA (mặt, văn…) thì chỉ sửa khi gõ thừa/thiếu một chữ cái ("họi" → "hộ"), không đổi sang chữ
         // khác cùng độ dài — "nhà mặt phố" không thành "nhà đất phố", "nguyễn văn linh" không thành "nguyên căn" (rà 18/10/2026)
         const duocDoi = (goc: string, dung: string) => goc.length >= 2 && lechMot(dung, goc) === 1 && (!td.has(goc) || goc.length !== dung.length);
-        if ((nt[i] === a && duocDoi(nt[i + 1], b)) || (nt[i + 1] === b && duocDoi(nt[i], a))) { khop = c; break; }
+        // chữ sắp đổi thuộc TÊN NƠI có thật thì không đổi ("nhà đà nẵng" từng thành "nhà đất nẵng" — 07/11/2026)
+        if ((nt[i] === a && duocDoi(nt[i + 1], b) && !noiTu.has(i + 1)) || (nt[i + 1] === b && duocDoi(nt[i], a) && !noiTu.has(i))) { khop = c; break; }
       }
     }
     if (!khop) continue;
@@ -582,6 +611,9 @@ export function suaChinhTa(raw: string): string | null {
       break;
     }
   }
+  // TÊN NƠI GÕ KHÔNG DẤU ("nhà đất da nang", "nha dat quy nhon") → vẫn hiện câu đã đặt dấu kiểu Google "Đang hiển thị kết quả cho nhà đất
+  // đà nẵng" (anh 07/11/2026: "gợi ý thay thế Google đâu")
+  if (chiDatDau.length) doi = true;
   if (doi) for (const [i, ds] of chiDatDau) tu.splice(i, ds.length, ...ds);
   // CHỮ GÕ LẶP LIỀN NHAU ("đất nền nen hòa xuân") → bỏ chữ lặp, như Google (07/11/2026); số thì giữ ("2 2" hiếm, không đoán)
   const noiLap = viTriTenNoi(tu.map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, "")));
@@ -605,7 +637,7 @@ export function suaChinhTa(raw: string): string | null {
   if (doi) {
     const noiCuoi = viTriTenNoi(tu.map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, "")));
     for (let i = 0; i < tu.length; i++) {
-      if (noiCuoi.has(i) || normalizeVi(tu[i]) !== tu[i].toLowerCase()) continue;
+      if (noiCuoi.has(i) || daCum.has(i) || normalizeVi(tu[i]) !== tu[i].toLowerCase() || MO_HO.has(normalizeVi(tu[i]))) continue;
       const dd = CHU_NHA_DAT.get(normalizeVi(tu[i]).replace(/[^a-z0-9]/g, ""));
       if (dd) tu[i] = dd;
     }
@@ -615,6 +647,9 @@ export function suaChinhTa(raw: string): string | null {
 // Chữ nhà đất → đúng dấu (một nghĩa trong lĩnh vực này): dùng để đặt lại dấu khi khách gõ SAI dấu
 const CHU_NHA_DAT = new Map("bán mua thuê căn nhà đất phòng ngủ trọ dưới trên tỷ triệu gần biển sông giá rẻ mới xây hẻm phố mặt tiền chung cư dự án nguyên ghép trường chợ trung tâm đường kiệt hộ nền riêng biệt thự liền kề văn sổ hồng đỏ nội thất kho xưởng"
   .split(" ").map((w) => [normalizeVi(w), w] as [string, string]));
+// CHỮ KHÔNG DẤU NHIỀU NGHĨA ("cho" = cho thuê / chợ, "can" = căn / cần, "do" = đỏ / do…): không tự đặt một dấu — chỉ đặt khi nằm trong
+// cụm quen ("căn hộ", "sổ đỏ"). Anh 07/11/2026: "cho thuê nhà đà nẵng" từng thành "chợ thuê…", "cần bán" thành "căn bán".
+const MO_HO = new Set(["can", "cho", "do", "so", "ho", "moi", "van", "tho"]);
 const CHU_CAP = new Set(["phuong", "xa", "quan", "huyen", "tp"]); // "thanh", "pho"… nằm trong tên nơi (Thanh Khê) — không chặn
 const TEN_TINH_KHOA = new Set(TINH.map(([t]) => normalizeVi(t).replace(/[^a-z0-9]+/g, " ").trim()));
 const TU_NHA_DAT = new Set(["ban", "mua", "nha", "dat", "thue", "cho", "can", "ho", "gia", "tai", "duoi", "tren", "gan", "phong", "view"]);
@@ -866,7 +901,12 @@ function phanTichCau(raw: string): ParsedQuery {
   const nqNoi = nq.replace(/\bhuong (dong|tay) (nam|bac)\b|\bhuong (dong|tay|nam|bac)\b/g, " ");
   // TỈNH = TÊN ĐẦY ĐỦ (34 mới + 63 cũ) ĐỨNG SAU CÙNG trong câu — địa chỉ viết phường → quận → tỉnh (anh 07/11/2026: "Xã Nguyễn Huệ, Cao Bằng"
   // từng đọc ra Huế vì chữ "huệ"; "Thụy Lâm, Đông Anh, Hà Nội" ra Lâm Đồng). Không có tên đầy đủ mới dùng tên gọi tắt của tỉnh web (TINH)
-  const tinhCuoi = tinhTheoTenCuoi(nq); // câu gốc — bước bỏ "hướng …" từng xoá mất "Tân Hương Đồng Tháp"
+  const tinhGo = tinhTheoTenCuoi(nq); // câu gốc — bước bỏ "hướng …" từng xoá mất "Tân Hương Đồng Tháp"
+  // "XÃ / PHƯỜNG …" không kèm tỉnh → tỉnh của xã đó; tên tỉnh trong câu CHÍNH LÀ tên xã ("phường quảng trị") → không phải tỉnh (07/11/2026)
+  const xa = tinhTheoTenXa(normalizeVi(raw), raw);
+  // chỉ khi cây của tỉnh đó KHÔNG đọc ra nơi nào ("xa bach xa tuyen quang" là xã Bạch Xa, Tuyên Quang — không phải "Xã Tuyên Quang")
+  const tinhLaXa = !!xa && !!tinhGo && !tinhTheoTenCuoi(` ${nq.replace(/[^a-z0-9]+/g, " ")} `.replace(` ${xa.tu} `, " ")) && !docDiaChiCay(nq, tinhGo, raw);
+  const tinhCuoi = tinhLaXa ? xa!.tinh : tinhGo ?? xa?.tinh ?? null;
   const places = tinhCuoi ? [tinhCuoi] : timTuDien(nqNoi, TINH);
   // TÊN TỈNH / THÀNH CŨ HOẶC MỚI GÕ ĐÚNG (bắt buộc đọc được — chủ dự án 01/11/2026): khớp trọn tên trước khi đoán gần đúng — "thanh hoa"
   // từng thành Khánh Hòa, "quang binh" thành huyện ở Tuyên Quang, "binh dinh" thành phường ở Đà Nẵng
@@ -879,7 +919,7 @@ function phanTichCau(raw: string): ParsedQuery {
   // Phường/quận trong câu ("Hoà Quý", "Ngũ Hành Sơn") — suy ra luôn TỈNH nếu
   // người dùng không gõ tên tỉnh ("nhà đất Hoà Quý" → Đà Nẵng).
   // có TÊN TỈNH → đọc theo CÂY địa chỉ của đúng tỉnh đó (docDiaChiCay); không có tỉnh / cây không ra → bộ dò cũ (tỉnh web trước, gần đúng)
-  const place0 = (tinhCuoi ? docDiaChiCay(nq, tinhCuoi, raw) : null) ?? timDiaGioi(soLaMaCuoi(cheChuChung(nqNoi)), places); // "hải châu i" = "hải châu 1"
+  const place0 = (tinhCuoi ? docDiaChiCay(nq, tinhCuoi, raw, tinhLaXa || !tinhGo) : null) ?? timDiaGioi(soLaMaCuoi(cheChuChung(nqNoi)), places); // "hải châu i" = "hải châu 1"
   // GÕ CÓ DẤU THÌ ĐỊA DANH PHẢI KHỚP ĐÚNG DẤU (01/11/2026: "đang mở bán" từng đọc thành xã Dang, Tây Giang; "hòa" thành "Hóa"):
   // tên nơi (bỏ cấp) phải có trong câu khách gõ theo đúng dấu — chỉ so khi khách gõ có dấu, gõ không dấu vẫn khớp như cũ
   const dungDau = (ten?: string) => {
@@ -906,7 +946,9 @@ function phanTichCau(raw: string): ParsedQuery {
   // lẫn thuê ("mua hoặc thuê") → chưa rõ mục đích, để gợi ý cả hai.
   // "cơ bản" (nội thất cơ bản), "bản đồ" không phải "bán" — 01/11/2026
   // "mở bán", "bàn giao" (tình trạng dự án) cũng không phải "bán"
-  const nqMd = nq.replace(/\b(ban cong|co ban|ban do|ban ve|mo ban|ban giao)\b/g, " ");
+  // chữ thuộc TÊN NƠI đã đọc ("Điện Bàn", "Bàn Thạch", "Nam Ban") không phải "bán" (07/11/2026)
+  const tenNoiDoc = place ? normalizeVi((place.ward ?? place.district ?? "").replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "")).replace(/[^a-z0-9]+/g, " ").trim() : "";
+  const nqMd = (tenNoiDoc ? ` ${nq} `.replace(` ${tenNoiDoc} `, " ") : nq).replace(/\b(ban cong|co ban|ban do|ban ve|mo ban|ban giao)\b/g, " ");
   const thueThat = !(/thuế/i.test(raw.normalize("NFC")) && !/thuê/i.test(raw.normalize("NFC")));
   // "sang nhượng" (mặt bằng, cửa hàng) và giá THEO THÁNG ("10 triệu/tháng") là cho thuê (01/11/2026)
   const coThue = thueThat && (/\b(thue|cho thue|sang nhuong)\b/.test(nqMd) || /\d\s*(trieu|tr)\s*(\/|mot|1|moi)?\s*thang\b/.test(normalizeVi(raw).replace(/[^a-z0-9/]+/g, " ")));

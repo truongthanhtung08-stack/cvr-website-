@@ -1,6 +1,7 @@
 "use client";
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
+import { cauDaHieu } from "@/lib/locTuCau";
 import { xongTim } from "@/components/VachTim";
 import { useEffect, useMemo, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
@@ -78,6 +79,8 @@ export default function SearchClient({
   // SỬA CHÍNH TẢ KIỂU GOOGLE — cùng luật trang Mua bán / Cho thuê (anh 07/11/2026): gõ sai → tìm theo câu đã sửa + dòng "Đang hiển thị kết quả cho"
   const nguyenVan = params.get("nguyenvan") === "1";
   const cauSua = useMemo(() => (!nguyenVan && coDiaDanh && filters.keyword.trim() ? suaChinhTa(filters.keyword) : null), [nguyenVan, filters.keyword, coDiaDanh]);
+  // DÒNG GOOGLE viết từ CÁI WEB ĐÃ HIỂU (loại hình, nơi — anh 07/11/2026), không phải câu sửa từng chữ
+  const cauHien = useMemo(() => (!nguyenVan && coDiaDanh && filters.keyword.trim() ? cauDaHieu(filters.keyword, purpose) : null), [nguyenVan, filters.keyword, coDiaDanh, purpose]); // eslint-disable-line react-hooks/exhaustive-deps
   const locThat = useMemo(() => (cauSua ? { ...filters, keyword: cauSua } : filters), [cauSua, filters]);
   const linkNguyenVan = (() => { const sp = new URLSearchParams(params.toString()); sp.set("q", filters.keyword); sp.set("nguyenvan", "1"); return `?${sp.toString()}`; })();
 
@@ -117,7 +120,7 @@ export default function SearchClient({
       </div>
 
       {/* bỏ hàng chip lặp lại các trường (anh 07/11/2026: "không cần list ra như vậy" — trường Loại BĐS đã ghi loại hình CHA) */}
-      {cauSua && <CauSuaGoogle cauSua={cauSua} goc={filters.keyword} linkNguyenVan={linkNguyenVan} />}
+      {cauHien && <CauSuaGoogle cauSua={cauHien} goc={filters.keyword} linkNguyenVan={linkNguyenVan} />}
 
       {/* Tổng kết + sắp xếp + xoá lọc.
           id="ket-qua": bấm Tìm / Enter / chọn gợi ý là cuộn thẳng xuống đây. */}
