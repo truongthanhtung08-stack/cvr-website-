@@ -1347,6 +1347,9 @@ export function LocationPanel({
   onDatLai?: () => void;
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
+  // SO NƠI BỎ CHỮ CẤP (07/11/2026): câu gõ "hòa xuân" lưu "Hòa Xuân", bảng ghi "Phường Hòa Xuân" — cùng một nơi → tick, lên đầu, chữ xanh
+  const boCap = (x?: string) => normalizeVi((x ?? "").replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)s+/i, ""));
+  const cungNoi = (a: LocationSel, b: LocationSel) => a.province === b.province && boCap(a.district) === boCap(b.district) && boCap(a.ward) === boCap(b.ward);
   const [q, setQ] = useState("");
   const [prov, setProv] = useState(""); // đường dẫn đang duyệt (chưa cam kết)
   const [dist, setDist] = useState("");
@@ -1377,7 +1380,7 @@ export function LocationPanel({
   // sáp nhập của web; nơi không có trong bảng thì giữ nguyên (không đoán). Kết quả lọc không đổi vì bộ lọc vẫn khớp cả hai hệ.
   const doiHe = (ls: LocationSel[], m: GeoMode): LocationSel[] => {
     const ra: LocationSel[] = [];
-    const them = (l: LocationSel) => { if (!ra.some((x) => sameLocation(x, l))) ra.push(l); };
+    const them = (l: LocationSel) => { if (!ra.some((x) => cungNoi(x, l))) ra.push(l); };
     for (const l of ls) {
       if (m === "cu") {
         if (l.ward && !l.district) {
@@ -1394,15 +1397,33 @@ export function LocationPanel({
           const ws = phuongMoiCuaQuan(l.province, l.district);
           if (ws.length) ws.forEach((w) => them({ province: newProvinceOf(l.province), ward: w }));
           else them(l);
-        } else them({ province: newProvinceOf(l.province) });
+        } else if (l.ward) them({ province: newProvinceOf(l.province), ward: l.ward }); // đã là phường hệ mới → giữ nguyên (trước bị rơi tên phường)
+        else them({ province: newProvinceOf(l.province) });
       }
     }
     return ra; // không cắt: đổi hệ là đổi CÁCH GỌI, không được làm rơi nơi khách đã chọn (01/11/2026)
   };
+  // MỞ BẢNG = QUY LỰA CHỌN VỀ ĐÚNG HỆ ĐANG XEM (07/11/2026: câu "hòa xuân" đọc thành phường hệ cũ Hòa Xuân, Cẩm Lệ → bảng hệ mới không tick
+  // Phường Hòa Xuân). Một lần lúc mở; đổi hệ thì switchMode quy đổi.
+  useEffect(() => {
+    const h = doiHe(locations, mode);
+    if (JSON.stringify(h) !== JSON.stringify(locations)) onChange(h);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ lúc mở bảng
+  }, []);
   const switchMode = (m: GeoMode) => {
     if (m === mode) return;
-    if (locations.length) onChange(doiHe(locations, m));
-    setMode(m); setProv(""); setDist(""); setQ("");
+    const moi = locations.length ? doiHe(locations, m) : locations;
+    if (locations.length) onChange(moi);
+    // ĐỒNG BỘ HAI HỆ (anh 07/11/2026): đang xem trong một tỉnh thì đổi hệ vẫn Ở LẠI tỉnh đó theo tên của hệ kia (Đà Nẵng mới ↔ Đà Nẵng /
+    // Quảng Nam cũ — ưu tiên tỉnh cũ có nơi đã chọn), không nhảy về danh sách tỉnh. Nơi đã chọn lên đầu, chữ xanh như mọi tầng.
+    let tinh = "";
+    if (prov) {
+      if (m === "cu") {
+        const cu = oldNamesOf(prov);
+        tinh = cu.find((t) => moi.some((l) => l.province === t)) ?? cu[0] ?? "";
+      } else tinh = newProvinceOf(prov);
+    }
+    setMode(m); setProv(tinh); setDist(""); setQ("");
   };
 
   const isNew = mode === "moi";
@@ -1439,7 +1460,7 @@ export function LocationPanel({
   // phường đó (thay "toàn bộ tỉnh"), bấm thêm phường = chọn thêm (tối đa ${MAX_LOCATIONS}); bỏ hết phường = về toàn bộ tỉnh. Chọn là lọc
   // ngay — không nút "Thêm cả", không "Áp dụng". Hệ cũ: Tỉnh → Quận/Huyện → Phường/Xã cùng cách.
   const cungTinh = (l: LocationSel, p: string) => l.province === p;
-  const cungQuan = (l: LocationSel, p: string, d: string) => l.province === p && l.district === d;
+  const cungQuan = (l: LocationSel, p: string, d: string) => l.province === p && !!l.district && boCap(l.district) === boCap(d);
   // Chọn xong một tầng → TẮT BÀN PHÍM (khách vừa gõ tìm tỉnh): bàn phím còn bật thì che hết danh sách tầng dưới (ảnh chủ dự án 01/11/2026)
   const tatPhim = () => (document.activeElement as HTMLElement | null)?.blur?.();
   // ĐANG GÕ Ô TÌM KHU VỰC (chủ dự án 01/11/2026, báo 4 lần — ảnh Bắc Kạn, "Hồ", Bắc Giang): bàn phím bật thì danh sách phải hiện NGAY
@@ -1470,23 +1491,26 @@ export function LocationPanel({
     setDist(d); setQ("");
   };
   const toanBo: LocationSel = isNew || !dist ? { province: prov } : { province: prov, district: dist };
-  const laToanBo = (l: LocationSel) => sameLocation(l, toanBo);
+  const laToanBo = (l: LocationSel) => cungNoi(l, toanBo);
   const phuongCua = (w: string): LocationSel => (isNew ? { province: prov, ward: w } : { province: prov, district: dist, ward: w });
   const doiPhuong = (w: string) => {
     const sel = phuongCua(w);
-    const daChon = locations.some((l) => sameLocation(l, sel));
-    let next = daChon ? locations.filter((l) => !sameLocation(l, sel)) : [...locations.filter((l) => !laToanBo(l)), sel];
+    const daChon = locations.some((l) => cungNoi(l, sel));
+    let next = daChon ? locations.filter((l) => !cungNoi(l, sel)) : [...locations.filter((l) => !laToanBo(l)), sel];
     const conPhuong = next.some((l) => l.province === prov && (isNew || l.district === dist) && !!l.ward);
     if (daChon && !conPhuong) next = [...next, toanBo]; // bỏ hết phường → về toàn bộ tỉnh / quận
     if (soNoi(next) > MAX_LOCATIONS) return;
     onChange(next);
   };
   // tầng TỈNH: chọn cả tỉnh = tick đủ · chỉ chọn phường / quận trong tỉnh = MỘT PHẦN (dấu "–"), bấm ô → chọn cả tỉnh (07/11/2026)
-  const motPhan = (name: string) => level === "province" && !locations.some((l) => cungTinh(l, name) && !l.district && !l.ward) && locations.some((l) => cungTinh(l, name));
+  // CHỌN MỘT PHẦN (dấu "–") ở tầng tỉnh VÀ tầng quận hệ cũ (07/11/2026: quận chỉ chọn vài phường mà hiện tick trọn)
+  const motPhan = (name: string) => level === "province"
+    ? !locations.some((l) => cungTinh(l, name) && !l.district && !l.ward) && locations.some((l) => cungTinh(l, name))
+    : level === "district" && !locations.some((l) => cungQuan(l, prov, name) && !l.ward) && locations.some((l) => cungQuan(l, prov, name));
   const daChon = (name: string) =>
     level === "province" ? locations.some((l) => cungTinh(l, name))
       : level === "district" ? locations.some((l) => cungQuan(l, prov, name))
-      : locations.some((l) => sameLocation(l, phuongCua(name)));
+      : locations.some((l) => cungNoi(l, phuongCua(name)));
   const pick = (name: string) => (level === "province" ? chonTinh(name) : level === "district" ? chonQuan(name) : doiPhuong(name));
   // NƠI ĐÃ CHỌN LÊN ĐẦU, TÔ XANH (chủ dự án 01/11/2026): cập nhật thứ tự ngay khi chọn.
   // CHỐT THỨ TỰ lúc mở bảng / đổi tầng (07/11/2026: bấm chọn tỉnh là dòng nhảy lên đầu ngay dưới ngón tay — bấm tiếp trúng tỉnh khác)
@@ -1515,7 +1539,7 @@ export function LocationPanel({
     const phan = motPhan(name);
     const doiTick = () => {
       if (level === "ward") return doiPhuong(name);
-      if (phan) return onChange(locations.filter((l) => !cungTinh(l, name))); // ô có dấu "–" (chọn một phần) bấm = GỠ cả tỉnh khỏi hàng đã chọn (anh 07/11/2026: "xoá là gỡ")
+      if (phan) return onChange(locations.filter((l) => (level === "province" ? !cungTinh(l, name) : !cungQuan(l, prov, name)))); // ô có dấu "–" (chọn một phần) bấm = GỠ cả tỉnh khỏi hàng đã chọn (anh 07/11/2026: "xoá là gỡ")
       if (on) return onChange(locations.filter((l) => (level === "province" ? !cungTinh(l, name) : !cungQuan(l, prov, name))));
       if (level === "province") { if (!full) onChange([...locations, { province: name }]); return; }
       const conLai = locations.filter((l) => !(cungTinh(l, prov) && !l.district && !l.ward));
@@ -1636,9 +1660,9 @@ export function LocationPanel({
         {filtered.length === 0 && phuongKhop.length === 0 && <p className="px-2 py-3 text-center text-sm text-cvr-faint">Không có kết quả</p>}
         {phuongKhop.map(({ t, w }) => {
           const sel: LocationSel = { province: t, ward: w };
-          const on = locations.some((l) => sameLocation(l, sel));
+          const on = locations.some((l) => cungNoi(l, sel));
           const doi = () => {
-            if (on) return onChange(locations.filter((l) => !sameLocation(l, sel)));
+            if (on) return onChange(locations.filter((l) => !cungNoi(l, sel)));
             const next = [...locations.filter((l) => !(l.province === t && !l.district && !l.ward)), sel];
             if (soNoi(next) <= MAX_LOCATIONS) onChange(next);
           };

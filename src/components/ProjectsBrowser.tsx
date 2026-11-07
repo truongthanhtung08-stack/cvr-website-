@@ -2,7 +2,7 @@
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { batDauTim, xongTim } from "@/components/VachTim";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
 import PhanTrang from "@/components/PhanTrang";
 import Image from "next/image";
@@ -30,7 +30,7 @@ import { nhomChuDauTu, slugChuDauTu } from "@/lib/chuDauTu";
 import FilterBar, { LocationPanel, NutXem, DaChon, nhanNoi, loaiTheoCha, nhanLoai } from "@/components/FilterBar";
 import type { Suggestion } from "@/lib/suggest";
 import { PanelLoaiBdsDuAn, PanelLocThemDuAn, PanelChuDauTu, tomTatLoaiDuAn } from "@/components/TruongDuAn";
-import { emptyFilters, filtersFromParams, type Filters } from "@/lib/filters";
+import { emptyFilters, filtersFromParams, filtersToParams, type Filters } from "@/lib/filters";
 import { CAY_LOAI_DU_AN, dsTinhTrang, khopKhuVuc, loaiCuaDuAn, thuHepDuAn, tinhCua, type DuAnLoc } from "@/lib/thuHepDuAn";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
@@ -173,6 +173,16 @@ export default function ProjectsBrowser({
     if (f.keyword) setQ(chuChuaHieu(f.keyword.replace(/(^|\s)dự\s+án(?=\s|$)/gi, " ")).replace(/,/g, ""));
     setBoLoc({ ...emptyFilters(), locations: f.locations.length ? f.locations : cau?.locations ?? [], project: f.project, types: f.types.length ? f.types : cau?.types ?? [], loaiDuAn: f.loaiDuAn, tinhTrang: tt || cau?.tinhTrang || undefined, chuDauTu: f.chuDauTu });
   }, [coDiaDanh]);
+
+  // GHI BỘ LỌC LÊN ĐỊA CHỈ TRANG như Mua bán / Cho thuê (07/11/2026: chọn khu vực rồi Tìm mà địa chỉ vẫn /du-an — tải lại / gửi link là mất).
+  // Bỏ qua lần đầu (đọc từ địa chỉ ở trên); chỉ đổi khi bộ lọc đổi thật.
+  const daDoc = useRef(false);
+  useEffect(() => {
+    if (!daDoc.current) { daDoc.current = true; return; }
+    const p = filtersToParams({ ...boLoc, keyword: q });
+    const u = `${window.location.pathname}${p.toString() ? `?${p.toString()}` : ""}`;
+    if (u !== window.location.pathname + window.location.search) window.history.replaceState(window.history.state, "", u);
+  }, [boLoc, q]);
 
   // Bấm search từ trang chủ → URL kèm #ket-qua → tự cuộn tới khối kết quả (bỏ qua
   // banner Hero rất to), cho cả PC & Mobile. Dùng JS cho chắc (hash native không

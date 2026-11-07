@@ -10,10 +10,6 @@ import { useEffect, useRef, useState } from "react";
 //   • Tôn trọng prefers-reduced-motion → đứng yên ở câu đầu.
 //   • Người dùng đã gõ chữ (paused) → dừng hẳn, không giật chữ dưới tay họ.
 //   • Tab ẩn → không chạy timer (đỡ tốn pin).
-const TOC_GO = 55;   // ms mỗi chữ khi gõ
-const TOC_XOA = 26;  // ms mỗi chữ khi xoá (xoá luôn nhanh hơn gõ)
-const GIU = 1800;    // ms giữ nguyên câu đủ nghĩa
-const NGHI = 320;    // ms nghỉ giữa 2 câu
 
 export function useTypingPlaceholder(phrases: string[], paused = false): string {
   const dau = phrases[0] ?? "";
@@ -39,46 +35,11 @@ export function useTypingPlaceholder(phrases: string[], paused = false): string 
     if (paused || phrases.length === 0) return;
     // Máy tắt hiệu ứng chuyển động → vẫn hiện câu gợi ý, đổi NGUYÊN CÂU mỗi 3,5 giây, không gõ từng chữ (01/11/2026: trước đây đứng
     // yên một câu nên khách bật chế độ này "không thấy câu gợi ý chạy")
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      if (phrases.length < 2) return;
-      const id = window.setInterval(() => { idx.current = (idx.current + 1) % phrases.length; setText(phrases[idx.current]); }, 3500);
-      return () => window.clearInterval(id);
-    }
-
-    let timer: number;
-    const buoc = () => {
-      const cau = phrases[idx.current] ?? "";
-      if (!xoa.current) {
-        if (len.current < cau.length) {
-          len.current += 1;
-          setText(cau.slice(0, len.current));
-          timer = window.setTimeout(buoc, TOC_GO);
-        } else {
-          xoa.current = true;
-          timer = window.setTimeout(buoc, GIU);
-        }
-      } else if (len.current > 0) {
-        len.current -= 1;
-        setText(cau.slice(0, len.current));
-        timer = window.setTimeout(buoc, TOC_XOA);
-      } else {
-        xoa.current = false;
-        idx.current = (idx.current + 1) % phrases.length;
-        timer = window.setTimeout(buoc, NGHI);
-      }
-    };
-    timer = window.setTimeout(buoc, GIU);
-
-    // Tab ẩn → dừng; quay lại → chạy tiếp
-    const onVis = () => {
-      window.clearTimeout(timer);
-      if (!document.hidden) timer = window.setTimeout(buoc, NGHI);
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      window.clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVis);
-    };
+    // LUÔN ĐỔI NGUYÊN CÂU (lỗi 18, 07/11/2026): gõ từng chữ cái làm ô trống có lúc chỉ hiện "B", "Bán n" — nhìn như khách đã gõ dở.
+    // Nay hiện trọn câu, 3,5 giây đổi câu khác; tab ẩn thì trình duyệt tự giãn nhịp hẹn giờ.
+    if (phrases.length < 2) return;
+    const id = window.setInterval(() => { idx.current = (idx.current + 1) % phrases.length; setText(phrases[idx.current]); }, 3500);
+    return () => window.clearInterval(id);
   }, [paused, key, dau, phrases]);
 
   return text;
