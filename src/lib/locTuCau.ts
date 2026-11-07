@@ -105,7 +105,10 @@ export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
     const b = loaiTuNhan(t, nq, mb === "ban" ? "thue" : "ban");
     return dung(b) ? b : a;
   };
-  const theoCay = loaiTheoCay(nq.replace(/ nha trang /g, " "), mb);
+  // "NHÀ ĐẤT" / "BẤT ĐỘNG SẢN" / "BĐS" là cách nói CHUNG (mọi loại), không phải loại Nhà + Đất (anh 07/11/2026: "nha dat quy nhon" từng
+  // thành Nhà +1, bỏ hết căn hộ… ở Quy Nhơn) — bỏ trước khi đọc loại hình, như parseQuery đã làm
+  const nqLoai = nq.replace(/ nha trang /g, " ").replace(/ (nha dat|bat dong san|bds)(?= )(?! (nghi duong|cong nghiep|khac) )/g, " "); // "BĐS nghỉ dưỡng", "BĐS công nghiệp", "Bất động sản khác" là tên loại — giữ
+  const theoCay = loaiTheoCay(nqLoai, mb);
   // cây chỉ khớp TÊN CHA ("nhà") mà câu nói rõ loại con bằng từ đồng nghĩa ("nhà mặt tiền" → Nhà mặt phố) → lấy loại con
   const conDongNghia = p.types.length ? [...new Set(p.types.flatMap(loaiCua))].filter((t) => theoCay.includes(t)) : [];
   // gõ ĐÚNG TÊN NHÓM CHA ("BĐS nghỉ dưỡng") → cả nhóm, không thu về một con theo từ đồng nghĩa (07/11/2026)
