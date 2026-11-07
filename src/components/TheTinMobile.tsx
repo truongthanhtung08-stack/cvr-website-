@@ -445,15 +445,15 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
           {nutChiaSe}
         </div>
         {coSo && (
-          // Cùng cơ chế thanh liên hệ trang tin (anh 07/11/2026): Zalo chỉ logo, ô vuông 36px · nút số vừa nội dung, không kéo dài
-          <div className="mt-2.5 flex items-center justify-end gap-2">
+          <div className="mt-2.5 flex items-center gap-2">
             <NutLienHeThe
               listingId={item.id}
               hienSo
               zaloTruoc
               nhan={item.soDau ? `${item.soDau} ***` : "Hiện số"}
-              soCls="flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-4 text-[13px] font-semibold text-white transition active:scale-95"
-              oCls="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cvr-line bg-white transition active:scale-95"
+              soCls="flex min-h-9 min-w-0 flex-[3] items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-2 py-1.5 text-[13px] font-semibold text-white transition active:scale-95"
+              oCls="flex min-h-9 min-w-0 flex-[2] self-stretch items-center justify-center gap-1.5 rounded-lg border border-cvr-line px-2 transition active:scale-95"
+              chuZalo="Zalo"
             />
           </div>
         )}
