@@ -20,7 +20,7 @@ export default function ListingShowcase({
   title,
   relevance = false,
   idsDayDu,
-  khoangTren = "mt-14",
+  khoangTren = "mt-khoi",
   daXem = false,
 }: {
   items: Listing[];

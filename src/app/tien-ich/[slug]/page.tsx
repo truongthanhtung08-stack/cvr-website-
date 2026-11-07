@@ -172,7 +172,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
 
           {/* Liên hệ tư vấn — CHỈ trang gói dịch vụ; trang công cụ tiện ích không có form báo giá (25/10/2026) */}
           {p.kind !== "tool" && (
-          <section id="lien-he" className="mt-14 scroll-mt-28">
+          <section id="lien-he" className="mt-khoi scroll-mt-28">
             <div className="mx-auto max-w-xl">
               <h2 className="text-center text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Đăng ký nhận bảng giá &amp; tư vấn</h2>
               <p className="mb-4 mt-1 text-center text-sm text-cvr-muted">Chuyên viên Coastal Land sẽ liên hệ tư vấn gói phù hợp nhất.</p>

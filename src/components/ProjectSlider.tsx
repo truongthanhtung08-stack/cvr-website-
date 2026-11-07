@@ -208,7 +208,7 @@ export default function ProjectSlider({
   // chạy đúng cấu trúc slide + "Xem thêm" mà không phải sửa gì thêm.
   if (sorted.length === 0) {
     return (
-      <div className="mt-10 sm:mt-14">
+      <div className="mt-khoi">
         <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
         <p className="mt-5 rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
           {emptyNote ?? "Chưa có dự án nào."}

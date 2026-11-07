@@ -30,7 +30,7 @@ export default function ArticleShowcase({
 
   if (articles.length === 0) {
     return (
-      <div className={title ? "mt-6 sm:mt-14" : undefined}>
+      <div className={title ? "mt-khoi" : undefined}>
         {title && <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
         <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
           {emptyNote}
@@ -43,7 +43,7 @@ export default function ArticleShowcase({
   if (expanded) return <ArticleBrowser articles={articles} />;
 
   return (
-    <div className={title ? "mt-6 sm:mt-14" : undefined}>
+    <div className={title ? "mt-khoi" : undefined}>
       {title && <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
 
       {/* SLIDE 8 bài — điện thoại vuốt ngang (ló mép bài sau), máy tính lưới 4 cột */}

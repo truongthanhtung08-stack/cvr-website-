@@ -48,7 +48,7 @@ export default function RecentlyViewed({ boQua, boCac, trangChu = false, boTinDa
       relevance
       daXem
       // Trang Tin đã lưu: cách khối Tin đã lưu phía trên đúng chuẩn giữa các khối (điện thoại 24 · máy tính 56)
-      khoangTren={trangChu ? "" : boTinDaLuu ? "mt-6 sm:mt-14" : undefined}
+      khoangTren={trangChu ? "" : boTinDaLuu ? "mt-khoi" : undefined}
     />
   );
   // Trang chủ: CÙNG khung + khoảng cách với các khối khác (section-edge · max-w-7xl · py-3/sm:py-4); không lịch sử thì không chừa chỗ trống

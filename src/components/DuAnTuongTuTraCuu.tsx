@@ -21,7 +21,7 @@ export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: s
 
   return (
     // PC cách đều như mọi phần trang dự án: 48 px trên, tiêu đề → thẻ 20 px (chủ dự án 31/10/2026)
-    <section id={id} className="mt-6 scroll-mt-14 sm:mt-12">
+    <section id={id} className="mt-khoi scroll-mt-14">
       <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án tương tự</h2>
       {/* Slide: điện thoại 1 thẻ (lộ thẻ kế), máy tính bảng 2, máy tính 4 — vuốt / cuộn ngang */}
       <ul className="no-scrollbar -mx-4 mt-4 grid snap-x snap-mandatory scroll-px-4 auto-cols-[80%] grid-flow-col items-start gap-x-4 overflow-x-auto px-4 py-2 sm:mx-0 sm:mt-3 sm:scroll-px-0 sm:auto-cols-[calc(50%-10px)] sm:gap-x-5 sm:px-0 lg:auto-cols-[calc(25%-15px)]">

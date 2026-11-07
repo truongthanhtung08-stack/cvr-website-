@@ -545,14 +545,15 @@ select option {
    ⚠️ KHÔNG cộng chiều cao thanh dính đáy (Gọi · Nhắn Zalo · tab bar) vào đây —
    làm vậy sẽ hở một mảng trắng to phía trên footer. Chỗ trống cho thanh đó nằm
    SAU footer, xem .footer-safe bên dưới. */
-.pb-footer {
-  padding-bottom: 3rem;
+/* MỘT CON SỐ KHOẢNG CÁCH GIỮA CÁC KHỐI CHO CẢ WEB (anh 07/11/2026: "chỉnh hệ thống, áp dụng cả web"): điện thoại 32px, máy tính 56px.
+   .mt-khoi = khối đứng sau khối khác (Bất động sản tương tự, đã xem, Tin liên quan, Dự án tương tự…) · .pb-footer = khối cuối tới footer. */
+:root { --khoang-khoi: 2rem; }
+@media (min-width: 1024px) { :root { --khoang-khoi: 3.5rem; } }
+.mt-khoi {
+  margin-top: var(--khoang-khoi);
 }
-/* Máy tính 56px = đúng khoảng cách giữa các khối (chủ dự án 24/10/2026: khoảng cách các phần phải CHUẨN, một số) */
-@media (min-width: 1024px) {
-  .pb-footer {
-    padding-bottom: 3.5rem;
-  }
+.pb-footer {
+  padding-bottom: var(--khoang-khoi);
 }
 
 /* Chỗ trống SAU footer để thanh hành động dính đáy (Gọi · Nhắn Zalo ở trang chi
