@@ -3,7 +3,7 @@ import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
 import { boTuGoTiep, coChuRac, diaDanhTuTin, goTiep, goiYGoTiep, goiYGoTiepDuAn, timDuAnTrongCau } from "@/lib/goTiep";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
-import { docMucDich, suaChinhTa } from "@/lib/smartSearch";
+import { docMucDich, hoanTenNoiCuoi, suaChinhTa } from "@/lib/smartSearch";
 
 // ============================================================================
 // GET /api/goi-y/that?q=<câu khách gõ>&md=ban|thue — GỢI Ý THEO DỮ LIỆU THẬT cho mọi ô tìm (21/10/2026, lib/goiYThat).
@@ -58,12 +58,15 @@ export async function GET(req: Request) {
   // GÕ SAI CHÍNH TẢ → GỢI Ý THEO CÂU ĐÃ SỬA, kiểu Google (07/11/2026: "đât nên hoa xuân đag năng" → "đất nền hòa xuân đà nẵng…"). Sửa các
   // chữ đã gõ xong; chữ cuối đang gõ dở để goTiep điền tiếp như cũ
   // sửa cả câu (chữ cuối sai một chữ cái như "đag năng" cũng sửa); chữ cuối gõ dở thì bộ sửa tự để nguyên (là đầu một chữ có thật)
-  const qSua = suaChinhTa(q) ?? q;
+  const qSua0 = suaChinhTa(q) ?? q;
+  // tên nơi đang gõ dở ở cuối câu → điền trọn trước khi gợi ý ("căn hộ ngủ hanh" → "căn hộ ngũ hành sơn") — anh 07/11/2026
+  const qSua = xongChu ? qSua0 : (hoanTenNoiCuoi(qSua0) ?? qSua0);
   const qDoc = xongChu ? qSua + " " : qSua;
   // gõ bậy (chữ không phải tiếng Việt, không có trong dữ liệu web) → không gợi ý gì (chủ dự án 01/11/2026)
   if (coChuRac(qDoc, tin, boTu)) return NextResponse.json([]);
   // GỢI Ý KIỂU GOOGLE ở cả 4 ô (lib/goTiep, 01/11/2026): giữ nguyên chữ khách gõ, điền tiếp theo dữ liệu thật / nội dung tin.
-  const cache = { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } };
+  // max-age=0: trình duyệt luôn hỏi lại CDN (không giữ gợi ý cũ sau khi web đổi bộ đọc) — CDN vẫn giữ 1 giờ như cũ, không thêm lượt chạy hàm
+  const cache = { headers: { "Cache-Control": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400" } };
   const motChu = q.split(/\s+/).length <= 1;
   const hoan = goTiep(qDoc, boTu)[0] ?? q;
   // TRANG CON: đúng mục của trang
