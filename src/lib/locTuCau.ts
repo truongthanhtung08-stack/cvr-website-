@@ -57,7 +57,13 @@ export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
   const cau = suaChinhTa(cauGo) ?? cauGo;
   const p = parseQuery(cau);
   // câu đã sửa có chữ có dấu lẫn không dấu ("bán nhà son tra") → bộ đọc nơi chốn có thể hụt; câu khách gõ đọc ra nơi thì lấy nơi đó
-  if (cau !== cauGo && !p.place && !p.places.length) { const g = parseQuery(cauGo); p.place = g.place; p.places = g.places; }
+  // ĐỊA CHỈ: câu khách gõ đọc ra nơi SÂU HƠN (phường > quận > tỉnh) câu đã sửa → lấy theo câu khách gõ — bộ sửa chính tả không được làm mất
+  // địa chỉ (anh 07/11/2026: "ban nha xa phu cat ha noi" từng bị sửa thành "phù cát" rồi mất phường)
+  if (cau !== cauGo) {
+    const g = parseQuery(cauGo);
+    const sau = (x: typeof p.place) => (x ? (x.ward ? 3 : x.district ? 2 : 1) : 0);
+    if ((g.place && sau(g.place) >= sau(p.place)) || (!p.place && !p.places.length)) { p.place = g.place; p.places = g.places.length ? g.places : p.places; }
+  }
   const nq = ` ${normalizeVi(cau).replace(/[^a-z0-9]+/g, " ")} `;
   const pl = p.place;
   // PHƯỜNG ĐỌC THEO HỆ MỚI (07/11/2026: "bán đất nền hòa xuân" đọc thành Hòa Xuân, quận Cẩm Lệ (hệ cũ) → tin ghi "Phường Hòa Xuân, Đà Nẵng"

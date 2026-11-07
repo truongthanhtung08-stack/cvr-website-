@@ -63,10 +63,27 @@ function tinhDungTen(nq: string): string[] {
   const x = tenTinhTrongCau(nq);
   return x ? [x[1]] : [];
 }
+/** Tỉnh (mới) của TÊN TỈNH ĐẦY ĐỦ đứng SAU CÙNG trong câu (địa chỉ viết từ nhỏ tới lớn) — cùng vị trí thì tên dài thắng */
+function tinhTheoTenCuoi(nq: string): string | null {
+  if (!daCoDiaDanh()) return null;
+  tenTinhTrongCau(nq); // dựng _tenTinh
+  const s = ` ${nq.replace(/[^a-z0-9]+/g, " ").trim()} `;
+  let tot: { cuoi: number; dai: number; tinh: string } | null = null;
+  for (const [n, tinh] of _tenTinh ?? []) {
+    let i = s.indexOf(` ${n} `);
+    while (i >= 0) {
+      const cuoi = i + n.length;
+      if (!tot || cuoi > tot.cuoi || (cuoi === tot.cuoi && n.length > tot.dai)) tot = { cuoi, dai: n.length, tinh };
+      i = s.indexOf(` ${n} `, i + 1);
+    }
+  }
+  return tot?.tinh ?? null;
+}
 /** Tên tỉnh (cũ hoặc mới) khách gõ trong câu: [tên đã bỏ dấu, tỉnh mới] — để bỏ khỏi "chữ lạ" và biết câu đã trọn tên nơi */
 export function tenTinhTrongCau(nq: string): [string, string] | null {
   if (!daCoDiaDanh()) return null;
-  _tenTinh ??= [...provincesNew.map((p): [string, string] => [normalizeVi(p.name), p.name]), ...provincesOld.map((p): [string, string] => [normalizeVi(p.name), newProvinceOf(p.name)])]
+  const nt = (t: string) => normalizeVi(t).replace(/[^a-z0-9]+/g, " ").trim(); // "Bà Rịa - Vũng Tàu" → "ba ria vung tau" như câu gõ
+  _tenTinh ??= [...provincesNew.map((p): [string, string] => [nt(p.name), p.name]), ...provincesOld.map((p): [string, string] => [nt(p.name), newProvinceOf(p.name)])]
     .filter(([n]) => n.length >= 3).sort((a, b) => b[0].length - a[0].length);
   const s = ` ${nq.replace(/[^a-z0-9]+/g, " ").trim()} `;
   return _tenTinh.find(([n]) => s.includes(` ${n} `)) ?? null;
@@ -144,6 +161,111 @@ function theoChuDau(): Map<string, NoiDG[]> {
   const m = new Map<string, NoiDG[]>();
   for (const x of diaGioi()) { const k = x.ten[0]; const ds = m.get(k); if (ds) ds.push(x); else m.set(k, [x]); }
   return (_theoChuDau = m);
+}
+
+// ── ĐỌC ĐỊA CHỈ THEO CÂY (anh 07/11/2026: "địa chỉ bắt buộc phải đọc được — admin, trường Toàn quốc đã có sẵn hết") ──
+// CÙNG NGUỒN trường Khu vực: hệ mới tỉnh → phường/xã (provincesNew) · hệ cũ tỉnh → quận/huyện → phường/xã (provincesOld, kèm tên cũ hơn).
+// ① tỉnh = tên tỉnh đầy đủ đứng SAU CÙNG (tinhTheoTenCuoi) · ② chỉ tìm tên trong ĐÚNG tỉnh đó (tỉnh mới: phường mới + mọi quận/phường cũ
+// gộp vào; tỉnh cũ: quận/phường cũ của nó + phường mới) · ③ tên DÀI khớp trước; phường nằm trong quận cũng được nhắc thắng quận
+const CAP_TEN = /^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i;
+type MucCay = { n: string; hit: PlaceHit; cap: "w" | "d"; quan?: string };
+const _cay = new Map<string, MucCay[]>();
+function cayCua(tinhMoi: string, chiTinhCu?: string): MucCay[] {
+  const khoa = `${tinhMoi}|${chiTinhCu ?? ""}`;
+  const co = _cay.get(khoa);
+  if (co) return co;
+  // số La Mã chỉ khi tên GỐC viết chữ in La Mã ("Hải Châu I" → "hai chau 1"); "Ba Vì" không phải "Ba VI" (07/11/2026)
+  const nn = (t: string) => {
+    const goc = t.replace(/\s*\(.*\)\s*$/, "").replace(CAP_TEN, "").trim();
+    const n = normalizeVi(goc).replace(/[^a-z0-9]+/g, " ").trim();
+    return / (I{1,3}|IV|VI{0,3}|IX|X)$/.test(goc) ? soLaMaCuoi(n) : n;
+  };
+  const ds: MucCay[] = [];
+  const pm = provincesNew.find((p) => p.name === tinhMoi);
+  for (const w of pm?.wards ?? []) ds.push({ n: nn(w), cap: "w", hit: { province: tinhMoi, ward: w, label: `${w}, ${tinhMoi}` } });
+  for (const po of provincesOld) {
+    if (po.newName !== tinhMoi || (chiTinhCu && po.name !== chiTinhCu)) continue;
+    for (const d of po.districts) {
+      ds.push({ n: nn(d.name), cap: "d", hit: { province: tinhMoi, district: d.name, label: `${d.name}, ${tinhMoi}` } });
+      for (const w of d.wards) ds.push({ n: nn(w), cap: "w", quan: nn(d.name), hit: { province: tinhMoi, district: d.name, ward: w.replace(/\s*\(.*\)\s*$/, "").trim(), label: `${w}, ${d.name}, ${tinhMoi}` } });
+      for (const [ten, i] of d.cu ?? []) { const w = pm?.wards[i]; if (w) ds.push({ n: nn(ten), cap: "w", hit: { province: tinhMoi, ward: w, label: `${w}, ${tinhMoi}` } }); }
+    }
+  }
+  const ra = ds.filter((x) => x.n.length >= 2).sort((a, b) => b.n.length - a.n.length);
+  _cay.set(khoa, ra);
+  return ra;
+}
+function docDiaChiCay(nq: string, tinh: string | null, goc = ""): PlaceHit | null {
+  // câu khách gõ CÓ DẤU → tên trùng chữ khác dấu (Cẩm Giang · Cẩm Giàng, Đồng Tiến · Đông Tiến) chọn đúng tên khách gõ
+  const goDau = goc && normalizeVi(goc) !== goc.normalize("NFC").toLowerCase() ? ` ${goc.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ")} ` : "";
+  const dau = (m: MucCay) => {
+    if (!goDau) return true;
+    const ten = (m.hit.ward ?? m.hit.district ?? "").replace(/\s*\(.*\)\s*$/, "").replace(CAP_TEN, "").normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    return goDau.includes(` ${ten} `);
+  };
+  if (!daCoDiaDanh()) return null;
+  const s = ` ${nq.replace(/[^a-z0-9]+/g, " ").trim()} `;
+  // phần địa chỉ ĐỨNG TRƯỚC tên tỉnh (tên tỉnh không được khớp nhầm thành phường: "hà nội" ≠ phường Hà …)
+  let truoc = s;
+  let tinhCu: string | undefined;
+  if (tinh) {
+    tenTinhTrongCau(nq);
+    let cuoi = -1, ten = "";
+    for (const [n, t] of _tenTinh ?? []) { if (t !== tinh) continue; const i = s.lastIndexOf(` ${n} `); if (i > cuoi || (i === cuoi && n.length > ten.length)) { cuoi = i; ten = n; } }
+    if (cuoi >= 0) { truoc = s.slice(0, cuoi + 1); tinhCu = provincesOld.find((p) => normalizeVi(p.name) === ten && p.name !== p.newName)?.name; }
+  }
+  const tim = (tinhMoi: string, cu?: string): PlaceHit | null => {
+    const muc = cayCua(tinhMoi, cu);
+    const CAP_W = ["phuong", "xa", "thi tran", "dac khu"], CAP_D = ["quan", "huyen", "thi xa", "thanh pho", "tp"];
+    const CAP_MOI = [...CAP_W, ...CAP_D];
+    // chữ CẤP khách gõ ngay trước tên: "w" (phường/xã) · "d" (quận/huyện/thị xã/thành phố) · null
+    const capTruoc = (n: string): "w" | "d" | null => {
+      for (const c of CAP_W) if (truoc.includes(` ${c} ${n} `)) return "w";
+      for (const c of CAP_D) if (truoc.includes(` ${c} ${n} `)) return "d";
+      return null;
+    };
+    // đúng dấu khách gõ trước (cùng mức thì giữ thứ tự tên dài trước)
+    let khop = muc.filter((m) => truoc.includes(` ${m.n} `)).sort((a, b) => Number(dau(b)) - Number(dau(a)));
+    if (!khop.length) return null;
+    // VỊ TRÍ chữ trong câu — tên phường không được CHỒNG lên tên quận đã khớp ("sơn phú định hóa" không thành "phú đình")
+    const tok = truoc.trim().split(" ");
+    const vt = (n: string) => { const w = n.split(" "); const r: number[] = []; for (let i = 0; i + w.length <= tok.length; i++) if (tok.slice(i, i + w.length).join(" ") === n) r.push(i); return r; };
+    const roiNhau = (a: string, b: string) => vt(a).some((i) => vt(b).some((j) => i + a.split(" ").length <= j || j + b.split(" ").length <= i));
+    // phường/xã có QUẬN CŨ của nó cũng được nhắc, hai tên KHÔNG chồng nhau → chắc chắn đúng phường đó ("Phương Mai, Đống Đa")
+    const quanKhop = khop.filter((m) => m.cap === "d");
+    // TÊN XÃ MỚI DÀI CHỨA LUÔN TÊN HUYỆN ("Xã Nam Ban Lâm Hà") khớp trọn → chính xã đó, không tách thành xã cũ "Nam Ban" + huyện "Lâm Hà"
+    const daiNhat = [...khop].sort((a, b) => b.n.length - a.n.length)[0];
+    if (daiNhat.cap === "w" && quanKhop.some((q) => q.n !== daiNhat.n && ` ${daiNhat.n} `.includes(` ${q.n} `))) return daiNhat.hit;
+    const chacChan = khop.filter((m) => m.cap === "w" && m.quan && m.n !== m.quan && quanKhop.some((q) => q.n === m.quan && roiNhau(m.n, q.n)))
+      .sort((a, b) => Number(dau(b)) - Number(dau(a)) || b.n.length - a.n.length)[0];
+    if (chacChan) return chacChan.hit;
+    // tên mà chữ đầu là CHỮ CẤP khách gõ ("phuong son" trong "phuong son tay") nhường cho tên đứng ngay sau chữ cấp đó ("son tay")
+    khop = khop.filter((m) => {
+      const c = CAP_MOI.find((x) => m.n.startsWith(`${x} `));
+      return !c || !khop.some((x) => x !== m && truoc.includes(` ${c} ${x.n} `) && x.n.startsWith(m.n.slice(c.length + 1).split(" ")[0]));
+    });
+    // bỏ tên nằm trọn trong tên dài hơn đã khớp ("liet" của "phuong liet")
+    const dai = khop.filter((m) => !khop.some((x) => x.n.length > m.n.length && ` ${x.n} `.includes(` ${m.n} `)));
+    const quanGo = new Set(dai.filter((m) => m.cap === "d" && capTruoc(m.n) !== "w").map((m) => m.n));
+    const phuong = dai.filter((m) => m.cap === "w");
+    // ① phường/xã có QUẬN CŨ của nó cũng được nhắc (tên khác nhau) → đúng phường đó (hệ cũ 3 cấp)
+    const coQuan = phuong.find((m) => m.quan && quanGo.has(m.quan) && m.n !== m.quan);
+    if (coQuan) return coQuan.hit;
+    // ② khách gõ chữ "phường/xã …" → phường/xã (hệ mới trước, rồi hệ cũ)
+    const goW = phuong.filter((m) => capTruoc(m.n) === "w");
+    if (goW.length) return (goW.find((m) => !m.quan) ?? goW[0]).hit;
+    // ③ khách gõ "quận/huyện …" → quận/huyện
+    const goD = dai.find((m) => m.cap === "d" && capTruoc(m.n) === "d");
+    if (goD) return goD.hit;
+    // ④ tên chỉ là phường/xã (không trùng tên quận đang khớp) → phường (hệ mới trước)
+    const rieng = phuong.filter((m) => !quanGo.has(m.n));
+    if (rieng.length) return (rieng.find((m) => !m.quan) ?? rieng[0]).hit;
+    // ⑤ tên trùng quận/huyện → cấp lớn: quận/huyện
+    const q = dai.find((m) => m.cap === "d");
+    return q?.hit ?? phuong[0]?.hit ?? null;
+  };
+  if (tinh) return tim(tinh, tinhCu);
+  return null;
 }
 
 // Câu có nhắc tên phường/quận nào không? Ưu tiên: đúng tỉnh người dùng nói →
@@ -300,6 +422,35 @@ function tuDien(): Set<string> {
   return s;
 }
 const coDau = (n: string) => CO_DAU?.get(n) ?? n;
+// MỌI TÊN NƠI CẢ NƯỚC, HAI HỆ (tỉnh mới · phường/xã mới · tỉnh cũ · quận/huyện cũ · phường/xã cũ · tên cũ hơn), bỏ dấu, từ 2 chữ — để bộ sửa
+// chính tả KHÔNG ĐỤNG vào tên nơi khách gõ (anh 07/11/2026: "địa chỉ bắt buộc phải đọc được"). Cụm toàn chữ nhà đất ("bản nhà") không tính.
+let _tenNoiDu: Set<string> | null = null;
+const _tenNoiDau = new Set<string>(); // cùng các tên, GIỮ DẤU, viết thường — khách gõ đúng dấu một tên có thật thì không đổi
+function tenNoiDu(): Set<string> {
+  if (_tenNoiDu) return _tenNoiDu;
+  const s = new Set<string>();
+  const them = (ten?: string) => {
+    const n = normalizeVi((ten ?? "").replace(/\s*\(.*\)\s*$/, "").replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "")).replace(/[^a-z0-9]+/g, " ").trim();
+    const w = n.split(" ");
+    if (w.length >= 2 && w.length <= 5 && !w.every((x) => TU_NHA_DAT.has(x))) { s.add(n); _tenNoiDau.add((ten ?? "").replace(/\s*\(.*\)\s*$/, "").replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "").normalize("NFC").toLowerCase().trim()); }
+  };
+  for (const p of provincesNew) { them(p.name); p.wards.forEach(them); }
+  for (const p of provincesOld) { them(p.name); for (const d of p.districts) { them(d.name); d.wards.forEach(them); d.cu?.forEach(([t]) => them(t)); } p.huyenCuHon?.forEach((h) => them(h.name)); }
+  _tenNoiDu = s;
+  return s;
+}
+/** Vị trí các chữ (theo mảng chữ đã bỏ dấu, phần tử rỗng = khoảng trắng) nằm trong một tên nơi — cụm dài khớp trước */
+function viTriTenNoi(nTok: string[]): Set<number> {
+  const ten = tenNoiDu();
+  const viTri = nTok.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
+  const ra = new Set<number>();
+  for (let a = 0; a < viTri.length; a++) for (let k = Math.min(5, viTri.length - a); k >= 2; k--) {
+    const ds = viTri.slice(a, a + k);
+    if (ten.has(ds.map((i) => nTok[i]).join(" "))) { ds.forEach((i) => ra.add(i)); break; }
+  }
+  return ra;
+}
+
 /** TÊN NƠI ĐANG GÕ DỞ ở cuối câu → điền trọn, kiểu Google (anh 07/11/2026: "căn ho ngủ hanh" từng gợi ý "căn hộ ngủ hanh huế"):
  *  2–3 chữ cuối là phần đầu của ĐÚNG MỘT tên nơi (chữ trước khớp trọn, chữ cuối là đầu chữ) → thay bằng tên đủ dấu ("căn hộ ngũ hành sơn"). */
 export function hoanTenNoiCuoi(raw: string): string | null {
@@ -326,19 +477,15 @@ export function suaChinhTa(raw: string): string | null {
   if (!daCoDiaDanh()) return null;
   const td = tuDien();
   let doi = false;
-  // CHỮ NẰM TRONG TÊN NƠI không đặt lại dấu theo chữ nhà đất (anh 07/11/2026: "ngũ hành sơn" từng thành "ngủ hành sơn" vì "ngủ" của phòng ngủ)
+  // CHỮ NẰM TRONG TÊN NƠI không đặt lại dấu theo chữ nhà đất (anh 07/11/2026: "ngũ hành sơn" từng thành "ngủ hành sơn" vì "ngủ" của phòng ngủ;
+  // "Đội Cấn" thành "Đội căn", "Tây Hồ" thành "Tây hộ") — TÊN NƠI CẢ NƯỚC, HAI HỆ (tenNoiDu), không chỉ tỉnh web phục vụ
   const nTok = raw.split(/(\s+)/).map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, ""));
-  const viTriChu = nTok.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
-  const trongTenNoi = new Set<number>();
-  const noiSan = cumNoi();
-  for (let a = 0; a < viTriChu.length; a++) for (let k = Math.min(4, viTriChu.length - a); k >= 2; k--) {
-    const ds = viTriChu.slice(a, a + k);
-    if (noiSan.has(ds.map((i) => nTok[i]).join(" "))) { ds.forEach((i) => trongTenNoi.add(i)); break; }
-  }
+  const trongTenNoi = viTriTenNoi(nTok);
   const kq = raw.split(/(\s+)/).map((tok, viTri) => {
     const n = normalizeVi(tok).replace(/[^a-z0-9]/g, "");
     // CHỮ NHÀ ĐẤT GÕ SAI DẤU ("đât" → "đất", "gân" → "gần", 07/11/2026): chỉ chữ trong từ điển nhà đất (không đụng tên nơi — "hóa"/"hòa")
-    const dauDung = trongTenNoi.has(viTri) ? undefined : CHU_NHA_DAT.get(n);
+    if (trongTenNoi.has(viTri)) return tok; // chữ thuộc tên nơi: giữ nguyên như khách gõ
+    const dauDung = CHU_NHA_DAT.get(n);
     if (dauDung && normalizeVi(tok) !== tok.toLowerCase() && tok.toLowerCase() !== dauDung) { doi = true; return dauDung; }
     if (n.length < 4 || /\d/.test(n) || td.has(n)) return tok; // chữ ngắn (sun, an…) dễ đoán nhầm — "sun cosmo" thành "sung"
     if (/[/\-]/.test(tok)) return tok; // "triệu/tháng", "2-3" — khách cố ý viết liền bằng dấu, không phải gõ sai (01/11/2026)
@@ -366,7 +513,9 @@ export function suaChinhTa(raw: string): string | null {
   const tu = kq.join("").split(/\s+/).filter(Boolean);
   const nt = tu.map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, ""));
   const daCum = new Set<number>(); // vị trí chữ đã khớp cụm nhà đất quen
+  const noiTu = viTriTenNoi(nt); // chữ thuộc tên nơi (cả nước) — cụm nhà đất không ghép đè lên
   for (let i = 0; i + 1 < nt.length; i++) {
+    if (noiTu.has(i) || noiTu.has(i + 1)) continue;
     let khop = CUM_QUEN.has(`${nt[i]} ${nt[i + 1]}`) ? `${nt[i]} ${nt[i + 1]}` : "";
     if (!khop) {
       for (const c of CUM_QUEN.keys()) {
@@ -392,6 +541,9 @@ export function suaChinhTa(raw: string): string | null {
     for (let k = Math.min(4, nt.length - i); k >= 2; k--) {
       const go = nt.slice(i, i + k);
       // chữ chỉ CẤP (phường, xã, quận…) không phải tên nơi; cụm khách đã gõ ĐỦ DẤU thì tin chữ khách ("phường sơn" không thành "Phượng Sơn")
+      // khách gõ ĐÚNG DẤU một tên nơi có thật (bất kỳ tỉnh nào: "Đại Thanh", "Phú Linh") → giữ nguyên, không đổi sang tên tỉnh web gần giống
+      tenNoiDu();
+      if (_tenNoiDau.has(tu.slice(i, i + k).join(" ").normalize("NFC").toLowerCase())) { i += k - 1; break; }
       if (go.some((w) => CHU_CAP.has(w)) || tu.slice(i, i + k).every((t, j) => normalizeVi(t) !== t.toLowerCase() && td.has(go[j]))) continue;
       let dung = noi.get(go.join(" "));
       if (!dung) {
@@ -424,14 +576,18 @@ export function suaChinhTa(raw: string): string | null {
   }
   if (doi) for (const [i, ds] of chiDatDau) tu.splice(i, ds.length, ...ds);
   // CHỮ GÕ LẶP LIỀN NHAU ("đất nền nen hòa xuân") → bỏ chữ lặp, như Google (07/11/2026); số thì giữ ("2 2" hiếm, không đoán)
+  const noiLap = viTriTenNoi(tu.map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, "")));
   for (let i = tu.length - 1; i > 0; i--) {
     const a = normalizeVi(tu[i]), b = normalizeVi(tu[i - 1]);
     // hai chữ CÙNG CÓ DẤU mà khác dấu là hai chữ khác nhau ("phòng ngủ Ngũ Hành Sơn") — không phải gõ lặp
     const khacDau = normalizeVi(tu[i]) !== tu[i].toLowerCase() && normalizeVi(tu[i - 1]) !== tu[i - 1].toLowerCase() && tu[i].toLowerCase() !== tu[i - 1].toLowerCase();
-    if (a && a === b && !/\d/.test(a) && !khacDau) { tu.splice(i, 1); doi = true; }
+    // chữ thuộc tên nơi ("Phường Phương Liệt", "Ngọc Hà Hà Nội") không phải gõ lặp
+    if (a && a === b && !/\d/.test(a) && !khacDau && !noiLap.has(i) && !noiLap.has(i - 1)) { tu.splice(i, 1); doi = true; }
   }
   // chữ chỉ cấp gõ không dấu cũng đặt dấu khi câu đằng nào cũng sửa ("quan cẩm lệ" → "quận cẩm lệ", "thanh pho" → "thành phố")
+  const noiCap = viTriTenNoi(tu.map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, ""))); // "Quán Thánh", "Phúc Xá", "Thành phố …" trong tên nơi: không đổi thành "quận", "xã"
   if (doi) for (let i = 0; i < tu.length; i++) {
+    if (noiCap.has(i)) continue;
     const t = tu[i].toLowerCase();
     if (t === "thanh" && normalizeVi(tu[i + 1] ?? "") === "pho") { tu[i] = "thành"; tu[i + 1] = "phố"; i++; continue; }
     const cap: Record<string, string> = { phuong: "phường", xa: "xã", quan: "quận", huyen: "huyện" };
@@ -691,7 +847,10 @@ function phanTichCau(raw: string): ParsedQuery {
   const types = timTuDien(nq.replace(/nha dat|bat dong san|bds/g, " ").replace(/\b(\d+|hai|ba) mat tien\b/g, " "), LOAI_HINH, true);
   // CỤM HƯỚNG NHÀ không phải nơi chốn (01/11/2026: "đất nền hướng đông nam" từng bị hiểu thành Phường Nam Nha Trang) — bỏ trước khi dò địa danh
   const nqNoi = nq.replace(/\bhuong (dong|tay) (nam|bac)\b|\bhuong (dong|tay|nam|bac)\b/g, " ");
-  const places = timTuDien(nqNoi, TINH);
+  // TỈNH = TÊN ĐẦY ĐỦ (34 mới + 63 cũ) ĐỨNG SAU CÙNG trong câu — địa chỉ viết phường → quận → tỉnh (anh 07/11/2026: "Xã Nguyễn Huệ, Cao Bằng"
+  // từng đọc ra Huế vì chữ "huệ"; "Thụy Lâm, Đông Anh, Hà Nội" ra Lâm Đồng). Không có tên đầy đủ mới dùng tên gọi tắt của tỉnh web (TINH)
+  const tinhCuoi = tinhTheoTenCuoi(nqNoi);
+  const places = tinhCuoi ? [tinhCuoi] : timTuDien(nqNoi, TINH);
   // TÊN TỈNH / THÀNH CŨ HOẶC MỚI GÕ ĐÚNG (bắt buộc đọc được — chủ dự án 01/11/2026): khớp trọn tên trước khi đoán gần đúng — "thanh hoa"
   // từng thành Khánh Hòa, "quang binh" thành huyện ở Tuyên Quang, "binh dinh" thành phường ở Đà Nẵng
   if (!places.length) places.push(...tinhDungTen(nqNoi));
@@ -702,14 +861,17 @@ function phanTichCau(raw: string): ParsedQuery {
   if (!features.includes("view biển") && /(^|[^\p{L}])biển([^\p{L}]|$)/iu.test(raw.normalize("NFC"))) features.push("view biển");
   // Phường/quận trong câu ("Hoà Quý", "Ngũ Hành Sơn") — suy ra luôn TỈNH nếu
   // người dùng không gõ tên tỉnh ("nhà đất Hoà Quý" → Đà Nẵng).
-  const place0 = timDiaGioi(soLaMaCuoi(cheChuChung(nqNoi)), places); // "hải châu i" = "hải châu 1"
+  // có TÊN TỈNH → đọc theo CÂY địa chỉ của đúng tỉnh đó (docDiaChiCay); không có tỉnh / cây không ra → bộ dò cũ (tỉnh web trước, gần đúng)
+  const place0 = (tinhCuoi ? docDiaChiCay(nqNoi.replace(CUM_CHUNG, " zz "), tinhCuoi, raw) : null) ?? timDiaGioi(soLaMaCuoi(cheChuChung(nqNoi)), places); // "hải châu i" = "hải châu 1"
   // GÕ CÓ DẤU THÌ ĐỊA DANH PHẢI KHỚP ĐÚNG DẤU (01/11/2026: "đang mở bán" từng đọc thành xã Dang, Tây Giang; "hòa" thành "Hóa"):
   // tên nơi (bỏ cấp) phải có trong câu khách gõ theo đúng dấu — chỉ so khi khách gõ có dấu, gõ không dấu vẫn khớp như cũ
   const dungDau = (ten?: string) => {
     if (!ten || normalizeVi(raw) === raw.normalize("NFC").toLowerCase()) return true;
     const chuan = (s: string) => s.normalize("NFC").toLowerCase().replace(/o([àáảãạ])/g, (_, x) => ({ "à": "òa", "á": "óa", "ả": "ỏa", "ã": "õa", "ạ": "ọa" } as Record<string, string>)[x])
       .replace(/u([ỳýỷỹỵ])/g, (_, x) => ({ "ỳ": "ùy", "ý": "úy", "ỷ": "ủy", "ỹ": "ũy", "ỵ": "ụy" } as Record<string, string>)[x]);
-    const ma = soLaMaCuoi(chuan(ten.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "")));
+    // số La Mã chỉ khi tên viết chữ in La Mã ("Hải Châu I"); "Pả Vi", "Mường Vi" không phải số 6 (07/11/2026)
+    const tenBo = ten.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "");
+    const ma = (/ (I{1,3}|IV|VI{0,3}|IX|X)$/.test(tenBo) ? soLaMaCuoi(chuan(tenBo)) : chuan(tenBo)).replace(/[^\p{L}\p{N}]+/gu, " ").trim(); // "Văn Miếu - Quốc Tử Giám": bỏ gạch nối như câu gõ
     const go = ` ${chuan(raw).replace(/[^\p{L}\p{N}]+/gu, " ")} `;
     if (go.includes(` ${ma} `)) return true;
     // chỉ xét dấu trên ĐÚNG PHẦN TÊN NƠI khách gõ: phần đó gõ không dấu ("phường thanh khe") thì nhận
