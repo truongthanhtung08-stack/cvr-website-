@@ -1486,8 +1486,11 @@ export function LocationPanel({
   // 02/11/2026: phần trên KHÔNG thu gọn nữa (ẩn / hiện làm bảng nhảy lên xuống) — chỉ còn đánh dấu bảng để ẩn hai nút đáy lúc gõ
   const henTim = useRef(0);
   const danhDauBang = (bat: boolean) => { const b = gocRef.current?.closest(".cvr-sheet"); if (b) { if (bat) b.setAttribute("data-tim-noi", "1"); else b.removeAttribute("data-tim-noi"); } };
-  const vaoTim = () => { clearTimeout(henTim.current); danhDauBang(true); };
-  const raTim = () => { clearTimeout(henTim.current); henTim.current = window.setTimeout(() => danhDauBang(false), 250); };
+  // 07/11/2026 (anh: "cho gọn lại, bỏ … để có không gian cho ô tìm và bàn phím ảo"): ĐIỆN THOẠI đang gõ ô tìm → ẩn hàng đã chọn + công tắc
+  // sáp nhập, ô tìm lên đầu bảng, danh sách kín phần trên bàn phím; rời ô tìm thì hiện lại đủ (máy tính giữ nguyên)
+  const [goTim, setGoTim] = useState(false);
+  const vaoTim = () => { clearTimeout(henTim.current); danhDauBang(true); if (window.innerWidth < 640) setGoTim(true); };
+  const raTim = () => { clearTimeout(henTim.current); henTim.current = window.setTimeout(() => { danhDauBang(false); setGoTim(false); }, 250); };
   useEffect(() => () => { clearTimeout(henTim.current); danhDauBang(false); }, []);
   // Cất chỗ gõ (×, đổi tầng, Đặt lại) mà ô gõ biến mất khi còn con trỏ thì không có lần "mất con trỏ" — tự hiện lại hai nút đáy
   useEffect(() => {
@@ -1589,28 +1592,15 @@ export function LocationPanel({
   // thành, vào tỉnh rồi mới tìm phường (đã bỏ tìm phường cả nước ở tầng tỉnh).
 
 
-  // ĐÃ CHỌN = MỖI TỈNH MỘT NÚT, MỤC CHA + SỐ MỤC CON (chủ dự án 02/11/2026: "1 dòng là tỉnh thành chính và con số"): "Cà Mau (3)" ·
-  // "Đà Nẵng" (cả tỉnh). × bỏ cả tỉnh; bấm tên = mở tỉnh đó để thêm / bớt phường (bỏ từng phường thì bấm lại phường đó).
-  const mucDaChon = tinhDaChon(locations).map((g) => ({
-    nhan: g.nhan,
-    bo: () => onChange(locations.filter((l) => l.province !== g.tinh)),
-    mo: () => {
-      const cua = locations.filter((l) => l.province === g.tinh);
-      const heDong: GeoMode = cua.some((l) => l.district) ? "cu" : cua.some((l) => l.ward) ? "moi" : mode;
-      if (heDong !== mode) setMode(heDong);
-      const quan = [...new Set(cua.map((l) => l.district).filter(Boolean))];
-      tatPhim(); setProv(g.tinh); setDist(heDong === "cu" && quan.length === 1 ? quan[0]! : ""); setQ("");
-    },
-  }));
   return (
     // CAO CỐ ĐỊNH trên điện thoại — vào tỉnh / Đặt lại / gõ tìm, bảng không co giãn, nhảy dưới tay (02/11/2026)
     // shrink-0: khung theo đúng chiều dài danh sách — co lại thì dòng đã chọn (dính trên cùng) trôi mất khi cuộn
-    <div ref={gocRef} className="min-h-[60dvh] shrink-0 sm:min-h-0">
+    <div ref={gocRef} className={`${goTim ? "" : "min-h-[60dvh]"} shrink-0 sm:min-h-0`}>
       {/* KHÔNG ẨN phần trên khi gõ (02/11/2026: ẩn / hiện làm bảng nhảy lên xuống) — chỉ hai nút đáy ẩn lúc gõ (data-tim-noi) */}
-      <DaChon muc={mucDaChon} macDinh="Toàn quốc" />
+      {/* BỎ HÀNG "Đà Nẵng ×" (anh 07/11/2026): khách chọn / bỏ chọn thẳng trên danh sách tỉnh thành (ô tick) */}
       {/* Công tắc: Tìm theo địa chỉ MỚI sau sáp nhập (2025). Bật = hệ mới 2 cấp
           (Tỉnh/Thành → Phường/Xã); Tắt = hệ cũ 3 cấp (Tỉnh → Quận/Huyện → Phường/Xã). */}
-      <button
+      {!goTim && <button
         type="button"
         role="switch"
         aria-checked={isNew}
@@ -1621,7 +1611,7 @@ export function LocationPanel({
         <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${isNew ? "bg-cvr-blue" : "bg-black/20"}`}>
           <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${isNew ? "left-[18px]" : "left-0.5"}`} />
         </span>
-      </button>
+      </button>}
 
       {/* TIÊU ĐỀ TẦNG + KÍNH LÚP — khách biết đang chọn cấp nào (01/11/2026); không khung ô tìm, bấm kính lúp mới gõ (02/11/2026) */}
       {(!moTim || level !== "province") && (
