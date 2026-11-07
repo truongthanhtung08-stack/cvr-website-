@@ -1,8 +1,8 @@
 // Câu gõ → các trường lọc. Tách khỏi TruongLocTrangChu để FilterBar (trang kết quả) dùng chung mà không
 // nạp chéo hai component (FilterBar ↔ TruongLocTrangChu) — nạp chéo làm trang chủ không chạy được.
-import { typeGroupsFor, normalizeVi, emptyFilters, dacDiemOptions, priceRangeText, DAC_DIEM, type Filters } from "@/lib/filters";
+import { typeGroupsFor, normalizeVi, emptyFilters, dacDiemOptions, type Filters } from "@/lib/filters";
 import { tenLoaiHinhMenu } from "@/lib/categories";
-import { chuChuaHieu, docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
+import { docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
 import { phuongMoiCua, phuongMoiCuaQuan, newProvinceOf } from "@/lib/locations";
 import { provincesOld, provincesNew } from "@/lib/diaDanhNguon";
 
@@ -176,48 +176,22 @@ export function gopCau(f0: Filters, cau: string, mb: "ban" | "thue"): Filters {
   };
 }
 
-/** CÂU ĐÃ HIỂU — dòng "Đang hiển thị kết quả cho …" kiểu Google (anh 07/11/2026: "gợi ý Google là mức độ HIỂU từ khoá — loại hình, địa
- *  điểm — dựa vào đó mà gợi ý"): viết lại câu từ CÁI WEB ĐÃ HIỂU, không sửa từng chữ:
- *  [mục đích khách gõ] + [loại hình theo cây loại hình] + [nơi theo bảng địa chỉ: phường/xã, tỉnh] + [giá] + [phần chữ chưa hiểu, giữ nguyên].
- *  Trả null khi câu viết lại trùng câu khách gõ (không có gì để báo). */
+/** CÂU ĐÃ HIỂU — dòng "Đang hiển thị kết quả cho …" CHUẨN GOOGLE (anh 07/11/2026: "làm đi"): GIỮ ĐÚNG THỨ TỰ CHỮ KHÁCH GÕ, chỉ sửa chữ
+ *  sai và đặt dấu (bộ sửa chính tả dùng chung suaChinhTa); tên nơi web đã hiểu (theo bảng địa chỉ) viết hoa đúng tên. Không đảo chữ,
+ *  không bỏ chữ ("chung cu hue gan trung tâm duoi 3 ty" → "chung cư Huế gần trung tâm dưới 3 tỷ").
+ *  Trả null khi không có gì để sửa. */
 export function cauDaHieu(raw: string, mb: "ban" | "thue"): string | null {
   const goc = raw.trim();
   if (!goc) return null;
+  const sua = suaChinhTa(goc);
+  if (!sua) return null;
   const f = locTuCau(goc, mb);
-  const n = ` ${normalizeVi(goc).replace(/[^a-z0-9]+/g, " ")} `;
-  // mục đích: chỉ ghi khi khách có gõ
-  const md = / (can mua) /.test(n) ? "cần mua" : / (can thue) /.test(n) ? "cần thuê" : / cho thue /.test(n) ? "cho thuê" : / thue /.test(n) ? "thuê"
-    : / (can ban) /.test(n) ? "cần bán" : / ban /.test(n) ? "bán" : / mua /.test(n) ? "mua" : "";
-  // loại hình: cách nói chung giữ đúng chữ; còn lại theo cây (trọn nhóm → tên nhóm, một loại → tên loại)
-  const sua = suaChinhTa(goc) ?? goc;
-  // ĐOẠN KHÁCH GÕ (theo câu đã sửa, đủ dấu) khớp một tên → lấy đúng chữ đó ("biệt thự" không thành "biệt thự, liền kề"; "gần biển" giữ "gần biển")
-  const tuSua = sua.split(/\s+/).filter(Boolean);
-  const nSua = tuSua.map((w) => normalizeVi(w).replace(/[^a-z0-9]/g, ""));
-  const doanGo = (ten: string) => {
-    const k = normalizeVi(ten).replace(/[^a-z0-9]+/g, " ").trim().split(" ");
-    for (let i = 0; i + k.length <= nSua.length; i++) if (k.every((x, j) => nSua[i + j] === x)) return tuSua.slice(i, i + k.length).join(" ");
-    return "";
-  };
-  let loai = / nha dat /.test(n) ? "nhà đất" : / (bat dong san|bds) /.test(n) && !f.types.length ? "bất động sản" : "";
-  if (!loai && f.types.length) {
-    const nhom = typeGroupsFor(mb).find((g) => g.items.length > 1 && g.items.every((x) => f.types.includes(x)) && f.types.every((x) => g.items.includes(x)));
-    // các tên của loại đã hiểu (tên nhóm, tên menu, tên loại, từng phần tách , /) — chữ khách gõ khớp tên nào thì giữ chữ đó, dài trước
-    const ten = [...(nhom ? [nhom.label] : []), ...f.types.flatMap((t) => [t, tenLoaiHinhMenu(t, mb)])]
-      .flatMap((x) => [x, ...x.split(/[,/]/)]).map((x) => x.trim()).filter(Boolean).sort((a, b) => b.length - a.length);
-    loai = ten.map(doanGo).find(Boolean) || (nhom ? nhom.label.split(",")[0] : tenLoaiHinhMenu(f.types[0], mb)).toLowerCase();
-  }
-  // nơi: phường/xã (bỏ chữ cấp) + tỉnh, hoặc tỉnh
-  const l = f.locations[0];
   const boCapTen = (x: string) => x.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "");
-  const noi = f.locations.length === 1 && l ? (l.ward ? `${boCapTen(l.ward)}, ${l.province}` : l.district ? `${boCapTen(l.district)}, ${l.province}` : l.province) : "";
-  // giá, đặc điểm, phần chữ còn lại lấy từ CÂU ĐÃ SỬA chính tả (không giữ chữ gõ sai); giá giữ đúng cách khách nói ("giá 3 tỷ")
-  const giaGo = sua.match(/(?:giá |dưới |trên |từ |khoảng |tầm )?\d[\d.,]*\s*(?:tỷ|triệu)(?:\s*(?:-|đến)\s*\d[\d.,]*\s*(?:tỷ|triệu))?/i)?.[0];
-  const gia = f.priceMin != null || f.priceMax != null ? (giaGo || priceRangeText(f.priceMin, f.priceMax).toLowerCase()) : "";
-  // đặc điểm: đúng chữ khách gõ ("gần biển", "giá rẻ"), không đổi sang tên trường ("view biển")
-  const dd = (f.dacDiem ?? []).map((x) => [x, ...(DAC_DIEM.find(([t]) => t === x)?.[1] ?? [])].map(doanGo).find(Boolean) || x).join(" ");
-  const conLai = chuChuaHieu(sua).split(/,\s*/).filter(Boolean).join(" ");
-  const cau = [md, loai, dd, noi, gia, conLai].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
-  if (!cau || (!loai && !noi)) return null;
+  const thoat = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let cau = sua;
+  const ten = [...new Set(f.locations.flatMap((l) => [l.ward, l.district, l.province]).filter((x): x is string => !!x).map(boCapTen))]
+    .sort((a, b) => b.length - a.length);
+  for (const t of ten) cau = cau.replace(new RegExp(`(^|\\s)${thoat(t.toLowerCase())}(?=[\\s,]|$)`, "u"), (_, a: string) => a + t);
   const so = (s: string) => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
   return so(cau) === so(goc) ? null : cau;
 }
