@@ -2,7 +2,7 @@
 // nạp chéo hai component (FilterBar ↔ TruongLocTrangChu) — nạp chéo làm trang chủ không chạy được.
 import { typeGroupsFor, normalizeVi, emptyFilters, dacDiemOptions, type Filters } from "@/lib/filters";
 import { docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
-import { phuongMoiCua, newProvinceOf } from "@/lib/locations";
+import { phuongMoiCua, phuongMoiCuaQuan, newProvinceOf } from "@/lib/locations";
 import { provincesOld, provincesNew } from "@/lib/diaDanhNguon";
 
 // Nhãn loại hình của bộ tách câu → loại hình của bộ lọc (cùng nguồn typeGroupsFor)
@@ -35,21 +35,24 @@ export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
   const pl = p.place;
   // PHƯỜNG ĐỌC THEO HỆ MỚI (07/11/2026: "bán đất nền hòa xuân" đọc thành Hòa Xuân, quận Cẩm Lệ (hệ cũ) → tin ghi "Phường Hòa Xuân, Đà Nẵng"
   // không còn chữ Cẩm Lệ nên lọt hết, báo "chưa có sẵn"). Phường cũ có trong bảng sáp nhập → quy về phường mới 2 cấp như cả web đang dùng.
-  // MỖI NƠI ĐÚNG MỘT HỆ (anh 07/11/2026: "mới 2 cấp, cũ 3 cấp" — không trộn tỉnh mới với quận cũ như "Gia Lai · Quy Nhơn"):
-  //   phường cũ còn TÊN ở hệ mới (Hòa Xuân) → hệ mới 2 cấp: tỉnh mới → phường mới
-  //   phường cũ đã mất tên (Hòa Quý → nay Ngũ Hành Sơn) → hệ cũ 3 cấp: tỉnh cũ → quận cũ → phường cũ (đúng nơi khách gõ, không nở ra cả phường mới)
-  //   chỉ có quận / huyện (cấp chỉ còn ở hệ cũ: Quy Nhơn, Hội An, Sơn Trà) → hệ cũ: tỉnh cũ → quận cũ
+  // ĐỊA CHỈ HAI CẤP: TỈNH / THÀNH PHỐ → PHƯỜNG / XÃ, CẢ HAI HỆ (anh 07/11/2026 — sửa từ gốc). Quận không phải cấp của bộ lọc:
+  //   phường/xã hệ MỚI ("hòa xuân", "phường sơn trà")        → tỉnh mới → phường mới
+  //   phường/xã hệ CŨ đã mất tên ("hòa quý", "an hải bắc")   → tỉnh → phường cũ đó (bộ lọc so phường cũ của tin)
+  //   tên QUẬN cũ ("sơn trà", "quy nhơn", "cẩm lệ")          → phường mới CÙNG TÊN; không có → các phường mới thuộc quận đó
+  //   tên cũ hơn ("hải châu 1") đã quy về phường mới ở bảng địa danh (smartSearch diaGioi)
   const moi = pl?.ward && pl.district ? phuongMoiCua(pl.province, pl.district, pl.ward) : null;
   const boCap = (x: string) => normalizeVi(x.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, ""));
   const tinhCu = (quan: string) => provincesOld.find((t) => newProvinceOf(t.name) === pl!.province && t.districts.some((d) => boCap(d.name) === boCap(quan)))?.name ?? pl!.province;
-  // khách GÕ RÕ CẤP: "phường / xã sơn trà" = phường mới cùng tên (không phải quận Sơn Trà cũ); "quận …" giữ quận cũ
-  const phuongCungTen = pl?.district && !pl.ward && / (phuong|xa) /.test(nq.replace(` ${boCap(pl.district)} `, " # "))
-    ? provincesNew.find((t) => t.name === pl.province)?.wards.find((w) => boCap(w) === boCap(pl.district!)) : undefined;
-  if (phuongCungTen && new RegExp(` (phuong|xa) ${boCap(pl!.district!)} `).test(nq)) f.locations = [{ province: pl!.province, ward: phuongCungTen }];
-  else if (moi && pl?.ward && boCap(moi.phuong) === boCap(pl.ward)) f.locations = [{ province: moi.tinh, ward: moi.phuong }];
-  else if (pl?.district) f.locations = [{ province: tinhCu(pl.district), district: pl.district, ...(pl.ward ? { ward: pl.ward } : {}) }];
-  else if (moi) f.locations = [{ province: moi.tinh, ward: moi.phuong }];
-  else if (pl?.ward) f.locations = [{ province: pl.province, ward: pl.ward }];
+  const phuongMoiTen = (ten: string) => provincesNew.find((t) => t.name === pl!.province)?.wards.find((w) => boCap(w) === boCap(ten));
+  if (pl?.ward && pl.district) {
+    // phường cũ: còn tên ở hệ mới → phường mới; mất tên → phường cũ (tỉnh → phường)
+    // phường cũ đi với TỈNH MỚI (một tỉnh mới gộp nhiều tỉnh cũ — đoán tỉnh cũ dễ nhầm: "Mỹ Thủy, Quảng Trị" từng ra Quảng Bình)
+    f.locations = moi && boCap(moi.phuong) === boCap(pl.ward) ? [{ province: moi.tinh, ward: moi.phuong }] : [{ province: pl.province, ward: pl.ward }];
+  } else if (pl?.district) {
+    const cungTen = phuongMoiTen(pl.district);
+    f.locations = cungTen ? [{ province: pl.province, ward: cungTen }]
+      : phuongMoiCuaQuan(tinhCu(pl.district), pl.district).map((w) => ({ province: pl.province, ward: w }));
+  } else if (pl?.ward) f.locations = [{ province: pl.province, ward: pl.ward }];
   else if (pl || p.places[0]) {
     // gõ TÊN TỈNH CŨ đã sáp nhập ("bình định", "quảng nam") → đúng tỉnh cũ đó, không nở ra cả tỉnh mới (Gia Lai, Đà Nẵng)
     const tinh = pl?.province ?? p.places[0];

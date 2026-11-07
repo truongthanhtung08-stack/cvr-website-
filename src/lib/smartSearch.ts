@@ -92,7 +92,8 @@ function diaGioi(): NoiDG[] {
     for (const d of p.districts) {
       for (const w of d.wards) {
         const ten = w.replace(/\s*\(.*\)\s*$/, "").trim(); // "Sịa (TT)" → "Sịa"
-        ds.push({ norm: normalizeVi(ten), ten: [], place: { province: p.name, district: d.name, ward: ten, label: `${ten}, ${d.name}, ${p.name}` } });
+        // dò theo TÊN RIÊNG (bỏ chữ cấp còn sót: "Phường Nghĩa Lộ") — giữ chữ cấp thì "phường nghĩa lộ" khớp trọn tên này, thắng nơi tỉnh web
+        ds.push({ norm: normalizeVi(ten.replace(/^(Phường|Xã|Thị trấn)\s+(?=\D)/i, "")), ten: [], place: { province: p.name, district: d.name, ward: ten, label: `${ten}, ${d.name}, ${p.name}` } });
       }
       ds.push({ norm: normalizeVi(d.name), ten: [], place: { province: p.name, district: d.name, label: `${d.name}, ${p.name}` } });
     }
@@ -100,6 +101,8 @@ function diaGioi(): NoiDG[] {
   // TÊN CŨ HƠN (gộp TRƯỚC 30/06/2025 — "Hải Châu I", "Hải Châu II" → Phường Hải Châu): bảng địa danh ghi ở `cu` của từng quận
   // [tên, CHỈ SỐ PHƯỜNG MỚI trong provincesNew — xem đầu provincesOld.ts]; tin và khách vẫn dùng tên này (anh 07/11/2026: "phải đọc
   // chính xác địa chỉ") → quy về đúng phường HỆ MỚI đó (2 cấp: tỉnh → phường)
+  // tên đã là phường cũ HIỆN CÓ trong cùng tỉnh mới ("Triệu Lăng") → không thêm bản "tên cũ hơn" chồng lên (quy sai phường mới)
+  const coSan = new Set(ds.map((x) => `${x.place.province}|${x.norm}`));
   for (const p of provincesOld) {
     const moi = newProvinceOf(p.name);
     const dsMoi = provincesNew.find((x) => x.name === moi)?.wards ?? [];
@@ -107,6 +110,7 @@ function diaGioi(): NoiDG[] {
       const phuong = dsMoi[i];
       if (!phuong) continue;
       const ten = tenCu.replace(/^(Phường|Xã|Thị trấn)\s+/i, "").trim();
+      if (coSan.has(`${moi}|${normalizeVi(ten)}`)) continue;
       ds.push({ norm: normalizeVi(ten), ten: [], place: { province: moi, ward: phuong, label: `${phuong}, ${moi}` } });
     }
   }
@@ -166,10 +170,17 @@ function timDiaGioi(nq: string, tinh: string[]): PlaceHit | null {
   // TRÙNG TÊN Ở NHIỀU TỈNH ("an hải": Đà Nẵng · Khánh Hòa) → nơi thuộc thị trường web phục vụ trước, theo thứ tự danh sách TINH
   // (Đà Nẵng, Huế… — nơi web có tin), như đoán gõ sai (timGanDung) — 01/11/2026
   const thuTu = (x: NoiDG) => { const i = TINH.findIndex(([t]) => t === x.place.province); return i < 0 ? 999 : i; };
-  const chon = [...hop].sort((a, b) => thuTu(a) - thuTu(b));
+  // KHÁCH GÕ RÕ CẤP "phường …" / "xã …" (07/11/2026) → chỉ xét phường/xã (bỏ quận, thị xã cũ trùng tên ở tỉnh khác: "phường thuận an"
+  // từng ra thị xã Thuận An, Bình Dương); "phường" thì phường trước xã, "xã" thì xã trước
+  const capGo = (x: NoiDG) => (nq.match(new RegExp(`(?:^|[^a-z0-9])(phuong|xa) ${x.norm}(?:[^a-z0-9]|$)`)) ?? [])[1];
+  const coCap = hop.filter((x) => x.place.ward && capGo(x));
+  const nguon = coCap.length ? coCap : hop;
+  const dungCap = (x: NoiDG) => { const c = capGo(x); return !c ? 0 : normalizeVi(x.place.ward ?? "").startsWith(c === "xa" ? "xa " : "phuong ") ? 0 : 1; };
+  const chon = [...nguon].sort((a, b) => dungCap(a) - dungCap(b) || thuTu(a) - thuTu(b));
   // Trùng tên giữa quận và phường (Hải Châu, Sơn Trà…) → lấy cấp LỚN: khách nói "Hải Châu" là quận Hải Châu
-  // Đà Nẵng, không phải phường Hải Châu ở Ninh Bình
-  const quan = chon.find((x) => !x.place.ward && chon.some((y) => y.place.ward && y.norm === x.norm));
+  // Đà Nẵng, không phải phường Hải Châu ở Ninh Bình — quận phải CÙNG TỈNH với phường trùng tên (không lấy thị xã Thuận An, Bình Dương
+  // khi khớp phường Thuận An, Huế)
+  const quan = chon.find((x) => !x.place.ward && chon.some((y) => y.place.ward && y.norm === x.norm && y.place.province === x.place.province));
   // …nhưng câu còn nêu PHƯỜNG nằm trong quận đó ("hòa xuân cẩm lệ") → lấy phường, quận chỉ là chữ ghi kèm (01/11/2026)
   const phuongTrong = quan && chon.find((y) => y.place.ward && y.norm !== quan.norm && y.place.district === quan.place.district && y.place.province === quan.place.province);
   if (phuongTrong) return phuongTrong.place;
@@ -660,7 +671,15 @@ function phanTichCau(raw: string): ParsedQuery {
     const chuan = (s: string) => s.normalize("NFC").toLowerCase().replace(/o([àáảãạ])/g, (_, x) => ({ "à": "òa", "á": "óa", "ả": "ỏa", "ã": "õa", "ạ": "ọa" } as Record<string, string>)[x])
       .replace(/u([ỳýỷỹỵ])/g, (_, x) => ({ "ỳ": "ùy", "ý": "úy", "ỷ": "ủy", "ỹ": "ũy", "ỵ": "ụy" } as Record<string, string>)[x]);
     const ma = soLaMaCuoi(chuan(ten.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "")));
-    return ` ${chuan(raw).replace(/[^\p{L}\p{N}]+/gu, " ")} `.includes(` ${ma} `);
+    const go = ` ${chuan(raw).replace(/[^\p{L}\p{N}]+/gu, " ")} `;
+    if (go.includes(` ${ma} `)) return true;
+    // chỉ xét dấu trên ĐÚNG PHẦN TÊN NƠI khách gõ: phần đó gõ không dấu ("phường thanh khe") thì nhận
+    const tu = go.trim().split(" "), n = ma.split(" ").length, khoa = normalizeVi(ma);
+    for (let i = 0; i + n <= tu.length; i++) {
+      const doan = tu.slice(i, i + n).join(" ");
+      if (normalizeVi(doan) === khoa && normalizeVi(doan) === doan) return true;
+    }
+    return false;
   };
   const place = place0 && dungDau(place0.ward ?? place0.district) ? place0 : null;
   if (place && !places.includes(place.province)) places.push(place.province);
