@@ -330,6 +330,17 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
       }
       if (dangDung || m !== mucDang) { dangDung = false; mucDang = m; cau = cauCua(m); i = 0; n = 0; xoa = false; }
       if (giamDong) { dat(cau[i] ?? ""); i = (i + 1) % Math.max(1, cau.length); hen = window.setTimeout(buoc, 3500); return; }
+      // CÂU KHÔNG VỪA Ô TÌM ĐIỆN THOẠI thì bỏ qua (08/11/2026: "Bán nhà Đà Nẵng có sổ đỏ," bị cắt dở) — chỉ chạy câu hiện trọn trong ô
+      if (!xoa && n === 0 && chuChayDt.current?.parentElement?.offsetParent) {
+        const khung = chuChayDt.current.parentElement;
+        for (let k = 0; k < cau.length; k++) {
+          chuChayDt.current.textContent = cau[i] ?? "";
+          const vua = khung.scrollWidth <= khung.clientWidth + 1;
+          chuChayDt.current.textContent = "";
+          if (vua) break;
+          i = (i + 1) % Math.max(1, cau.length);
+        }
+      }
       const c = cau[i] ?? "";
       if (!xoa && n < c.length) { n++; dat(c.slice(0, n)); hen = window.setTimeout(buoc, 55); }
       else if (!xoa) { xoa = true; hen = window.setTimeout(buoc, 1800); }
