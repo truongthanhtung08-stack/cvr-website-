@@ -1372,7 +1372,7 @@ export function nhanNoi(locations: LocationSel[]): string {
 // Bộ chọn khu vực ĐA TẦNG + ĐA CHỌN (kiểu Batdongsan): duyệt Tỉnh→Quận→Phường,
 // thêm cả tỉnh/quận hoặc chọn tới phường; mỗi khu vực là 1 chip (tối đa MAX_LOCATIONS).
 export function LocationPanel({
-  locations, onChange, demTheoNoi, onApDung, onDatLai,
+  locations: locGoc, onChange: onChangeGoc, demTheoNoi, onApDung, onDatLai,
 }: {
   locations: LocationSel[];
   /** Trang có dữ liệu ít (Dự án): đếm số kết quả của một nơi → CHỈ hiện nơi CÓ kết quả, kèm số (chủ dự án 01/11/2026: không cho
@@ -1406,7 +1406,7 @@ export function LocationPanel({
     setMoTim(false);
   }, [prov, dist]);
   // ĐẶT LẠI (bỏ hết nơi đã chọn) = về đầu: danh sách tỉnh, xoá chữ đang gõ (02/11/2026: bấm Đặt lại mà bảng vẫn đứng trong tỉnh cũ)
-  const rong = locations.length === 0;
+  const rong = locGoc.length === 0;
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- về đầu khi bỏ hết
     if (rong) { setProv(""); setDist(""); setQ(""); setMoTim(false); }
@@ -1429,7 +1429,7 @@ export function LocationPanel({
           else them(l);
         } else if (!l.district && !l.ward) {
           // tỉnh CŨ (Bình Định, hoặc Gia Lai cũ đánh dấu cu) giữ nguyên; tỉnh MỚI = mọi tỉnh cũ gộp vào nó
-          if (l.cu || newProvinceOf(l.province) !== l.province) them({ province: l.province });
+          if (tu === "cu" || l.cu || newProvinceOf(l.province) !== l.province) them({ province: l.province });
           else oldNamesOf(l.province).forEach((p) => them({ province: p }));
         } else if (l.district) {
           // quận cũ đi với TÊN TỈNH MỚI ("Phan Thiết, Lâm Đồng" — đọc từ câu) → đúng tỉnh cũ chứa quận đó (Bình Thuận → Phan Thiết)
@@ -1461,15 +1461,15 @@ export function LocationPanel({
   };
   // MỞ BẢNG = QUY LỰA CHỌN VỀ ĐÚNG HỆ ĐANG XEM (07/11/2026: câu "hòa xuân" đọc thành phường hệ cũ Hòa Xuân, Cẩm Lệ → bảng hệ mới không tick
   // Phường Hòa Xuân). Một lần lúc mở; đổi hệ thì switchMode quy đổi.
-  useEffect(() => {
-    const h = doiHe(locations, mode);
-    if (JSON.stringify(h) !== JSON.stringify(locations)) onChange(h);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ lúc mở bảng
-  }, []);
+  // MỘT LỰA CHỌN, HAI CÁCH XEM (anh 07/11/2026: "tao chỉ chọn nơi tao cần" — gạt hệ từng đổi hẳn nơi đã chọn sang hệ kia, một phường mới nở
+  // thành cả chục phường cũ, bấm Tìm ra "Minh An, Quảng Nam +25"). Nơi đã chọn (locGoc) GIỮ NGUYÊN theo hệ khách chọn (heGoc); bảng chỉ
+  // HIỆN theo hệ đang xem (doiHe). Khách chọn / bỏ ngay trong hệ đang xem thì lựa chọn mới tính theo hệ đó.
+  const [heGoc, setHeGoc] = useState<GeoMode>("moi");
+  const locations = useMemo(() => doiHe(locGoc, mode, heGoc), [locGoc, mode, heGoc]); // eslint-disable-line react-hooks/exhaustive-deps
+  const onChange = (ls: LocationSel[]) => { setHeGoc(mode); onChangeGoc(ls); };
   const switchMode = (m: GeoMode) => {
     if (m === mode) return;
-    const moi = locations.length ? doiHe(locations, m, mode) : locations;
-    if (locations.length) onChange(moi);
+    const moi = doiHe(locGoc, m, heGoc); // chỉ để biết ở lại tỉnh nào — không đổi nơi đã chọn
     // ĐỒNG BỘ HAI HỆ (anh 07/11/2026): đang xem trong một tỉnh thì đổi hệ vẫn Ở LẠI tỉnh đó theo tên của hệ kia (Đà Nẵng mới ↔ Đà Nẵng /
     // Quảng Nam cũ — ưu tiên tỉnh cũ có nơi đã chọn), không nhảy về danh sách tỉnh. Nơi đã chọn lên đầu, chữ xanh như mọi tầng.
     let tinh = "";
