@@ -10,7 +10,7 @@ import { useNutQuayLai } from "@/lib/khoaCuon";
 import { useRouter } from "next/navigation";
 import { createPortal, flushSync } from "react-dom";
 import FilterDropdown, { PanelActions, FilterDropdownGroup, ChanBangContext } from "@/components/FilterDropdown";
-import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, choCuCua, phuongMoiCua, phuongMoiCuaQuan, oldNamesOf, newProvinceOf, type GeoMode } from "@/lib/locations";
+import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, choCuCua, phuongMoiCua, phuongMoiCuaQuan, oldNamesOf, newProvinceOf, chuanTen, type GeoMode } from "@/lib/locations";
 import {
   typeGroupsFor,
   priceRangesFor,
@@ -1427,13 +1427,18 @@ export function LocationPanel({
           if (cu.length) cu.forEach((c) => them({ province: c.tinh, district: c.quan, ward: c.phuong }));
           else them(l);
         } else if (!l.district && !l.ward) oldNamesOf(l.province).forEach((p) => them({ province: p }));
-        else them(l);
+        else if (l.district) {
+          // quận cũ đi với TÊN TỈNH MỚI ("Phan Thiết, Lâm Đồng" — đọc từ câu) → đúng tỉnh cũ chứa quận đó (Bình Thuận → Phan Thiết)
+          const tinhCu = oldNamesOf(l.province).find((p) => districtsOf(p).some((d) => chuanTen(d) === chuanTen(l.district!))) ?? l.province;
+          them({ ...l, province: tinhCu });
+        } else them(l);
       } else {
         if (l.ward && l.district) {
           const moi = phuongMoiCua(l.province, l.district, l.ward);
           them(moi ? { province: moi.tinh, ward: moi.phuong } : l);
         } else if (l.district) {
-          const ws = phuongMoiCuaQuan(l.province, l.district);
+          // tỉnh ghi theo tên MỚI hay CŨ đều tra được quận cũ ("Phan Thiết" với Lâm Đồng hay Bình Thuận)
+          const ws = [...new Set([l.province, ...oldNamesOf(l.province)].flatMap((p) => phuongMoiCuaQuan(p, l.district!)))];
           if (ws.length) ws.forEach((w) => them({ province: newProvinceOf(l.province), ward: w }));
           else them(l);
         } else if (l.ward) them({ province: newProvinceOf(l.province), ward: l.ward }); // đã là phường hệ mới → giữ nguyên (trước bị rơi tên phường)

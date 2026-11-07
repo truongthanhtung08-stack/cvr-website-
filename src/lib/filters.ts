@@ -396,7 +396,9 @@ export function filtersFromParams(params: URLSearchParams): Filters {
       .map((a) => (a.length === 2 && /^(Phường|Xã|Thị trấn|Đặc khu)\s/i.test(a[1])
         ? { province: a[0], ward: a[1] }
         : { province: a[0], district: a[1] || undefined, ward: a[2] || undefined }))
-      .slice(0, MAX_LOCATIONS);
+      // tối đa MAX_LOCATIONS TỈNH (cùng cách đếm của bảng chọn), không cắt theo từng phường — "Phan Thiết" là 7 phường mới, cắt theo mục
+      // làm rơi mất nơi khách đã chọn khi chọn thêm tỉnh khác (anh 07/11/2026)
+      .filter((l, _i, ds) => [...new Set(ds.map((x) => x.province))].indexOf(l.province) < MAX_LOCATIONS);
   } else {
     const tinh = params.get("tinh");
     if (tinh) f.locations = [{ province: tinh, district: params.get("quan") || undefined, ward: params.get("phuong") || undefined }];
