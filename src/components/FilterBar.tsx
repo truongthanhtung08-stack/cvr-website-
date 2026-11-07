@@ -1508,7 +1508,9 @@ export function LocationPanel({
     !prov ? { province: name } : !isNew && !dist ? { province: prov, district: name } : isNew ? { province: prov, ward: name } : { province: prov, district: dist, ward: name };
   // tầng tỉnh hệ mới: gõ TÊN TỈNH CŨ cũng ra tỉnh mới (Bình Định → Gia Lai) — bộ lọc phải đọc được tỉnh / thành – phường / xã (07/11/2026)
   const khopTinh = (x: string) => khopTen(x, q) || (isNew && level === "province" && oldNamesOf(x).some((c) => khopTen(c, q)));
-  const filtered = (nq ? list.filter(khopTinh).sort((x, y) => diemTen(y, q) - diemTen(x, q)) : list); // luôn đủ tỉnh / phường để chọn, không ẩn nơi chưa có tin (anh 07/11/2026); số tin vẫn ghi bên cạnh
+  // cùng điểm: tên BẮT ĐẦU bằng chữ khách gõ đứng trước ("gia" → Gia Lai trước An Giang — 08/11/2026)
+  const dauTen = (x: string) => (tenRieng(x).startsWith(nq) ? 1 : 0);
+  const filtered = (nq ? list.filter(khopTinh).sort((x, y) => diemTen(y, q) - diemTen(x, q) || dauTen(y) - dauTen(x)) : list); // luôn đủ tỉnh / phường để chọn, không ẩn nơi chưa có tin (anh 07/11/2026); số tin vẫn ghi bên cạnh
   // TẦNG NÀO TÌM TẦNG ĐÓ (anh 01/11 + 07/11/2026: "đây là mục tìm TỈNH / THÀNH PHỐ"): danh sách tỉnh chỉ tìm tỉnh / thành (kể cả tên tỉnh cũ);
   // vào tỉnh rồi mới tìm phường / xã của tỉnh đó. Không đưa phường cả nước ra danh sách tỉnh.
   const phuongKhop: { t: string; w: string }[] = [];
