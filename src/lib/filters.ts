@@ -312,6 +312,9 @@ export const DAC_DIEM: [string, string[]][] = [
   ["gần trường", ["gan truong", "truong hoc", "gan truong dai hoc", "gan dai hoc"]],
   ["gần chợ", ["gan cho", "sieu thi"]],
   ["trung tâm", ["trung tam", "gan trung tam"]],
+  // GIÁ RẺ (luật 18/10/2026): KHÔNG dò chữ trong tin — là 1/3 số tin GIÁ THẤP NHẤT trong các tin đúng loại hình + khu vực khách tìm;
+  // locDanhSach tính phân khúc và xếp tin rẻ lên đầu (coDacDiem luôn nhận để không loại tin)
+  ["giá rẻ", ["gia re", "re nhat", "gia tot"]],
 ];
 /** Đặc điểm có nút trong Lọc thêm — "sổ hồng", "full nội thất" đã có trường riêng (Pháp lý · Nội thất) */
 export const dacDiemOptions = DAC_DIEM.map(([n]) => n).filter((n) => n !== "sổ hồng" && n !== "full nội thất");
@@ -326,6 +329,7 @@ export function dacDiemChoLoai(types: string[], dangChon: string[] = []): string
 const tuKhoaDD = new Map(DAC_DIEM);
 /** Tin có đặc điểm này không — đọc tiêu đề + mô tả + các ô ghi tự do */
 export function coDacDiem(l: { title: string; desc?: string; searchText?: string }, nhan: string): boolean {
+  if (nhan === "giá rẻ") return true; // phân khúc giá — locDanhSach xử lý, không phải chữ trong tin
   const nd = ` ${normalizeVi(`${l.title} ${l.desc ?? ""} ${l.searchText ?? ""}`).replace(/[^a-z0-9]+/g, " ")} `;
   return (tuKhoaDD.get(nhan) ?? [normalizeVi(nhan)]).some((k) => nd.includes(` ${k} `));
 }

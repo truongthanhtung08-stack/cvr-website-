@@ -120,7 +120,8 @@ export function locDanhSach(
   theoMuc = true,
 ): KetQuaLoc & { ketQua: Listing[] } {
   // Câu có "giá rẻ" → trong cùng nhóm, tin rẻ đứng trước (cùng quy ước với trang sạch ?sapxep=gia-tang)
-  const timRe = / gia re /.test(` ${normalizeVi(filters.keyword)} `);
+  // "giá rẻ" gõ trong câu HOẶC chọn ở Lọc thêm → cùng một phân khúc (luật 18/10/2026)
+  const timRe = / gia re /.test(` ${normalizeVi(filters.keyword)} `) || !!filters.dacDiem?.includes("giá rẻ");
   if (sort === "moi" && timRe) sort = "gia-tang";
   // Câu có "trung tâm" (nhà đất bán trung tâm Đà Nẵng) → tin GẦN TÂM nơi khách nói đứng trước (chủ dự án 21/10/2026)
   const kwGoc = filters.keyword;
@@ -181,8 +182,14 @@ export function locDanhSach(
   const loaiCungCha = new Set(typeGroupsFor(purpose).filter((g) => g.items.some((x) => filters.types.includes(x))).flatMap((g) => g.items));
   const dungLoai = (l: Listing) => dungLoaiCon(l) || [...loaiCungCha].some((t) => matchType(l.type, t));
   // phường HỆ MỚI không kèm quận → quận CŨ của nó theo bảng sáp nhập (Phường Hòa Xuân → Cẩm Lệ): tin cùng quận cũ là nơi gần nhất
-  const quanCuCua = sauChon.filter((x) => x.ward && !x.district).flatMap((x) =>
-    [...new Set(choCuCua(x.province, x.ward!).map((c) => `${c.tinh}|${c.quan}`))].map((k) => ({ province: k.split("|")[0], district: k.split("|")[1] })));
+  // gần nhất = quận cũ của phường cũ CÙNG TÊN (Phường Hòa Xuân → Hòa Xuân, Cẩm Lệ); không có phường cùng tên mới lấy mọi quận cũ đã gộp
+  // vào (Hòa Xuân mới gộp cả Hòa Châu, Hòa Phước của Hòa Vang — lấy cả Hòa Vang thì Hòa Tiến xa lắc cũng thành "gần", 07/11/2026)
+  const quanCuCua = sauChon.filter((x) => x.ward && !x.district).flatMap((x) => {
+    const ds = choCuCua(x.province, x.ward!);
+    const boCapP = (s: string) => normalizeVi(s.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, ""));
+    const cungTen = ds.filter((c) => boCapP(c.phuong) === boCapP(x.ward!));
+    return [...new Set((cungTen.length ? cungTen : ds).map((c) => `${c.tinh}|${c.quan}`))].map((k) => ({ province: k.split("|")[0], district: k.split("|")[1] }));
+  });
   // XẾP THEO ĐÚNG 9 BẬC (chủ dự án 01/11/2026 — bảng ô search dùng chung, "kết quả sắp xếp theo dữ liệu, ưu tiên theo CHA – CON"):
   //   THEO THỨ TỰ CÁC TRƯỜNG DƯỚI Ô TÌM, TRÁI QUA PHẢI (chủ dự án 01/11/2026): mục đích = 3 tab · Toàn quốc: tỉnh/thành phố (bắt buộc) →
   //   quận/huyện, phường/xã · Loại BĐS (bắt buộc) · Giá · Diện tích · 6 chủ đầu tư, 7 dự án (tin ghi đúng dự án khách gõ) · 8 Lọc thêm: phòng ngủ → hướng → pháp lý → nội thất →
@@ -244,7 +251,8 @@ export function locDanhSach(
   const goiY = sortListings(hits.filter((h) => h.tier > 1 && coKhopTieuChi(h, filters) && dungLoai(h.item) && dungTinhChon(h.item)).map((h) => h.item), sort)
     .map((l, i) => ({ l, i, d: diemGoiY(l), nd: noiDung(l) }))
     // cùng mức khớp: tin NỘI DUNG tương tự đứng trước (không theo gần / xa — anh 07/11/2026)
-    .sort((a, b) => b.d - a.d || b.nd - a.nd || a.i - b.i)
+    // THỨ TỰ Ý KHÁCH (anh 07/11/2026): 1 loại hình → 2 ở đâu (đã trong d) → 3 GIÁ: khách nói "giá rẻ" thì cùng mức, giá thấp trước (i = thứ tự giá tăng)
+    .sort((a, b) => b.d - a.d || (timRe ? a.i - b.i : 0) || b.nd - a.nd || a.i - b.i)
     .slice(0, TOI_DA_GOI_Y)
     .map((x) => x.l);
   // TIN HẾT HẠN CŨNG GỢI Ý THEO CÙNG LUẬT (chủ dự án 21/10/2026: kho còn ít tin, "Villa biển gần Hội An" bỏ sót biệt thự Đà Nẵng
@@ -305,7 +313,7 @@ export function locDanhSach(
   } else if (!ketQua.length) {
     // GỢI Ý khi không tin nào khớp hết: tin khớp được NHIỀU TRƯỜNG CÒN LẠI hơn đứng trước, theo thứ bậc giá → diện tích → phòng ngủ →
     // hướng → pháp lý → nội thất → đặc điểm (chủ dự án 01/11/2026).
-    const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, k: diemGoiY(l), nd: noiDung(l) })).sort((a, b) => b.k - a.k || b.nd - a.nd || a.i - b.i).map((x) => x.l);
+    const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, k: diemGoiY(l), nd: noiDung(l) })).sort((a, b) => b.k - a.k || (timRe ? a.i - b.i : 0) || b.nd - a.nd || a.i - b.i).map((x) => x.l);
     if (filters.types.length) {
       const cungLoai = conHan.filter(dungLoai);
       if (cungLoai.length) {
@@ -325,6 +333,7 @@ export function locDanhSach(
     ketQua = duPhong;
   }
   // Không tin nào khớp đủ nhưng có tin cùng loại / nơi gần → vẫn là kết quả theo độ chính xác, không ghi gì (anh 07/11/2026)
+  // Khách nói LOẠI HÌNH thì chỉ ra đúng loại đó (anh 07/11/2026: "đất thì chỉ tìm đất") — không thêm loại khác dù đúng nơi
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));
   for (const l of goiYHetHan) tierById.set(l.id, 3);
   for (const l of duPhong) tierById.set(l.id, 3);

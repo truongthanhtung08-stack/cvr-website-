@@ -1,6 +1,7 @@
 // Câu gõ → các trường lọc. Tách khỏi TruongLocTrangChu để FilterBar (trang kết quả) dùng chung mà không
 // nạp chéo hai component (FilterBar ↔ TruongLocTrangChu) — nạp chéo làm trang chủ không chạy được.
 import { typeGroupsFor, normalizeVi, emptyFilters, dacDiemOptions, type Filters } from "@/lib/filters";
+import { tenLoaiHinhMenu } from "@/lib/categories";
 import { docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
 import { phuongMoiCua, phuongMoiCuaQuan, newProvinceOf } from "@/lib/locations";
 import { provincesOld, provincesNew } from "@/lib/diaDanhNguon";
@@ -19,6 +20,32 @@ function loaiTuNhan(nhan: string, nq: string, mb: "ban" | "thue"): string[] {
   if (khop.length) return khop;
   const dau = n.split(" ")[0];
   return nhom.flatMap((x) => x.items).filter((t) => normalizeVi(t).split(/[^a-z0-9]+/).includes(dau));
+}
+
+/** ĐỌC LOẠI HÌNH THẲNG TỪ CÂY LOẠI HÌNH CHA – CON (anh 07/11/2026: "làm chuẩn cách đọc loại hình theo cha và con") — một nguồn
+ *  typeGroupsFor + tên hiện trên menu (tenLoaiHinhMenu). Cụm DÀI NHẤT khớp trước: tên CHA → cả nhóm ("bđs nghỉ dưỡng"), tên CON → đúng
+ *  loại con ("căn hộ dịch vụ", "villa"). Tên con trùng tên cha ("đất") → cha. "căn hộ" / "chung cư" là một nhu cầu → cả nhóm (luật cũ).
+ *  Mục đang đứng trước, không có mới tra mục kia. Không khớp gì → [] (dùng cách đọc cũ theo từ đồng nghĩa). */
+function loaiTheoCay(nq: string, mb: "ban" | "thue"): string[] {
+  const k = (s: string) => normalizeVi(s).replace(/[^a-z0-9]+/g, " ").trim();
+  for (const m of [mb, mb === "ban" ? "thue" : "ban"] as const) {
+    // "căn hộ" / "chung cư" là MỘT nhu cầu → cả nhóm (luật đã chốt) — đặt TRƯỚC để thắng tên loại con cùng chữ
+    const ten: { k: string; loai: string[] }[] = ["can ho", "chung cu"].map((x) => ({ k: x, loai: typeGroupsFor(m).find((g) => k(g.label) === "can ho chung cu")?.items ?? [] }));
+    for (const g of typeGroupsFor(m)) {
+      if (g.label === "Khác") continue;
+      ten.push({ k: k(g.label), loai: g.items });
+      for (const t of g.items) {
+        const cacTen = [t, tenLoaiHinhMenu(t, m), ...t.split("/"), ...tenLoaiHinhMenu(t, m).split(",")].map(k).filter((x) => x.length >= 3);
+        for (const x of new Set(cacTen)) if (x !== k(g.label)) ten.push({ k: x, loai: [t] });
+      }
+    }
+    ten.sort((a, b) => b.k.length - a.k.length);
+    let con = ` ${nq.trim()} `;
+    const ra: string[] = [];
+    for (const x of ten) if (x.loai.length && con.includes(` ${x.k} `)) { ra.push(...x.loai); con = con.replace(` ${x.k} `, " # "); }
+    if (ra.length) return [...new Set(ra)];
+  }
+  return [];
 }
 
 /** Câu gõ → các trường lọc (khu vực · loại hình · giá · phòng ngủ) — phần còn lại để ô tìm xử lý */
@@ -68,7 +95,11 @@ export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
     const b = loaiTuNhan(t, nq, mb === "ban" ? "thue" : "ban");
     return dung(b) ? b : a;
   };
-  if (p.types.length) f.types = [...new Set(p.types.flatMap(loaiCua))];
+  const theoCay = loaiTheoCay(nq.replace(/ nha trang /g, " "), mb);
+  // cây chỉ khớp TÊN CHA ("nhà") mà câu nói rõ loại con bằng từ đồng nghĩa ("nhà mặt tiền" → Nhà mặt phố) → lấy loại con
+  const conDongNghia = p.types.length ? [...new Set(p.types.flatMap(loaiCua))].filter((t) => theoCay.includes(t)) : [];
+  if (theoCay.length) f.types = conDongNghia.length && conDongNghia.length < theoCay.length ? conDongNghia : theoCay;
+  else if (p.types.length) f.types = [...new Set(p.types.flatMap(loaiCua))];
   // "nha trang" (gõ không dấu) là nơi chốn, không phải "nhà"
   else if (/ nha /.test(nq.replace(/ nha trang /g, " ")) && !/ nha dat /.test(nq)) f.types = typeGroupsFor(mb).find((g) => g.label === "Nhà")?.items ?? [];
   f.priceMin = p.priceMinTy;
