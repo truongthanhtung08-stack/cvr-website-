@@ -532,9 +532,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       rel="noopener noreferrer"
                       aria-label="Mở trong Zalo"
                       title="Mở trong Zalo"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#0068ff] text-[12px] font-bold text-white transition active:scale-95"
+                      // LOGO MINI APP theo chuẩn Zalo (docs.zaloplatforms.com/docs/MA/zaui/foundation/MiniAppLogo, anh 07/11/2026: "dùng đúng
+                      // logo Zalo Mini App"): ảnh đại diện CHÍNH Mini App Coastal Land, ô vuông có viền ngoài, bo góc = 20% chiều rộng (36 → 7px)
+                      className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-[7px] bg-white ring-1 ring-cvr-line transition active:scale-95"
                     >
-                      Za
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/logo/app-icon-1024.png" alt="Coastal Land Mini App" width={36} height={36} loading="lazy" className="h-full w-full object-cover" />
                     </a>
                     <ShareButtons title={tieuDe1Dong} />
                   </div>
@@ -880,7 +883,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4).
             Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
         {contact && (
-        <div data-do-cao="lienhe-h" className="an-khi-go-phim fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <div data-do-cao="lienhe-h" className="an-khi-go-phim fixed inset-x-0 bottom-0 z-40 flex items-center gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
           {hetHan ? <NutYeuCauLienHe /> : <ContactBarMobile listingId={l.id} phoneMask={phoneMask} avatar={contact.avatar} ten={contact.name} />}
         </div>
         )}

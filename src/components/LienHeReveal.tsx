@@ -231,7 +231,9 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
   }, [muonZalo, phones]);
   // Ô Zalo chỉ có LOGO → gọn đúng cỡ logo, nhường chỗ cho ô số (chủ dự án 22/10/2026 tối, ảnh chụp: ô Zalo to mà trống, ô số
   // chật, biểu tượng mắt lòi ra mép khi máy để chữ to).
-  const nutNhan = "flex w-14 shrink-0 items-center justify-center rounded-lg border border-cvr-line bg-white py-2.5 transition active:scale-95";
+  // GỌN MỘT HÀNG (anh 07/11/2026: "khối Tên - Zalo - Số ĐT dưới chân gọn gàng, dễ nhìn, tính cả khi có avatar"): ba ô CÙNG CAO 44px —
+  // ảnh đại diện (ảnh thật hoặc chữ tắt) 44×44, ô Zalo 44×44, nút số chiếm phần còn lại
+  const nutNhan = "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-cvr-line bg-white transition active:scale-95";
   // CHỮ PHÓNG TO (Zalo / Facebook tự phóng chữ theo cỡ chữ điện thoại — chủ dự án 21/10/2026): nút số mà xuống 2 dòng
   // thì thanh đáy cao gấp đôi, che nửa màn hình. Số che *** + mắt KHÔNG xuống dòng (22/10) nên đo cả chữ TRÀN NGANG khỏi nút
   // (đo kiểu chữ 160% 22/10: tràn 190>168) → bậc 1 bỏ biểu tượng điện thoại trong nút, bậc 2 ẩn thêm ảnh đại diện.
@@ -255,12 +257,12 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
 
   // Người đăng có 2 số → thanh đáy giữ nguyên 2 nút; bấm vào thì mở bảng chọn số nào.
   if (phone && phones && phones.length > 1) {
-    const nut = "flex min-w-0 flex-[3] items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition active:scale-95";
+    const nut = "flex min-w-0 flex-[3] items-center justify-center gap-2 h-11 rounded-lg text-sm font-bold transition active:scale-95";
     return (
       <>
         <AnhNguoiDang avatar={avatar} ten={ten} />
         <button type="button" onClick={() => setChon("zalo")} className={nutNhan}>
-          <ZaloMark className="h-7 w-7" />
+          <ZaloMark className="h-6 w-6" />
         </button>
         <button type="button" onClick={() => setChon("goi")} className={`${nut} bg-cvr-blue text-white`}>
           <PhoneIcon />
@@ -275,7 +277,7 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
                   key={p}
                   href={chon === "goi" ? `tel:${telOf(p)}` : `https://zalo.me/${digitsOf(p)}`}
                   onClick={() => setChon(null)}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-cvr-blue py-2.5 text-sm font-bold text-white"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-cvr-blue h-11 text-sm font-bold text-white"
                 >
                   {chon === "goi" && <PhoneIcon />}
                   {p}
@@ -294,9 +296,9 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
       <>
         <AnhNguoiDang avatar={avatar} ten={ten} />
         <a href={`https://zalo.me/${digitsOf(phone)}`} className={nutNhan}>
-          <ZaloMark className="h-7 w-7" />
+          <ZaloMark className="h-6 w-6" />
         </a>
-        <a href={`tel:${telOf(phone)}`} className="flex min-w-0 flex-[3] items-center justify-center gap-2 rounded-lg bg-cvr-blue py-2.5 text-sm font-bold text-white transition active:scale-95">
+        <a href={`tel:${telOf(phone)}`} className="flex min-w-0 flex-[3] items-center justify-center gap-2 rounded-lg bg-cvr-blue h-11 text-sm font-bold text-white transition active:scale-95">
           <PhoneIcon />
           Gọi ngay
         </a>
@@ -308,9 +310,9 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
     <>
       {gon < 2 && <AnhNguoiDang avatar={avatar} ten={ten} />}
       <button type="button" onClick={() => { setMuonZalo(true); reveal(); }} disabled={loading} className={`${nutNhan} disabled:opacity-60`}>
-        <ZaloMark className="h-7 w-7" />
+        <ZaloMark className="h-6 w-6" />
       </button>
-      <button type="button" data-hien-so onClick={reveal} disabled={loading} className="flex min-w-0 flex-[3] items-center justify-center gap-2 rounded-lg bg-cvr-blue py-2.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60">
+      <button type="button" data-hien-so onClick={reveal} disabled={loading} className="flex min-w-0 flex-[3] items-center justify-center gap-2 rounded-lg bg-cvr-blue h-11 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60">
         {gon < 1 && <PhoneIcon />}
         <span ref={chuSo} className="min-w-0 text-center leading-tight">{loading ? "Đang mở…" : <span className="inline-flex items-center gap-1.5 whitespace-nowrap">{phoneMask}<MatIcon /></span>}</span>
       </button>
