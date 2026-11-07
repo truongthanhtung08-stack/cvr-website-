@@ -4,10 +4,19 @@
 export function veDauKhoi(nut: HTMLElement) {
   const khoi = (nut.closest("section") ?? nut.parentElement) as HTMLElement | null;
   if (!khoi) return;
-  requestAnimationFrame(() => {
+  // ĐO SAU KHI NỘI DUNG ĐÃ CO (07/11/2026: đo trước khi co → Thu gọn xong bị nhảy xuống mục sau "Tiện ích") — chờ React vẽ xong (2 khung hình)
+  // CHE PHÍA TRÊN ĐO THẬT (header, thanh tiêu đề, thanh mục dính) — trước ghi cứng 130 px, điện thoại cao hơn nên đầu khối bị che
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    let che = 0;
+    for (const e of document.querySelectorAll<HTMLElement>("header, nav, [class*='sticky'], [class*='fixed']")) {
+      const cs = getComputedStyle(e);
+      if (cs.position !== "sticky" && cs.position !== "fixed") continue;
+      const r = e.getBoundingClientRect();
+      if (r.height > 0 && r.top <= 4 + che && r.bottom < window.innerHeight / 2) che = Math.max(che, r.bottom);
+    }
     const tren = khoi.getBoundingClientRect().top;
-    if (tren < 0) window.scrollTo({ top: window.scrollY + tren - 130 });
-  });
+    if (tren < che + 8) window.scrollTo({ top: window.scrollY + tren - che - 12 });
+  }));
 }
 
 // CHỖ CẮT KHI THU GỌN — MỘT LUẬT CHO CẢ WEB (chủ dự án 31/10/2026: "không cắt ngang ảnh / bản đồ", "làm là code cả hệ thống"):

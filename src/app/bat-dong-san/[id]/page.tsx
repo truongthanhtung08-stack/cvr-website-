@@ -40,7 +40,7 @@ import { getProject, getProjects } from "@/lib/contentDb";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { chuanHoaSdt } from "@/lib/phone";
-import MoTaThuGon from "@/components/MoTaThuGon";
+import ThuGonTrang from "@/components/ThuGonTrang";
 import RichContent from "@/components/RichContent";
 import { tieuDeGoogle } from "@/lib/thang";
 
@@ -682,14 +682,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {/* Menu dính — sáng theo mục đang xem, bấm để cuộn mượt (như trang dự án) */}
               <ProjectNav items={nav} />
 
+              {/* XEM THÊM / THU GỌN MỘT KIỂU CHO CẢ TRANG TIN (anh 07/11/2026: "đến độ dài nhất định cần có xem thêm, thu gọn cuối trang,
+                  đúng 1 kiểu, không có kiểu thứ 2") — cùng ThuGonTrang của trang Dự án; ô Mô tả không còn thu gọn riêng */}
+              <ThuGonTrang>
               {/* Mô tả — chỉ hiện khi người đăng có viết (không bịa) */}
               {d.descriptionParas.length > 0 && (
                 <Section id="mo-ta" title="Thông tin mô tả">
-                  <MoTaThuGon>
-                    <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
-                      <RichContent paragraphs={d.descriptionParas} title={tieuDe1Dong} wysiwyg />
-                    </div>
-                  </MoTaThuGon>
+                  <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
+                    <RichContent paragraphs={d.descriptionParas} title={tieuDe1Dong} wysiwyg />
+                  </div>
                 </Section>
               )}
 
@@ -782,6 +783,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   bấm gửi mới xác minh (đã đăng nhập / đã xác minh số thì gửi luôn). */}
               {/* Điện thoại: cách khối Vị trí đúng bằng khoảng giữa các khối khác (20/10/2026) */}
               <div className="mt-5 lg:mt-0"><KhoiDanhGiaTin listingId={l.id} /></div>
+              </ThuGonTrang>
             </div>
 
             {/* Cột phụ — môi giới (dính khi cuộn) */}
