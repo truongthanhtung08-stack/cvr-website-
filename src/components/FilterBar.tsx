@@ -1562,6 +1562,11 @@ export function LocationPanel({
   const phuongCua = (w: string): LocationSel => (isNew ? { province: prov, ward: w } : { province: prov, district: dist, ward: w });
   const doiPhuong = (w: string) => {
     const sel = phuongCua(w);
+    // tỉnh đang hiện tick CHUYỂN TỪ HỆ KIA (anh 08/11/2026: "tao muốn chọn 1 phường xã của Bắc Ninh") → bấm phường = chỉ còn phường đó
+    if (heGoc !== mode && locations.some((l) => cungTinh(l, prov))) {
+      onChange([...locations.filter((l) => !cungTinh(l, prov)), sel]);
+      return;
+    }
     const daChon = locations.some((l) => cungNoi(l, sel));
     let next = daChon ? locations.filter((l) => !cungNoi(l, sel)) : [...locations.filter((l) => !laToanBo(l)), sel];
     const conPhuong = next.some((l) => l.province === prov && (isNew || l.district === dist) && !!l.ward);
