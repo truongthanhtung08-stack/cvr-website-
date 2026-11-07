@@ -257,7 +257,7 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
 
   // Người đăng có 2 số → thanh đáy giữ nguyên 2 nút; bấm vào thì mở bảng chọn số nào.
   if (phone && phones && phones.length > 1) {
-    const nut = "flex min-w-0 flex-1 px-3 items-center justify-center gap-2 h-9 rounded-lg text-[13px] font-semibold transition active:scale-95";
+    const nut = "flex shrink-0 px-4 items-center justify-center gap-2 h-9 rounded-lg text-[13px] font-semibold transition active:scale-95";
     return (
       <>
         <AnhNguoiDang avatar={avatar} ten={ten} />
@@ -298,7 +298,7 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
         <a href={`https://zalo.me/${digitsOf(phone)}`} className={nutNhan}>
           <ZaloMark className="h-6 w-6" />
         </a>
-        <a href={`tel:${telOf(phone)}`} className="flex min-w-0 flex-1 px-3 items-center justify-center gap-2 rounded-lg bg-cvr-blue h-9 text-[13px] font-semibold text-white transition active:scale-95">
+        <a href={`tel:${telOf(phone)}`} className="flex shrink-0 px-4 items-center justify-center gap-2 rounded-lg bg-cvr-blue h-9 text-[13px] font-semibold text-white transition active:scale-95">
           <PhoneIcon />
           Gọi ngay
         </a>
@@ -312,7 +312,7 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
       <button type="button" onClick={() => { setMuonZalo(true); reveal(); }} disabled={loading} className={`${nutNhan} disabled:opacity-60`}>
         <ZaloMark className="h-6 w-6" />
       </button>
-      <button type="button" data-hien-so onClick={reveal} disabled={loading} className="flex min-w-0 flex-1 px-3 items-center justify-center gap-2 rounded-lg bg-cvr-blue h-9 text-[13px] font-semibold text-white transition active:scale-95 disabled:opacity-60">
+      <button type="button" data-hien-so onClick={reveal} disabled={loading} className="flex shrink-0 px-4 items-center justify-center gap-2 rounded-lg bg-cvr-blue h-9 text-[13px] font-semibold text-white transition active:scale-95 disabled:opacity-60">
         {gon < 1 && <PhoneIcon />}
         <span ref={chuSo} className="min-w-0 text-center leading-tight">{loading ? "Đang mở…" : <span className="inline-flex items-center gap-1.5 whitespace-nowrap">{phoneMask}<MatIcon /></span>}</span>
       </button>

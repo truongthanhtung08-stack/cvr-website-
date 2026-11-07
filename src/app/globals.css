@@ -224,13 +224,14 @@ select option {
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  min-height: 34px;
-  min-width: 124px;
-  padding-inline: 1rem;
+  /* GỌN, CÂN ĐỐI VỚI NỘI DUNG (anh 07/11/2026: "nút xem thêm thu gọn quá to, che hết nội dung") — 34→28px, chữ 12px */
+  min-height: 28px;
+  min-width: 96px;
+  padding-inline: 0.875rem;
   border-radius: 9999px;
   background-image: linear-gradient(135deg, #2a2a2c 0%, #060606 100%);
   color: #fff;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.35),
