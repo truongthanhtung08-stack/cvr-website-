@@ -18,7 +18,7 @@ export const GIA_DUOI: Record<"ban" | "thue", number[]> = { ban: [1, 2, 3, 5, 10
 export function duongDanSach(muc: "ban" | "thue", f: Filters): string | null {
   const conLai =
     f.keyword.trim() || f.project || f.areaMin != null || f.areaMax != null || f.priceMin != null ||
-    f.beds || f.direction || f.legal || f.furnishing || f.verified || f.broker || f.locations.length > 1;
+    f.beds || f.direction || f.legal || f.furnishing || f.verified || f.broker || !!f.dacDiem?.length || f.locations.length > 1;
   if (conLai) return null;
   const goc = muc === "thue" ? "/cho-thue" : "/mua-ban";
 

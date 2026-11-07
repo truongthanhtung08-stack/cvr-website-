@@ -1,5 +1,5 @@
 import type { Listing } from "@/lib/data";
-import { sortListings, applyFilters, emptyFilters, normalizeVi, matchType, type Filters, type SortKey } from "@/lib/filters";
+import { sortListings, applyFilters, emptyFilters, normalizeVi, matchType, dacDiemOptions, type Filters, type SortKey } from "@/lib/filters";
 import { smartFilter, smartSearch, parseQuery, coKhopTieuChi, chuChuaHieu } from "@/lib/smartSearch";
 import { nhanDoiHienThi } from "@/lib/nhanDoiHienThi";
 import { locTuCau } from "@/lib/locTuCau";
@@ -53,7 +53,7 @@ export function cauThanhBoLoc(f: Filters, purpose: "ban" | "thue"): Filters | nu
   // (goiYNoiLong) — "nhà" trơn không thành loại Nhà, "nhà mặt tiền" không thành Nhà mặt phố → kết quả lệch với các trường đang hiện
   const c = locTuCau(kw, purpose);
   const coGi = c.locations.length || c.types.length || c.priceMin != null || c.priceMax != null || c.beds || c.areaMin != null || c.areaMax != null
-    || c.direction || c.legal || c.furnishing || c.verified || c.broker;
+    || c.direction || c.legal || c.furnishing || c.verified || c.broker || c.dacDiem?.length;
   if (!coGi) return null;
   const coGiaF = f.priceMin != null || f.priceMax != null;
   const coDtF = f.areaMin != null || f.areaMax != null;
@@ -71,11 +71,12 @@ export function cauThanhBoLoc(f: Filters, purpose: "ban" | "thue"): Filters | nu
     furnishing: f.furnishing || c.furnishing,
     verified: f.verified || c.verified,
     broker: f.broker || c.broker,
+    dacDiem: f.dacDiem?.length ? f.dacDiem : c.dacDiem,
     // Chi tiết máy không làm trường lọc ("view biển", "gần trường"…) và TỪ chưa hiểu ("sân vườn", "nở hậu" — chủ dự án
     // 21/10/2026) giữ lại làm từ khoá dò nội dung tin, XẾP tin khớp lên đầu
     // "trung tâm" + nơi chốn là VỊ TRÍ: locDanhSach xếp tin tự ghi ở trung tâm lên trước (khớp trọn cụm) — không để bộ dò chữ
     // khớp lẻ "tâm"/"trung" đẩy tin không liên quan lên đầu
-    keyword: [...parseQuery(kw).features.filter((x) => (x !== "trung tâm" || !c.locations.length) && x !== "sổ hồng" && x !== "full nội thất"), chuChuaHieu(kw).replace(/,/g, "")].filter(Boolean).join(" "),
+    keyword: [...parseQuery(kw).features.filter((x) => !dacDiemOptions.includes(x) && x !== "sổ hồng" && x !== "full nội thất"), chuChuaHieu(kw).replace(/,/g, "")].filter(Boolean).join(" "),
   };
 }
 
@@ -428,6 +429,7 @@ export function boLocKhoiDau(
     if (f.priceMin == null && f.priceMax == null) { f.priceMin = c.priceMin; f.priceMax = c.priceMax; }
     if (!f.beds) f.beds = c.beds;
     f.direction ||= c.direction; f.legal ||= c.legal; f.furnishing ||= c.furnishing;
+    if (!f.dacDiem?.length && c.dacDiem?.length) f.dacDiem = c.dacDiem;
   }
   // Địa chỉ chưa chỉ định loại hình → lấy loại hình của danh mục đang xem
   if (initialTypes?.length && !f.types.length) f.types = [...initialTypes];

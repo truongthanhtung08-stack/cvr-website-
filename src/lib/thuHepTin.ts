@@ -20,4 +20,4 @@ export const demLoaiTu = (bang: [string, number][], loai: string) => bang.reduce
 /** Khách đã chọn trường nào KHÁC loại hình chưa — chưa thì bảng Loại hình để đủ */
 export const coTruongKhacLoai = (f: Filters) =>
   f.locations.length > 0 || !!f.project || f.priceMin != null || f.priceMax != null || f.areaMin != null || f.areaMax != null ||
-  !!f.beds || !!f.direction || !!f.legal || !!f.furnishing || f.verified || f.broker;
+  !!f.beds || !!f.direction || !!f.legal || !!f.furnishing || f.verified || f.broker || !!f.dacDiem?.length;

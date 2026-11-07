@@ -1,6 +1,6 @@
 // Câu gõ → các trường lọc. Tách khỏi TruongLocTrangChu để FilterBar (trang kết quả) dùng chung mà không
 // nạp chéo hai component (FilterBar ↔ TruongLocTrangChu) — nạp chéo làm trang chủ không chạy được.
-import { typeGroupsFor, normalizeVi, emptyFilters, type Filters } from "@/lib/filters";
+import { typeGroupsFor, normalizeVi, emptyFilters, dacDiemOptions, type Filters } from "@/lib/filters";
 import { docDienTich, docLocThem, parseQuery } from "@/lib/smartSearch";
 import { phuongMoiCua } from "@/lib/locations";
 
@@ -52,6 +52,9 @@ export function locTuCau(cau: string, mb: "ban" | "thue"): Filters {
   const lt = docLocThem(cau);
   f.direction = lt.direction; f.legal = lt.legal; f.furnishing = lt.furnishing;
   f.verified = lt.verified; f.broker = lt.broker; if (lt.tinhTrang) f.tinhTrang = lt.tinhTrang;
+  // Đặc điểm (Lọc thêm): "view biển", "hẻm ô tô"… — cùng bảng DAC_DIEM
+  const dd = p.features.filter((x) => dacDiemOptions.includes(x));
+  if (dd.length) f.dacDiem = dd;
   const dt = docDienTich(cau);
   f.areaMin = dt.areaMin; f.areaMax = dt.areaMax;
   return f;
@@ -74,6 +77,7 @@ export function gopCau(f0: Filters, cau: string, mb: "ban" | "thue"): Filters {
     if (cu.direction && f.direction === cu.direction) f.direction = "";
     if (cu.legal && f.legal === cu.legal) f.legal = "";
     if (cu.furnishing && f.furnishing === cu.furnishing) f.furnishing = "";
+    if (cu.dacDiem?.length && giong(f.dacDiem, cu.dacDiem)) f.dacDiem = [];
   }
   const c = locTuCau(cau, mb);
   const coGia = c.priceMin != null || c.priceMax != null;
@@ -92,6 +96,7 @@ export function gopCau(f0: Filters, cau: string, mb: "ban" | "thue"): Filters {
     furnishing: c.furnishing || f.furnishing,
     verified: c.verified || f.verified,
     broker: c.broker || f.broker,
+    dacDiem: c.dacDiem?.length ? c.dacDiem : f.dacDiem,
     tinhTrang: c.tinhTrang || f.tinhTrang,
   };
 }

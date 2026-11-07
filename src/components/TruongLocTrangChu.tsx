@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
-import { LocationPanel, ProjectPanel, RangePanel, Chip, SwitchRow, NutXem, DaChon, loaiTheoCha, nhanLoai, nhanNoi, tenLoai } from "@/components/FilterBar";
+import { LocationPanel, ProjectPanel, RangePanel, Chip, SwitchRow, NutXem, DaChon, NhomDacDiem, tenDacDiem, loaiTheoCha, nhanLoai, nhanNoi, tenLoai } from "@/components/FilterBar";
 import { PanelLoaiBdsDuAn, PanelLocThemDuAn, PanelChuDauTu } from "@/components/TruongDuAn";
 import { CAY_LOAI_DU_AN, dsTinhTrang, thuHepDuAn, type DuAnLoc } from "@/lib/thuHepDuAn";
 import { coTruongKhacLoai, demLoaiTu } from "@/lib/thuHepTin";
@@ -105,7 +105,7 @@ export default function TruongLocTrangChu({
 
   // số mục đang bật trong "Lọc thêm" (cùng cách đếm của FilterBar)
   // màn tìm điện thoại (the): Diện tích nằm TRONG "Lọc thêm" (chỉ 3 thẻ dưới thẻ tìm) → đếm luôn
-  const soThem = (f.project ? 1 : 0) + (the && !hien("dt") && (f.areaMin != null || f.areaMax != null) ? 1 : 0) + (f.beds ? 1 : 0) + (mb === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0)) + (f.verified ? 1 : 0) + (f.broker ? 1 : 0);
+  const soThem = (f.project ? 1 : 0) + (the && !hien("dt") && (f.areaMin != null || f.areaMax != null) ? 1 : 0) + (f.beds ? 1 : 0) + (mb === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0)) + (f.verified ? 1 : 0) + (f.broker ? 1 : 0) + (f.dacDiem?.length ?? 0);
   return (
     <FilterDropdownGroup>
       {hang(<>
@@ -171,7 +171,8 @@ export default function TruongLocTrangChu({
               ...(f.furnishing ? [{ nhan: f.furnishing, bo: () => set({ furnishing: "" }) }] : []),
               ...(f.verified ? [{ nhan: "Tin xác thực", bo: () => set({ verified: false }) }] : []),
               ...(f.broker ? [{ nhan: "Môi giới chuyên nghiệp", bo: () => set({ broker: false }) }] : []),
-            ]} onBoHet={() => set({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false })} />
+              ...(f.dacDiem ?? []).map((d) => ({ nhan: tenDacDiem(d), bo: () => set({ dacDiem: (f.dacDiem ?? []).filter((x) => x !== d) }) })),
+            ]} onBoHet={() => set({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false, dacDiem: [] })} />
               {the && !hien("dt") && (
                 <div>
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Diện tích</p>
@@ -207,6 +208,7 @@ export default function TruongLocTrangChu({
                     : furnishingOptions.map((x) => <Chip key={x} active={f.furnishing === x} onClick={() => set({ furnishing: f.furnishing === x ? "" : x })}>{x}</Chip>)}
                 </div>
               </div>
+              <NhomDacDiem chon={f.dacDiem ?? []} types={f.types} onDoi={(ds) => set({ dacDiem: ds })} />
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Lọc khác</p>
                 <div className="space-y-1">
@@ -215,7 +217,7 @@ export default function TruongLocTrangChu({
                 </div>
               </div>
               {/* CHỌN LÀ LỌC NGAY — không nút Đặt lại · Áp dụng (chủ dự án 01/11/2026: mỗi mức nhu cầu có lựa chọn, không ép khách bấm thêm) */}
-              {loiRa(close, () => set({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false }))}
+              {loiRa(close, () => set({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false, dacDiem: [] }))}
             </div>
           )}
         </FilterDropdown>}

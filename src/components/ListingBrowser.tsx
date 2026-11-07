@@ -17,6 +17,7 @@ import PropertyCard from "@/components/PropertyCard";
 import TheTinMobile from "@/components/TheTinMobile";
 import FilterBar from "@/components/FilterBar";
 import { cauThanhBoLoc, boLocKhoiDau } from "@/lib/locDanhSach";
+import { cumTuDam } from "@/components/Highlight";
 import { newProvinceOf } from "@/lib/locations";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
@@ -26,7 +27,6 @@ import {
   hasActiveFilters,
   priceRangesFor,
   areaRangesFor,
-  normalizeVi,
   type Filters,
   type SortKey,
 } from "@/lib/filters";
@@ -301,10 +301,9 @@ export default function ListingBrowser({
   const khoaKetQua = `${lanTim}-${JSON.stringify(filters)}`;
   const khoaKetQuaDau = useRef(khoaKetQua);
   const pageItems = kq?.trang ?? [];
-  // BÔI ĐẬM KIỂU GOOGLE (chủ dự án 18/10/2026): chữ khách gõ (bỏ chữ nối) in đậm trong tên tin kết quả
-  const BO_NOI = new Set(["ban", "mua", "thue", "cho", "can", "tai", "o", "va", "co", "gia", "nha", "dat", "nhu", "cua", "duoi", "tren", "tu", "den"]);
-  const tuGo = filters.keyword.split(/\s+/).filter((w) => { const n = normalizeVi(w).replace(/[^a-z0-9]/g, ""); return n.length >= 2 && !BO_NOI.has(n); });
-  const chuDam = (id: string) => (kq?.boiDam[id]?.length ? kq.boiDam[id] : tuGo);
+  // BÔI ĐẬM KIỂU GOOGLE (anh 18/10 + 07/11/2026: "bôi theo từ, cụm từ"): bôi CỤM máy hiểu từ câu khách tìm — loại hình ("căn hộ"),
+  // tên nơi ("Quy Nhơn"), đặc điểm, phần nội dung còn lại — không bôi chữ lẻ trong cụm ("hộ" của "căn hộ"). Một bộ cho mọi tin trên trang.
+  const cumDam = useMemo(() => cumTuDam(filters.keyword), [filters.keyword, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: đọc lại khi địa danh về
   const totalPages = kq?.soTrang ?? 1;
   const current = kq?.trangHienTai ?? 1;
   const provinces = kq?.khuVuc ?? [];
@@ -583,8 +582,8 @@ export default function ListingBrowser({
                 {pageItems.flatMap((item, i) => [dongTang(item, i), (
                   // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
                   item.hetHan
-                    ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={chuDam(item.id)} />
-                    : <TheTinMobile key={khoaThe(item)} item={item} terms={chuDam(item.id)} uuTien={i === 0} />
+                    ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={cumDam} />
+                    : <TheTinMobile key={khoaThe(item)} item={item} terms={cumDam} uuTien={i === 0} />
                 )])}
               </div>
               {/* DESKTOP (≥ 640px): MỖI TIN MỘT HÀNG, nội dung đúng thẻ điện thoại theo cấp, khung ảnh theo cấp (TheTinMobile pc, chủ dự án
@@ -594,8 +593,8 @@ export default function ListingBrowser({
               <div className="reveal is-visible cards-stagger hidden sm:flex sm:flex-col sm:gap-5">
                 {pageItems.flatMap((item, i) => [dongTang(item, i), (
                   item.hetHan
-                    ? <PropertyCard key={khoaThe(item)} item={item} layout="list" showTime terms={chuDam(item.id)} />
-                    : <div key={khoaThe(item)} className="overflow-hidden rounded-xl bg-white shadow-lux"><TheTinMobile item={item} terms={chuDam(item.id)} pc uuTien={i === 0} /></div>
+                    ? <PropertyCard key={khoaThe(item)} item={item} layout="list" showTime terms={cumDam} />
+                    : <div key={khoaThe(item)} className="overflow-hidden rounded-xl bg-white shadow-lux"><TheTinMobile item={item} terms={cumDam} pc uuTien={i === 0} /></div>
                 )])}
               </div>
 

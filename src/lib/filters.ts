@@ -298,6 +298,38 @@ export function listingProBroker(id: string): boolean {
 export type LocationSel = { province: string; district?: string; ward?: string };
 export const MAX_LOCATIONS = 5;
 
+// ĐẶC ĐIỂM (trường Lọc thêm) — MỘT BẢNG cho cả bộ đọc câu (parseQuery) lẫn trường chọn (07/11/2026, anh: "view biển = các loại khác trong
+// Lọc thêm = phải đọc được"). Thêm đặc điểm mới: thêm MỘT dòng ở đây là ô tìm đọc được, Lọc thêm có nút, lọc tin, địa chỉ trang đều theo.
+// [nhãn, các cách gõ không dấu]
+export const DAC_DIEM: [string, string[]][] = [
+  ["view biển", ["view bien", "huong bien", "gan bien", "sat bien", "mat bien", "ven bien"]],
+  ["view sông", ["view song", "ven song", "mat song"]],
+  ["mới xây", ["moi xay", "moi 100", "xay moi", "moi hoan thien", "nha moi"]],
+  ["full nội thất", ["full noi that", "day du noi that", "noi that cao cap", "co noi that"]],
+  // "chính chủ" là người đăng (chủ nhà tự bán), không phải pháp lý — bỏ khỏi đây để không ép vào trường sổ hồng (21/10/2026)
+  ["sổ hồng", ["so hong", "so do", "so rieng", "phap ly ro rang"]],
+  ["hẻm ô tô", ["o to", "hem o to", "oto vao nha", "duong rong"]],
+  ["gần trường", ["gan truong", "truong hoc", "gan truong dai hoc", "gan dai hoc"]],
+  ["gần chợ", ["gan cho", "sieu thi"]],
+  ["trung tâm", ["trung tam", "gan trung tam"]],
+];
+/** Đặc điểm có nút trong Lọc thêm — "sổ hồng", "full nội thất" đã có trường riêng (Pháp lý · Nội thất) */
+export const dacDiemOptions = DAC_DIEM.map(([n]) => n).filter((n) => n !== "sổ hồng" && n !== "full nội thất");
+/** TẦNG 3 CO GIÃN THEO LOẠI HÌNH (tài liệu "Hệ thống bộ lọc thông minh đa tầng"): đặc điểm không hợp loại đang chọn thì không hiện —
+ *  đất không có "mới xây", căn hộ không có "hẻm ô tô". Chưa chọn loại = hiện đủ. Đặc điểm đang chọn luôn hiện để bỏ được. */
+export function dacDiemChoLoai(types: string[], dangChon: string[] = []): string[] {
+  const n = types.map((t) => normalizeVi(t));
+  const laDat = n.length > 0 && n.every((t) => t.startsWith("dat"));
+  const laCanHo = n.length > 0 && n.every((t) => /can ho|chung cu|condotel|officetel|penthouse|duplex|studio/.test(t));
+  return dacDiemOptions.filter((d) => dangChon.includes(d) || !((laDat && d === "mới xây") || (laCanHo && d === "hẻm ô tô")));
+}
+const tuKhoaDD = new Map(DAC_DIEM);
+/** Tin có đặc điểm này không — đọc tiêu đề + mô tả + các ô ghi tự do */
+export function coDacDiem(l: { title: string; desc?: string; searchText?: string }, nhan: string): boolean {
+  const nd = ` ${normalizeVi(`${l.title} ${l.desc ?? ""} ${l.searchText ?? ""}`).replace(/[^a-z0-9]+/g, " ")} `;
+  return (tuKhoaDD.get(nhan) ?? [normalizeVi(nhan)]).some((k) => nd.includes(` ${k} `));
+}
+
 export type Filters = {
   locations: LocationSel[]; // đa khu vực (OR giữa các phần tử); rỗng = toàn quốc
   project: string;          // tên dự án (rỗng = mọi dự án)
@@ -312,6 +344,7 @@ export type Filters = {
   furnishing: string;  // nội thất — đặc thù CHO THUÊ
   verified: boolean;   // chỉ tin đã xác thực (toggle kiểu Batdongsan)
   broker: boolean;     // chỉ tin của môi giới chuyên nghiệp (toggle)
+  dacDiem?: string[];  // đặc điểm (Lọc thêm) — nhãn trong dacDiemOptions, tin phải có ĐỦ
   keyword: string;
   // TRƯỜNG RIÊNG MỤC DỰ ÁN (chủ dự án 01/11/2026: bộ lọc chung, bổ sung cho dự án các trường theo chuẩn tra cứu dự án) — không bắt
   // buộc, Mua bán / Cho thuê không dùng: loaiDuAn = slug nhóm loại hình dự án (projectCategories), tinhTrang, chuDauTu = tên chủ đầu tư
@@ -394,6 +427,8 @@ export function filtersFromParams(params: URLSearchParams): Filters {
   f.furnishing = params.get("noithat") ?? "";
   f.verified = params.get("xacthuc") === "1";
   f.broker = params.get("moigioi") === "1";
+  const dd = params.get("dd");
+  if (dd) f.dacDiem = dd.split(",").map((x) => x.trim()).filter((x) => dacDiemOptions.includes(x));
   f.keyword = params.get("q") ?? "";
   const loaida = params.get("loaida");
   if (loaida) f.loaiDuAn = loaida.split(",").map((s) => s.trim()).filter(Boolean);
@@ -420,6 +455,7 @@ export function filtersToParams(f: Filters): URLSearchParams {
   if (f.furnishing) p.set("noithat", f.furnishing);
   if (f.verified) p.set("xacthuc", "1");
   if (f.broker) p.set("moigioi", "1");
+  if (f.dacDiem?.length) p.set("dd", f.dacDiem.join(","));
   if (f.keyword.trim()) p.set("q", f.keyword.trim());
   if (f.loaiDuAn?.length) p.set("loaida", f.loaiDuAn.join(","));
   if (f.tinhTrang) p.set("tinhtrang", f.tinhTrang);
@@ -433,7 +469,7 @@ export function hasActiveFilters(f: Filters): boolean {
     f.locations.length || f.project || f.types.length ||
     f.priceMin != null || f.priceMax != null ||
     f.areaMin != null || f.areaMax != null ||
-    f.beds || f.direction || f.legal || f.furnishing || f.verified || f.broker || f.keyword.trim() ||
+    f.beds || f.direction || f.legal || f.furnishing || f.verified || f.broker || f.dacDiem?.length || f.keyword.trim() ||
     f.loaiDuAn?.length || f.tinhTrang || f.chuDauTu
   );
 }
@@ -594,6 +630,7 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
     if (f.direction && (item.huong ? normalizeVi(item.huong) !== normalizeVi(f.direction) : normalizeVi(ndCua(item).huong ?? "") !== normalizeVi(f.direction))) return false;
     if (f.legal && (item.phapLy ? !khopNhom(item.phapLy, NHOM_PHAP_LY[f.legal]) : ndCua(item).phapLy !== f.legal)) return false;
     if (f.furnishing && (item.noiThat ? !khopNhom(item.noiThat, NHOM_NOI_THAT[f.furnishing]) : ndCua(item).noiThat !== f.furnishing)) return false;
+    if (f.dacDiem?.length && !f.dacDiem.every((d) => coDacDiem(item, d))) return false;
     // TỪ KHOÁ dò MỌI TRƯỜNG CÓ THÔNG TIN của tin (tiêu đề · địa chỉ · loại hình ·
     // giá · diện tích · người đăng · mô tả · pháp lý/hướng/nội thất/tiện ích…).
     // Địa danh dân gian (Mỹ Khê, cầu Rồng…) không có trong danh mục hành chính

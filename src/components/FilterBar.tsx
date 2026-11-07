@@ -26,6 +26,7 @@ import {
   MAX_LOCATIONS,
   legalOptions,
   furnishingOptions,
+  dacDiemChoLoai,
   emptyFilters,
   filtersToParams,
   hasActiveFilters,
@@ -662,7 +663,7 @@ export default function FilterBar({
     (f.project ? 1 : 0) +
     (f.beds ? 1 : 0) +
     (purpose === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0)) +
-    (f.verified ? 1 : 0) + (f.broker ? 1 : 0);
+    (f.verified ? 1 : 0) + (f.broker ? 1 : 0) + (f.dacDiem?.length ?? 0);
 
   // LỐI RA của mỗi bảng chọn (chủ dự án 01/11/2026): một nút "Xem N tin" ghi đúng số kết quả theo lựa chọn — bấm là đóng bảng, tới kết quả
   const chuXem = nhanXem ?? (soKetQua != null ? `Xem ${soKetQua} tin` : "Tìm kiếm");
@@ -849,7 +850,8 @@ export default function FilterBar({
               ...(g.furnishing ? [{ nhan: g.furnishing, bo: () => setN({ furnishing: "" }) }] : []),
               ...(g.verified ? [{ nhan: "Tin xác thực", bo: () => setN({ verified: false }) }] : []),
               ...(g.broker ? [{ nhan: "Môi giới chuyên nghiệp", bo: () => setN({ broker: false }) }] : []),
-            ]} onBoHet={() => setN({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false })} />
+              ...(g.dacDiem ?? []).map((d) => ({ nhan: tenDacDiem(d), bo: () => setN({ dacDiem: (g.dacDiem ?? []).filter((x) => x !== d) }) })),
+            ]} onBoHet={() => setN({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false, dacDiem: [] })} />
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Số phòng ngủ</p>
               <div className="flex flex-wrap gap-1.5">
@@ -896,6 +898,7 @@ export default function FilterBar({
                 </div>
               </div>
             )}
+            <NhomDacDiem chon={g.dacDiem ?? []} types={g.types} onDoi={(ds) => setN({ dacDiem: ds })} />
             {/* Công tắc chuyển từ thanh chính vào đây (theo mockup): Tin xác thực · Môi giới chuyên nghiệp */}
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Lọc khác</p>
@@ -905,7 +908,7 @@ export default function FilterBar({
               </div>
             </div>
             {/* Lọc thêm gồm NHIỀU trường → NHÁP, Áp dụng mới tìm (07/11/2026) */}
-            {loiRaNhap(close, () => setN({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false }))}
+            {loiRaNhap(close, () => setN({ project: "", beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false, dacDiem: [] }))}
           </div>
         )}
       </FilterDropdown>
@@ -1310,7 +1313,7 @@ export function tinhDaChon(locations: LocationSel[]): { tinh: string; so: number
 }
 /** Câu tìm dựng từ các trường đang chọn (lỗi 7): mục đích + loại + khu vực + giá + diện tích — chữ người gõ, không ghi số đếm */
 export function cauTuTruong(f: Filters, purpose: "ban" | "thue", nhom: { label: string; items: string[] }[]): string {
-  const bo = (x: string) => x.replace(/s*(d+)$/, "");
+  const bo = (x: string) => x.replace(/\s*\(\d+\)$/, "");
   const loai = loaiTheoCha(f.types, nhom).map((x) => bo(x.nhan).toLowerCase()).slice(0, 2).join(", ");
   const noi = tinhDaChon(f.locations).map((x) => bo(x.nhan)).slice(0, 3).join(", ");
   const gia = priceRangeText(f.priceMin, f.priceMax).toLowerCase();
@@ -1348,7 +1351,7 @@ export function LocationPanel({
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   // SO NƠI BỎ CHỮ CẤP (07/11/2026): câu gõ "hòa xuân" lưu "Hòa Xuân", bảng ghi "Phường Hòa Xuân" — cùng một nơi → tick, lên đầu, chữ xanh
-  const boCap = (x?: string) => normalizeVi((x ?? "").replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)s+/i, ""));
+  const boCap = (x?: string) => normalizeVi((x ?? "").replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, ""));
   const cungNoi = (a: LocationSel, b: LocationSel) => a.province === b.province && boCap(a.district) === boCap(b.district) && boCap(a.ward) === boCap(b.ward);
   const [q, setQ] = useState("");
   const [prov, setProv] = useState(""); // đường dẫn đang duyệt (chưa cam kết)
@@ -1798,6 +1801,23 @@ function HighlightLabel({ label, q }: { label: string; q: string }) {
         return !n || daGo.includes(n) || n.startsWith(daGo[daGo.length - 1]) ? w : <b key={i} className="font-semibold">{w}</b>;
       })}
     </span>
+  );
+}
+
+/** ĐẶC ĐIỂM trong Lọc thêm — MỘT khối cho mọi bộ lọc (Mua bán · Cho thuê · trang chủ). Nút lấy từ dacDiemOptions (filters.ts), cùng bảng
+ *  ô tìm đọc câu: gõ "view biển" là nút View biển sáng (07/11/2026). Chọn nhiều — tin phải có đủ. */
+export const tenDacDiem = (d: string) => d.charAt(0).toUpperCase() + d.slice(1);
+export function NhomDacDiem({ chon, onDoi, types }: { chon: string[]; onDoi: (ds: string[]) => void; types: string[] }) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Đặc điểm</p>
+      <div className="flex flex-wrap gap-1.5">
+        {dacDiemChoLoai(types, chon).map((d) => {
+          const on = chon.includes(d);
+          return <Chip key={d} active={on} onClick={() => onDoi(on ? chon.filter((x) => x !== d) : [...chon, d])}>{tenDacDiem(d)}</Chip>;
+        })}
+      </div>
+    </div>
   );
 }
 

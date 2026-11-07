@@ -13,7 +13,7 @@
 // khớp để nơi hiển thị BÔI ĐẬM (xem components/Highlight.tsx).
 // ============================================================================
 
-import { applyFilters, emptyFilters, normalizeVi, quaNoiDung, type Filters } from "@/lib/filters";
+import { applyFilters, emptyFilters, normalizeVi, quaNoiDung, DAC_DIEM, type Filters } from "@/lib/filters";
 import { provinces, newProvinceOf } from "@/lib/locations";
 // Tỉnh khách nói (có thể là tên CŨ: "hội an" → Quảng Nam) có chứa tỉnh của nơi tìm được (tên MỚI: Đà Nẵng) không
 const cungTinh = (tinh: string[], p: string) => tinh.some((t) => t === p || newProvinceOf(t) === p);
@@ -334,18 +334,7 @@ const CUM_QUEN = new Map([
 ]);
 
 // Đặc điểm mô tả — khớp vào tiêu đề/mô tả tin
-const DAC_DIEM: [string, string[]][] = [
-  ["view biển", ["view bien", "huong bien", "gan bien", "sat bien", "mat bien", "ven bien"]],
-  ["view sông", ["view song", "ven song", "mat song"]],
-  ["mới xây", ["moi xay", "moi 100", "xay moi", "moi hoan thien", "nha moi"]],
-  ["full nội thất", ["full noi that", "day du noi that", "noi that cao cap", "co noi that"]],
-  // "chính chủ" là người đăng (chủ nhà tự bán), không phải pháp lý — bỏ khỏi đây để không ép vào trường sổ hồng (21/10/2026)
-  ["sổ hồng", ["so hong", "so do", "so rieng", "phap ly ro rang"]],
-  ["hẻm ô tô", ["o to", "hem o to", "oto vao nha", "duong rong"]],
-  ["gần trường", ["gan truong", "truong hoc", "gan truong dai hoc", "gan dai hoc"]],
-  ["gần chợ", ["gan cho", "sieu thi"]],
-  ["trung tâm", ["trung tam", "gan trung tam"]],
-];
+// DAC_DIEM: MỘT NGUỒN ở filters.ts (trường Lọc thêm → Đặc điểm đọc cùng bảng này, 07/11/2026)
 
 // Từ nối / từ vô nghĩa khi chấm điểm
 const TU_BO = new Set([
@@ -831,6 +820,7 @@ function tachTieuChi(f: Filters): Tieu[] {
   if (f.furnishing) ds.push({ ten: "nội thất", giu: false, f: chi({ furnishing: f.furnishing }) });
   if (f.verified) ds.push({ ten: "tin xác thực", giu: false, f: chi({ verified: true }) });
   if (f.broker) ds.push({ ten: "môi giới chuyên nghiệp", giu: false, f: chi({ broker: true }) });
+  for (const d of f.dacDiem ?? []) ds.push({ ten: d, giu: false, f: chi({ dacDiem: [d] }) });
   return ds;
 }
 

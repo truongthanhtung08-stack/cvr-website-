@@ -1,5 +1,5 @@
 import type { Listing } from "@/lib/data";
-import { applyFilters, emptyFilters, normalizeVi, priceToTy } from "@/lib/filters";
+import { applyFilters, emptyFilters, normalizeVi, priceToTy, tenLoaiHinh } from "@/lib/filters";
 import { LOAI_HINH, chuChuaHieu, docDienTich, docLocThem, parseQuery, tenTinhTrongCau } from "@/lib/smartSearch";
 import { cauThanhBoLoc } from "@/lib/locDanhSach";
 import { hrefGoiY, type DongGoiY } from "@/lib/goiYTheoY";
@@ -25,7 +25,7 @@ const CUM_CO_DINH = [
   // loại hình hay gõ (nhãn loại hình thêm từ LOAI_HINH)
   "nhà", "đất", "căn hộ", "chung cư", "nhà phố", "biệt thự", "liền kề",
   // đặc điểm — XẾP THEO ĐỘ PHỔ BIẾN (gõ "gần" → gần biển, gần trung tâm… theo đúng thứ tự này)
-  "gần biển", "gần trung tâm", "view biển", "trung tâm", "gần trường", "gần chợ", "gần sông", "view sông", "cao cấp", "mới xây",
+  "mỹ khê", "gần biển", "gần trung tâm", "view biển", "trung tâm", "gần trường", "gần chợ", "gần sông", "view sông", "cao cấp", "mới xây",
   "full nội thất", "sổ hồng", "sổ đỏ", "hẻm ô tô", "mặt tiền", "giá rẻ", "phòng ngủ",
   // đơn vị giá — chữ trọn, không phải chữ dở
   "tỷ", "triệu",
@@ -131,7 +131,7 @@ function noiTiepTheoDuLieu(cau: string, md: "ban" | "thue", tin: Listing[]): str
   const tinh = p.place?.province ?? p.places[0];
   // "nhà", "nhà đất" đã là loại hình chung — không nối thêm "nhà riêng" sau "nhà hẻm ô tô"
   const coNha = / nha /.test(nq);
-  if (!p.types.length && !coNha) for (const l of tap) cong(thuongVi(l.type ?? ""));
+  if (!p.types.length && !coNha) for (const l of tap) cong(thuongVi(tenLoaiHinh(l.type ?? ""))); // tên hiện, không dấu "/" (07/11/2026)
   else if (!tinh) for (const l of tap) cong(thuongVi(boCapNoi(l.location.split(",").pop() ?? "")));
   else if (!p.place?.ward && !p.place?.district) for (const l of tap) cong(thuongVi(boCapNoi(l.location.split(",")[0] ?? "")));
   // đủ loại + nơi, chưa nói giá → các mức giá đang có tin ("căn hộ 2 phòng ngủ sơn trà" → "… dưới 3 tỷ")
@@ -306,8 +306,9 @@ export function goiYGoTiepDuAn(raw0: string, ds: DuAnLoc[], boTu: string[], toiD
     .replace(/\s+/g, " ").replace(/^\s+/, "") + (/\s$/.test(raw0) ? " " : "");
   if (!raw.trim()) return [];
   const ra: DongGoiY[] = [];
+  // CHUẨN GOOGLE như ô Mua bán / Cho thuê (07/11/2026): giữ đúng chữ, thứ tự khách gõ, đặt dấu theo cụm, nối tiếp phía sau
   const them = (nhan: string, href?: string) => {
-    const x = href ? nhan : thuongVi(nhan);
+    const x = href ? nhan : datDau(thuongVi(nhan), boTu);
     if (x && !ra.some((d) => normalizeVi(d.nhan) === normalizeVi(x))) ra.push({ nhan: x, muc: "duan", href: href ?? `/du-an?q=${encodeURIComponent(x)}` });
   };
   // số khách gõ giữ nguyên — dự án không lọc theo giá, không chắp "tỷ" / "triệu"; ĐỊA DANH đã trọn ở cuối câu ("hội an") cũng giữ
@@ -323,7 +324,7 @@ export function goiYGoTiepDuAn(raw0: string, ds: DuAnLoc[], boTu: string[], toiD
   if (!chinh) return ra;
   // CÂU ĐÃ HIỂU đứng đầu (loại hình · dự án / chủ đầu tư · vị trí · tình trạng)
   const hieuCau = /\s$/.test(raw) || chinh === thuongVi(raw) ? cauDaHieu(raw, "duan", ds) : null;
-  if (hieuCau && (hieuCau.soPhan >= 2 || / tại /.test(` ${hieuCau.cau} `)) && normalizeVi(hieuCau.cau) !== normalizeVi(raw)) them(hieuCau.cau);
+  void hieuCau; // không đưa câu đảo thứ tự lên đầu (chuẩn Google, 07/11/2026)
   const boChuDuAn = chinh.replace(/(^|\s)dự\s+án(?=\s|$)/g, " ").trim();
   const p = parseQuery(boChuDuAn);
   const lf = locTuCauDuAn(boChuDuAn);
@@ -336,12 +337,13 @@ export function goiYGoTiepDuAn(raw0: string, ds: DuAnLoc[], boTu: string[], toiD
     const dem = new Map<string, number>();
     const cong = (k: string) => { if (k) dem.set(k, (dem.get(k) ?? 0) + 1); };
     const tinh = p.place?.province ?? p.places[0];
-    if (!p.types.length) for (const d of tap) loaiCuaDuAn(d.loaiHinh).forEach((o) => cong(thuongVi(o)));
+    if (!p.types.length) for (const d of tap) loaiCuaDuAn(d.loaiHinh).forEach((o) => cong(thuongVi(tenLoaiHinh(o))));
     else if (!tinh) for (const d of tap) cong(thuongVi(d.tinh));
-    else if (!p.place?.ward && !p.place?.district) for (const d of tap) cong(thuongVi(boCapNoi(d.diaChiTim.split(/[,·]/)[0] ?? "")));
+    // nối PHƯỜNG / XÃ của dự án (phần địa chỉ có chữ cấp), không lấy tên đường ("trục trần hưng đạo…" — 07/11/2026)
+    else if (!p.place?.ward && !p.place?.district) for (const d of tap) cong(thuongVi(boCapNoi(d.diaChiTim.split(/[,·]/).map((x) => x.trim()).find((x) => /^(Phường|Xã|Thị trấn|Đặc khu)\s/i.test(x)) ?? "")));
     const nq = ` ${normalizeVi(chinh).replace(/[^a-z0-9]+/g, " ")} `;
     for (const [k] of [...dem].filter(([k]) => k && !/\d/.test(k) && !nq.includes(` ${normalizeVi(k)} `)).sort((a, b) => b[1] - a[1]).slice(0, toiDa))
-      { const h = cauDaHieu(`${chinh} ${k}`, "duan", ds); them(h.soPhan >= 2 ? h.cau : `${chinh} ${k}`); } // đọc lại thành câu đã hiểu
+      them(`${chinh} ${k}`); // nối tiếp sau đúng câu khách gõ (chuẩn Google)
     // đủ loại + nơi → các DỰ ÁN THẬT đúng loại, đúng nơi (bấm là mở trang dự án)
     if (p.types.length && tinh) for (const d of tap.slice(0, 3)) them(d.ten, `/du-an/${d.slug}`);
   }
