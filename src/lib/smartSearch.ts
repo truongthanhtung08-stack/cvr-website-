@@ -97,17 +97,17 @@ function diaGioi(): NoiDG[] {
       ds.push({ norm: normalizeVi(d.name), ten: [], place: { province: p.name, district: d.name, label: `${d.name}, ${p.name}` } });
     }
   }
-  // PHƯỜNG CŨ HƠN (danh mục 30/06/2025, gồm cả tên đã gộp trước đó như "Hải Châu I", "Hải Châu II"): tin và khách vẫn ghi tên này
-  // (anh 07/11/2026: "phải đọc chính xác địa chỉ") — thêm nơi chưa có trong bảng trên
-  const daCo = new Set(ds.map((x) => `${x.place.province}|${normalizeVi(x.place.district ?? "")}|${x.norm}`));
+  // TÊN CŨ HƠN (gộp TRƯỚC 30/06/2025 — "Hải Châu I", "Hải Châu II" → Phường Hải Châu): bảng địa danh ghi ở `cu` của từng quận
+  // [tên, CHỈ SỐ PHƯỜNG MỚI trong provincesNew — xem đầu provincesOld.ts]; tin và khách vẫn dùng tên này (anh 07/11/2026: "phải đọc
+  // chính xác địa chỉ") → quy về đúng phường HỆ MỚI đó (2 cấp: tỉnh → phường)
   for (const p of provincesOld) {
     const moi = newProvinceOf(p.name);
-    for (const d of p.districts) for (const w of d.wards) {
-      const ten = w.replace(/^(Phường|Xã|Thị trấn)\s+/i, "").replace(/\s*\(.*\)\s*$/, "").trim();
-      const k = `${moi}|${normalizeVi(d.name)}|${normalizeVi(ten)}`;
-      if (daCo.has(k)) continue;
-      daCo.add(k);
-      ds.push({ norm: normalizeVi(ten), ten: [], place: { province: moi, district: d.name, ward: ten, label: `${ten}, ${d.name}, ${moi}` } });
+    const dsMoi = provincesNew.find((x) => x.name === moi)?.wards ?? [];
+    for (const d of p.districts) for (const [tenCu, i] of d.cu ?? []) {
+      const phuong = dsMoi[i];
+      if (!phuong) continue;
+      const ten = tenCu.replace(/^(Phường|Xã|Thị trấn)\s+/i, "").trim();
+      ds.push({ norm: normalizeVi(ten), ten: [], place: { province: moi, ward: phuong, label: `${phuong}, ${moi}` } });
     }
   }
   // PHƯỜNG XÃ MỚI (sau sáp nhập 2025) — trước đây bảng chỉ có phường xã CŨ nên "Hải Vân" (phường mới của Đà Nẵng) không có,
@@ -378,6 +378,11 @@ export function suaChinhTa(raw: string): string | null {
     }
   }
   if (doi) for (const [i, ds] of chiDatDau) tu.splice(i, ds.length, ...ds);
+  // CHỮ GÕ LẶP LIỀN NHAU ("đất nền nen hòa xuân") → bỏ chữ lặp, như Google (07/11/2026); số thì giữ ("2 2" hiếm, không đoán)
+  for (let i = tu.length - 1; i > 0; i--) {
+    const a = normalizeVi(tu[i]), b = normalizeVi(tu[i - 1]);
+    if (a && a === b && !/\d/.test(a)) { tu.splice(i, 1); doi = true; }
+  }
   // chữ chỉ cấp gõ không dấu cũng đặt dấu khi câu đằng nào cũng sửa ("quan cẩm lệ" → "quận cẩm lệ", "thanh pho" → "thành phố")
   if (doi) for (let i = 0; i < tu.length; i++) {
     const t = tu[i].toLowerCase();
@@ -647,7 +652,7 @@ function phanTichCau(raw: string): ParsedQuery {
   if (!features.includes("view biển") && /(^|[^\p{L}])biển([^\p{L}]|$)/iu.test(raw.normalize("NFC"))) features.push("view biển");
   // Phường/quận trong câu ("Hoà Quý", "Ngũ Hành Sơn") — suy ra luôn TỈNH nếu
   // người dùng không gõ tên tỉnh ("nhà đất Hoà Quý" → Đà Nẵng).
-  const place0 = timDiaGioi(cheChuChung(nqNoi), places);
+  const place0 = timDiaGioi(soLaMaCuoi(cheChuChung(nqNoi)), places); // "hải châu i" = "hải châu 1"
   // GÕ CÓ DẤU THÌ ĐỊA DANH PHẢI KHỚP ĐÚNG DẤU (01/11/2026: "đang mở bán" từng đọc thành xã Dang, Tây Giang; "hòa" thành "Hóa"):
   // tên nơi (bỏ cấp) phải có trong câu khách gõ theo đúng dấu — chỉ so khi khách gõ có dấu, gõ không dấu vẫn khớp như cũ
   const dungDau = (ten?: string) => {
