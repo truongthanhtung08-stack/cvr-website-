@@ -2,7 +2,7 @@
 // 👉 Thêm/bớt loại hình hoặc mức giá tại đây — toàn bộ bộ lọc tự cập nhật.
 
 import { tierRank } from "./packages";
-import { tenTinhTuongDuong, chuanTen, chuanTenCap, newProvinceOf, oldNamesOf, phuongMoiCuaQuan } from "./locations";
+import { tenTinhTuongDuong, chuanTen, chuanTenCap, newProvinceOf, oldNamesOf, phuongMoiCuaQuan, choCuCua } from "./locations";
 import { dungODienTichXayDung, dienTichSanThat, oLoaiCon } from "./listingSpec";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -295,7 +295,8 @@ export function listingProBroker(id: string): boolean {
 
 // ===== Bộ lọc gộp — dùng chung cho mọi trang =====
 // Khu vực ĐA CHỌN (tối đa 5, kiểu Batdongsan): mỗi phần tử là 1 đường dẫn địa giới.
-export type LocationSel = { province: string; district?: string; ward?: string };
+// cu: TỈNH CŨ trùng tên tỉnh mới (Gia Lai cũ ≠ Gia Lai mới đã gộp Bình Định) — chọn ở hệ cũ thì giữ đúng phần cũ đó (07/11/2026)
+export type LocationSel = { province: string; district?: string; ward?: string; cu?: boolean };
 export const MAX_LOCATIONS = 5;
 
 // ĐẶC ĐIỂM (trường Lọc thêm) — MỘT BẢNG cho cả bộ đọc câu (parseQuery) lẫn trường chọn (07/11/2026, anh: "view biển = các loại khác trong
@@ -364,7 +365,7 @@ export function locationLabel(l: LocationSel): string {
 
 // So khớp 2 khu vực (để tránh thêm trùng vào danh sách đa chọn).
 export function sameLocation(a: LocationSel, b: LocationSel): boolean {
-  return a.province === b.province && (a.district ?? "") === (b.district ?? "") && (a.ward ?? "") === (b.ward ?? "");
+  return a.province === b.province && (a.district ?? "") === (b.district ?? "") && (a.ward ?? "") === (b.ward ?? "") && !!a.cu === !!b.cu;
 }
 
 export function emptyFilters(): Filters {
@@ -393,7 +394,7 @@ export function filtersFromParams(params: URLSearchParams): Filters {
       .filter((a) => a[0])
       // PHƯỜNG/XÃ KHÔNG QUẬN (hệ mới 2 cấp) ghi "Tỉnh//Phường"; link cũ ghi "Tỉnh/Phường X" (2 phần, phần 2 có chữ cấp phường/xã) → vẫn là
       // PHƯỜNG, không phải quận (anh 07/11/2026: "nha dat quy nhon" đọc thành Phường Quy Nhơn mà trường chỉ ghi "Gia Lai")
-      .map((a) => (a.length === 2 && /^(Phường|Xã|Thị trấn|Đặc khu)\s/i.test(a[1])
+      .map((a) => (a[1] === "~cu" ? { province: a[0], cu: true } : a.length === 2 &&/^(Phường|Xã|Thị trấn|Đặc khu)\s/i.test(a[1])
         ? { province: a[0], ward: a[1] }
         : { province: a[0], district: a[1] || undefined, ward: a[2] || undefined }))
       // tối đa MAX_LOCATIONS TỈNH (cùng cách đếm của bảng chọn), không cắt theo từng phường — "Phan Thiết" là 7 phường mới, cắt theo mục
@@ -452,7 +453,7 @@ export function filtersToParams(f: Filters): URLSearchParams {
   const p = new URLSearchParams();
   if (f.locations.length) {
     // phường không kèm quận → "Tỉnh//Phường" (giữ chỗ quận trống) — đọc lại không lẫn phường thành quận
-    p.set("kv", f.locations.map((l) => (l.ward && !l.district ? `${l.province}//${l.ward}` : [l.province, l.district, l.ward].filter(Boolean).join("/"))).join(";"));
+    p.set("kv", f.locations.map((l) => (l.cu ? `${l.province}/~cu` : l.ward && !l.district ? `${l.province}//${l.ward}` : [l.province, l.district, l.ward].filter(Boolean).join("/"))).join(";"));
   }
   if (f.project) p.set("duan", f.project);
   if (f.types.length) p.set("loai", f.types.join(","));
@@ -591,8 +592,9 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
       const bang = (a?: string, b?: string) => !!a && !!b && chuanTen(a) === chuanTen(b);
       const inArea = f.locations.some((l) => {
         // tỉnh CŨ đã sáp nhập (Quảng Nam, Bình Định…) chỉ so tỉnh cũ của tin — không nở ra cả tỉnh mới (Đà Nẵng); tên đang dùng thì so cả hai
-        const laTinhCu = newProvinceOf(l.province) !== l.province;
-        const dungTinh = laTinhCu ? bang(l.province, cu?.tinh) : tenTinhTuongDuong(l.province).some((t) => bang(t, moi?.tinh) || bang(t, cu?.tinh));
+        const laTinhCu = !!l.cu || newProvinceOf(l.province) !== l.province;
+        // tin chỉ ghi địa chỉ MỚI: tỉnh cũ của tin tra theo bảng sáp nhập (phường mới → chỗ cũ)
+        const dungTinh = laTinhCu ? bang(l.province, cu?.tinh) || (!cu?.tinh && !!moi && choCuCua(moi.tinh, moi.phuong).some((c) => bang(c.tinh, l.province))) : tenTinhTuongDuong(l.province).some((t) => bang(t, moi?.tinh) || bang(t, cu?.tinh));
         if (!dungTinh) return false;
         if (l.district) {
           if (bang(l.district, cu?.quan)) return !l.ward || bang(l.ward, cu?.phuong);

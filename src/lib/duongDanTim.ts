@@ -23,7 +23,7 @@ export function duongDanSach(muc: "ban" | "thue", f: Filters): string | null {
   const goc = muc === "thue" ? "/cho-thue" : "/mua-ban";
 
   const loc = f.locations[0];
-  if (loc && (loc.district || loc.ward)) return null;
+  if (loc && (loc.district || loc.ward || loc.cu)) return null; // tỉnh cũ trùng tên (Gia Lai cũ) không có trang riêng — giữ ?kv
   const tinh = loc ? timKhuVuc(slugKhuVuc(loc.province)) : null;
   if (loc && !tinh) return null;
 

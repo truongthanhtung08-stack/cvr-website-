@@ -1340,8 +1340,9 @@ export function tinhDaChon(locations: LocationSel[]): { tinh: string; so: number
   const mot = new Map<string, string>(); // tên nơi con khi tỉnh chỉ có MỘT nơi con
   for (const l of locations) {
     const con = l.ward || l.district;
-    m.set(l.province, (m.get(l.province) ?? 0) + (con ? 1 : 0));
-    if (con && !mot.has(l.province)) mot.set(l.province, con.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, ""));
+    const tinh = l.cu ? `${l.province} (cũ)` : l.province; // Gia Lai cũ ≠ Gia Lai mới
+    m.set(tinh, (m.get(tinh) ?? 0) + (con ? 1 : 0));
+    if (con && !mot.has(tinh)) mot.set(tinh, con.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, ""));
   }
   // MỘT nơi con → ghi thẳng tên nơi đó (chủ dự án 07/11/2026: "Khánh Hòa (1)" mà thật là Nha Trang — khách tưởng chọn cả tỉnh)
   // NHIỀU nơi con → nơi đầu + số còn lại, không kiểu "Huế (2)" (anh 07/11/2026): "Vỹ Dạ, Huế +1"
@@ -1388,7 +1389,7 @@ export function LocationPanel({
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   // SO NƠI BỎ CHỮ CẤP (07/11/2026): câu gõ "hòa xuân" lưu "Hòa Xuân", bảng ghi "Phường Hòa Xuân" — cùng một nơi → tick, lên đầu, chữ xanh
   const boCap = (x?: string) => normalizeVi((x ?? "").replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, ""));
-  const cungNoi = (a: LocationSel, b: LocationSel) => a.province === b.province && boCap(a.district) === boCap(b.district) && boCap(a.ward) === boCap(b.ward);
+  const cungNoi = (a: LocationSel, b: LocationSel) => a.province === b.province && boCap(a.district) === boCap(b.district) && boCap(a.ward) === boCap(b.ward) && !!a.cu === !!b.cu;
   const [q, setQ] = useState("");
   const [prov, setProv] = useState(""); // đường dẫn đang duyệt (chưa cam kết)
   const [dist, setDist] = useState("");
@@ -1417,7 +1418,7 @@ export function LocationPanel({
   // → lần nào mở cũng ra danh sách tỉnh cũ lồng trong tỉnh mới, khách không hiểu. Hệ cũ chỉ khi khách tự gạt công tắc, trong lần mở đó.
   // ĐỔI HỆ CŨ ↔ MỚI = ĐỔI LUÔN những nơi đã chọn sang hệ kia (chủ dự án 01/11/2026: "chuyển đổi qua lại phải đồng bộ") — dùng bảng
   // sáp nhập của web; nơi không có trong bảng thì giữ nguyên (không đoán). Kết quả lọc không đổi vì bộ lọc vẫn khớp cả hai hệ.
-  const doiHe = (ls: LocationSel[], m: GeoMode): LocationSel[] => {
+  const doiHe = (ls: LocationSel[], m: GeoMode, tu: GeoMode = "moi"): LocationSel[] => {
     const ra: LocationSel[] = [];
     const them = (l: LocationSel) => { if (!ra.some((x) => cungNoi(x, l))) ra.push(l); };
     for (const l of ls) {
@@ -1426,8 +1427,11 @@ export function LocationPanel({
           const cu = choCuCua(l.province, l.ward);
           if (cu.length) cu.forEach((c) => them({ province: c.tinh, district: c.quan, ward: c.phuong }));
           else them(l);
-        } else if (!l.district && !l.ward) oldNamesOf(l.province).forEach((p) => them({ province: p }));
-        else if (l.district) {
+        } else if (!l.district && !l.ward) {
+          // tỉnh CŨ (Bình Định, hoặc Gia Lai cũ đánh dấu cu) giữ nguyên; tỉnh MỚI = mọi tỉnh cũ gộp vào nó
+          if (l.cu || newProvinceOf(l.province) !== l.province) them({ province: l.province });
+          else oldNamesOf(l.province).forEach((p) => them({ province: p }));
+        } else if (l.district) {
           // quận cũ đi với TÊN TỈNH MỚI ("Phan Thiết, Lâm Đồng" — đọc từ câu) → đúng tỉnh cũ chứa quận đó (Bình Thuận → Phan Thiết)
           const tinhCu = oldNamesOf(l.province).find((p) => districtsOf(p).some((d) => chuanTen(d) === chuanTen(l.district!))) ?? l.province;
           them({ ...l, province: tinhCu });
@@ -1442,7 +1446,15 @@ export function LocationPanel({
           if (ws.length) ws.forEach((w) => them({ province: newProvinceOf(l.province), ward: w }));
           else them(l);
         } else if (l.ward) them({ province: newProvinceOf(l.province), ward: l.ward }); // đã là phường hệ mới → giữ nguyên (trước bị rơi tên phường)
-        else them({ province: newProvinceOf(l.province) });
+        else {
+          // TỈNH CŨ → hệ mới (anh 07/11/2026: chọn ngược hệ cũ → mới phải giữ đúng phần đã chọn): đủ mọi tỉnh cũ gộp vào tỉnh mới mới
+          // thành cả tỉnh mới; thiếu thì giữ tỉnh cũ đó (Bình Định; Gia Lai cũ trùng tên → đánh dấu cu)
+          const moi = newProvinceOf(l.province);
+          const chon = new Set(ls.filter((x) => !x.district && !x.ward).map((x) => x.province));
+          if (l.cu || (tu === "moi" && l.province === moi)) them(l); // đang ở hệ mới: tên tỉnh mới = cả tỉnh mới
+          else if (oldNamesOf(moi).every((p) => chon.has(p))) them({ province: moi });
+          else them(l.province === moi ? { province: moi, cu: true } : { province: l.province });
+        }
       }
     }
     return ra; // không cắt: đổi hệ là đổi CÁCH GỌI, không được làm rơi nơi khách đã chọn (01/11/2026)
@@ -1456,7 +1468,7 @@ export function LocationPanel({
   }, []);
   const switchMode = (m: GeoMode) => {
     if (m === mode) return;
-    const moi = locations.length ? doiHe(locations, m) : locations;
+    const moi = locations.length ? doiHe(locations, m, mode) : locations;
     if (locations.length) onChange(moi);
     // ĐỒNG BỘ HAI HỆ (anh 07/11/2026): đang xem trong một tỉnh thì đổi hệ vẫn Ở LẠI tỉnh đó theo tên của hệ kia (Đà Nẵng mới ↔ Đà Nẵng /
     // Quảng Nam cũ — ưu tiên tỉnh cũ có nơi đã chọn), không nhảy về danh sách tỉnh. Nơi đã chọn lên đầu, chữ xanh như mọi tầng.
@@ -1503,7 +1515,9 @@ export function LocationPanel({
   // CÁCH CHỌN NHƯ NGƯỜI BÌNH THƯỜNG (chủ dự án 01/11/2026): bấm TỈNH = chọn cả tỉnh ngay + mở danh sách phường; bấm PHƯỜNG = chọn
   // phường đó (thay "toàn bộ tỉnh"), bấm thêm phường = chọn thêm (tối đa ${MAX_LOCATIONS}); bỏ hết phường = về toàn bộ tỉnh. Chọn là lọc
   // ngay — không nút "Thêm cả", không "Áp dụng". Hệ cũ: Tỉnh → Quận/Huyện → Phường/Xã cùng cách.
-  const cungTinh = (l: LocationSel, p: string) => l.province === p;
+  // hệ mới: tỉnh CŨ đã chọn (Bình Định, Gia Lai cũ) thuộc tỉnh mới gộp nó → tỉnh mới hiện dấu "–" (một phần)
+  const cungTinh = (l: LocationSel, p: string) => l.province === p || (isNew && newProvinceOf(l.province) === p);
+  const caTinh = (l: LocationSel, p: string) => l.province === p && !l.district && !l.ward && !l.cu;
   const cungQuan = (l: LocationSel, p: string, d: string) => l.province === p && !!l.district && boCap(l.district) === boCap(d);
   // Chọn xong một tầng → TẮT BÀN PHÍM (khách vừa gõ tìm tỉnh): bàn phím còn bật thì che hết danh sách tầng dưới (ảnh chủ dự án 01/11/2026)
   const tatPhim = () => (document.activeElement as HTMLElement | null)?.blur?.();
@@ -1552,7 +1566,7 @@ export function LocationPanel({
   // tầng TỈNH: chọn cả tỉnh = tick đủ · chỉ chọn phường / quận trong tỉnh = MỘT PHẦN (dấu "–"), bấm ô → chọn cả tỉnh (07/11/2026)
   // CHỌN MỘT PHẦN (dấu "–") ở tầng tỉnh VÀ tầng quận hệ cũ (07/11/2026: quận chỉ chọn vài phường mà hiện tick trọn)
   const motPhan = (name: string) => level === "province"
-    ? !locations.some((l) => cungTinh(l, name) && !l.district && !l.ward) && locations.some((l) => cungTinh(l, name))
+    ? !locations.some((l) => caTinh(l, name)) && locations.some((l) => cungTinh(l, name))
     : level === "district" && !locations.some((l) => cungQuan(l, prov, name) && !l.ward) && locations.some((l) => cungQuan(l, prov, name));
   const daChon = (name: string) =>
     level === "province" ? locations.some((l) => cungTinh(l, name))
