@@ -1,5 +1,5 @@
 import type { Listing } from "@/lib/data";
-import { sortListings, applyFilters, emptyFilters, normalizeVi, matchType, dacDiemOptions, typeGroupsFor, type Filters, type SortKey } from "@/lib/filters";
+import { sortListings, applyFilters, hasActiveFilters, emptyFilters, normalizeVi, matchType, dacDiemOptions, typeGroupsFor, type Filters, type SortKey } from "@/lib/filters";
 import { smartFilter, smartSearch, parseQuery, coKhopTieuChi, chuChuaHieu } from "@/lib/smartSearch";
 import { nhanDoiHienThi } from "@/lib/nhanDoiHienThi";
 import { locTuCau } from "@/lib/locTuCau";
@@ -157,7 +157,11 @@ export function locDanhSach(
   let ketQuaHetHan: Listing[] = [];
   if (gocHetHan.length) {
     const khop = smartFilter(gocHetHan, { ...filters, keyword: "" }).filter((h) => h.tier === 1).map((h) => h.item);
-    ketQuaHetHan = coTuKhoa
+    // TIN LÀ TIN (anh 07/11/2026): tin hết hạn khớp đủ các TRƯỜNG (mục đích · loại hình · nơi…) là kết quả như tin còn hạn — không đòi
+    // thêm chữ trong tin khớp từng chữ câu gõ ("nhà đất phan thiết" từng bỏ hết 21 tin Phan Thiết vì tiêu đề không có chữ "nhà đất").
+    // Chỉ khi câu không đọc ra trường nào mới lọc theo chữ.
+    const coTruong = hasActiveFilters({ ...filters, keyword: "" });
+    ketQuaHetHan = coTuKhoa && !coTruong
       ? smartSearch(khop, filters.keyword).hits.filter((h) => h.tier === 1).map((h) => h.item)
       : sortListings(khop, sort);
   }
@@ -319,7 +323,9 @@ export function locDanhSach(
   } else if (!ketQua.length) {
     // GỢI Ý khi không tin nào khớp hết: tin khớp được NHIỀU TRƯỜNG CÒN LẠI hơn đứng trước, theo thứ bậc giá → diện tích → phòng ngủ →
     // hướng → pháp lý → nội thất → đặc điểm (chủ dự án 01/11/2026).
-    const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, k: diemGoiY(l), nd: noiDung(l) })).sort((a, b) => b.k - a.k || (timRe ? a.i - b.i : 0) || cachGia(a.l) - cachGia(b.l) || b.nd - a.nd || a.i - b.i).map((x) => x.l);
+    // nơi khách nói không có tin → tỉnh GẦN nơi đó trước ("phan thiết" → Khánh Hòa trước Đà Nẵng — anh 07/11/2026)
+    const tinhDich = filters.locations[0]?.province ?? [...tinhChon][0];
+    const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, k: diemGoiY(l), nd: noiDung(l), xa: xaTinh(tinhDich, l.location.split(",").pop()?.trim() ?? "") })).sort((a, b) => b.k - a.k || a.xa - b.xa || (timRe ? a.i - b.i : 0) || cachGia(a.l) - cachGia(b.l) || b.nd - a.nd || a.i - b.i).map((x) => x.l);
     if (filters.types.length) {
       const cungLoai = conHan.filter(dungLoai);
       if (cungLoai.length) {
@@ -338,6 +344,10 @@ export function locDanhSach(
     if (duPhong.some((l) => noiDung(l) > 0)) thongBao = undefined;
     ketQua = duPhong;
   }
+  // KHÔNG TIN NÀO KHỚP ĐỦ các trường khách nói (anh 07/11/2026: "nhà đất phan thiết" — Phan Thiết không có tin mà web ghi "12 bất động sản
+  // phù hợp", bày tin Đà Nẵng) → nói thẳng chưa có, phần dưới là tương tự. Khách nói NƠI mà nơi đó không có tin thì luôn báo.
+  const soKhop = (coTuKhoa ? chuTrong.length + khopDu.filter((l) => !daCo.has(l.id)).length : khopDu.length) + ketQuaHetHan.length;
+  if (!soKhop && ketQua.length && !thongBao && (filters.locations.length > 0 || !ketQua.some((l) => noiDung(l) > 0))) thongBao = `${CHUA_CO} ${TUONG_TU}`;
   // Không tin nào khớp đủ nhưng có tin cùng loại / nơi gần → vẫn là kết quả theo độ chính xác, không ghi gì (anh 07/11/2026)
   // Khách nói LOẠI HÌNH thì chỉ ra đúng loại đó (anh 07/11/2026: "đất thì chỉ tìm đất") — không thêm loại khác dù đúng nơi
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));
@@ -415,7 +425,7 @@ export function locDanhSach(
     ketQua,
     trang,
     tong: ketQua.length,
-    khop: coTuKhoa ? chuTrong.length + khopDu.filter((l) => !daCo.has(l.id)).length : khopDu.length,
+    khop: (coTuKhoa ? chuTrong.length + khopDu.filter((l) => !daCo.has(l.id)).length : khopDu.length) + ketQuaHetHan.length, // tin là tin: hết hạn khớp đủ cũng đếm
     soTrang,
     trangHienTai,
     tangDau: trang[0] ? tierById.get(trang[0].id) ?? 1 : 1,
@@ -463,3 +473,20 @@ export function boLocKhoiDau(
 
 // Điểm bản đồ của một tin — chuyển sang src/lib/diemBanDo.ts (bản đồ nhiều tin dùng thẳng, không kéo cả tệp lọc này).
 export { diemTuTin } from "@/lib/diemBanDo";
+
+// VỊ TRÍ TRUNG TÂM 34 TỈNH / THÀNH (hệ mới, gần đúng) — chỉ để xếp "tỉnh gần nơi khách nói trước" khi nơi đó chưa có tin (07/11/2026)
+const TAM_TINH: Record<string, [number, number]> = {
+  "Hà Nội": [21.03, 105.85], "Cao Bằng": [22.67, 106.26], "Tuyên Quang": [22.1, 105.1], "Điện Biên": [21.39, 103.02], "Lai Châu": [22.4, 103.46],
+  "Sơn La": [21.33, 103.9], "Lào Cai": [22.1, 104.3], "Thái Nguyên": [21.9, 105.85], "Lạng Sơn": [21.85, 106.76], "Quảng Ninh": [21.0, 107.3],
+  "Bắc Ninh": [21.25, 106.2], "Phú Thọ": [21.1, 105.3], "Hải Phòng": [20.86, 106.5], "Hưng Yên": [20.6, 106.2], "Ninh Bình": [20.3, 105.97],
+  "Thanh Hóa": [19.8, 105.4], "Nghệ An": [19.1, 104.9], "Hà Tĩnh": [18.3, 105.9], "Quảng Trị": [17.2, 106.7], "Huế": [16.46, 107.59],
+  "Đà Nẵng": [15.8, 108.1], "Quảng Ngãi": [14.9, 108.3], "Gia Lai": [14.0, 108.4], "Khánh Hòa": [12.0, 109.0], "Đắk Lắk": [12.9, 108.5],
+  "Lâm Đồng": [11.6, 108.0], "Đồng Nai": [11.3, 107.0], "Hồ Chí Minh": [10.8, 106.8], "Tây Ninh": [11.0, 106.0], "Đồng Tháp": [10.4, 105.9],
+  "Vĩnh Long": [10.0, 106.2], "An Giang": [10.2, 105.0], "Cần Thơ": [9.8, 105.8], "Cà Mau": [9.2, 105.2],
+};
+/** Khoảng cách gần đúng giữa hai tỉnh (độ) — không biết tỉnh thì coi như xa nhất */
+function xaTinh(a: string | undefined, b: string): number {
+  const p = a ? TAM_TINH[a] : undefined, q = TAM_TINH[b];
+  if (!p || !q) return 999;
+  return Math.hypot(p[0] - q[0], (p[1] - q[1]) * Math.cos((p[0] * Math.PI) / 180));
+}

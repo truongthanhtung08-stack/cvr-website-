@@ -86,9 +86,12 @@ export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
     // phường cũ đi với TỈNH MỚI (một tỉnh mới gộp nhiều tỉnh cũ — đoán tỉnh cũ dễ nhầm: "Mỹ Thủy, Quảng Trị" từng ra Quảng Bình)
     f.locations = moi && boCap(moi.phuong) === boCap(pl.ward) ? [{ province: moi.tinh, ward: moi.phuong }] : [{ province: pl.province, ward: pl.ward }];
   } else if (pl?.district) {
+    // TÊN THÀNH PHỐ / QUẬN / HUYỆN CŨ = CẢ VÙNG ĐÓ (anh 07/11/2026: "phan thiết" phải ra mọi tin của TP Phan Thiết cũ — Mũi Né, Phú Thủy,
+    // Tiến Thành… — trước đây chỉ lấy Phường Phan Thiết cùng tên nên lọc không ra tin nào). Không có trong bảng sáp nhập → phường cùng tên
+    // MỘT NƠI = quận / thành phố cũ đó; bộ lọc chung (applyFilters) khớp mọi phường mới gộp từ nó. Không có trong bảng → phường cùng tên
+    const ca = phuongMoiCuaQuan(tinhCu(pl.district), pl.district);
     const cungTen = phuongMoiTen(pl.district);
-    f.locations = cungTen ? [{ province: pl.province, ward: cungTen }]
-      : phuongMoiCuaQuan(tinhCu(pl.district), pl.district).map((w) => ({ province: pl.province, ward: w }));
+    f.locations = ca.length ? [{ province: pl.province, district: pl.district }] : cungTen ? [{ province: pl.province, ward: cungTen }] : [];
   } else if (pl?.ward) f.locations = [{ province: pl.province, ward: pl.ward }];
   else if (pl || p.places[0]) {
     // gõ TÊN TỈNH CŨ đã sáp nhập ("bình định", "quảng nam") → đúng tỉnh cũ đó, không nở ra cả tỉnh mới (Gia Lai, Đà Nẵng)

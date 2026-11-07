@@ -126,7 +126,8 @@ export default function SearchClient({
           id="ket-qua": bấm Tìm / Enter / chọn gợi ý là cuộn thẳng xuống đây. */}
       <div id="ket-qua" className="mb-5 mt-5 flex scroll-mt-20 flex-wrap items-center justify-between gap-3 sm:scroll-mt-24">
         <p className="text-sm text-cvr-body">
-          {choDiaDanh ? null : active ? <><span className="font-bold text-cvr-ink">{results.filter((l) => !l.banSao).length}</span> bất động sản phù hợp</> : "Tin mua bán, cho thuê nhà đất mới nhất"}
+          {/* số "phù hợp" = tin KHỚP ĐỦ, không đếm tin tương tự (anh 07/11/2026) */}
+          {choDiaDanh ? null : active ? (chung?.khop ? <><span className="font-bold text-cvr-ink">{chung.khop}</span> bất động sản phù hợp</> : null) : "Tin mua bán, cho thuê nhà đất mới nhất"}
         </p>
         {/* bỏ nút "Xoá lọc" và ô xếp "Mới nhất" (anh 07/11/2026: "không cần") — kết quả xếp tin khớp chính xác nhất lên trên */}
       </div>

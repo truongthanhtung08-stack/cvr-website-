@@ -2,7 +2,7 @@
 // 👉 Thêm/bớt loại hình hoặc mức giá tại đây — toàn bộ bộ lọc tự cập nhật.
 
 import { tierRank } from "./packages";
-import { tenTinhTuongDuong, chuanTen, chuanTenCap, newProvinceOf } from "./locations";
+import { tenTinhTuongDuong, chuanTen, chuanTenCap, newProvinceOf, oldNamesOf, phuongMoiCuaQuan } from "./locations";
 import { dungODienTichXayDung, dienTichSanThat, oLoaiCon } from "./listingSpec";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -592,7 +592,12 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
         const laTinhCu = newProvinceOf(l.province) !== l.province;
         const dungTinh = laTinhCu ? bang(l.province, cu?.tinh) : tenTinhTuongDuong(l.province).some((t) => bang(t, moi?.tinh) || bang(t, cu?.tinh));
         if (!dungTinh) return false;
-        if (l.district) return bang(l.district, cu?.quan) && (!l.ward || bang(l.ward, cu?.phuong));
+        if (l.district) {
+          if (bang(l.district, cu?.quan)) return !l.ward || bang(l.ward, cu?.phuong);
+          // QUẬN / THÀNH PHỐ CŨ = CẢ VÙNG (anh 07/11/2026: "phan thiết" phải ra tin Mũi Né, Phú Thủy… ghi theo hệ mới): tin chỉ có phường
+          // mới thì khớp khi phường đó gộp từ quận cũ này — hai hệ một bộ lọc
+          return !l.ward && !!moi && phuongCuaQuanCu(l.province, l.district).some((w) => bang(w, moi.phuong));
+        }
         // phường không kèm quận = hệ mới; tên phường cũ (đã mất ở hệ mới) gõ trần cũng nhận theo phường cũ
         if (l.ward) return bang(l.ward, moi?.phuong) || bang(l.ward, cu?.phuong);
         return true;
@@ -724,4 +729,15 @@ export function areaRangeText(min: number | null, max: number | null): string {
   if (min != null && min > 0) return `Trên ${min} m²`;
   if (max != null) return `Dưới ${max} m²`;
   return "";
+}
+
+// Phường mới gộp từ một quận / thành phố cũ (tên tỉnh cũ hoặc mới đều được) — nhớ lại, bộ lọc gọi cho từng tin
+const _phuongQuanCu = new Map<string, string[]>();
+function phuongCuaQuanCu(tinh: string, quan: string): string[] {
+  const k = `${tinh}|${quan}`;
+  const co = _phuongQuanCu.get(k);
+  if (co) return co;
+  const ds = [...new Set([tinh, ...oldNamesOf(tinh)].flatMap((t) => phuongMoiCuaQuan(t, quan)))];
+  if (ds.length) _phuongQuanCu.set(k, ds); // địa danh trình duyệt chưa nạp → chưa nhớ, lần sau tính lại
+  return ds;
 }
