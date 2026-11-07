@@ -23,7 +23,7 @@ const HO_SO = {
   display: "standalone",
   orientation: "portrait",
   background_color: "#ffffff",
-  theme_color: "#161617",
+  theme_color: "#1d1d1f",
   categories: ["business", "lifestyle", "shopping"],
   icons: [
     { src: "/icons/icon-192.png?v=2", sizes: "192x192", type: "image/png", purpose: "any" },

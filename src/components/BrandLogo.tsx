@@ -15,17 +15,17 @@ export default function BrandLogo({
   tone?: "dark" | "light";
 }) {
   const cls =
-    size === "lg" ? "h-[3.4rem]" : "h-[2.7rem] sm:h-[3rem] lg:h-[3.15rem]";
+    size === "lg" ? "h-[3.4rem]" : "h-[3rem] lg:h-[3.15rem]"; // điện thoại 48px: logo gốc to nhất vừa thanh 60px để đọc được slogan (anh 07/11/2026)
   const src =
     tone === "light"
-      ? "/logo/logo-horizontal-white.svg"
+      ? (size === "md" ? "/logo/logo-goc-white.svg" : "/logo/logo-horizontal-white.svg") // đầu trang: đúng logo GỐC (anh 07/11/2026)
       : "/logo/logo-horizontal-dark.svg";
 
   return (
     <Image
       src={asset(src)}
       alt="COASTAL LAND — Gateway to Central Coast property"
-      width={2005}
+      width={size === "md" && tone === "light" ? 2012 : 2005}
       height={389}
       // Chỉ logo thanh trên (md) tải trước; logo chân trang (lg) nằm cuối trang → trình duyệt tự tải khi khách cuộn gần tới,
       // không giành đường truyền với nội dung đầu trang (27/10/2026: trước đây mọi trang tải trước CẢ HAI logo).

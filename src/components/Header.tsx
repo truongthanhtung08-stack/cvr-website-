@@ -351,9 +351,9 @@ function MobileMenu({
           {user && (
             // Ảnh đại diện 40px + tên 16px đậm + dòng phụ "Thành viên" — CÙNG khối tên trong menu ảnh đại diện máy tính (25/10/2026)
             <Link href="/tai-khoan" onClick={onClose} className="mb-4 flex min-w-0 items-center gap-3">
-              <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-10 w-10 shrink-0 bg-white/10 text-[15px] text-[#e8e8ed] ring-1 ring-white/15" />
+              <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-10 w-10 shrink-0 bg-[#2c2c2e] text-[15px] text-[#f5f5f7] ring-1 ring-[#3a3a3c]" />
               <span className="min-w-0">
-                <span className="block break-words text-[17px] font-medium leading-tight text-[#e8e8ed]">{displayName(user)}</span>
+                <span className="block break-words text-[17px] font-medium leading-tight text-[#f5f5f7]">{displayName(user)}</span>
                 {lienHeTaiKhoan(user).length ? lienHeTaiKhoan(user).map((x) => <span key={x} className="mt-0.5 block break-all text-[14px] leading-tight text-[#a1a1a6]">{x}</span>) : <span className="mt-0.5 block text-[14px] leading-tight text-[#a1a1a6]">Thành viên</span>}
               </span>
             </Link>
@@ -385,7 +385,7 @@ function MobileMenu({
           <div
             key={item.href}
             className={`-mx-3 rounded-2xl px-3 transition-colors duration-300 ${
-              expanded === item.label ? "bg-white/[0.07]" : ""
+              expanded === item.label ? "bg-[#2c2c2e]" : ""
             }`}
           >
             {item.children ? (
@@ -396,10 +396,10 @@ function MobileMenu({
                   <Link
                     href={item.href}
                     onClick={onClose}
-                    className="flex min-h-[44px] flex-1 items-center gap-4 text-[17px] font-normal text-[#e8e8ed]"
+                    className="flex min-h-[44px] flex-1 items-center gap-4 text-[17px] font-normal text-[#f5f5f7]"
                   >
                     {item.icon && (
-                      <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-white/60" />
+                      <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
                     )}
                     {item.label}
                   </Link>
@@ -411,7 +411,7 @@ function MobileMenu({
                     className="-mr-2 flex h-[44px] w-12 shrink-0 items-center justify-center"
                   >
                     <svg
-                      className={`h-4 w-4 text-white/50 transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
+                      className={`h-4 w-4 text-[#8e8e93] transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
                       fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -437,23 +437,23 @@ function MobileMenu({
                             <Link
                               href={child.href}
                               onClick={onClose}
-                              className="block text-[16px] font-normal text-[#c7c7cc] transition-colors active:text-white"
+                              className="block text-[16px] font-normal text-[#d2d2d7] transition-colors active:text-[#f5f5f7]"
                             >
                               {child.label}
                             </Link>
                           ) : (
-                            <p className="pb-0.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white/50">
+                            <p className="pb-0.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#8e8e93]">
                               {child.label}
                             </p>
                           )}
                           {child.children?.length ? (
-                            <div className="mt-1.5 space-y-2 border-l border-white/10 pl-3.5">
+                            <div className="mt-1.5 space-y-2 border-l border-[#3a3a3c] pl-3.5">
                               {child.children.map((grandChild) => (
                                 <Link
                                   key={grandChild.label}
                                   href={grandChild.href ?? "#"}
                                   onClick={onClose}
-                                  className="block text-[15px] font-normal text-[#a1a1a6] transition-colors active:text-white"
+                                  className="block text-[15px] font-normal text-[#a1a1a6] transition-colors active:text-[#f5f5f7]"
                                 >
                                   {grandChild.label}
                                 </Link>
@@ -471,10 +471,10 @@ function MobileMenu({
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="flex min-h-[44px] items-center gap-4 text-[17px] font-normal text-[#e8e8ed]"
+                className="flex min-h-[44px] items-center gap-4 text-[17px] font-normal text-[#f5f5f7]"
               >
                 {item.icon && (
-                  <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-white/60" />
+                  <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
                 )}
                 {item.label}
               </Link>
@@ -487,11 +487,11 @@ function MobileMenu({
             Icon 22px + gap-3.5 để chữ thẳng hàng với các mục menu chính phía trên.
             Tách khỏi menu chính bằng KHOẢNG TRẮNG, không dùng đường kẻ. */}
         {/* nhóm cuối: cùng nhịp dòng với menu trên (space-y-1); chưa đăng nhập thì điện thoại không còn mục nào ở đây → không vẽ đường kẻ trống */}
-        <div className={`mt-5 space-y-1 border-white/10 pt-3 ${user ? "border-t" : "max-lg:hidden lg:border-t"}`}>
+        <div className={`mt-5 space-y-1 border-[#2c2c2e] pt-3 ${user ? "border-t" : "max-lg:hidden lg:border-t"}`}>
           {/* Đã đăng nhập: mục tài khoản còn lại — cùng kiểu hàng với Tin đã lưu · Đăng xuất */}
           {user && TAI_KHOAN_PHU.map((l) => (
-            <Link key={l.href} href={l.href} onClick={onClose} className="flex min-h-[44px] items-center gap-4 text-[16px] font-normal text-[#c7c7cc]">
-              <BieuTuong ten={l.icon} className="h-5 w-5 shrink-0 text-white/55" />
+            <Link key={l.href} href={l.href} onClick={onClose} className="flex min-h-[44px] items-center gap-4 text-[16px] font-normal text-[#d2d2d7]">
+              <BieuTuong ten={l.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
               {l.label}
             </Link>
           ))}
@@ -499,9 +499,9 @@ function MobileMenu({
           <Link
             href="/tin-luu"
             onClick={onClose}
-            className="flex min-h-[44px] items-center gap-4 text-[16px] font-normal text-[#c7c7cc] max-lg:hidden"
+            className="flex min-h-[44px] items-center gap-4 text-[16px] font-normal text-[#f5f5f7] max-lg:hidden"
           >
-            <BieuTuong ten="tim" className="h-5 w-5 shrink-0 text-white/55" />
+            <BieuTuong ten="tim" className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
             Tin đã lưu
           </Link>
           {user && (
@@ -510,7 +510,7 @@ function MobileMenu({
               onClick={() => { onLogout(); onClose(); }}
               className="flex min-h-[44px] w-full items-center gap-4 text-left text-[16px] font-normal text-[#a1a1a6]"
             >
-              <BieuTuong ten="dangXuat" className="h-5 w-5 shrink-0 text-white/45" />
+              <BieuTuong ten="dangXuat" className="h-5 w-5 shrink-0 text-[#8e8e93]" />
               Đăng xuất
             </button>
           )}
@@ -604,15 +604,15 @@ export default function Header() {
             aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="relative -mr-1 flex h-11 w-11 items-center justify-center xl:hidden"
+            className="relative -mr-3 flex h-11 w-11 items-center justify-center xl:hidden"
           >
             <span
-              className={`absolute h-[1.5px] w-[18px] rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              className={`absolute h-[1.5px] w-5 rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                 menuOpen ? "rotate-45" : "-translate-y-[3.5px]"
               }`}
             />
             <span
-              className={`absolute h-[1.5px] w-[18px] rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              className={`absolute h-[1.5px] w-5 rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                 menuOpen ? "-rotate-45" : "translate-y-[3.5px]"
               }`}
             />

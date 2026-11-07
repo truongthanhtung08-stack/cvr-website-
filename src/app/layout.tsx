@@ -186,8 +186,8 @@ export const viewport: Viewport = {
   // iPhone và trình duyệt trong Zalo/Facebook bỏ qua dòng này — do <BanPhimAo /> lo.
   interactiveWidget: "resizes-content",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#161617" },
-    { media: "(prefers-color-scheme: dark)", color: "#161617" },
+    { media: "(prefers-color-scheme: light)", color: "#1d1d1f" },
+    { media: "(prefers-color-scheme: dark)", color: "#1d1d1f" },
   ],
 };
 

@@ -99,13 +99,13 @@ h1, h2, h3 {
 .nav-glass {
   /* Độ đặc cao (0.97) để đọc ra ĐEN #161617 kể cả khi sau lưng là nền trắng —
      web nền sáng khác trang nền tối của Apple, phải đặc hơn mới ra "đen chuẩn". */
-  background-color: rgba(22, 22, 23, 0.97);
+  background-color: rgba(29, 29, 31, 0.97); /* MỘT nền đen cho đầu trang + menu: #1d1d1f (đen than Apple), dịu hơn #161617 (anh 07/11/2026) */
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
 }
 /* Trình duyệt không hỗ trợ backdrop-filter → nền đen đặc hoàn toàn */
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .nav-glass { background-color: #161617; }
+  .nav-glass { background-color: #1d1d1f; }
 }
 
 /* ===== Panel menu Mobile — nền ĐEN ĐẶC (không kính mờ) =====
@@ -115,8 +115,8 @@ h1, h2, h3 {
        trang phía sau (trông như menu "bị ẩn").
      · Blur cả màn hình phải vẽ lại liên tục → GIẬT LAG khi mở/cuộn.
    Nền đặc: chữ luôn rõ, mở tức thì, không tốn GPU. */
-.menu-solid {
-  background-color: #161617;
+.menu-solid { /* nền đen cùng đầu trang; chữ theo thang Apple tối: chính #f5f5f7 · phụ #c7c7cc · cấp 3 #98989d (anh 07/11/2026) */
+  background-color: #1d1d1f;
 }
 
 /* ===== Bóng "luxury" — nhiều lớp, ám màu mực, rất mềm (cho card nền trắng) ===== */
