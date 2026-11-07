@@ -188,9 +188,15 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const [sanSang, setSanSang] = useState(false);
   useEffect(() => {
     if (!window.matchMedia("(max-width: 639px)").matches) return;
-    const t = setTimeout(() => setSanSang(true), 1200);
+    // DỰNG NGAY KHI MÁY RẢNH (08/11/2026: đo điện thoại chậm — chờ cố định 1,2 s sau khi trang chạy thì 4–8 s mới có, khách chạm trước đó
+    // là phải dựng cả màn tìm ngay trong cú chạm, khựng 0,3–1,3 s)
+    const w = window as Window & { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback) { const id = w.requestIdleCallback(() => setSanSang(true), { timeout: 1500 }); return () => w.cancelIdleCallback?.(id); }
+    const t = setTimeout(() => setSanSang(true), 300);
     return () => clearTimeout(t);
   }, []);
+  // CHẠM KHI MÀN TÌM CHƯA DỰNG SẴN: hiện NGAY khung gọn (ô gõ, bàn phím bật trong cú chạm), danh sách gợi ý dựng ngay sau — không chặn cú chạm
+  const [nhe, setNhe] = useState(false);
   const [moPc, setMoPc] = useState(false); // máy tính: bảng gợi ý
   const [ganDay, setGanDay] = useState<Suggestion[]>([]);
   const [boLoc, setLoc] = useState<Filters>(emptyFilters); // trường lọc chi tiết
@@ -255,8 +261,9 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
       dlg.querySelector<HTMLTextAreaElement>("textarea")?.focus({ preventScroll: true });
       startTransition(() => { setDangGo(true); setMo(true); });
     } else {
-      flushSync(() => { setDangGo(true); setMo(true); });
+      flushSync(() => { setNhe(true); setDangGo(true); setMo(true); });
       document.querySelector<HTMLTextAreaElement>("[role='dialog'] textarea")?.focus({ preventScroll: true });
+      window.setTimeout(() => startTransition(() => setNhe(false)), 0);
     }
     // dấu RIÊNG cho mỗi lần mở: quay lại trang chủ từ trang kết quả thì mục lịch sử cũ còn dấu của lần mở trước — dùng
     // dấu chung thì nút ← lùi về mục đó mà màn tìm không đóng (đo 18/10/2026)
@@ -881,7 +888,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             </div>
             {/* MÀN GÕ GỌN NHƯ GOOGLE: ô gõ + hàng trường lọc + đường kẻ, bên dưới là các lần tìm gần đây / gợi ý. */}
             {/* Đang gõ: chỉ ô gõ + gợi ý (kiểu Google); bấm ← về lại màn có đủ 5 trường để tìm chi tiết (chủ dự án 17/10/2026) */}
-            <div className={`-mx-2 mt-1 transition-opacity duration-200 ${dangTim ? "pointer-events-none opacity-40" : ""}`}>{dsGoiY}</div>
+            <div className={`-mx-2 mt-1 transition-opacity duration-200 ${dangTim ? "pointer-events-none opacity-40" : ""}`}>{nhe ? null : dsGoiY}</div>
           </div>
           {/* Hai trường chính thành THẺ gọn dưới thẻ tìm (như "Thời gian · Khách" của Airbnb) */}
           <div className="mb-3 shrink-0" />
