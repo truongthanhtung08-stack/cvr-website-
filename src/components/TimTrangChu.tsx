@@ -495,7 +495,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
       const sua = suaChinhTa(kw);
       const u = duongDanCau(mb, sua ?? kw);
       if (u) {
-        if (!sua) return den(u);
+        // câu khách gõ LUÔN đi theo (?q=), không chỉ khi sửa chính tả — trang kết quả hiện dòng "Đang hiển thị kết quả cho …" (07/11/2026)
         const [duong, cu] = u.split("?");
         const q = new URLSearchParams(cu);
         q.set("q", kw);

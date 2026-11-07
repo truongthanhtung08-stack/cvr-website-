@@ -578,6 +578,8 @@ export function suaChinhTa(raw: string): string | null {
       tenNoiDu();
       if (_tenNoiDau.has(tu.slice(i, i + k).join(" ").normalize("NFC").toLowerCase())) { i += k - 1; break; }
       if (go.some((w) => CHU_CAP.has(w)) || tu.slice(i, i + k).every((t, j) => normalizeVi(t) !== t.toLowerCase() && td.has(go[j]))) continue;
+      // chữ đã thuộc cụm nhà đất vừa khớp ("chung cư") không ghép thành tên nơi — "chung cu hue" từng thành "chung cư huê" (xã Cư Huê)
+      if (go.some((_, j) => daCum.has(i + j))) continue;
       let dung = noi.get(go.join(" "));
       // ĐOÁN GẦN ĐÚNG không được đè lên TÊN NƠI CÓ THẬT khách đã gõ đúng chữ (cả nước, hai hệ): "nam dong hai phong" là Nam Đồng · Hải Phòng,
       // không thành "Nam Đông Hà" (anh 07/11/2026: "không nhận ra thì chịu, đã là địa chỉ phải đọc được")
@@ -613,6 +615,12 @@ export function suaChinhTa(raw: string): string | null {
   }
   // TÊN NƠI GÕ KHÔNG DẤU ("nhà đất da nang", "nha dat quy nhon") → vẫn hiện câu đã đặt dấu kiểu Google "Đang hiển thị kết quả cho nhà đất
   // đà nẵng" (anh 07/11/2026: "gợi ý thay thế Google đâu")
+  // TÊN TỈNH MỘT CHỮ gõ không dấu ("hue") cũng đặt dấu như tên nơi hai chữ ("nhà đất hue" → "nhà đất huế", 07/11/2026)
+  for (let i = 0; i < tu.length; i++) {
+    if (daCum.has(i) || normalizeVi(tu[i]) !== tu[i].toLowerCase()) continue;
+    const t1 = TINH.find(([t]) => !t.includes(" ") && normalizeVi(t) === tu[i].toLowerCase());
+    if (t1 && !chiDatDau.some(([j]) => j === i)) chiDatDau.push([i, [t1[0].toLowerCase()]]);
+  }
   if (chiDatDau.length) doi = true;
   if (doi) for (const [i, ds] of chiDatDau) tu.splice(i, ds.length, ...ds);
   // CHỮ GÕ LẶP LIỀN NHAU ("đất nền nen hòa xuân") → bỏ chữ lặp, như Google (07/11/2026); số thì giữ ("2 2" hiếm, không đoán)

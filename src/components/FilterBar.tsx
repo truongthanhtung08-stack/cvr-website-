@@ -383,7 +383,9 @@ export default function FilterBar({
         return diKetQua(`${m === "thue" ? "/cho-thue" : "/mua-ban"}?duan=${encodeURIComponent(da.duAn.ten)}`, kw);
       }
       const u = duongDanCau(purpose, kw);
-      if (u && u !== window.location.pathname) return diKetQua(u, kw);
+      // câu khách gõ LUÔN đi theo sang trang (?q=) — trang kết quả mới hiện được dòng "Đang hiển thị kết quả cho …" (anh 07/11/2026:
+      // "gợi ý Google thay thế đâu" — gõ "chung cu hue" sang /mua-ban/can-ho-chung-cu/hue mất câu)
+      if (u && u !== window.location.pathname) return diKetQua(`${u.split("?")[0]}?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(u.split("?")[1] ?? "")), q: kw }).toString()}`, kw);
       // Địa chỉ trang đi theo câu mới (tải lại / gửi link vẫn đúng câu khách tìm). Đang ở trang con cố định nơi
       // (VD /cho-thue/nha/da-nang) → về trang mục đích gốc, không để lọc cố định của trang con đè câu mới.
       const goc = purpose === "thue" ? "/cho-thue" : "/mua-ban";
