@@ -207,7 +207,7 @@ export default function Footer() {
           {/* Cột liên kết */}
           {columns.map((col) => (
             <div key={col.title} className={col.ngang ? "col-span-2 md:col-span-1" : undefined}>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-cvr-ink">
+              <h3 className="text-[15px] font-semibold uppercase tracking-wider text-cvr-ink sm:text-sm">
                 {col.title}
               </h3>
               <ul className={col.ngang ? "mt-4 flex flex-wrap gap-x-5 gap-y-2.5 md:block md:space-y-2.5" : "mt-4 space-y-2.5"}>
@@ -215,7 +215,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="inline-block text-sm text-cvr-muted transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:translate-x-1 hover:text-cvr-ink"
+                      className="inline-block text-[15px] text-cvr-muted transition-all sm:text-sm duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:translate-x-1 hover:text-cvr-ink"
                     >
                       {link.label}
                     </Link>

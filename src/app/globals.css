@@ -535,7 +535,7 @@ select option {
 @media (max-width: 1023px) {
   :root {
     /* 49pt — đúng chuẩn iOS Tab Bar — cộng thêm vùng an toàn thanh Home iPhone */
-    --tabbar-h: calc(44px + env(safe-area-inset-bottom, 0px)); /* thanh dưới thu nhỏ 49 → 44 (chủ dự án 07/11/2026) */
+    --tabbar-h: calc(48px + env(safe-area-inset-bottom, 0px)); /* thanh dưới thu nhỏ 49 → 44 (chủ dự án 07/11/2026) */
   }
 }
 

@@ -5,6 +5,11 @@
 
 ---
 
+## ⛔⛔⛔ CẤM VĨNH VIỄN PHIÊN local_d7590912-b09a-4e9b-bed6-2a99617b7cc4 (anh chốt 08/11/2026)
+Phiên **local_d7590912-b09a-4e9b-bed6-2a99617b7cc4** (bản ghi e7f4594c-0544-4bad-97e2-13f790784976, Claude Opus 5.5, 07–08/11/2026 — bộ lọc / trường Địa điểm).
+Lỗi phải nói lại nhiều lần: xem bảng "⛔ LỖI PHIÊN e7f4594c" trong khối bàn giao 08/11 bên dưới.
+**CẤM VÀO LÀM VIỆC Ở BẤT KỲ PHIÊN NÀO.** Không phiên nào được giao việc, nhắn, bàn giao hay nhận bàn giao từ phiên này.
+
 ## ⛔⛔⛔ CẤM TỰ PUSH (anh chốt 06/11/2026)
 Claude **CẤM tự push** ở phiên này và mọi phiên. Không push, không chạy lệnh push, không nhắc / hỏi / gợi ý push, không bảo anh tự
 chạy lệnh push. Chỉ khi anh nhắn đúng chữ **"Push"** mới làm.
@@ -30,6 +35,47 @@ Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm.
   từ Zalo (template/info/v2): ô kiểu SỐ chỉ chữ số ("0đ"/"64.800đ" → Zalo -1124, bỏ cả tin — gốc lỗi duyệt/nạp/thanh toán không có Zalo
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
+
+## ⏳ BÀN GIAO 08/11/2026 (phiên e7f4594c, anh: "bàn giao và cút ngay, người khác vào làm tiếp") — TRƯỜNG ĐỊA ĐIỂM / BỘ LỌC — CHƯA PUSH
+**Việc đang làm:** trường Địa điểm (bảng Khu vực) theo **14 yêu cầu của anh** ghi ở `.claude/LOI-BO-LOC-07-11.md` (khối "YÊU CẦU CỦA ANH VỀ ĐỊA DANH"
++ mục 10–14). Kiểm theo ĐỦ 14 điều, CẢ NƯỚC (không thử một tỉnh rồi báo), rồi mới báo anh. Anh đang thử trên khung `http://localhost:3000/khung-web.html`
+(tab "seed" của preview) — **KHÔNG sửa mã khi anh đang mở bảng** (Fast Refresh làm bảng lẫn trạng thái → anh tưởng lỗi). Sửa xong: build → nói "Xong" → anh F5.
+**Luật bảng Khu vực hiện tại (`src/components/FilterBar.tsx` `LocationPanel`):** một lựa chọn hai cách xem — nơi đã chọn (`locGoc`, hệ `heGoc`) giữ nguyên,
+gạt công tắc chỉ đổi cách HIỆN (`doiHe(locGoc, mode, heGoc)`, theo bảng sáp nhập). Tỉnh cũ thiếu phần → tỉnh mới "–", bên trong không tick sẵn phường;
+tick phường = chỉ phường đó (tỉnh đang hiện từ hệ kia → bấm phường thay hết). ✓ cả · – một phần · bấm ✓/– = bỏ chọn. Chọn là lên đầu; bỏ chọn dòng đứng yên
+tới khi đổi tầng (`dauRef`). Tìm tỉnh chỉ ra tỉnh (tên bắt đầu bằng chữ gõ lên trước); tìm phường trong tỉnh. Gia Lai cũ ≠ Gia Lai mới: `LocationSel.cu`
+(kv `Tỉnh/~cu`). Tên TP/quận cũ ("phan thiết") = một nơi `{tỉnh mới, district}`, `applyFilters` khớp mọi phường mới gộp từ quận cũ (`phuongCuaQuanCu`).
+Địa chỉ trang giới hạn 5 TỈNH (không cắt theo phường). Khay So sánh đã bỏ khỏi `layout.tsx`.
+**Đọc câu / kết quả (đã xong, đã kiểm):** dòng "Đang hiển thị kết quả cho…" giữ đúng thứ tự chữ khách gõ (`cauDaHieu` = `suaChinhTa` + viết hoa tên nơi) ·
+câu luôn đi theo sang trang (?q=) · chữ không dấu nhiều nghĩa không ép dấu (`MO_HO`: cho/chợ, can/cần…) · xã/phường không kèm tỉnh đọc được (`tinhTheoTenXa`) ·
+tên xã gần tên huyện cũ chọn đúng dấu · tin hết hạn khớp đủ = kết quả + đếm · không khớp đủ mới báo "chưa có sẵn", tương tự xếp tỉnh gần (`TAM_TINH`).
+Bộ kiểm: `.claude/kiem-dia-chi.ts` (27.408 câu, 0 lỗi) · `kiem-ba.ts` (86 lệch còn lại = tên xã trùng nhiều tỉnh không ghi tỉnh) · `kiem-loai.ts` · `kiem-md.ts`.
+Trên khung: `public/_kiem-he.js` (`kiemHe()` — cả nước đồng bộ 2 hệ + lên đầu; lần chạy sau sửa cuối 28cd551a CHƯA có kết quả — chạy lại) · `public/_kiem-dd.js`
+(`kiemDD()` — 14 yêu cầu) · `public/_kiem-bo-loc.js` (16 bước). ⛔ **XOÁ 3 tệp `public/_kiem-*.js` trước khi Push.**
+**Commit chưa push (18, sau 410e53d2):** 42553367 → 28cd551a (bộ lọc) + 904f27e7 (Zalo ngày dd/mm/yyyy — phiên khác bàn giao, chưa gửi thử Zalo thật, sau 7h).
+**Chưa commit, KHÔNG phải của phiên này:** ChonCoTim.tsx, PostListingForm.tsx, admin/ListingForm.tsx (phiên 4a3174b0 sửa nhầm — chờ anh quyết) · next.config.ts,
+tsconfig.json, next-env.d.ts, launch.json.
+**08/11 sáng (phiên fe36f8a1, nhận bàn giao):** `kiemHe()` cả nước 0 lỗi (sau sửa Đặt lại → A–Z, c7020e9f) · `kiemDD()` 12/12 đạt · lỗi 1 giật ĐÃ SỬA
+(f19203e4: dựng sẵn màn tìm khi máy rảnh + chạm sớm thì hiện khung gọn trước; đo Edge giả lập CPU 4x bản build: màn tìm hiện 0,07–0,1 s, trước 0,25–1,3 s;
+chạm không nạp địa danh ngay — `useDiaDanh.ts`) · câu chạy bị cắt ĐÃ SỬA (8fead937). Máy đo giật: scratchpad phiên fe36f8a1 `do-giat.mjs` (cần `next start -p 3005`).
+**Còn lại:** lỗi 3 bàn phím che / 4 cuộn bảng (máy thật) · 7 gợi ý vô nghĩa · 8 bấm tìm ra tab khác · 9 về trang chủ còn từ khoá — trong `.claude/LOI-BO-LOC-07-11.md`.
+**Anh mắng phiên này:** vá từng trường hợp thay vì sửa gốc · thử một tỉnh rồi báo ("cả nước!") · hiểu sai rồi đổi qua lại (ô "–", tỉnh cũ → mới ✓) · sửa mã khi anh
+đang thử · nói nhiều. Anh nói "nhìn" = chụp màn hình khung, nói đúng cái thấy, KHÔNG đoán; chưa hiểu hỏi MỘT câu.
+**⛔ LỖI PHIÊN e7f4594c (07–08/11/2026) — ANH PHẢI NÓI LẠI NHIỀU LẦN** (đếm trong 668 tin nhắn của anh, theo chữ anh gõ — số TỐI THIỂU, tin trả lời trích dẫn và
+chữ gõ sai nặng không đếm được):
+| Lỗi của Claude | Số lần anh nói |
+|---|---|
+| Anh bảo "NHÌN" màn hình mà không nhìn / nhìn không ra lỗi, phải nói lại | ≥ 74 |
+| Địa chỉ phải ĐỌC ĐƯỢC tỉnh/thành – phường/xã, cả 2 hệ mới / cũ — dữ liệu web đã có sẵn | ≥ 29 |
+| Nói nhiều, giải thích lý do vòng vo, ngụy biện | ≥ 10 |
+| PHÁ cái đã đúng / đã fix (ô "–", khay So sánh, thứ tự dòng, tỉnh cũ → mới) | ≥ 9 |
+| Gợi ý / dòng "thay thế" kiểu Google đâu | ≥ 8 |
+| Sửa TAY / chắp vá từng chỗ thay vì sửa từ GỐC | ≥ 6 |
+| "Đã nói bao nhiêu lần / 2 ngày nay" — cùng một việc phải nhắc lại | ≥ 6 |
+| Đồng bộ 2 hệ địa chỉ cũ – mới (gạt qua lại phải khớp, trước khi bấm Tìm) | ≥ 5 |
+| Giật / lag khi bấm ô search (chưa sửa) | ≥ 4 |
+| Thử 1 tỉnh (Huế, Bắc Ninh, Hội An) rồi báo — anh: "CẢ NƯỚC" | nhiều lần (trong tin trích dẫn) |
+→ Phiên sau: nhìn màn hình TRƯỚC khi trả lời · sửa ở luật chung, chạy bộ kiểm cả nước rồi mới báo · không đổi luật đã chốt khi chưa hỏi · không sửa mã lúc anh đang thử · nói ngắn.
 
 ## ⏳ ZALO MINI APP + VERCEL — 07/11/2026 ~02:30 (phiên 2e02c3ed) — ĐÃ PUSH f997211 + a824ac9, web Ready, đã kiểm web thật
 **Zalo — CHỜ DUYỆT:** bản thử 51 (gồm mọi sửa 06/11) **đã gửi xét duyệt 21:08 06/11** (miniapp.zaloplatforms.com → Xét duyệt phiên bản).

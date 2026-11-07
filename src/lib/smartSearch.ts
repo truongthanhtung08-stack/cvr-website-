@@ -266,7 +266,8 @@ function docDiaChiCay(nq: string, tinh: string | null, goc = "", khongCatTinh = 
     const daiNhat = [...khop].sort((a, b) => b.n.length - a.n.length)[0];
     if (daiNhat.cap === "w" && quanKhop.some((q) => q.n !== daiNhat.n && ` ${daiNhat.n} `.includes(` ${q.n} `))) return daiNhat.hit;
     // phường và quận CÙNG SỐ ("Phường 3, Quận 3") được khi khách gõ đủ hai chữ cấp
-    const cungSo = (m: MucCay) => m.n === m.quan && truoc.includes(` phuong ${m.n} `) && truoc.includes(` quan ${m.n} `);
+    // hoặc tên GÕ HAI LẦN tách rời ("sa pa sa pa lao cai" = thị trấn Sa Pa, huyện Sa Pa) — phường/xã trùng tên quận chứa nó (08/11/2026)
+    const cungSo = (m: MucCay) => m.n === m.quan && ((truoc.includes(` phuong ${m.n} `) && truoc.includes(` quan ${m.n} `)) || vt(m.n).length >= 2);
     const chacChan = khop.filter((m) => m.cap === "w" && m.quan && (m.n !== m.quan || cungSo(m)) && quanKhop.some((q) => q.n === m.quan && (roiNhau(m.n, q.n) || cungSo(m))))
       .sort((a, b) => Number(dau(b)) - Number(dau(a)) || b.n.length - a.n.length)[0];
     if (chacChan) return chacChan.hit;
