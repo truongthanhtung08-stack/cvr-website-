@@ -1751,7 +1751,7 @@ export function LocationPanel({
       </div>
             {/* Đặt lại · Tìm CHỈ ở danh sách tỉnh (anh 07/11/2026: "không cần để 2 CTA đó" ở phường). Vào phường rồi quay ra bằng "‹ Tên tỉnh":
           mọi nơi đã chọn GIỮ NGUYÊN qua lại (nháp chung), không phải chọn lại */}
-      {onApDung && level === "province" && <NutXem onClick={onApDung} onReset={() => onDatLai?.()} tatDatLai={!locations.length} />}
+      {onApDung && level === "province" && <NutXem onClick={onApDung} onReset={() => { dauRef.current = { khoa: "", ds: new Set() }; onDatLai?.(); }} tatDatLai={!locations.length} />}
 
     </div>
   );

@@ -26,7 +26,9 @@ function napKhiRanh() {
   daHen = true;
   if (/[?&]q=/.test(window.location.search)) { void napDiaDanh(); return; }
   const nap = () => { void napDiaDanh(); };
-  window.addEventListener("pointerdown", nap, { once: true, capture: true });
+  // CHẠM KHÔNG NẠP NGAY (anh 08/11/2026: "rất giật khi bấm vào ô search" — đo: cú chạm đầu kéo theo đọc gói địa danh, máy nghẽn 183 ms đúng
+  // lúc màn tìm mở + bàn phím bật). Chờ màn tìm hiện xong rồi mới nạp; gõ phím (cần địa danh để hiểu câu) vẫn nạp ngay.
+  window.addEventListener("pointerdown", () => window.setTimeout(nap, 500), { once: true, capture: true });
   window.addEventListener("keydown", nap, { once: true, capture: true });
   const ranh = () => (window.requestIdleCallback ? window.requestIdleCallback(nap, { timeout: 3000 }) : window.setTimeout(nap, 1000));
   if (document.readyState === "complete") ranh();
