@@ -300,6 +300,27 @@ function tuDien(): Set<string> {
   return s;
 }
 const coDau = (n: string) => CO_DAU?.get(n) ?? n;
+/** TÊN NƠI ĐANG GÕ DỞ ở cuối câu → điền trọn, kiểu Google (anh 07/11/2026: "căn ho ngủ hanh" từng gợi ý "căn hộ ngủ hanh huế"):
+ *  2–3 chữ cuối là phần đầu của ĐÚNG MỘT tên nơi (chữ trước khớp trọn, chữ cuối là đầu chữ) → thay bằng tên đủ dấu ("căn hộ ngũ hành sơn"). */
+export function hoanTenNoiCuoi(raw: string): string | null {
+  if (!daCoDiaDanh()) return null;
+  const tu = raw.trim().split(/\s+/).filter(Boolean);
+  const nt = tu.map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, ""));
+  const noi = cumNoi();
+  for (let k = Math.min(3, nt.length); k >= 2; k--) {
+    const duoi = nt.slice(-k);
+    if (duoi[k - 1].length < 2) continue;
+    const ung = [...noi.keys()].filter((c) => {
+      const w = c.split(" ");
+      return w.length > k - 1 && duoi.every((d, j) => (j < k - 1 ? w[j] === d : w[j].startsWith(d))) && c !== duoi.join(" ");
+    });
+    const ten = [...new Set(ung.map((c) => noi.get(c)!))];
+    if (ten.length === 1) return [...tu.slice(0, -k), ten[0]].join(" ");
+    if (ten.length > 1) return null;
+  }
+  return null;
+}
+
 export function suaChinhTa(raw: string): string | null {
   // Chưa có địa danh thì từ điển thiếu tên phường xã → "sửa" nhầm tên nơi khách gõ đúng. Tạm không sửa (vài trăm ms đầu).
   if (!daCoDiaDanh()) return null;
@@ -380,7 +401,8 @@ export function suaChinhTa(raw: string): string | null {
         const gan = (noiTheoSo.get(k) ?? []).filter((c) => {
           const w = c.split(" "); let lech = 0;
           // chữ khách gõ là chữ CÓ NGHĨA thì không đổi sang chữ khác ("đất" không thành "đăk", "phường hòa" không thành "Hướng Hóa")
-          for (let j = 0; j < k; j++) if (w[j] !== go[j]) { if (lechMot(w[j], go[j]) !== 1 || go[j].length < 2 || td.has(go[j])) return false; lech++; }
+          // tên nơi TỪ 3 CHỮ mà các chữ kia khớp đúng ("nhu hành sơn" → Ngũ Hành Sơn, anh 07/11/2026) thì đủ chắc, cho đổi cả chữ có nghĩa
+          for (let j = 0; j < k; j++) if (w[j] !== go[j]) { if (lechMot(w[j], go[j]) !== 1 || go[j].length < 2 || (td.has(go[j]) && k < 3)) return false; lech++; }
           return lech === 1;
         });
         // nhiều tên gần đúng → ưu tiên tên TỈNH ("đag năng" → Đà Nẵng); vẫn nhiều thì không đoán
