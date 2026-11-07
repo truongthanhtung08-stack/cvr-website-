@@ -56,11 +56,12 @@ export default function ThuGonTrang({ children, className = "" }: { children: Re
     <div>
       <div ref={ref} className={`relative overflow-hidden ${className}`} style={dai && !mo ? { maxHeight: `${catTai}px` } : undefined}>
         {children}
-        {dai && !mo && !duoiAnh && <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" aria-hidden />}
+        {/* vệt mờ NGẮN (40px) — vệt 96px phủ trắng mất mấy dòng cuối, trông như nút che nội dung (anh 07/11/2026) */}
+        {dai && !mo && !duoiAnh && <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white/90 to-transparent" aria-hidden />}
       </div>
       {dai && (
         // Như Batdongsan: "Xem thêm" → mở hết, "Thu gọn" nằm SÁT ngay dưới nội dung (chủ dự án 31/10/2026). Cùng kiểu nút cả web
-        <div className="mt-4 flex justify-center">
+        <div className="mt-3 flex justify-center">
           <button type="button" onClick={() => { if (mo && ref.current) veDauKhoi(ref.current); setMo((v) => !v); }} className="btn-xemthem">
             {mo ? "Thu gọn" : "Xem thêm"}
             <svg className={`h-4 w-4 transition-transform ${mo ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
