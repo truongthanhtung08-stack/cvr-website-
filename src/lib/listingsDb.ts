@@ -12,6 +12,9 @@ import type { Listing } from "@/lib/data";
 import { chuanHoaTienIch, chuanHoaNoiThat, chuanHoaPhapLy, chuanHoaMucNoiThat } from "@/lib/chuanHoaThuocTinh";
 import { linkHopLe } from "@/lib/linkChen";
 import { chuanHoaDiaChiCu, dongBoHaiHe, haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
+import { choCuCua } from "@/lib/locations";
+// chữ thường không dấu, chỉ chữ + số cách nhau một dấu cách (dò tên nơi trong nội dung tin)
+const khongDauChu = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
@@ -246,7 +249,7 @@ function rowToListing(r: Row): Listing {
     // Người đăng nhập theo hệ nào cũng được, người xem luôn thấy tên đang dùng hiện
     // nay; cách gọi cũ nằm ở dòng "Địa chỉ hệ cũ" ngay dưới. Suy không ra tới cấp
     // phường thì giữ nguyên chuỗi khách đã nhập, không hiện địa chỉ nửa vời.
-    ...((): { location: string; locationCu?: string; diaChiTim?: string; diaChiSo?: string } => {
+    ...((): { location: string; locationCu?: string; diaChiTim?: string; diaChiSo?: string; noiMoi?: Listing["noiMoi"]; noiCu?: Listing["noiCu"] } => {
       const goc = [r.ward, r.district, r.province].filter(Boolean).join(", ");
       if (!r.province) return { location: goc };
       const hai = haiDongDiaChi(heCuaTin(r.district), {
@@ -276,7 +279,24 @@ function rowToListing(r: Row): Listing {
         tay.phuong || tay.quan
           ? chuanHoaDiaChiCu(hm.tinh, hm.phuong, tay) || [tay.phuong, tay.quan, tay.tinh || hai.cuTinh].filter(Boolean).join(", ")
           : hai.cu;
-      const cu = cuTho && cuTho !== moi ? cuTho : "";
+      let cu = cuTho && cuTho !== moi ? cuTho : "";
+      // THIẾU ĐỊA CHỈ CŨ → ĐỌC NỘI DUNG TIN (anh 07/11/2026: "web phải tự đọc được"): phường mới gộp từ nhiều phường cũ (Ngũ Hành Sơn =
+      // Hòa Quý + Hòa Hải + Mỹ An…) nên máy không suy ngược được; tiêu đề / mô tả nhắc ĐÚNG MỘT phường cũ thuộc phường mới này (theo bảng
+      // sáp nhập) → lấy làm địa chỉ cũ. Nhắc nhiều phường cũ khác nhau thì không đoán.
+      if (!cu && hm.phuong) {
+        const nd = ` ${khongDauChu(`${r.title} ${r.description ?? ""}`)} `;
+        const ten = (x: string) => khongDauChu(x.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, ""));
+        const goc = choCuCua(hm.tinh, hm.phuong);
+        const gap = goc.filter((c) => { const t = ten(c.phuong); return t.length >= 3 && nd.includes(` ${t} `); });
+        const khac = [...new Set(gap.map((c) => `${c.phuong}|${c.quan}`))];
+        const boCapQ = (q: string) => q.replace(/^(Quận|Huyện|Thị xã|Thành phố)\s+/i, "");
+        if (khac.length === 1) cu = [gap[0].phuong.replace(/^(Phường|Xã|Thị trấn)\s+/i, ""), boCapQ(gap[0].quan), gap[0].tinh].join(", ");
+        else {
+          // nội dung không nói phường cũ nhưng MỌI phường cũ của phường mới này cùng MỘT quận / tỉnh cũ → địa chỉ cũ chắc tới cấp quận
+          const quan = [...new Set(goc.map((c) => `${boCapQ(c.quan)}, ${c.tinh}`))];
+          if (quan.length === 1 && goc[0]?.quan) cu = quan[0];
+        }
+      }
       return {
         location: moi,
         ...(cu ? { locationCu: cu } : {}),
@@ -284,6 +304,12 @@ function rowToListing(r: Row): Listing {
         ...(r.details?.addressDetail?.trim() ? { diaChiSo: r.details.addressDetail.trim() } : {}),
         // Lọc/tìm khu vực dò trên chuỗi này để tin không mất hút khi đổi cách gọi.
         diaChiTim: [moi, cu, goc].filter(Boolean).join(" · "),
+        // tách cấp cho bộ lọc: hệ mới (tỉnh, phường) · hệ cũ "phường, quận, tỉnh" hoặc "quận, tỉnh"
+        ...(hm.tinh && hm.phuong ? { noiMoi: { tinh: hm.tinh, phuong: hm.phuong } } : {}),
+        ...((): { noiCu?: Listing["noiCu"] } => {
+          const c = cu.split(",").map((x) => x.trim()).filter(Boolean);
+          return c.length === 3 ? { noiCu: { phuong: c[0], quan: c[1], tinh: c[2] } } : c.length === 2 ? { noiCu: { phuong: "", quan: c[0], tinh: c[1] } } : {};
+        })(),
       };
     })(),
     diaGioi: { ward: r.ward ?? "", district: r.district ?? "", province: r.province ?? "" },

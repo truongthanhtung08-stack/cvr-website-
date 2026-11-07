@@ -2,7 +2,7 @@
 // 👉 Thêm/bớt loại hình hoặc mức giá tại đây — toàn bộ bộ lọc tự cập nhật.
 
 import { tierRank } from "./packages";
-import { tenTinhTuongDuong, chuanTen, chuanTenCap } from "./locations";
+import { tenTinhTuongDuong, chuanTen, chuanTenCap, newProvinceOf } from "./locations";
 import { dungODienTichXayDung, dienTichSanThat, oLoaiCon } from "./listingSpec";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -556,6 +556,8 @@ export type FilterableListing = {
   builtAreaM2Uoc?: number | null;
   // Địa chỉ gộp cả hai hệ cũ/mới — lọc & tìm khu vực dò trên chuỗi này.
   diaChiTim?: string;
+  noiMoi?: { tinh: string; phuong: string };
+  noiCu?: { tinh: string; quan: string; phuong: string };
   desc?: string;       // mô tả tin
   agentName?: string;  // người đăng
   // Mọi trường còn lại đã nhập (pháp lý, hướng, nội thất, tiện ích, đặc điểm…)
@@ -570,7 +572,25 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
   return items.filter((item) => {
     if (f.verified && !listingVerified(item.id)) return false;
     if (f.broker && !listingProBroker(item.id)) return false;
-    if (f.locations.length) {
+    if (f.locations.length && (item.noiMoi || item.noiCu)) {
+      // SO ĐÚNG CẤP, ĐÚNG HỆ, TRỌN TÊN (anh 07/11/2026 — gốc lỗi: so trên chuỗi gộp phẳng nên "Phường Quy Nhơn" ra cả Quy Nhơn Nam,
+      // "Phường Sơn Trà" ra cả quận Sơn Trà cũ). Lựa chọn hệ MỚI (tỉnh → phường) so với phường mới của tin; lựa chọn hệ CŨ (tỉnh → quận
+      // → phường) so với quận / phường cũ của tin. Tên tỉnh cũ – mới tương đương (tenTinhTuongDuong).
+      const moi = item.noiMoi, cu = item.noiCu;
+      const bang = (a?: string, b?: string) => !!a && !!b && chuanTen(a) === chuanTen(b);
+      const inArea = f.locations.some((l) => {
+        // tỉnh CŨ đã sáp nhập (Quảng Nam, Bình Định…) chỉ so tỉnh cũ của tin — không nở ra cả tỉnh mới (Đà Nẵng); tên đang dùng thì so cả hai
+        const laTinhCu = newProvinceOf(l.province) !== l.province;
+        const dungTinh = laTinhCu ? bang(l.province, cu?.tinh) : tenTinhTuongDuong(l.province).some((t) => bang(t, moi?.tinh) || bang(t, cu?.tinh));
+        if (!dungTinh) return false;
+        if (l.district) return bang(l.district, cu?.quan) && (!l.ward || bang(l.ward, cu?.phuong));
+        // phường không kèm quận = hệ mới; tên phường cũ (đã mất ở hệ mới) gõ trần cũng nhận theo phường cũ
+        if (l.ward) return bang(l.ward, moi?.phuong) || bang(l.ward, cu?.phuong);
+        return true;
+      });
+      if (!inArea) return false;
+    } else if (f.locations.length) {
+      // Tin chưa có địa chỉ tách cấp (dữ liệu mẫu, tin rút gọn): dò chuỗi như cũ
       // Khớp cả TÊN TỈNH CŨ và MỚI (sau sáp nhập) — xem tenTinhTuongDuong()
       // Dò trên chuỗi gộp CẢ HAI hệ: tin hiện "Phường Hội An, Đà Nẵng" vẫn phải
       // ra khi người mua lọc theo "Quảng Nam → Hội An" của hệ cũ, và ngược lại.

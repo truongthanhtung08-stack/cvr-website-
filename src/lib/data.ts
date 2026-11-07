@@ -48,6 +48,9 @@ export type Listing = {
    *  tin nhập theo hệ cũ ("Sơn Trà") mất hút khi location đã đổi sang tên mới. */
   diaChiTim?: string;
   diaGioi?: { ward: string; district: string; province: string };
+  /** ĐỊA CHỈ TÁCH CẤP, HAI HỆ (07/11/2026) — bộ lọc khu vực so đúng cấp, đúng hệ: hệ mới tỉnh → phường; hệ cũ tỉnh → quận → phường */
+  noiMoi?: { tinh: string; phuong: string };
+  noiCu?: { tinh: string; quan: string; phuong: string };
   type: string;
   image: string;
   // Số ẢNH thật của tin (để badge "📷 n" đúng, không cứng "1"). Không có → coi như 1.

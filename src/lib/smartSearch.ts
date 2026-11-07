@@ -325,9 +325,12 @@ export function suaChinhTa(raw: string): string | null {
   // TÊN NƠI (tỉnh, phường xã, quận cũ) GÕ SAI DẤU hoặc SAI MỘT CHỮ CÁI (anh 07/11/2026, ảnh Google "đât nên hoa xuân đag năng" → "đất nền
   // hòa xuân đà nẵng"): cụm 2–4 chữ khớp tên nơi → đặt đúng chữ. Gõ KHÔNG DẤU mà đúng chữ ("da nang") thì để nguyên, như Google.
   const noi = cumNoi();
+  const chiDatDau: [number, string[]][] = [];
   for (let i = 0; i < nt.length; i++) {
     for (let k = Math.min(4, nt.length - i); k >= 2; k--) {
       const go = nt.slice(i, i + k);
+      // chữ chỉ CẤP (phường, xã, quận…) không phải tên nơi; cụm khách đã gõ ĐỦ DẤU thì tin chữ khách ("phường sơn" không thành "Phượng Sơn")
+      if (go.some((w) => CHU_CAP.has(w)) || tu.slice(i, i + k).every((t, j) => normalizeVi(t) !== t.toLowerCase() && td.has(go[j]))) continue;
       let dung = noi.get(go.join(" "));
       if (!dung) {
         // đúng MỘT chữ lệch một chữ cái, các chữ kia trùng — và chỉ một tên nơi khớp kiểu đó (nhiều tên thì không đoán)
@@ -335,8 +338,8 @@ export function suaChinhTa(raw: string): string | null {
         if (go.some((_, j) => daCum.has(i + j))) continue;
         const gan = (noiTheoSo.get(k) ?? []).filter((c) => {
           const w = c.split(" "); let lech = 0;
-          // chữ khách gõ là chữ CÓ NGHĨA cùng độ dài thì không đổi sang chữ khác ("đất" không thành "đăk") — cùng luật cụm quen ở trên
-          for (let j = 0; j < k; j++) if (w[j] !== go[j]) { if (lechMot(w[j], go[j]) !== 1 || go[j].length < 2 || (td.has(go[j]) && go[j].length === w[j].length)) return false; lech++; }
+          // chữ khách gõ là chữ CÓ NGHĨA thì không đổi sang chữ khác ("đất" không thành "đăk", "phường hòa" không thành "Hướng Hóa")
+          for (let j = 0; j < k; j++) if (w[j] !== go[j]) { if (lechMot(w[j], go[j]) !== 1 || go[j].length < 2 || td.has(go[j])) return false; lech++; }
           return lech === 1;
         });
         // nhiều tên gần đúng → ưu tiên tên TỈNH ("đag năng" → Đà Nẵng); vẫn nhiều thì không đoán
@@ -350,12 +353,16 @@ export function suaChinhTa(raw: string): string | null {
       const khongDau = goTu.every((t) => normalizeVi(t) === t);
       const daDung = goTu.every((t, j) => t === dungTu[j]);
       if (!daDung && !(khongDau && go.join(" ") === normalizeVi(dung))) { tu.splice(i, k, ...dungTu); nt.splice(i, k, ...normalizeVi(dung).split(" ")); doi = true; }
+      // gõ không dấu mà đúng chữ: chỉ đặt dấu khi câu đằng nào cũng sửa (dòng "Đang hiển thị kết quả cho" đủ dấu: "bán nhà sơn trà")
+      else if (!daDung) chiDatDau.push([i, dungTu]);
       i += k - 1;
       break;
     }
   }
+  if (doi) for (const [i, ds] of chiDatDau) tu.splice(i, ds.length, ...ds);
   return doi ? tu.join(" ") : null;
 }
+const CHU_CAP = new Set(["phuong", "xa", "quan", "huyen", "thi", "tran", "tinh", "thanh", "pho", "tp", "dac", "khu"]);
 const TEN_TINH_KHOA = new Set(TINH.map(([t]) => normalizeVi(t).replace(/[^a-z0-9]+/g, " ").trim()));
 const TU_NHA_DAT = new Set(["ban", "mua", "nha", "dat", "thue", "cho", "can", "ho", "gia", "tai", "duoi", "tren", "gan", "phong", "view"]);
 // Tên nơi (bỏ chữ cấp) → chữ đúng dấu, viết thường; dựng một lần

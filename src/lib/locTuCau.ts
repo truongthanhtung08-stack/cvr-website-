@@ -2,7 +2,8 @@
 // nạp chéo hai component (FilterBar ↔ TruongLocTrangChu) — nạp chéo làm trang chủ không chạy được.
 import { typeGroupsFor, normalizeVi, emptyFilters, dacDiemOptions, type Filters } from "@/lib/filters";
 import { docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
-import { phuongMoiCua } from "@/lib/locations";
+import { phuongMoiCua, newProvinceOf } from "@/lib/locations";
+import { provincesOld, provincesNew } from "@/lib/diaDanhNguon";
 
 // Nhãn loại hình của bộ tách câu → loại hình của bộ lọc (cùng nguồn typeGroupsFor)
 function loaiTuNhan(nhan: string, nq: string, mb: "ban" | "thue"): string[] {
@@ -28,14 +29,33 @@ export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
   // mọi ô tìm, trường lọc, gợi ý — cùng bộ sửa với dòng "Đang hiển thị kết quả cho …"
   const cau = suaChinhTa(cauGo) ?? cauGo;
   const p = parseQuery(cau);
+  // câu đã sửa có chữ có dấu lẫn không dấu ("bán nhà son tra") → bộ đọc nơi chốn có thể hụt; câu khách gõ đọc ra nơi thì lấy nơi đó
+  if (cau !== cauGo && !p.place && !p.places.length) { const g = parseQuery(cauGo); p.place = g.place; p.places = g.places; }
   const nq = ` ${normalizeVi(cau).replace(/[^a-z0-9]+/g, " ")} `;
   const pl = p.place;
   // PHƯỜNG ĐỌC THEO HỆ MỚI (07/11/2026: "bán đất nền hòa xuân" đọc thành Hòa Xuân, quận Cẩm Lệ (hệ cũ) → tin ghi "Phường Hòa Xuân, Đà Nẵng"
   // không còn chữ Cẩm Lệ nên lọt hết, báo "chưa có sẵn"). Phường cũ có trong bảng sáp nhập → quy về phường mới 2 cấp như cả web đang dùng.
+  // MỖI NƠI ĐÚNG MỘT HỆ (anh 07/11/2026: "mới 2 cấp, cũ 3 cấp" — không trộn tỉnh mới với quận cũ như "Gia Lai · Quy Nhơn"):
+  //   phường cũ còn TÊN ở hệ mới (Hòa Xuân) → hệ mới 2 cấp: tỉnh mới → phường mới
+  //   phường cũ đã mất tên (Hòa Quý → nay Ngũ Hành Sơn) → hệ cũ 3 cấp: tỉnh cũ → quận cũ → phường cũ (đúng nơi khách gõ, không nở ra cả phường mới)
+  //   chỉ có quận / huyện (cấp chỉ còn ở hệ cũ: Quy Nhơn, Hội An, Sơn Trà) → hệ cũ: tỉnh cũ → quận cũ
   const moi = pl?.ward && pl.district ? phuongMoiCua(pl.province, pl.district, pl.ward) : null;
-  if (moi) f.locations = [{ province: moi.tinh, ward: moi.phuong }];
-  else if (pl) f.locations = [{ province: pl.province, district: pl.district, ward: pl.ward }];
-  else if (p.places[0]) f.locations = [{ province: p.places[0] }];
+  const boCap = (x: string) => normalizeVi(x.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, ""));
+  const tinhCu = (quan: string) => provincesOld.find((t) => newProvinceOf(t.name) === pl!.province && t.districts.some((d) => boCap(d.name) === boCap(quan)))?.name ?? pl!.province;
+  // khách GÕ RÕ CẤP: "phường / xã sơn trà" = phường mới cùng tên (không phải quận Sơn Trà cũ); "quận …" giữ quận cũ
+  const phuongCungTen = pl?.district && !pl.ward && / (phuong|xa) /.test(nq.replace(` ${boCap(pl.district)} `, " # "))
+    ? provincesNew.find((t) => t.name === pl.province)?.wards.find((w) => boCap(w) === boCap(pl.district!)) : undefined;
+  if (phuongCungTen && new RegExp(` (phuong|xa) ${boCap(pl!.district!)} `).test(nq)) f.locations = [{ province: pl!.province, ward: phuongCungTen }];
+  else if (moi && pl?.ward && boCap(moi.phuong) === boCap(pl.ward)) f.locations = [{ province: moi.tinh, ward: moi.phuong }];
+  else if (pl?.district) f.locations = [{ province: tinhCu(pl.district), district: pl.district, ...(pl.ward ? { ward: pl.ward } : {}) }];
+  else if (moi) f.locations = [{ province: moi.tinh, ward: moi.phuong }];
+  else if (pl?.ward) f.locations = [{ province: pl.province, ward: pl.ward }];
+  else if (pl || p.places[0]) {
+    // gõ TÊN TỈNH CŨ đã sáp nhập ("bình định", "quảng nam") → đúng tỉnh cũ đó, không nở ra cả tỉnh mới (Gia Lai, Đà Nẵng)
+    const tinh = pl?.province ?? p.places[0];
+    const cuGo = provincesOld.find((t) => newProvinceOf(t.name) === tinh && t.name !== tinh && nq.includes(` ${boCap(t.name)} `));
+    f.locations = [{ province: cuGo?.name ?? tinh }];
+  }
   // Loại CHỈ CÓ Ở MỤC KIA ("văn phòng", "mặt bằng" chỉ có ở Cho thuê) → tra cả mục kia; trước đây bị ép sang loại gần chữ nhất
   // ("mặt bằng" → Nhà mặt phố) — 01/11/2026
   const loaiCua = (t: string) => {
