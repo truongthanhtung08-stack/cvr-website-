@@ -220,6 +220,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // lại — bàn phím bật vẫn thấy rõ chữ gõ và gợi ý.
   // Mặc định ĐANG GÕ: màn tìm dựng sẵn (ẩn) đúng ngay bố cục màn gõ — chạm vào chỉ việc hiện ra, không phải dựng lại (01/11/2026)
   const [dangGo, setDangGo] = useState(true);
+  // khách TỰ bấm tab Mua bán · Cho thuê · Dự án → câu chung chung đi theo tab đó (không đổ trang tìm chung) — anh 07/11/2026
+  const [daChonTab, setDaChonTab] = useState(false);
   // VÀO / RA MÀN GÕ MƯỢT (chủ dự án 17/10/2026: "gõ vào ô tìm, bàn phím ảo hiện lên rất thô"): menu + tiêu đề ẩn làm thẻ tìm
   // nhảy lên — đo vị trí thẻ trước khi đổi, sau khi đổi cho thẻ TRƯỢT từ chỗ cũ về chỗ mới (chỉ transform, chạy trên GPU).
   const theTimRef = useRef<HTMLDivElement>(null);
@@ -473,7 +475,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     }
     // CÂU CHUNG CHUNG (không nói mua / bán / thuê / dự án), khách không tự chọn trường → TRANG TÌM CHUNG cả bán lẫn cho thuê, tin khớp chính
     // xác nhất lên trên (anh 07/11/2026: "ra cả 2", "theo dữ liệu, cái nào chính xác thì để lên trên") — không tự gán "bán" theo tab
-    if (kw && !n && !mucGhiDe && muc !== "duan" && !mucDichCau(kw, dsDa)) {
+    if (kw && !n && !mucGhiDe && !daChonTab && muc !== "duan" && !mucDichCau(kw, dsDa)) { // khách TỰ bấm tab thì theo tab
       // trường đọc từ câu (khu vực · loại · giá…) điền sẵn như mọi ô tìm — cùng bộ đọc locTuCau
       return den(`/tim-kiem?${filtersToParams({ ...locTuCau(kw, "ban"), keyword: kw }).toString()}`);
     }
@@ -544,7 +546,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // GỢI Ý THEO DỮ LIỆU THẬT (máy chủ đếm tin — lib/goiYThat): chỉ câu có tin, giá và nơi thực tế (chủ dự án 21/10/2026)
   // ĐỦ 3 MỤC (01/11/2026): máy chủ trả gợi ý Mua bán · Cho thuê · Dự án, mục của tab đang đứng trước
   // MỘT CƠ CHẾ cả điện thoại lẫn máy tính (anh 07/11/2026: "cơ chế ra kết quả giống nhau hết"): câu chung chung → gợi ý cả bán lẫn cho thuê
-  const goiYThatDs = useGoiYThat(kwHieu, muc, false, true);
+  const goiYThatDs = useGoiYThat(kwHieu, muc, false, !daChonTab);
   // Chỉ hiện lịch sử ĐÚNG mục đang chọn; câu cũ chưa gắn mục thì đoán theo chữ (có "thuê" → Cho thuê, còn lại → Mua bán)
   const mucCua = (x: Suggestion): Muc => (x as Suggestion & { muc?: Muc }).muc ?? (/ thue /.test(` ${normalizeVi(x.label)} `) ? "thue" : "ban");
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "Gợi ý phổ biến" khi chưa gõ)
@@ -697,7 +699,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             type="button"
             role="tab"
             aria-selected={on}
-            onClick={() => { setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
+            onClick={() => { setDaChonTab(true); setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
             className={`group relative flex items-center whitespace-nowrap px-1 font-semibold transition-colors duration-300 ${dinh ? "gap-1.5 pb-2 text-[13px] sm:text-[14px]" : ngang ? "gap-3 pb-3.5 text-[16px]" : "flex-col gap-1 pb-2.5 text-[13px] sm:gap-1.5 sm:pb-3 sm:text-[15px]"} ${
               toi ? (on ? "text-white [text-shadow:0_1px_8px_rgba(0,0,0,0.55)]" : "text-white/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)] hover:text-white") : on ? "text-cvr-blue" : "text-cvr-muted hover:text-cvr-ink"
             }`}
@@ -844,8 +846,19 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             <div className={dangGo ? "sticky top-0 z-10 -mx-5 -mt-3 shrink-0 border-b border-[#e0e0e0] bg-white px-2 pb-2 pt-1" : "shrink-0"}>
             {/* 3 MỤC Mua bán · Cho thuê · Dự án Ở TRÊN Ô GÕ như cũ, ba ô đều nhau, thẳng lề với ô gõ (chủ dự án 01/11/2026: trang chủ là bộ lọc
                 TỔNG — không có hàng trường lọc, bấm gợi ý là sang thẳng trang con) */}
-            {/* BỎ HÀNG TAB Mua bán · Cho thuê · Dự án trên màn tìm điện thoại (anh 07/11/2026: "bỏ qua việc khách chọn mục đích"): mục đích đọc từ
-                câu gõ; câu chung chung → gợi ý cả bán lẫn cho thuê, bấm tìm ra trang tìm chung. Máy tính giữ nguyên. */}
+            {/* TRẢ LẠI 3 MỤC (anh 07/11/2026: "3 cái menu kia đâu, ai nói mày bỏ") */}
+            {dangGo && (
+              <div role="tablist" className="mb-1 grid grid-cols-3 pl-10 pr-1">
+                {TABS.map((t) => (
+                  <button key={t.muc} type="button" role="tab" aria-selected={muc === t.muc} onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { setDaChonTab(true); setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
+                    className={`relative py-2.5 text-[15px] font-semibold transition-colors ${muc === t.muc ? "text-cvr-ink" : "text-cvr-muted"}`}>
+                    {t.nhan}
+                    {muc === t.muc && <span className="absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-cvr-blue" />}
+                  </button>
+                ))}
+              </div>
+            )}
             {/* ĐANG GÕ: nút ← quay lại đứng CẠNH ô gõ, giống màn tìm Mua bán / Cho thuê / Dự án (chủ dự án 18/10/2026: bỏ nút ×) */}
             <div className={dangGo ? "flex items-center gap-1" : ""}>
             {dangGo && <button type="button" aria-label="Quay lại" onMouseDown={(e) => e.preventDefault()} onClick={dongMo} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"><svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg></button>}
@@ -897,7 +910,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             <div role="tablist" className="inline-flex items-center gap-1">
               {TABS.map((t) => (
                 <button key={t.muc} type="button" role="tab" aria-selected={muc === t.muc}
-                  onClick={() => { setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
+                  onClick={() => { setDaChonTab(true); setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
                   className={`rounded-full px-4 py-1.5 text-[13.5px] font-semibold tracking-[-0.01em] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${muc === t.muc ? "bg-white text-cvr-ink shadow-[0_1px_6px_rgba(0,0,0,0.2)]" : "text-white/85 hover:bg-white/15 hover:text-white"}`}>
                   {t.nhan}
                 </button>

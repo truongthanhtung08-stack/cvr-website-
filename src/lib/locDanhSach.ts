@@ -220,9 +220,13 @@ export function locDanhSach(
     // không có tin đúng PHƯỜNG thì tin cùng QUẬN/HUYỆN chứa phường đó ("hòa xuân" → Cẩm Lệ) đứng trước nơi khác trong tỉnh
     const quanChon = [...sauChon.filter((x) => x.ward && x.district).map((x) => ({ province: x.province, district: x.district })), ...quanCuCua];
     const dungQuan = quanChon.length > 0 && applyFilters([l], { ...emptyFilters(), locations: quanChon }).length > 0;
-    // địa danh (tỉnh → phường → quận chứa phường) → loại hình (đúng loại con trước loại cùng cha) → các bậc con
-    return (dungTinh ? 65536 : 0) + (dungSau ? 32768 : 0) + (dungQuan ? 16384 : 0) + (dungLoai(l) ? 8192 : 0) + (dungLoaiCon(l) ? 4096 : 0) + diemCon(l);
+    // THỨ TỰ Ý KHÁCH (anh 07/11/2026: "1. loại hình, 2. ở đâu, 3. giá"): tỉnh (gợi ý đã chỉ trong tỉnh khách nói) → ĐÚNG LOẠI CON
+    // ("đất nền" → tin đất nền trước tin đất khác) → phường → quận cũ chứa phường → loại cùng cha → các bậc con (giá, diện tích…)
+    return (dungTinh ? 65536 : 0) + (dungLoaiCon(l) ? 32768 : 0) + (dungSau ? 16384 : 0) + (dungQuan ? 8192 : 0) + (dungLoai(l) ? 4096 : 0) + diemCon(l);
   };
+  // GIÁ GẦN NHẤT TRƯỚC (anh 07/11/2026: "giá 3 tỷ" mà tin 6,8 tỷ đứng trên tin 3,2 tỷ): cùng mức khớp, tin có giá gần mức khách nói đứng trước
+  const giaDich = coGia ? ((filters.priceMin ?? filters.priceMax!) + (filters.priceMax ?? filters.priceMin!)) / 2 : 0;
+  const cachGia = (l: Listing) => (coGia && (l.priceVnd ?? 0) > 0 ? Math.abs((l.priceVnd ?? 0) - giaDich) : Number.MAX_SAFE_INTEGER);
   // GỢI Ý TƯƠNG TỰ THEO NỘI DUNG, KHÔNG THEO GẦN / XA (anh 07/11/2026: "gợi ý là tương tự = nội dung, ý định khách cần tìm"): sau các trường,
   // tin có NỘI DUNG khớp chữ khách gõ (tên nơi, dự án, mô tả — "hòa xuân" → tin dự án Nam Hòa Xuân) đứng trước; cùng mức giữ thứ tự cấp tin
   const chuKhach = [...sauChon.flatMap((x) => [x.ward, x.district]), ...chuChuaHieu(filters.keyword).split(",")]
@@ -254,7 +258,7 @@ export function locDanhSach(
     .map((l, i) => ({ l, i, d: diemGoiY(l), nd: noiDung(l) }))
     // cùng mức khớp: tin NỘI DUNG tương tự đứng trước (không theo gần / xa — anh 07/11/2026)
     // THỨ TỰ Ý KHÁCH (anh 07/11/2026): 1 loại hình → 2 ở đâu (đã trong d) → 3 GIÁ: khách nói "giá rẻ" thì cùng mức, giá thấp trước (i = thứ tự giá tăng)
-    .sort((a, b) => b.d - a.d || (timRe ? a.i - b.i : 0) || b.nd - a.nd || a.i - b.i)
+    .sort((a, b) => b.d - a.d || (timRe ? a.i - b.i : 0) || cachGia(a.l) - cachGia(b.l) || b.nd - a.nd || a.i - b.i)
     .slice(0, TOI_DA_GOI_Y)
     .map((x) => x.l);
   // TIN HẾT HẠN CŨNG GỢI Ý THEO CÙNG LUẬT (chủ dự án 21/10/2026: kho còn ít tin, "Villa biển gần Hội An" bỏ sót biệt thự Đà Nẵng
@@ -315,7 +319,7 @@ export function locDanhSach(
   } else if (!ketQua.length) {
     // GỢI Ý khi không tin nào khớp hết: tin khớp được NHIỀU TRƯỜNG CÒN LẠI hơn đứng trước, theo thứ bậc giá → diện tích → phòng ngủ →
     // hướng → pháp lý → nội thất → đặc điểm (chủ dự án 01/11/2026).
-    const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, k: diemGoiY(l), nd: noiDung(l) })).sort((a, b) => b.k - a.k || (timRe ? a.i - b.i : 0) || b.nd - a.nd || a.i - b.i).map((x) => x.l);
+    const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, k: diemGoiY(l), nd: noiDung(l) })).sort((a, b) => b.k - a.k || (timRe ? a.i - b.i : 0) || cachGia(a.l) - cachGia(b.l) || b.nd - a.nd || a.i - b.i).map((x) => x.l);
     if (filters.types.length) {
       const cungLoai = conHan.filter(dungLoai);
       if (cungLoai.length) {
