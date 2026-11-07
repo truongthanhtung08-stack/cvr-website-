@@ -539,6 +539,7 @@ export function suaChinhTa(raw: string): string | null {
   // TÊN NƠI (tỉnh, phường xã, quận cũ) GÕ SAI DẤU hoặc SAI MỘT CHỮ CÁI (anh 07/11/2026, ảnh Google "đât nên hoa xuân đag năng" → "đất nền
   // hòa xuân đà nẵng"): cụm 2–4 chữ khớp tên nơi → đặt đúng chữ. Gõ KHÔNG DẤU mà đúng chữ ("da nang") thì để nguyên, như Google.
   const noi = cumNoi();
+  const noiThat = viTriTenNoi(nt); // chữ thuộc một tên nơi có thật khách gõ đúng chữ
   const chiDatDau: [number, string[]][] = [];
   for (let i = 0; i < nt.length; i++) {
     for (let k = Math.min(4, nt.length - i); k >= 2; k--) {
@@ -549,6 +550,9 @@ export function suaChinhTa(raw: string): string | null {
       if (_tenNoiDau.has(tu.slice(i, i + k).join(" ").normalize("NFC").toLowerCase())) { i += k - 1; break; }
       if (go.some((w) => CHU_CAP.has(w)) || tu.slice(i, i + k).every((t, j) => normalizeVi(t) !== t.toLowerCase() && td.has(go[j]))) continue;
       let dung = noi.get(go.join(" "));
+      // ĐOÁN GẦN ĐÚNG không được đè lên TÊN NƠI CÓ THẬT khách đã gõ đúng chữ (cả nước, hai hệ): "nam dong hai phong" là Nam Đồng · Hải Phòng,
+      // không thành "Nam Đông Hà" (anh 07/11/2026: "không nhận ra thì chịu, đã là địa chỉ phải đọc được")
+      if (!dung && go.every((_, j) => noiThat.has(i + j))) continue; // cả cụm đều nằm trong tên có thật mới bỏ ("nhu hành sơn" vẫn đoán)
       if (!dung) {
         // đúng MỘT chữ lệch một chữ cái, các chữ kia trùng — và chỉ một tên nơi khớp kiểu đó (nhiều tên thì không đoán)
         // chữ đã thuộc cụm nhà đất vừa sửa ("đất nền") không đem so tên nơi — "đât nên" từng thành "đăk nên"
@@ -557,7 +561,8 @@ export function suaChinhTa(raw: string): string | null {
           const w = c.split(" "); let lech = 0;
           // chữ khách gõ là chữ CÓ NGHĨA thì không đổi sang chữ khác ("đất" không thành "đăk", "phường hòa" không thành "Hướng Hóa")
           // tên nơi TỪ 3 CHỮ mà các chữ kia khớp đúng ("nhu hành sơn" → Ngũ Hành Sơn, anh 07/11/2026) thì đủ chắc, cho đổi cả chữ có nghĩa
-          for (let j = 0; j < k; j++) if (w[j] !== go[j]) { if (lechMot(w[j], go[j]) !== 1 || go[j].length < 2 || (td.has(go[j]) && k < 3)) return false; lech++; }
+          for (let j = 0; j < k; j++) if (w[j] !== go[j]) { if (lechMot(w[j], go[j]) !== 1 || go[j].length < 2 || (td.has(go[j]) && k < 3 && !TEN_TINH_KHOA.has(c))) return false; lech++; }
+          // ↑ TÊN TỈNH / THÀNH 2 chữ: chữ kia khớp đúng thì đổi được cả chữ có nghĩa ("nha dan năng" → nhà đà nẵng — anh 07/11/2026)
           return lech === 1;
         });
         // nhiều tên gần đúng → ưu tiên tên TỈNH ("đag năng" → Đà Nẵng); vẫn nhiều thì không đoán
@@ -595,6 +600,15 @@ export function suaChinhTa(raw: string): string | null {
     if (t === "thanh" && normalizeVi(tu[i + 1] ?? "") === "pho") { tu[i] = "thành"; tu[i + 1] = "phố"; i++; continue; }
     const cap: Record<string, string> = { phuong: "phường", xa: "xã", quan: "quận", huyen: "huyện" };
     if (cap[t]) tu[i] = cap[t];
+  }
+  // câu đằng nào cũng sửa → chữ nhà đất gõ KHÔNG DẤU cũng đặt dấu ("nha đà nẵng" → "nhà đà nẵng"), trừ chữ thuộc tên nơi ("nha trang")
+  if (doi) {
+    const noiCuoi = viTriTenNoi(tu.map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, "")));
+    for (let i = 0; i < tu.length; i++) {
+      if (noiCuoi.has(i) || normalizeVi(tu[i]) !== tu[i].toLowerCase()) continue;
+      const dd = CHU_NHA_DAT.get(normalizeVi(tu[i]).replace(/[^a-z0-9]/g, ""));
+      if (dd) tu[i] = dd;
+    }
   }
   return doi ? tu.join(" ") : null;
 }

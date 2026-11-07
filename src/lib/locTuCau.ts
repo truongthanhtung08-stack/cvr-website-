@@ -62,7 +62,11 @@ export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
   if (cau !== cauGo) {
     const g = parseQuery(cauGo);
     const sau = (x: typeof p.place) => (x ? (x.ward ? 3 : x.district ? 2 : 1) : 0);
-    if ((g.place && sau(g.place) >= sau(p.place)) || (!p.place && !p.places.length)) { p.place = g.place; p.places = g.places.length ? g.places : p.places; }
+    // chỉ lấy theo câu gốc khi CÙNG TỈNH với câu đã sửa (hoặc câu sửa không ra tỉnh nào) — "nha dan nang" sửa thành Đà Nẵng thì không lấy
+    // xã Đăk Năng (Quảng Ngãi) của câu gốc
+    const tinhSua = p.place?.province ?? p.places[0];
+    const cungTinh = !tinhSua || g.place?.province === tinhSua;
+    if ((g.place && cungTinh && sau(g.place) >= sau(p.place)) || (!p.place && !p.places.length)) { p.place = g.place; p.places = g.places.length ? g.places : p.places; }
   }
   const nq = ` ${normalizeVi(cau).replace(/[^a-z0-9]+/g, " ")} `;
   const pl = p.place;
