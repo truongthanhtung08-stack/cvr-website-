@@ -1,7 +1,7 @@
 // Câu gõ → các trường lọc. Tách khỏi TruongLocTrangChu để FilterBar (trang kết quả) dùng chung mà không
 // nạp chéo hai component (FilterBar ↔ TruongLocTrangChu) — nạp chéo làm trang chủ không chạy được.
 import { typeGroupsFor, normalizeVi, emptyFilters, dacDiemOptions, type Filters } from "@/lib/filters";
-import { docDienTich, docLocThem, parseQuery } from "@/lib/smartSearch";
+import { docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
 import { phuongMoiCua } from "@/lib/locations";
 
 // Nhãn loại hình của bộ tách câu → loại hình của bộ lọc (cùng nguồn typeGroupsFor)
@@ -21,9 +21,12 @@ function loaiTuNhan(nhan: string, nq: string, mb: "ban" | "thue"): string[] {
 }
 
 /** Câu gõ → các trường lọc (khu vực · loại hình · giá · phòng ngủ) — phần còn lại để ô tìm xử lý */
-export function locTuCau(cau: string, mb: "ban" | "thue"): Filters {
+export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
   const f = emptyFilters();
-  if (!cau.trim()) return f;
+  if (!cauGo.trim()) return f;
+  // GÕ SAI CHÍNH TẢ → ĐỌC CÂU ĐÃ SỬA (07/11/2026, kiểu Google: "đât nên hoa xuân đag năng" đọc ra Đất nền · Hòa Xuân, Đà Nẵng). Một chỗ cho
+  // mọi ô tìm, trường lọc, gợi ý — cùng bộ sửa với dòng "Đang hiển thị kết quả cho …"
+  const cau = suaChinhTa(cauGo) ?? cauGo;
   const p = parseQuery(cau);
   const nq = ` ${normalizeVi(cau).replace(/[^a-z0-9]+/g, " ")} `;
   const pl = p.place;

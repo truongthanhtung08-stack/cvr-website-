@@ -3,7 +3,7 @@ import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
 import { boTuGoTiep, coChuRac, diaDanhTuTin, goTiep, goiYGoTiep, goiYGoTiepDuAn, timDuAnTrongCau } from "@/lib/goTiep";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
-import { docMucDich } from "@/lib/smartSearch";
+import { docMucDich, suaChinhTa } from "@/lib/smartSearch";
 
 // ============================================================================
 // GET /api/goi-y/that?q=<câu khách gõ>&md=ban|thue — GỢI Ý THEO DỮ LIỆU THẬT cho mọi ô tìm (21/10/2026, lib/goiYThat).
@@ -52,9 +52,14 @@ export async function GET(req: Request) {
   const md = tab === "thue" ? "thue" : "ban";
   if (q.length < 2) return NextResponse.json([]);
   // khoảng trắng cuối = khách đã gõ xong chữ (goTiep đọc dấu cách cuối)
-  const qDoc = /\s$/.test(u.searchParams.get("q") ?? "") ? q + " " : q;
+  const xongChu = /\s$/.test(u.searchParams.get("q") ?? "");
   const [tin, duAn] = await Promise.all([getListings(), getProjects()]);
   const { dsLoc, boTu } = nguonGoiY(tin, duAn);
+  // GÕ SAI CHÍNH TẢ → GỢI Ý THEO CÂU ĐÃ SỬA, kiểu Google (07/11/2026: "đât nên hoa xuân đag năng" → "đất nền hòa xuân đà nẵng…"). Sửa các
+  // chữ đã gõ xong; chữ cuối đang gõ dở để goTiep điền tiếp như cũ
+  // sửa cả câu (chữ cuối sai một chữ cái như "đag năng" cũng sửa); chữ cuối gõ dở thì bộ sửa tự để nguyên (là đầu một chữ có thật)
+  const qSua = suaChinhTa(q) ?? q;
+  const qDoc = xongChu ? qSua + " " : qSua;
   // gõ bậy (chữ không phải tiếng Việt, không có trong dữ liệu web) → không gợi ý gì (chủ dự án 01/11/2026)
   if (coChuRac(qDoc, tin, boTu)) return NextResponse.json([]);
   // GỢI Ý KIỂU GOOGLE ở cả 4 ô (lib/goTiep, 01/11/2026): giữ nguyên chữ khách gõ, điền tiếp theo dữ liệu thật / nội dung tin.

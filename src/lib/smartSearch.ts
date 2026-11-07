@@ -303,6 +303,7 @@ export function suaChinhTa(raw: string): string | null {
   // khi chữ đứng cạnh khớp cụm; cụm đúng chữ mà SAI/THIẾU DẤU cũng đặt lại dấu — "căn họi" → "căn hộ", "view biên" → "view biển"
   const tu = kq.join("").split(/\s+/).filter(Boolean);
   const nt = tu.map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, ""));
+  const daCum = new Set<number>(); // vị trí chữ đã khớp cụm nhà đất quen
   for (let i = 0; i + 1 < nt.length; i++) {
     let khop = CUM_QUEN.has(`${nt[i]} ${nt[i + 1]}`) ? `${nt[i]} ${nt[i + 1]}` : "";
     if (!khop) {
@@ -317,10 +318,68 @@ export function suaChinhTa(raw: string): string | null {
     if (!khop) continue;
     const [da, db] = CUM_QUEN.get(khop)!.split(" ");
     if (tu[i].toLowerCase() !== da || tu[i + 1].toLowerCase() !== db) { tu[i] = da; tu[i + 1] = db; doi = true; }
+    daCum.add(i); daCum.add(i + 1);
     [nt[i], nt[i + 1]] = khop.split(" ");
     i++;
   }
+  // TÊN NƠI (tỉnh, phường xã, quận cũ) GÕ SAI DẤU hoặc SAI MỘT CHỮ CÁI (anh 07/11/2026, ảnh Google "đât nên hoa xuân đag năng" → "đất nền
+  // hòa xuân đà nẵng"): cụm 2–4 chữ khớp tên nơi → đặt đúng chữ. Gõ KHÔNG DẤU mà đúng chữ ("da nang") thì để nguyên, như Google.
+  const noi = cumNoi();
+  for (let i = 0; i < nt.length; i++) {
+    for (let k = Math.min(4, nt.length - i); k >= 2; k--) {
+      const go = nt.slice(i, i + k);
+      let dung = noi.get(go.join(" "));
+      if (!dung) {
+        // đúng MỘT chữ lệch một chữ cái, các chữ kia trùng — và chỉ một tên nơi khớp kiểu đó (nhiều tên thì không đoán)
+        // chữ đã thuộc cụm nhà đất vừa sửa ("đất nền") không đem so tên nơi — "đât nên" từng thành "đăk nên"
+        if (go.some((_, j) => daCum.has(i + j))) continue;
+        const gan = (noiTheoSo.get(k) ?? []).filter((c) => {
+          const w = c.split(" "); let lech = 0;
+          // chữ khách gõ là chữ CÓ NGHĨA cùng độ dài thì không đổi sang chữ khác ("đất" không thành "đăk") — cùng luật cụm quen ở trên
+          for (let j = 0; j < k; j++) if (w[j] !== go[j]) { if (lechMot(w[j], go[j]) !== 1 || go[j].length < 2 || (td.has(go[j]) && go[j].length === w[j].length)) return false; lech++; }
+          return lech === 1;
+        });
+        // nhiều tên gần đúng → ưu tiên tên TỈNH ("đag năng" → Đà Nẵng); vẫn nhiều thì không đoán
+        const tinhGan = gan.filter((c) => TEN_TINH_KHOA.has(c));
+        const chon = gan.length === 1 ? gan : tinhGan.length === 1 ? tinhGan : [];
+        if (chon.length === 1) dung = noi.get(chon[0]);
+      }
+      if (!dung) continue;
+      const dungTu = dung.split(" ");
+      const goTu = tu.slice(i, i + k).map((t) => t.toLowerCase());
+      const khongDau = goTu.every((t) => normalizeVi(t) === t);
+      const daDung = goTu.every((t, j) => t === dungTu[j]);
+      if (!daDung && !(khongDau && go.join(" ") === normalizeVi(dung))) { tu.splice(i, k, ...dungTu); nt.splice(i, k, ...normalizeVi(dung).split(" ")); doi = true; }
+      i += k - 1;
+      break;
+    }
+  }
   return doi ? tu.join(" ") : null;
+}
+const TEN_TINH_KHOA = new Set(TINH.map(([t]) => normalizeVi(t).replace(/[^a-z0-9]+/g, " ").trim()));
+const TU_NHA_DAT = new Set(["ban", "mua", "nha", "dat", "thue", "cho", "can", "ho", "gia", "tai", "duoi", "tren", "gan", "phong", "view"]);
+// Tên nơi (bỏ chữ cấp) → chữ đúng dấu, viết thường; dựng một lần
+let CUM_NOI: Map<string, string> | null = null;
+const noiTheoSo = new Map<number, string[]>();
+function cumNoi(): Map<string, string> {
+  if (CUM_NOI) return CUM_NOI;
+  const m = new Map<string, string>();
+  const them = (ten?: string) => {
+    const t = (ten ?? "").replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố|TP\.?)\s+/i, "").toLowerCase().trim();
+    const n = normalizeVi(t).replace(/[^a-z0-9]+/g, " ").trim();
+    const so = n.split(" ").length;
+    if (so < 2 || so > 4 || m.has(n)) return;
+    m.set(n, t);
+    noiTheoSo.set(so, [...(noiTheoSo.get(so) ?? []), n]);
+  };
+  for (const [ten] of TINH) them(ten);
+  // chỉ nơi thuộc tỉnh web phục vụ — tên phường tỉnh khác trùng chữ nhà đất ("bản …") sẽ sửa nhầm câu khách
+  for (const x of diaGioi()) if (TINH_WEB.has(x.place.province)) { them(x.place.ward); them(x.place.district); }
+  // cụm có chữ nhà đất chung (bán, nhà, đất…) không phải tên nơi khách gõ
+  for (const n of [...m.keys()]) if (n.split(" ").some((w) => TU_NHA_DAT.has(w))) m.delete(n);
+  for (const [so, ds] of noiTheoSo) noiTheoSo.set(so, ds.filter((n) => m.has(n)));
+  CUM_NOI = m;
+  return m;
 }
 const CUM_QUEN = new Map([
   ["can ho", "căn hộ"], ["chung cu", "chung cư"], ["phong ngu", "phòng ngủ"], ["dat nen", "đất nền"], ["nha rieng", "nhà riêng"],

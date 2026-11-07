@@ -1,5 +1,5 @@
 import type { Listing } from "@/lib/data";
-import { applyFilters, emptyFilters, normalizeVi, priceToTy, tenLoaiHinh } from "@/lib/filters";
+import { applyFilters, emptyFilters, normalizeVi, priceToTy, tenLoaiHinh, dacDiemOptions, coDacDiem } from "@/lib/filters";
 import { LOAI_HINH, chuChuaHieu, docDienTich, docLocThem, parseQuery, tenTinhTrongCau } from "@/lib/smartSearch";
 import { cauThanhBoLoc } from "@/lib/locDanhSach";
 import { hrefGoiY, type DongGoiY } from "@/lib/goiYTheoY";
@@ -135,11 +135,27 @@ function noiTiepTheoDuLieu(cau: string, md: "ban" | "thue", tin: Listing[]): str
   else if (!tinh) for (const l of tap) cong(thuongVi(boCapNoi(l.location.split(",").pop() ?? "")));
   else if (!p.place?.ward && !p.place?.district) for (const l of tap) cong(thuongVi(boCapNoi(l.location.split(",")[0] ?? "")));
   // đủ loại + nơi, chưa nói giá → các mức giá đang có tin ("căn hộ 2 phòng ngủ sơn trà" → "… dưới 3 tỷ")
-  else if (p.priceMaxTy == null && p.priceMinTy == null && !/ (ty|trieu|tr) /.test(nq)) {
-    const muc = md === "thue" ? [[0.005, "5 triệu"], [0.01, "10 triệu"], [0.015, "15 triệu"], [0.02, "20 triệu"]] as const : [[2, "2 tỷ"], [3, "3 tỷ"], [5, "5 tỷ"], [10, "10 tỷ"]] as const;
+  else {
+    // ĐỦ LOẠI + NƠI → nối tiếp như Google, đủ dòng (anh 07/11/2026: "chỉ có 1 dòng, CHẾT"): mức giá · đặc điểm · "giá rẻ" theo TIN THẬT.
+    // Phường ít tin → lấy tin cả tỉnh cùng loại hình (nối tiếp vẫn đúng ý câu, bấm thì trang tìm theo độ chính xác rồi tương tự)
+    const rong = tap.length >= 3 || !bl ? tap
+      : applyFilters(tin.filter((l) => !l.banSao && (l.purpose ?? "ban") === md), { ...bl, keyword: "", locations: bl.locations.map((x) => ({ province: x.province })) });
     const ra: string[] = [];
-    for (const [ty, chu] of muc) if (tap.some((l) => { const g = priceToTy(l.price); return g != null && g <= ty; })) ra.push(`dưới ${chu}`);
-    return ra;
+    const coGia = p.priceMaxTy != null || p.priceMinTy != null || / (ty|trieu|tr) /.test(nq);
+    if (!coGia) {
+      const muc = md === "thue" ? [[0.003, "3 triệu"], [0.005, "5 triệu"], [0.01, "10 triệu"], [0.015, "15 triệu"], [0.02, "20 triệu"]] as const : [[2, "2 tỷ"], [3, "3 tỷ"], [5, "5 tỷ"], [10, "10 tỷ"]] as const;
+      for (const [ty, chu] of muc) if (rong.some((l) => { const g = priceToTy(l.price); return g != null && g <= ty; })) ra.push(`dưới ${chu}`);
+      // chưa có tin nào để đo → vẫn đưa các mức thường gặp (như nhánh "dưới / trên"; bấm thì trang tìm rồi ra tương tự)
+      if (!rong.length) ra.push(...muc.slice(0, 3).map(([, chu]) => `dưới ${chu}`));
+    }
+    // đặc điểm (Lọc thêm) có tin — nhiều tin trước
+    const dd = dacDiemOptions.filter((d) => !daCo(d) && !(bl?.dacDiem ?? []).includes(d))
+      .map((d) => [d, rong.filter((l) => coDacDiem(l, d)).length] as const).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).map(([d]) => d);
+    // xen kẽ giá – đặc điểm để mấy dòng đầu có cả hai
+    const kq: string[] = [];
+    for (let i = 0; i < Math.max(ra.length, dd.length); i++) { if (ra[i]) kq.push(ra[i]); if (dd[i]) kq.push(dd[i]); }
+    if (!coGia && !/ re /.test(nq)) kq.push("giá rẻ");
+    return kq;
   }
   return [...dem].filter(([k]) => k && !/\d/.test(k) && !daCo(k) && normalizeVi(k) !== normalizeVi(tinh ?? "")).sort((a, b) => b[1] - a[1]).map(([k]) => k);
 }
