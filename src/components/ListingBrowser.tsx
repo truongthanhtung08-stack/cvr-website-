@@ -398,9 +398,10 @@ export default function ListingBrowser({
       } else choDi.current = null;
     }
     if (hieu && nf.keyword === filtersSong.keyword) {
-      const conLai = hieu.keyword.trim();
-      const moi = { ...nf, keyword: conLai };
-      setTuKhoaDaTim(conLai);
+      // GIỮ CÂU trong ô (anh 07/11/2026: đổi Lọc thêm mà ô tìm bị xoá trắng, mất dòng "Đang hiển thị kết quả cho …"). Câu nói khác trường
+      // mới thì FilterBar capNhatCau đã viết lại câu theo trường; câu không nhắc trường vừa đổi thì giữ nguyên
+      const moi = nf;
+      setTuKhoaDaTim(nf.keyword);
       setFilters(moi);
       const u = new URL(window.location.href);
       const coCau = u.searchParams.has("q");
