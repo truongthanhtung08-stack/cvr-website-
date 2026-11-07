@@ -1456,9 +1456,8 @@ export function LocationPanel({
           else {
             // CHỈ ĐỂ HIỆN, ĐỒNG BỘ THEO BẢNG SÁP NHẬP (anh 08/11/2026: "2 hệ phải đồng bộ"): tỉnh cũ thiếu phần → tỉnh mới "–", bên trong tick
             // đúng các phường mới gộp từ tỉnh cũ đó (An Giang cũ trong An Giang mới; Kiên Giang để trống)
-            const ws = wardsOfNew(moi).filter((w) => choCuCua(moi, w).some((c) => chuanTen(c.tinh) === chuanTen(l.province)));
-            if (ws.length) ws.forEach((w) => them({ province: moi, ward: w }));
-            else them(l.province === moi ? { province: moi, cu: true } : { province: l.province });
+            // bên trong KHÔNG tick sẵn phường nào (anh 08/11/2026: "không chọn là chọn toàn bộ, chọn là chọn 1 phường xã tao muốn")
+            them(l.province === moi ? { province: moi, cu: true } : { province: l.province });
           }
         }
       }
