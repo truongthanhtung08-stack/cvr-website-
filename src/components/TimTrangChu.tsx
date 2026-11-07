@@ -420,25 +420,14 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // GIỮ CÂU KHÁCH VỪA TÌM cho trang kết quả (chủ dự án 17/10/2026: sang trang kết quả muốn SỬA câu tìm thì ô trống trơn):
   // ghi tạm vào sessionStorage theo đường dẫn — ô tìm trang kết quả hiện lại đúng câu đó (chỉ trên máy khách, không gọi máy chủ)
   const di = (url: string, cau = "") => {
-    try { if (cau) { sessionStorage.setItem("cvr-cau:" + url.split("?")[0], cau); sessionStorage.setItem("cvr-tim-cuoi", cau); } } catch { /* bỏ qua */ }
+    try { if (cau) sessionStorage.setItem("cvr-cau:" + url.split("?")[0], cau); } catch { /* bỏ qua */ }
     setDangTim(true); batDauTim(); // vạch xanh chung chạy tới khi trang kết quả hiện
     // QUAY LẠI TỪ KẾT QUẢ = VỀ TRANG CHỦ MỘT LẦN BẤM (02/11/2026): màn tìm điện thoại đã thêm một bước lịch sử (cvrTim) → trang kết quả
     // THAY bước đó, lịch sử chỉ còn Trang chủ → Kết quả (trước: phải bấm ← hai lần, lần đầu đứng yên ở trang chủ)
     if (history.state?.cvrTim === dauMo.current) router.replace(url); else router.push(url);
   };
-  // QUAY LẠI TRANG CHỦ như Google (chủ dự án 18/10/2026): ô tìm vẫn giữ câu vừa tìm để sửa tiếp; bấm × xoá là thoát tìm kiếm
-  useEffect(() => {
-    try {
-      const c = sessionStorage.getItem("cvr-tim-cuoi");
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc một lần khi quay lại trang chủ
-      if (c) setTuKhoa(c);
-    } catch { /* bỏ qua */ }
-  }, []);
-  const daCoCau = useRef(false);
-  useEffect(() => {
-    if (tuKhoa) { daCoCau.current = true; return; }
-    if (daCoCau.current) try { sessionStorage.removeItem("cvr-tim-cuoi"); } catch { /* bỏ qua */ }
-  }, [tuKhoa]);
+  // QUAY LẠI TRANG CHỦ = Ô TÌM TRỐNG, chuẩn Google (anh 07/11/2026: "ở đây không muốn, cần CHUẨN" — thay luật 18/10/2026 giữ câu cũ):
+  // câu vừa tìm nằm ở "Tìm kiếm gần đây" (đã sửa đúng); trang kết quả vẫn giữ câu (cvr-cau:)
 
   // Tìm theo câu gõ, hoặc theo một nơi vừa chọn
   function tim(cau: string, n: Noi | null = null, mucGhiDe?: Muc) {
