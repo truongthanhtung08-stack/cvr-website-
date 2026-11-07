@@ -9,7 +9,6 @@ import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
 import { featuredListings, type Listing } from "@/lib/data";
 import {
-  sortListings,
   filtersFromParams,
   emptyFilters,
   hasActiveFilters,
@@ -76,26 +75,16 @@ export default function SearchClient({
   // Có từ khoá mà địa danh chưa về → chưa hiện kết quả (tìm thiếu phường xã ra sai rồi nhảy; máy chủ dựng cũng vậy để khớp)
   const choDiaDanh = coTuKhoa && !coDiaDanh;
 
-  const ketQuaHetHan = useMemo(() => {
-    const goc = itemsHetHan.filter(dungMuc);
-    if (goc.length === 0) return [];
-    const khop = smartFilter(goc, { ...filters, keyword: "" }).filter((h) => h.tier === 1).map((h) => h.item);
-    return coTuKhoa
-      ? smartSearch(khop, filters.keyword).hits.filter((h) => h.tier === 1).map((h) => h.item)
-      : sortListings(khop, sort);
-  }, [itemsHetHan, purpose, mode, filters, coTuKhoa, sort, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Không có tin khớp chặt (câu lạ, hoặc trống) → dùng chung luật nới dần + câu nói rõ của trang Mua bán / Cho thuê
   // (chủ dự án 21/10/2026: không bao giờ 0 kết quả, nhưng gợi ý vô lý là tệ nhất)
+  // MỘT BỘ XẾP CHO TOÀN WEB (anh 07/11/2026: "tương tự cho cách hiểu này toàn web"): trang Tìm kiếm dùng đúng locDanhSach như Mua bán /
+  // Cho thuê — ý khách (loại hình → nơi → giá…), xếp theo mức khớp. Câu không nói mục đích → cả hai mục (theoMuc = false)
   const chung = useMemo(() => {
     if (choDiaDanh) return null;
-    const khongKhop = coTuKhoa ? !search.hits.some((h) => h.tier <= 2) : loc.length === 0;
-    return khongKhop ? locDanhSach(items, itemsHetHan, purpose, filters, sort, 1) : null;
-  }, [choDiaDanh, coTuKhoa, search, loc, items, itemsHetHan, purpose, filters, sort]);
-  const results = useMemo(
-    () => (choDiaDanh ? [] : chung ? chung.ketQua : [...(coTuKhoa ? search.hits.map((h) => h.item) : sortListings(loc, sort)), ...ketQuaHetHan]),
-    [choDiaDanh, chung, coTuKhoa, search, loc, sort, ketQuaHetHan],
-  );
+    return locDanhSach(items.filter(dungMuc), itemsHetHan.filter(dungMuc), purpose, filters, sort, 1, undefined, items, !!mode);
+  }, [choDiaDanh, items, itemsHetHan, purpose, filters, sort, mode, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
+  const results = useMemo(() => (choDiaDanh || !chung ? [] : chung.ketQua), [choDiaDanh, chung]);
   // Tra cứu nhanh: tin nào thuộc tầng nào + khớp những chữ gì (để bôi đậm)
   // Kết quả đã hiện → tắt vạch xanh "đang tìm" chung (lọc tại chỗ nên có ngay)
   useEffect(() => { if (!choDiaDanh) xongTim(); }, [results, choDiaDanh]);

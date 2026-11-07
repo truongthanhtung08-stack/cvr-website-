@@ -211,6 +211,8 @@ export function locDanhSach(
     + (filters.furnishing ? (mot(l, { furnishing: filters.furnishing }) ? 16 : 0) : 0)
     + (filters.verified ? (mot(l, { verified: true }) ? 8 : 0) : 0)
     + (filters.broker ? (mot(l, { broker: true }) ? 4 : 0) : 0)
+    // đặc điểm chọn ở Lọc thêm (gần biển, view sông…) — tính điểm như các trường Lọc thêm khác (07/11/2026)
+    + ((filters.dacDiem ?? []).some((d) => d !== "giá rẻ" && mot(l, { dacDiem: [d] })) ? 2 : 0)
     + (coDacDiem.has(l.id) ? 1 : 0);
   const diemGoiY = (l: Listing) => {
     const dungTinh = tinhChon.size === 0 || tinhChon.has(l.location.split(",").pop()?.trim() ?? "");
