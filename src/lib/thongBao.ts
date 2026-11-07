@@ -298,6 +298,9 @@ export function khopMauZbs(templateId: string, data: Record<string, string>, pho
     let v = String(data[ten] ?? "").trim();
     if (kieu === "NUMBER") { const so = v.replace(/[^\d]/g, ""); v = so ? String(Number(so)) : "0"; }
     else if (!v) v = ten === "ten_khach_hang" ? "Quý khách" : ten === "so_dien_thoai" ? (soDienThoaiHien(phone) || "—") : kieu === "DATE" ? homNay : "—";
+    // Ô KIỂU NGÀY: Zalo chỉ nhận ngày/tháng đủ 2 chữ số — "7/11/2026" → -1124 "ngay_het_han has invalid format" (07/11/2026,
+    // khách không nhận Zalo báo hết hạn); ngày 1–9 hay tháng 1–9 là hỏng. Nơi gọi gửi kiểu gì cũng nắn về dd/mm/yyyy ở đây.
+    if (kieu === "DATE") v = v.replace(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/, (_, d, m, y) => `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`);
     const max = Number(dai);
     ra[ten] = max && v.length > max ? v.slice(0, max).trimEnd() : v;
   }
