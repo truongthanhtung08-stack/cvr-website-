@@ -555,10 +555,7 @@ export default function ProjectsBrowser({
             // Điện thoại ẩn dòng "Dự án bất động sản" — thanh "‹ Dự án" đã ghi tên (chủ dự án 31/10/2026); vẫn là H1 cho Google
             <h1 className="sr-only text-xl font-semibold tracking-tight text-cvr-ink sm:not-sr-only sm:text-2xl">{tieuDe}</h1>
           )}
-          <p className="mt-1 text-sm text-cvr-muted">
-            {/* Coastal Land là CỔNG THÔNG TIN — không phân phối, không mua bán dự án. */}
-            Dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land.
-          </p>
+          {/* bỏ câu "Dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land." (anh 07/11/2026 — chú thích thừa) */}
         </div>
         )}
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
