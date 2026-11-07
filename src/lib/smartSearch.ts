@@ -307,6 +307,9 @@ export function suaChinhTa(raw: string): string | null {
   let doi = false;
   const kq = raw.split(/(\s+)/).map((tok) => {
     const n = normalizeVi(tok).replace(/[^a-z0-9]/g, "");
+    // CHỮ NHÀ ĐẤT GÕ SAI DẤU ("đât" → "đất", "gân" → "gần", 07/11/2026): chỉ chữ trong từ điển nhà đất (không đụng tên nơi — "hóa"/"hòa")
+    const dauDung = CHU_NHA_DAT.get(n);
+    if (dauDung && normalizeVi(tok) !== tok.toLowerCase() && tok.toLowerCase() !== dauDung) { doi = true; return dauDung; }
     if (n.length < 4 || /\d/.test(n) || td.has(n)) return tok; // chữ ngắn (sun, an…) dễ đoán nhầm — "sun cosmo" thành "sung"
     if (/[/\-]/.test(tok)) return tok; // "triệu/tháng", "2-3" — khách cố ý viết liền bằng dấu, không phải gõ sai (01/11/2026)
     // CHỮ ĐANG GÕ DỞ (là phần đầu của một chữ có thật: "thiế" → "thiết") thì không sửa — "phan thiế" từng thành "phan thiện"
@@ -403,6 +406,9 @@ export function suaChinhTa(raw: string): string | null {
   }
   return doi ? tu.join(" ") : null;
 }
+// Chữ nhà đất → đúng dấu (một nghĩa trong lĩnh vực này): dùng để đặt lại dấu khi khách gõ SAI dấu
+const CHU_NHA_DAT = new Map("bán mua thuê căn nhà đất phòng ngủ trọ dưới trên tỷ triệu gần biển sông giá rẻ mới xây hẻm phố mặt tiền chung cư dự án nguyên ghép trường chợ trung tâm đường kiệt hộ nền riêng biệt thự liền kề văn sổ hồng đỏ nội thất kho xưởng"
+  .split(" ").map((w) => [normalizeVi(w), w] as [string, string]));
 const CHU_CAP = new Set(["phuong", "xa", "quan", "huyen", "tp"]); // "thanh", "pho"… nằm trong tên nơi (Thanh Khê) — không chặn
 const TEN_TINH_KHOA = new Set(TINH.map(([t]) => normalizeVi(t).replace(/[^a-z0-9]+/g, " ").trim()));
 const TU_NHA_DAT = new Set(["ban", "mua", "nha", "dat", "thue", "cho", "can", "ho", "gia", "tai", "duoi", "tren", "gan", "phong", "view"]);
