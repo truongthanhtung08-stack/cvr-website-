@@ -191,7 +191,7 @@ function cayCua(tinhMoi: string, chiTinhCu?: string): MucCay[] {
       for (const [ten, i] of d.cu ?? []) { const w = pm?.wards[i]; if (w) ds.push({ n: nn(ten), cap: "w", hit: { province: tinhMoi, ward: w, label: `${w}, ${tinhMoi}` } }); }
     }
   }
-  const ra = ds.filter((x) => x.n.length >= 2).sort((a, b) => b.n.length - a.n.length);
+  const ra = ds.filter((x) => x.n.length >= 2 || /^\d+$/.test(x.n)).sort((a, b) => b.n.length - a.n.length); // "Quận 3" giữ, chỉ khớp khi khách gõ kèm chữ cấp
   _cay.set(khoa, ra);
   return ra;
 }
@@ -225,7 +225,8 @@ function docDiaChiCay(nq: string, tinh: string | null, goc = ""): PlaceHit | nul
       return null;
     };
     // đúng dấu khách gõ trước (cùng mức thì giữ thứ tự tên dài trước)
-    let khop = muc.filter((m) => truoc.includes(` ${m.n} `)).sort((a, b) => Number(dau(b)) - Number(dau(a)));
+    // tên CHỈ LÀ SỐ ("Phường 14", "Quận 3") chỉ nhận khi khách gõ kèm chữ cấp — "3 phòng ngủ" không phải Quận 3
+    let khop = muc.filter((m) => truoc.includes(` ${m.n} `) && (!/^\d+$/.test(m.n) || capTruoc(m.n) !== null)).sort((a, b) => Number(dau(b)) - Number(dau(a)));
     if (!khop.length) return null;
     // VỊ TRÍ chữ trong câu — tên phường không được CHỒNG lên tên quận đã khớp ("sơn phú định hóa" không thành "phú đình")
     const tok = truoc.trim().split(" ");
@@ -236,7 +237,9 @@ function docDiaChiCay(nq: string, tinh: string | null, goc = ""): PlaceHit | nul
     // TÊN XÃ MỚI DÀI CHỨA LUÔN TÊN HUYỆN ("Xã Nam Ban Lâm Hà") khớp trọn → chính xã đó, không tách thành xã cũ "Nam Ban" + huyện "Lâm Hà"
     const daiNhat = [...khop].sort((a, b) => b.n.length - a.n.length)[0];
     if (daiNhat.cap === "w" && quanKhop.some((q) => q.n !== daiNhat.n && ` ${daiNhat.n} `.includes(` ${q.n} `))) return daiNhat.hit;
-    const chacChan = khop.filter((m) => m.cap === "w" && m.quan && m.n !== m.quan && quanKhop.some((q) => q.n === m.quan && roiNhau(m.n, q.n)))
+    // phường và quận CÙNG SỐ ("Phường 3, Quận 3") được khi khách gõ đủ hai chữ cấp
+    const cungSo = (m: MucCay) => m.n === m.quan && truoc.includes(` phuong ${m.n} `) && truoc.includes(` quan ${m.n} `);
+    const chacChan = khop.filter((m) => m.cap === "w" && m.quan && (m.n !== m.quan || cungSo(m)) && quanKhop.some((q) => q.n === m.quan && (roiNhau(m.n, q.n) || cungSo(m))))
       .sort((a, b) => Number(dau(b)) - Number(dau(a)) || b.n.length - a.n.length)[0];
     if (chacChan) return chacChan.hit;
     // tên mà chữ đầu là CHỮ CẤP khách gõ ("phuong son" trong "phuong son tay") nhường cho tên đứng ngay sau chữ cấp đó ("son tay")
@@ -849,7 +852,7 @@ function phanTichCau(raw: string): ParsedQuery {
   const nqNoi = nq.replace(/\bhuong (dong|tay) (nam|bac)\b|\bhuong (dong|tay|nam|bac)\b/g, " ");
   // TỈNH = TÊN ĐẦY ĐỦ (34 mới + 63 cũ) ĐỨNG SAU CÙNG trong câu — địa chỉ viết phường → quận → tỉnh (anh 07/11/2026: "Xã Nguyễn Huệ, Cao Bằng"
   // từng đọc ra Huế vì chữ "huệ"; "Thụy Lâm, Đông Anh, Hà Nội" ra Lâm Đồng). Không có tên đầy đủ mới dùng tên gọi tắt của tỉnh web (TINH)
-  const tinhCuoi = tinhTheoTenCuoi(nqNoi);
+  const tinhCuoi = tinhTheoTenCuoi(nq); // câu gốc — bước bỏ "hướng …" từng xoá mất "Tân Hương Đồng Tháp"
   const places = tinhCuoi ? [tinhCuoi] : timTuDien(nqNoi, TINH);
   // TÊN TỈNH / THÀNH CŨ HOẶC MỚI GÕ ĐÚNG (bắt buộc đọc được — chủ dự án 01/11/2026): khớp trọn tên trước khi đoán gần đúng — "thanh hoa"
   // từng thành Khánh Hòa, "quang binh" thành huyện ở Tuyên Quang, "binh dinh" thành phường ở Đà Nẵng
@@ -862,7 +865,7 @@ function phanTichCau(raw: string): ParsedQuery {
   // Phường/quận trong câu ("Hoà Quý", "Ngũ Hành Sơn") — suy ra luôn TỈNH nếu
   // người dùng không gõ tên tỉnh ("nhà đất Hoà Quý" → Đà Nẵng).
   // có TÊN TỈNH → đọc theo CÂY địa chỉ của đúng tỉnh đó (docDiaChiCay); không có tỉnh / cây không ra → bộ dò cũ (tỉnh web trước, gần đúng)
-  const place0 = (tinhCuoi ? docDiaChiCay(nqNoi.replace(CUM_CHUNG, " zz "), tinhCuoi, raw) : null) ?? timDiaGioi(soLaMaCuoi(cheChuChung(nqNoi)), places); // "hải châu i" = "hải châu 1"
+  const place0 = (tinhCuoi ? docDiaChiCay(nq, tinhCuoi, raw) : null) ?? timDiaGioi(soLaMaCuoi(cheChuChung(nqNoi)), places); // "hải châu i" = "hải châu 1"
   // GÕ CÓ DẤU THÌ ĐỊA DANH PHẢI KHỚP ĐÚNG DẤU (01/11/2026: "đang mở bán" từng đọc thành xã Dang, Tây Giang; "hòa" thành "Hóa"):
   // tên nơi (bỏ cấp) phải có trong câu khách gõ theo đúng dấu — chỉ so khi khách gõ có dấu, gõ không dấu vẫn khớp như cũ
   const dungDau = (ten?: string) => {
