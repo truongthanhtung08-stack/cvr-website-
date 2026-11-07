@@ -534,10 +534,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       title="Mở trong Zalo"
                       // LOGO ZALO MINI APP GỐC (anh 07/11/2026: "dùng đúng logo Zalo Mini App") — tệp chính thức trên máy chủ ảnh của Zalo
                       // (miniapp.zaloplatforms.com dùng chính tệp này), ô vuông viền ngoài bo góc 20% theo chuẩn ZaUI
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-[7px] bg-white ring-1 ring-cvr-line transition active:scale-95"
+                      // cùng kiểu nút Chia sẻ bên cạnh (tròn 36px, viền cvr-line, biểu tượng 19px) — cân đối hai nút (anh 07/11/2026)
+                      className="inline-flex min-h-[36px] min-w-[36px] shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white px-2.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-cvr-ink active:scale-95"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="https://miniapp.zmncdn.me/developer/portal/static/icons/miniapp-logo.svg" alt="Zalo Mini App" width={20} height={21} loading="lazy" className="h-5 w-5" />
+                      <img src="https://miniapp.zmncdn.me/developer/portal/static/icons/miniapp-logo.svg" alt="Zalo Mini App" width={19} height={19} loading="lazy" className="h-[19px] w-[19px]" />
                     </a>
                     <ShareButtons title={tieuDe1Dong} />
                   </div>
@@ -883,7 +884,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4).
             Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
         {contact && (
-        <div data-do-cao="lienhe-h" className="an-khi-go-phim fixed inset-x-0 bottom-0 z-40 flex items-center gap-2 border-t border-cvr-line bg-white/95 px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <div data-do-cao="lienhe-h" className="an-khi-go-phim fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-cvr-line bg-white/95 px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
           {hetHan ? <NutYeuCauLienHe /> : <ContactBarMobile listingId={l.id} phoneMask={phoneMask} avatar={contact.avatar} ten={contact.name} />}
         </div>
         )}
