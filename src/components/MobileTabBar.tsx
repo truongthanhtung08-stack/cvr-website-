@@ -153,7 +153,7 @@ function TabBody({
 
   return (
     <span
-      className={`press flex h-[44px] flex-col items-center justify-center gap-[2px] transition-colors duration-200 ${
+      className={`press flex min-h-[40px] flex-col items-center justify-center gap-[2px] py-0.5 transition-colors duration-200 ${
         active ? "text-cvr-blue" : "text-cvr-muted"
       }`}
     >
@@ -165,7 +165,7 @@ function TabBody({
           </span>
         ) : null}
       </span>
-      <span className="text-[10px] font-medium leading-none tracking-[-0.01em]">{label}</span>
+      <span className="whitespace-nowrap text-[10px] font-medium leading-none tracking-[-0.01em]">{label}</span>
     </span>
   );
 }
@@ -270,26 +270,26 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
               {t.ngoai ? (
                 // CHAT = mở Zalo OA của Coastal Land (cùng đường dẫn nút chat nổi cũ). Đường dẫn thật, không window.open: iPhone và trình
                 // duyệt trong Zalo / Facebook chặn cửa sổ mở bằng mã.
-                <a href={t.href} target="_blank" rel="noopener noreferrer" aria-label="Nhắn tin cho Coastal Land qua Zalo" className="press flex h-[44px] flex-col items-center justify-center gap-[2px] text-cvr-muted">
-                  {/* đúng hình bong bóng "Tin nhắn" của nút chat nổi (Chatbox.tsx) */}
-                  <svg className="-my-px h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                    <path d="M12 2.25c-5.385 0-9.75 3.24-9.75 7.5 0 2.68 1.72 5.03 4.32 6.4-.14.86-.5 1.9-1.2 2.86a.375.375 0 0 0 .35.6c1.7-.2 3.06-.78 4.02-1.35.73.16 1.5.24 2.26.24 5.385 0 9.75-3.24 9.75-7.5S17.385 2.25 12 2.25Z" />
+                <a href={t.href} target="_blank" rel="noopener noreferrer" aria-label="Nhắn tin cho Coastal Land qua Zalo" className="press flex min-h-[40px] flex-col items-center justify-center gap-[2px] py-0.5 text-cvr-muted">
+                  {/* bong bóng tin nhắn kiểu Apple Messages (anh 07/11/2026): bầu dục ngang, đuôi cong góc dưới trái; nét 1,6 bằng nét Home · Lưu · Hồ sơ */}
+                  <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round" viewBox="0 0 24 24" aria-hidden>
+                    <path d="M12 3.75c-4.97 0-9 3.3-9 7.38 0 2.27 1.25 4.3 3.22 5.66-.17 1.33-.83 2.5-1.82 3.3 1.86.08 3.52-.5 4.72-1.47.92.24 1.88.36 2.88.36 4.97 0 9-3.3 9-7.38S16.97 3.75 12 3.75Z" />
                   </svg>
-                  <span className="text-[10px] font-medium leading-none tracking-[-0.01em]">{t.label}</span>
+                  <span className="whitespace-nowrap text-[10px] font-medium leading-none tracking-[-0.01em]">{t.label}</span>
                 </a>
               ) : nutDangTinNoi && t.href === "/dang-tin" ? (
                 // ĐĂNG TIN = NÚT CHÍNH của khu quản lý (25/09): vòng tròn xanh. 22/10/2026 chủ dự án: "cân đối, không phải
                 // cứ to là nổi bật mà cản trở giao diện" → bỏ nhô lên, cùng cỡ + cùng hàng với các tab khác, không che nội dung.
-                <Link href={t.href} aria-label="Đăng tin" className={`press relative flex h-[44px] flex-col items-center justify-center ${dangTinBang ? "gap-[2px]" : "-top-[6px] gap-px"}`}>
+                <Link href={t.href} aria-label="Đăng tin" className={`press relative flex min-h-[40px] flex-col items-center justify-center ${dangTinBang ? "gap-[2px] py-0.5" : "-top-[6px] gap-px"}`}>
                   {/* 22/10/2026 chủ dự án: giữ kiểu cũ, to hơn một chút — 35px. 29/10/2026: to thêm chút nữa + nhô lên một chút → 38px,
                       cả nút dời lên 6px để chữ "Đăng tin" thẳng hàng chữ các nút khác (vòng tròn nhô khỏi thanh ~5px). Các nút khác giữ nguyên. */}
                   {/* dangTinBang (thanh trang công khai, chủ dự án 07/11/2026: "các menu bằng nhau hết"): cùng kiểu vòng tròn xanh, cỡ BẰNG biểu tượng các nút khác, không nhô */}
-                  <span className={`flex items-center justify-center rounded-full bg-cvr-blue text-white ${dangTinBang ? "-my-[5px] h-8 w-8" : "h-[38px] w-[38px]"}`}>
-                    <svg className={dangTinBang ? "h-[18px] w-[18px]" : "h-[22px] w-[22px]"} fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
+                  <span className={`flex items-center justify-center rounded-full bg-cvr-blue text-white ${dangTinBang ? "-mt-[4px] h-[26px] w-[26px]" : "h-[38px] w-[38px]"}`}>
+                    <svg className={dangTinBang ? "h-[16px] w-[16px]" : "h-[22px] w-[22px]"} fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" d="M12 5v14M5 12h14" />
                     </svg>
                   </span>
-                  <span className="text-[10px] font-semibold leading-none tracking-[-0.01em] text-cvr-blue">{t.label}</span>
+                  <span className="whitespace-nowrap text-[10px] font-medium leading-none tracking-[-0.01em] text-cvr-blue">{t.label}</span>
                 </Link>
               ) : (
               <Link
