@@ -132,6 +132,10 @@ export default function FilterBar({
   const capNhatCau = (moi: Filters): Filters => {
     const kw = f.keyword.trim();
     if (!kw || moi.keyword !== f.keyword) return moi;
+    // CHỌN NHIỀU NƠI (anh 07/11/2026: "khi chọn nhiều tỉnh thành tốt nhất không ghi câu từ khoá — chỉ hiện đúng trường khách chọn và kết quả"):
+    // không ghép được một câu cho đúng → ô trống, các trường nói thay
+    const doiNoi = JSON.stringify(moi.locations) !== JSON.stringify(f.locations);
+    if (doiNoi && moi.locations.length > 1) return { ...moi, keyword: "" };
     const c = locTuCau(kw, purpose);
     const khacNoi = c.locations.length > 0 && !(c.locations.length === moi.locations.length && c.locations.every((x) => moi.locations.some((y) => sameLocation(x, y))));
     const khacLoai = c.types.length > 0 && JSON.stringify([...c.types].sort()) !== JSON.stringify([...moi.types].sort());
@@ -1611,7 +1615,7 @@ export function LocationPanel({
         role="switch"
         aria-checked={isNew}
         onClick={() => switchMode(isNew ? "cu" : "moi")}
-        className={`flex mb-2 w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-3 py-2.5 text-left transition hover:bg-cvr-blue/[0.1]`}
+        className={`flex mb-1.5 w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-3 py-1.5 text-left transition hover:bg-cvr-blue/[0.1]`}
       >
         <span className="text-[13px] font-semibold text-cvr-ink">Tìm theo địa chỉ mới sau sáp nhập</span>
         <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${isNew ? "bg-cvr-blue" : "bg-black/20"}`}>
@@ -2008,7 +2012,7 @@ export function DaChon({ muc, macDinh = "Tất cả" }: { muc: { nhan: string; b
   // GIỮ CHỖ CỐ ĐỊNH kể cả khi chưa chọn gì (chủ dự án 01/11/2026: vuốt / chọn không được nhảy): dòng này hiện ra hay mất đi không đẩy
   // danh sách bên dưới chạy dưới tay khách. DÍNH TRÊN CÙNG khi cuộn — khách luôn thấy mình đang chọn gì.
   return (
-    <div className="sticky -top-3 z-10 -mx-1 -mt-3 mb-2 h-[46px] bg-white px-1 pb-1 pt-3">
+    <div className="sticky -top-3 z-10 -mx-1 -mt-3 mb-1.5 h-[42px] bg-white px-1 pb-1 pt-3">
       {/* -top-3 -mt-3 pt-3: dính sát MÉP TRÊN bảng, phủ luôn phần đệm 12px của bảng — trước đây danh sách cuộn lộ ra trong khe đệm phía trên, chữ "Cao Bằng" đè lên ô đã chọn (lỗi kinh niên, 07/11/2026) */}
       {/* MỘT HÀNG cố định (dài thì vuốt ngang) — chọn thêm không đẩy danh sách bên dưới chạy dưới tay khách (01/11/2026) */}
       <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1">

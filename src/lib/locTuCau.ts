@@ -32,8 +32,8 @@ function loaiTheoCay(nq: string, mb: "ban" | "thue"): string[] {
     // "căn hộ" / "chung cư" là MỘT nhu cầu → cả nhóm (luật đã chốt) — đặt TRƯỚC để thắng tên loại con cùng chữ
     const ten: { k: string; loai: string[] }[] = ["can ho", "chung cu"].map((x) => ({ k: x, loai: typeGroupsFor(m).find((g) => k(g.label) === "can ho chung cu")?.items ?? [] }));
     for (const g of typeGroupsFor(m)) {
-      if (g.label === "Khác") continue;
-      ten.push({ k: k(g.label), loai: g.items });
+      // nhóm "Khác": tên nhóm không phải loại hình khách gõ, nhưng mục con ("Bất động sản khác") vẫn đọc được (07/11/2026)
+      if (g.label !== "Khác") ten.push({ k: k(g.label), loai: g.items });
       for (const t of g.items) {
         const cacTen = [t, tenLoaiHinhMenu(t, m), ...t.split("/"), ...tenLoaiHinhMenu(t, m).split(",")].map(k).filter((x) => x.length >= 3);
         for (const x of new Set(cacTen)) if (x !== k(g.label)) ten.push({ k: x, loai: [t] });
@@ -104,7 +104,10 @@ export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
   const theoCay = loaiTheoCay(nq.replace(/ nha trang /g, " "), mb);
   // cây chỉ khớp TÊN CHA ("nhà") mà câu nói rõ loại con bằng từ đồng nghĩa ("nhà mặt tiền" → Nhà mặt phố) → lấy loại con
   const conDongNghia = p.types.length ? [...new Set(p.types.flatMap(loaiCua))].filter((t) => theoCay.includes(t)) : [];
-  if (theoCay.length) f.types = conDongNghia.length && conDongNghia.length < theoCay.length ? conDongNghia : theoCay;
+  // gõ ĐÚNG TÊN NHÓM CHA ("BĐS nghỉ dưỡng") → cả nhóm, không thu về một con theo từ đồng nghĩa (07/11/2026)
+  const kc = (x: string) => ` ${normalizeVi(x).replace(/[^a-z0-9]+/g, " ").trim()} `;
+  const goCha = typeGroupsFor(mb).some((g) => g.label !== "Khác" && nq.includes(kc(g.label)) && g.items.every((x) => theoCay.includes(x)));
+  if (theoCay.length) f.types = !goCha && conDongNghia.length && conDongNghia.length < theoCay.length ? conDongNghia : theoCay;
   else if (p.types.length) f.types = [...new Set(p.types.flatMap(loaiCua))];
   // "nha trang" (gõ không dấu) là nơi chốn, không phải "nhà"
   else if (/ nha /.test(nq.replace(/ nha trang /g, " ")) && !/ nha dat /.test(nq)) f.types = typeGroupsFor(mb).find((g) => g.label === "Nhà")?.items ?? [];

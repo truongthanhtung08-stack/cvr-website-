@@ -7,6 +7,9 @@ import { createPortal } from "react-dom";
 // bấm mục khác là chuyển ngay (mượt, chuẩn Homedy). Bọc nhóm bằng <FilterDropdownGroup>.
 const DropdownGroupContext = createContext<{ openId: string | null; setOpenId: (id: string | null) => void } | null>(null);
 
+// chiều cao màn hình lớn nhất đã thấy khi KHÔNG gõ — so để biết trình duyệt đã thu nhỏ trang vì bàn phím
+let caoManToiDa = 0;
+
 export function FilterDropdownGroup({ children }: { children: React.ReactNode }) {
   const [openId, setOpenId] = useState<string | null>(null);
   return <DropdownGroupContext.Provider value={{ openId, setOpenId }}>{children}</DropdownGroupContext.Provider>;
@@ -168,7 +171,23 @@ export default function FilterDropdown({
     const thanh = document.querySelector('nav[aria-label="Điều hướng nhanh"]') as HTMLElement | null;
     const rThanh = thanh?.getBoundingClientRect();
     const caoThanh = rThanh && rThanh.height > 0 && getComputedStyle(thanh!).display !== "none" ? Math.max(0, window.innerHeight - rThanh.top) : 0; // thanh cố định ở đáy (đang ẩn khi cuộn thì vẫn tính chỗ của nó)
-    const maxH = Math.max(220, Math.round(Math.min(window.innerHeight * 0.7, window.innerHeight - r.bottom - m - caoThanh - 8)));
+    // BÀN PHÍM ẢO BẬT (gõ ô tìm trong bảng — anh 07/11/2026: "bàn phím ảo che khuất ô search trên điện thoại, các trường hợp tương tự chỉnh hết"):
+    // đáy nhìn thấy = mép trên bàn phím (visualViewport); trình duyệt không báo bàn phím (Zalo…) mà đang gõ (lớp ban-phim-mo của BanPhimAo)
+    // → coi như bàn phím che nửa dưới. Bảng co vừa phần trên bàn phím, ô tìm và danh sách luôn thấy — MỘT chỗ cho mọi bảng chọn của bộ lọc
+    const vv = window.visualViewport;
+    const phim = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+    const dangGo = document.documentElement.classList.contains("ban-phim-mo");
+    const coPhim = phim > 80 || dangGo;
+    if (!dangGo) caoManToiDa = Math.max(caoManToiDa, window.innerHeight);
+    // trình duyệt THU NHỎ CẢ TRANG khi bật bàn phím (Samsung Internet, Chrome Android): innerHeight đã là phần trên bàn phím → dùng luôn;
+    // chỉ khi không đo được gì (trang không co, visualViewport không đổi — Zalo) mới coi bàn phím che nửa dưới (ảnh máy anh 07/11/2026)
+    const trangDaCo = window.innerHeight < caoManToiDa - 120;
+    const dayThay = coPhim
+      ? (phim > 80 && vv ? vv.offsetTop + vv.height : trangDaCo ? window.innerHeight : window.innerHeight * 0.5)
+      : window.innerHeight - caoThanh;
+    const maxH = coPhim
+      ? Math.max(140, Math.round(dayThay - r.bottom - m - 8))
+      : Math.max(220, Math.round(Math.min(window.innerHeight * 0.7, dayThay - r.bottom - m - 8)));
     const vert = openUp ? { top: r.top + window.scrollY - m, len: true } : { top: r.bottom + window.scrollY + m };
     // Màn hẹp (điện thoại): bảng rộng gần hết màn, chừa 8px hai bên — không tràn ra ngoài
     const hep = window.innerWidth < 640;
@@ -203,11 +222,20 @@ export default function FilterDropdown({
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
     window.addEventListener("resize", reposition);
+    // bàn phím bật / tắt (visualViewport đổi cỡ) và lúc chạm vào ô tìm trong bảng → đo lại cho bảng vừa phần trên bàn phím
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", reposition);
+    const doLai = () => { requestAnimationFrame(reposition); setTimeout(reposition, 350); };
+    document.addEventListener("focusin", doLai);
+    document.addEventListener("focusout", doLai);
 
     return () => {
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", reposition);
+      vv?.removeEventListener("resize", reposition);
+      document.removeEventListener("focusin", doLai);
+      document.removeEventListener("focusout", doLai);
 
     };
   }, [open, sheet, reposition, setOpen]);
