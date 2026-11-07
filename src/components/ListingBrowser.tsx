@@ -17,6 +17,7 @@ import PropertyCard from "@/components/PropertyCard";
 import TheTinMobile from "@/components/TheTinMobile";
 import FilterBar from "@/components/FilterBar";
 import { cauThanhBoLoc, boLocKhoiDau } from "@/lib/locDanhSach";
+import { newProvinceOf } from "@/lib/locations";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
   filtersFromParams,
@@ -139,6 +140,22 @@ export default function ListingBrowser({
     return Number.isFinite(n) && n > 0 ? n : 1;
   };
   const [filtersSong, setFiltersState] = useState<Filters>(() => boLocTu(params));
+  // ĐỌC LẠI CÂU KHI ĐỊA DANH VỀ (07/11/2026: "bán nhà quy nhơn" chỉ ra Gia Lai): trang mở ra đọc câu lúc dữ liệu phường / quận chưa nạp →
+  // chỉ có tỉnh, rồi giữ luôn. Địa danh về mà khách CHƯA đổi trường nào → đọc lại để có đủ tỉnh / thành – phường / xã (cả hai hệ).
+  // Khu vực hiện CHỈ CÓ TỈNH (đọc lúc chưa có địa danh) mà câu đọc lại ra nơi CHI TIẾT HƠN trong cùng tỉnh → thay bằng nơi chi tiết đó.
+  // Các trường khác giữ nguyên; khách tự chọn phường / quận thì không đụng.
+  useEffect(() => {
+    if (!coDiaDanh || !filtersSong.keyword.trim()) return;
+    const hien = filtersSong.locations;
+    if (hien.some((l) => l.district || l.ward)) return;
+    const moi = boLocTu(new URLSearchParams(window.location.search)).locations;
+    // so tỉnh qua bảng sáp nhập ("hội an" đọc sớm ra tỉnh cũ Quảng Nam → nay là Đà Nẵng)
+    const tinh = new Set(hien.map((l) => newProvinceOf(l.province)));
+    if (!moi.some((l) => l.district || l.ward) || (hien.length && !moi.every((l) => tinh.has(newProvinceOf(l.province))))) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc lại khu vực một lần khi địa danh về
+    setFiltersState((f) => ({ ...f, locations: moi }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- khi địa danh về hoặc câu đổi
+  }, [coDiaDanh, filtersSong.keyword]);
   // GÕ MƯỢT (chủ dự án 20/10/2026: màn tìm điện thoại "rất giật và lag"): ô tìm dùng bộ lọc SỐNG (filtersSong) nên chữ hiện
   // ngay; danh sách, đếm kết quả, sửa chính tả dùng bản HOÃN — React dựng lại danh sách lúc rảnh, không chặn từng phím gõ.
   const filtersHoan = useDeferredValue(filtersSong);
@@ -305,7 +322,7 @@ export default function ListingBrowser({
     };
     const n = nhom(item);
     if (i === 0 || n === 0 || n === nhom(pageItems[i - 1])) return null;
-    const tieuDe = n === 2 || tinhChon.length !== 1 ? "Gợi ý ở địa phương khác" : `Gợi ý khác tại ${tinhChon[0]}`;
+    const tieuDe = "Bất động sản tương tự"; // anh 07/11/2026: bỏ chữ "gợi ý"
     return (
       <p key={`tang-${item.id}`} className="col-span-full mt-3 border-t border-cvr-line px-4 pb-1 pt-5 text-[15px] font-semibold text-cvr-ink sm:px-0">
         {tieuDe}

@@ -260,12 +260,13 @@ export function locDanhSach(
   const chuTrong = khopChu.filter((l) => dungLoc.has(l.id));
   const chuNgoai = khopChu.filter((l) => !dungLoc.has(l.id) && dungLoai(l) && dungTinhChon(l)); // khớp chữ mà khác loại khách nói → không đưa vào
   const daCo = new Set(khopChu.map((l) => l.id));
-  let ketQua = [
-    // Khách đã nói loại hình: tin khớp chữ ngoài bộ lọc đã nằm trong bảng gợi ý (xếp theo tỉnh + đặc điểm) — không chen trước
-    ...(coTuKhoa ? [...chuTrong, ...khopDu.filter((l) => !daCo.has(l.id)), ...(filters.types.length ? [] : chuNgoai), ...goiY.filter((l) => !daCo.has(l.id) || (filters.types.length > 0 && !dungLoc.has(l.id)))] : [...khopDu, ...goiY]),
-    ...ketQuaHetHan,
-    ...goiYHetHan,
-  ];
+  // THEO ĐỘ CHÍNH XÁC NHƯ GOOGLE (anh 07/11/2026: "search ra kết quả theo cấp độ chính xác, tới mới đến tương tự"): tin KHỚP ĐÚNG câu tìm
+  // (còn hạn → đã hết hạn, nhãn "Hết hạn") đứng trước, rồi mới đến "Bất động sản tương tự". Trước đây tin hết hạn khớp đúng bị xếp sau cả
+  // tin tương tự còn hạn ("bán nhà quy nhơn" → tin Pleiku đứng đầu, tin Quy Nhơn Nam hết hạn ở dưới).
+  const khopDung = coTuKhoa ? [...chuTrong, ...khopDu.filter((l) => !daCo.has(l.id))] : khopDu;
+  // Khách đã nói loại hình: tin khớp chữ ngoài bộ lọc đã nằm trong bảng gợi ý (xếp theo tỉnh + đặc điểm) — không chen trước
+  const tuongTu = coTuKhoa ? [...(filters.types.length ? [] : chuNgoai), ...goiY.filter((l) => !daCo.has(l.id) || (filters.types.length > 0 && !dungLoc.has(l.id)))] : goiY;
+  let ketQua = [...khopDung, ...ketQuaHetHan, ...tuongTu, ...goiYHetHan];
   // KHÔNG BAO GIỜ 0 KẾT QUẢ (chủ dự án 21/10/2026): mọi tầng trên đều trống thì nới dần, dừng ở bậc đầu có tin, vẫn bám nhu cầu:
   // ① khách nói loại hình → cùng loại ở MỌI nơi, nơi gần chỗ khách nói trước · ② khách nói nơi → mọi loại trong tỉnh đó ·
   // ③ còn lại (câu không hiểu, không chữ nào khớp) → tin mới nhất của mục, theo cấp rồi ngày đăng. Nhãn "Gợi ý tương tự" như cũ.

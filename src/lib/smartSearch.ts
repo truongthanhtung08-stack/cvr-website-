@@ -1078,7 +1078,7 @@ export function searchAny<T>(
 // Nhãn từng tầng (đúng chữ trong tài liệu mục 4)
 export const TIER_LABEL: Record<1 | 2 | 3, string> = {
   1: "🔥 Khớp hoàn hảo với tiêu chí của bạn",
-  2: "✨ Gợi ý tương tự có thể bạn quan tâm",
+  2: "Bất động sản tương tự", // anh 07/11/2026: bỏ chữ "gợi ý"
   // Chủ dự án 17/10/2026: tìm câu dài KHÔNG BAO GIỜ báo "không có kết quả" — dùng lại nhãn gợi ý của tầng 2
-  3: "✨ Gợi ý tương tự có thể bạn quan tâm",
+  3: "Bất động sản tương tự",
 };
