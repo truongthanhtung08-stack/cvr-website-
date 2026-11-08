@@ -46,7 +46,7 @@
 :root { --at: env(safe-area-inset-top, 0px); }
 /* CHIỀU CAO THANH LOGO — MỘT BIẾN cho mọi thanh dính bên dưới (ô tìm, ‹, menu ≡, cuộn tới neo). Điện thoại 52px (anh 08/11/2026: đầu
    trang hơi to so với toàn cục; trước 60px), máy tính giữ 60px. */
-:root { --hdr: 52px; }
+:root { --hdr: 48px; } /* điện thoại: thanh trên 48px như apple.com (08/11/2026) */
 @media (min-width: 640px) { :root { --hdr: 60px; } }
 
 html {
@@ -103,13 +103,13 @@ h1, h2, h3 {
 .nav-glass {
   /* Độ đặc cao (0.97) để đọc ra ĐEN #161617 kể cả khi sau lưng là nền trắng —
      web nền sáng khác trang nền tối của Apple, phải đặc hơn mới ra "đen chuẩn". */
-  background-color: rgba(29, 29, 31, 0.97); /* MỘT nền đen cho đầu trang + menu: #1d1d1f (đen than Apple), dịu hơn #161617 (anh 07/11/2026) */
+  background-color: rgba(22, 22, 23, 0.94); /* nền đen Apple #161617 (anh 08/11/2026 chiều: "để nền logo đen đi") — trước: rgba(29,29,31,.97) · MỘT nền đen cho đầu trang + menu: #1d1d1f (đen than Apple), dịu hơn #161617 (anh 07/11/2026) */
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
 }
 /* Trình duyệt không hỗ trợ backdrop-filter → nền đen đặc hoàn toàn */
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .nav-glass { background-color: #1d1d1f; }
+  .nav-glass { background-color: #161617; }
 }
 
 /* ===== Panel menu Mobile — nền ĐEN ĐẶC (không kính mờ) =====
@@ -119,8 +119,8 @@ h1, h2, h3 {
        trang phía sau (trông như menu "bị ẩn").
      · Blur cả màn hình phải vẽ lại liên tục → GIẬT LAG khi mở/cuộn.
    Nền đặc: chữ luôn rõ, mở tức thì, không tốn GPU. */
-.menu-solid { /* nền đen cùng đầu trang; chữ theo thang Apple tối: chính #f5f5f7 · phụ #c7c7cc · cấp 3 #98989d (anh 07/11/2026) */
-  background-color: #1d1d1f;
+.menu-solid { /* nền đen #000 cùng đầu trang (08/11/2026 chiều); chữ theo thang Apple tối: chính #f5f5f7 · phụ #c7c7cc · cấp 3 #98989d (anh 07/11/2026) */
+  background-color: #161617; /* đen Apple (anh 08/11/2026: "nền màu đen KIỂU APPLE") */
 }
 
 /* ===== Bóng "luxury" — nhiều lớp, ám màu mực, rất mềm (cho card nền trắng) ===== */
@@ -942,3 +942,18 @@ nextjs-portal { display: none !important; }
    cỡ 40px, xếp một cột góc phải: ✕ trên cùng · +/− · định vị. Khung nhỏ trong form giữ nguyên cỡ 29px. */
 .ban-do-toan .maplibregl-ctrl-top-right { top: 50px; }
 .ban-do-toan .maplibregl-ctrl-group button { width: 40px; height: 40px; }
+
+/* Menu điện thoại mở: từng dòng trồi xuống + hiện dần, nối đuôi nhau như apple.com (08/11/2026) — chỉ opacity/transform */
+@keyframes menu-muc-hien { from { opacity: 0; transform: translate3d(0, -8px, 0); } to { opacity: 1; transform: none; } }
+.menu-muc { animation: menu-muc-hien 320ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@media (prefers-reduced-motion: reduce) { .menu-muc { animation: none; } }
+/* Cách mở menu điện thoại như apple.com: màn đen buông từ dưới thanh logo xuống (clip-path), đóng thì kéo ngược lên; chữ hiện dần theo (menu-muc) */
+.menu-man {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 406ms cubic-bezier(0.4, 0, 0.6, 1), visibility 0s linear 406ms;
+}
+.menu-man.menu-man-mo {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 406ms cubic-bezier(0.4, 0, 0.6, 1), visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) { .menu-man, .menu-man.menu-man-mo { transition: none; } }

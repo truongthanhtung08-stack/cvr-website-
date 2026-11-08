@@ -335,11 +335,11 @@ function MobileMenu({
       // header dính + body khoá cuộn làm mốc neo sai: menu bị đẩy lệch lên và cụt
       // (trông như "ẩn"). Fixed neo thẳng vào màn hình nên cuộn tới đâu cũng đúng.
       // z-[45]: trên thanh tab đáy (z-40), dưới header (z-50) để nút ☰ vẫn bấm đóng được.
-      className={`menu-solid fixed inset-x-0 bottom-0 top-[calc(var(--hdr)+var(--at))] z-[45] flex flex-col overflow-y-auto overscroll-contain transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] xl:hidden ${
-        open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0 pointer-events-none"
+      className={`menu-solid fixed inset-x-0 bottom-0 top-[calc(var(--hdr)+var(--at))] z-[45] flex flex-col overflow-y-auto overscroll-contain menu-man xl:hidden ${
+        open ? "menu-man-mo visible" : "invisible pointer-events-none"
       }`}
     >
-      {(open || daMo) && <nav className="flex-1 px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-5">
+      {(open || daMo) && <nav className="flex flex-1 flex-col px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-5">
         {/* ── ĐĂNG TIN + (chưa đăng nhập → Đăng nhập/Đăng ký) — đầu menu.
             Kiểu Batdongsan: KHI ĐÃ ĐĂNG NHẬP, tài khoản & avatar nằm ở THANH TRÊN
             (avatar + ♡ + 🔔), KHÔNG lặp lại khối tài khoản trong menu drawer. ── */}
@@ -347,10 +347,10 @@ function MobileMenu({
             hàng hai nút bằng nhau cao 44px — trái nút viền (chưa đăng nhập: Đăng nhập · đã đăng nhập: Tin đăng),
             phải nút xanh "+ Đăng tin". Đã đăng nhập thì thêm MỘT dòng ảnh đại diện + tên phía trên (bấm → Tổng quan).
             Các mục tài khoản còn lại (Khách hàng, Tài khoản) nằm ở nhóm cuối menu cùng Tin đã lưu · Đăng xuất. */}
-        <div className="mb-5">
-          {user && (
+        {user && <div className="mb-6">
+          {(
             // Ảnh đại diện 40px + tên 16px đậm + dòng phụ "Thành viên" — CÙNG khối tên trong menu ảnh đại diện máy tính (25/10/2026)
-            <Link href="/tai-khoan" onClick={onClose} className="mb-4 flex min-w-0 items-center gap-3">
+            <Link href="/tai-khoan" onClick={onClose} className="flex min-w-0 items-center gap-3">
               <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-10 w-10 shrink-0 bg-[#2c2c2e] text-[15px] text-[#f5f5f7] ring-1 ring-[#3a3a3c]" />
               <span className="min-w-0">
                 <span className="block break-words text-[17px] font-medium leading-tight text-[#f5f5f7]">{displayName(user)}</span>
@@ -358,33 +358,17 @@ function MobileMenu({
               </span>
             </Link>
           )}
-          <div className="flex items-center justify-between">
-            {/* HAI KHỐI ĐẶC CÙNG KHUÔN — ngắn vừa chữ, căn đều hai bên (chủ dự án 07/11/2026) (chủ dự án 07/11/2026: "cho hài hoà"): trái khối TRẮNG chữ đen + biểu tượng, phải khối XANH — cùng cao 40,
-                cùng chữ 14px (chủ dự án: "cho CTA nhỏ lại"), cùng bo tròn; Đăng tin vẫn nổi nhờ màu xanh */}
-            <Link href={user ? "/tai-khoan/tin-dang" : "/dang-nhap"} onClick={onClose} className="press flex min-h-[34px] items-center justify-center gap-1 rounded-full bg-white px-5 text-[13px] font-semibold text-cvr-ink">
-              <BieuTuong ten={user ? "tinDang" : "taiKhoan"} className="h-[14px] w-[14px] shrink-0" />
-              {user ? "Tin đăng" : "Đăng nhập"}
-            </Link>
-            <Link
-              href="/dang-tin"
-              onClick={onClose}
-              className="press flex min-h-[34px] items-center justify-center gap-1 rounded-full bg-cvr-blue px-5 text-[13px] font-semibold text-white"
-            >
-              <svg className="h-[12px] w-[12px]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              Đăng tin
-            </Link>
-          </div>
-        </div>
+        </div>}
 
         {/* Danh sách menu — KHÔNG dùng đường kẻ phân chia (kiểu Apple): phân tách bằng
             khoảng trắng; mục đang mở được bọc khối kính sáng nhẹ để gom nhóm thị giác. */}
         <div className="space-y-1">
-        {navItems.map((item) => (
+        {navItems.map((item, i) => (
           <div
             key={item.href}
-            className={`-mx-3 rounded-2xl px-3 transition-colors duration-300 ${
+            // Mở menu: từng dòng hiện dần từ trên xuống như apple.com (chữ 17px đậm kiểu Apple, cỡ cân với web, không biểu tượng — anh: "chữ không quá to" — 08/11/2026)
+            style={open ? { animationDelay: `${40 + i * 30}ms` } : undefined}
+            className={`${open ? "menu-muc " : ""}-mx-3 rounded-2xl px-3 transition-colors duration-300 ${
               expanded === item.label ? "bg-[#2c2c2e]" : ""
             }`}
           >
@@ -396,11 +380,8 @@ function MobileMenu({
                   <Link
                     href={item.href}
                     onClick={onClose}
-                    className="flex min-h-[44px] flex-1 items-center gap-4 text-[17px] font-normal text-[#f5f5f7]"
+                    className="flex min-h-[44px] flex-1 items-center text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]"
                   >
-                    {item.icon && (
-                      <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
-                    )}
                     {item.label}
                   </Link>
                   <button
@@ -429,7 +410,7 @@ function MobileMenu({
                   {/* pl-9 = 22px icon + gap-3.5 → danh mục con thẳng hàng với CHỮ của mục cha */}
                   {/* overflow-hidden + min-h-0: gập là 0px thật — phần đệm nằm trong khối con, các dòng menu cách ĐỀU nhau (07/11/2026) */}
                   <div className="min-h-0 overflow-hidden">
-                  <div className="pb-2 pl-9">
+                  <div className="pb-2">
                     {item.children.map((child) => (
                       <div key={child.label}>
                         <div className="py-1.5">
@@ -471,11 +452,8 @@ function MobileMenu({
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="flex min-h-[44px] items-center gap-4 text-[17px] font-normal text-[#f5f5f7]"
+                className="flex min-h-[44px] items-center text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]"
               >
-                {item.icon && (
-                  <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
-                )}
                 {item.label}
               </Link>
             )}
@@ -487,10 +465,10 @@ function MobileMenu({
             Icon 22px + gap-3.5 để chữ thẳng hàng với các mục menu chính phía trên.
             Tách khỏi menu chính bằng KHOẢNG TRẮNG, không dùng đường kẻ. */}
         {/* nhóm cuối: cùng nhịp dòng với menu trên (space-y-1); chưa đăng nhập thì điện thoại không còn mục nào ở đây → không vẽ đường kẻ trống */}
-        <div className={`mt-5 space-y-1 border-[#2c2c2e] pt-3 ${user ? "border-t" : "max-lg:hidden lg:border-t"}`}>
+        <div className="mt-5 space-y-1 border-t border-[#2c2c2e] pt-3 max-lg:hidden">
           {/* Đã đăng nhập: mục tài khoản còn lại — cùng kiểu hàng với Tin đã lưu · Đăng xuất */}
           {user && TAI_KHOAN_PHU.map((l) => (
-            <Link key={l.href} href={l.href} onClick={onClose} className="flex min-h-[44px] items-center gap-4 text-[16px] font-normal text-[#d2d2d7]">
+            <Link key={l.href} href={l.href} onClick={onClose} className="flex min-h-[44px] items-center gap-4 text-[16px] font-normal text-[#d2d2d7] max-lg:hidden">
               <BieuTuong ten={l.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
               {l.label}
             </Link>
@@ -513,6 +491,30 @@ function MobileMenu({
               <BieuTuong ten="dangXuat" className="h-5 w-5 shrink-0 text-[#8e8e93]" />
               Đăng xuất
             </button>
+          )}
+        </div>
+        <div className="menu-muc mt-8 grid grid-cols-2 gap-3 lg:hidden" style={open ? { animationDelay: `${40 + navItems.length * 30}ms` } : undefined}>
+          {user ? (
+            <>
+              <button type="button" onClick={() => { onLogout(); onClose(); }} className="press flex h-10 items-center justify-center rounded-full border border-[#48484a] text-[14px] font-semibold text-[#f5f5f7]">
+                Đăng xuất
+              </button>
+              <Link href="/dang-tin" onClick={onClose} className="press btn-dangtin flex h-10 items-center justify-center gap-1 rounded-full text-[14px] font-semibold text-white">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Đăng tin
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/dang-ky" onClick={onClose} className="press flex h-10 items-center justify-center rounded-full border border-[#48484a] text-[14px] font-semibold text-[#f5f5f7]">
+                Đăng ký
+              </Link>
+              <Link href="/dang-nhap" onClick={onClose} className="press flex h-10 items-center justify-center rounded-full bg-[#f5f5f7] text-[14px] font-semibold text-[#1d1d1f]">
+                Đăng nhập
+              </Link>
+            </>
           )}
         </div>
       </nav>}
