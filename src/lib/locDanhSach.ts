@@ -123,6 +123,9 @@ export function locDanhSach(
   // "giá rẻ" gõ trong câu HOẶC chọn ở Lọc thêm → cùng một phân khúc (luật 18/10/2026)
   const timRe = / gia re /.test(` ${normalizeVi(filters.keyword)} `) || !!filters.dacDiem?.includes("giá rẻ");
   if (sort === "moi" && timRe) sort = "gia-tang";
+  // Câu có "MỚI NHẤT" ("đất nền hòa xuân dưới 2 tỷ mới nhất") → trong cùng mức khớp, TIN MỚI ĐĂNG / MỚI ĐẨY lên trước, không xếp theo cấp VIP
+  // (anh 08/11/2026). Kho tin đã xếp sẵn theo mốc mới nhất → giữ nguyên thứ tự đó.
+  if (sort === "moi" && / moi nhat | moi dang /.test(` ${normalizeVi(filters.keyword).replace(/[^a-z0-9]+/g, " ")} `)) sort = "lien-quan";
   // Câu có "trung tâm" (nhà đất bán trung tâm Đà Nẵng) → tin GẦN TÂM nơi khách nói đứng trước (chủ dự án 21/10/2026)
   const kwGoc = filters.keyword;
   const timTrungTam = !!kwGoc.trim() && parseQuery(kwGoc).features.includes("trung tâm");

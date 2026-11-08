@@ -123,6 +123,11 @@ export function locTuCau(cauGo: string, mb: "ban" | "thue"): Filters {
   else if (p.types.length) f.types = [...new Set(p.types.flatMap(loaiCua))];
   // "nha trang" (gõ không dấu) là nơi chốn, không phải "nhà"
   else if (/ nha /.test(nq.replace(/ nha trang /g, " ")) && !/ nha dat /.test(nq)) f.types = typeGroupsFor(mb).find((g) => g.label === "Nhà")?.items ?? [];
+  // VILLA = BIỆT THỰ (anh 08/11/2026: "villa nha trang 2 phòng ngủ" chỉ ra 1 căn hộ condotel hết hạn — tin villa trên web ghi loại "Nhà biệt
+  // thự / Liền kề", còn chữ "villa" đọc thành "Villa / Biệt thự biển" nhóm nghỉ dưỡng). Gõ villa hoặc biệt thự → lấy CẢ HAI loại
+  const dsLoai = typeGroupsFor(mb).flatMap((g) => g.items);
+  const laBietThu = (t: string) => /villa|biệt thự/i.test(t);
+  if (f.types.some(laBietThu)) f.types = [...new Set([...f.types, ...dsLoai.filter(laBietThu)])];
   f.priceMin = p.priceMinTy;
   f.priceMax = p.priceMaxTy;
   if (p.beds) f.beds = Math.min(5, p.beds);

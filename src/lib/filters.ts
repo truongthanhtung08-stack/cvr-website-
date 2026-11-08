@@ -536,10 +536,42 @@ export function cungDuAn(a?: string | null, b?: string | null): boolean {
 // SO CẢ CỤM TÊN CHÍNH (phần trước dấu "/"), không chỉ chữ đầu (lỗi 21/10/2026: chọn "Nhà biệt thự / Liền kề" chỉ so chữ "nhà" nên ra
 // mọi loại "Nhà…" — nhà riêng, nhà mặt phố…; "Đất nền" ra cả đất nông nghiệp). Tên cũ dài hơn vẫn khớp: "Căn hộ" ↔ "Căn hộ chung cư",
 // "Đất nền / Đất nền dự án" ↔ "Đất nền / Đất", "Biệt thự / Liền kề" ↔ "Biệt thự / Villa"; nhãn nhóm ("Nhà") vẫn khớp cả nhóm.
+// TÊN ĐỒNG NGHĨA CỦA CÂY LOẠI HÌNH — loại hình ghi chữ nào trong một nhóm thì khớp mọi mục có chữ cùng nhóm (anh 08/11/2026: "villa nha
+// trang" không ra tin "Nhà biệt thự"). Thêm / đổi loại hình chỉ cần sửa cây ở trên + bảng này, bộ lọc tự theo.
+export const DONG_NGHIA_LOAI: string[][] = [["villa", "biệt thự"]];
+
+const cumLoai = (x: string) => x.split("/")[0].trim().toLowerCase().replace(/\s+/g, " ");
+let _moiMuc: string[] | null = null;
+const moiMucLoai = () => (_moiMuc ??= [...new Set([...saleTypeGroups, ...rentTypeGroups].flatMap((g) => g.items))]);
+const khopThang = (a: string, b: string) => a === b || a.startsWith(b + " ");
+
+/** CÁC LOẠI HÌNH CỦA MỘT TIN theo cây cha – con (anh 08/11/2026: "khách đăng tin sẽ không cập nhật đầy đủ loại hình cha con"):
+ *  loại hình đã chọn · loại con (nếu có) · tin chỉ ghi LOẠI CHA ("Đất", "Nhà", "Căn hộ") thì đọc thêm loại con có trong TIÊU ĐỀ ("bán đất nền…").
+ *  Tên loại lấy từ cây loại hình — đổi cây là bộ lọc đổi theo. */
+export function loaiCuaTin(item: { type: string; loaiCon?: string; title?: string }): string[] {
+  const ds = [item.type];
+  if (item.loaiCon) ds.push(item.loaiCon);
+  const t = cumLoai(item.type);
+  const laCha = [...saleTypeGroups, ...rentTypeGroups].some((g) => cumLoai(g.label).split(",")[0].trim() === t) || !moiMucLoai().some((o) => cumLoai(o) === t);
+  if (laCha && item.title) {
+    const tieuDe = ` ${item.title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ")} `;
+    for (const o of moiMucLoai()) { const c = cumLoai(o); if (!c.endsWith(" khác") && c.startsWith(t) && c !== t && tieuDe.includes(` ${c} `)) ds.push(o); }
+  }
+  return ds;
+}
+
 export function matchType(itemType: string, option: string): boolean {
-  const cum = (x: string) => x.split("/")[0].trim().toLowerCase().replace(/\s+/g, " ");
-  const a = cum(itemType), b = cum(option);
-  return !!b && (a === b || a.startsWith(b + " "));
+  const a = cumLoai(itemType), b = cumLoai(option);
+  if (!b) return false;
+  if (khopThang(a, b)) return true;
+  // MỤC "… KHÁC" CỦA CÂY ("Đất khác", "Bất động sản khác") = mọi loại CÙNG CHỮ ĐẦU mà CHƯA CÓ MỤC RIÊNG trong cây (đất nông nghiệp, đất vườn,
+  // loại đặt tên sau này…) — tự theo cây loại hình, không ghi cứng tên loại (anh 08/11/2026: "cập nhật hay thay đổi loại hình, bộ lọc thay đổi theo")
+  if (b.endsWith(" khác")) {
+    const goc = b.slice(0, -" khác".length);
+    return a.startsWith(goc) && !moiMucLoai().some((o) => { const c = cumLoai(o); return !c.endsWith(" khác") && khopThang(a, c); });
+  }
+  // TÊN ĐỒNG NGHĨA (bảng DONG_NGHIA_LOAI)
+  return DONG_NGHIA_LOAI.some((nhom) => nhom.some((t) => a.includes(t)) && nhom.some((t) => b.includes(t)));
 }
 
 // Chuỗi địa chỉ ("Phường Hội An, Đà Nẵng · Minh An, Hội An, Quảng Nam") → mảng tên
@@ -560,6 +592,7 @@ export type FilterableListing = {
   // giá trị suy từ mã tin của dữ liệu mẫu, lọc ra tin ngẫu nhiên).
   huong?: string; phapLy?: string; noiThat?: string;
   beds?: number; location: string; type: string; badge?: string;
+  loaiCon?: string; // loại con khách chọn (loại căn hộ, loại đất…) — bộ lọc đọc cùng loại hình (loaiCuaTin)
   // Số thô để sắp xếp theo GIÁ MỖI M² — chuỗi price/area đã định dạng để đọc,
   // tính lại từ chuỗi là chỗ đẻ ra lỗi dấu chấm/dấu phẩy.
   priceVnd?: number | null;
@@ -649,7 +682,7 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
         || normalizeVi(`${item.title} ${item.diaChiTim ?? item.location}`).includes(proj);
       if (!dung) return false;
     }
-    if (f.types.length && !f.types.some((t) => matchType(item.type, t))) return false;
+    if (f.types.length && !f.types.some((t) => loaiCuaTin(item).some((x) => matchType(x, t)))) return false;
 
     const ty = priceToTy(item.price);
     if (f.priceMin != null && (ty == null || ty < f.priceMin)) return false;
