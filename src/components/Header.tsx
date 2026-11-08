@@ -135,7 +135,7 @@ function NavLink({ item }: { item: NavItem }) {
     return (
       <Link
         href={item.href}
-        className="nav-link whitespace-nowrap text-sm font-medium text-cvr-line transition-colors hover:text-white"
+        className="nav-link whitespace-nowrap text-[13px] font-medium text-cvr-line transition-colors hover:text-white"
       >
         {item.label}
       </Link>
@@ -151,7 +151,7 @@ function NavLink({ item }: { item: NavItem }) {
     <div className="group relative">
       <Link
         href={item.href}
-        className="nav-link whitespace-nowrap text-sm font-medium text-cvr-line transition-colors group-hover:text-white"
+        className="nav-link whitespace-nowrap text-[13px] font-medium text-cvr-line transition-colors group-hover:text-white"
       >
         {item.label}
       </Link>
@@ -231,7 +231,7 @@ function SaveButton() {
           </span>
         )}
       </span>
-      <span className="hidden text-sm font-medium xl:inline">Lưu</span>
+      <span className="hidden text-[13px] font-medium xl:inline">Lưu</span>
     </Link>
   );
 }
@@ -578,7 +578,7 @@ export default function Header() {
         </Link>
 
         {/* Điều hướng */}
-        <nav className="hidden items-center gap-8 xl:flex">
+        <nav className="hidden items-center gap-7 xl:flex">{/* chữ menu 13px, cách 28px — nhỏ theo thanh 52px (anh 08/11/2026: "menu nhỏ lại tương tự") */}
           {navItems.map((item) => (
             <NavLink key={item.href} item={item} />
           ))}
@@ -598,7 +598,7 @@ export default function Header() {
               // Chưa đăng nhập: CHỈ "Đăng nhập" — trang đăng nhập tự lo cả tài khoản mới, không cần nút Đăng ký (chủ dự án 25/10/2026)
               <Link
                 href="/dang-nhap"
-                className="text-sm font-medium text-cvr-line transition-colors hover:text-white"
+                className="text-[13px] font-medium text-cvr-line transition-colors hover:text-white"
               >
                 Đăng nhập
               </Link>
@@ -608,7 +608,7 @@ export default function Header() {
           {/* Đăng tin — chỉ desktop (< lg đã có trong Menu, tránh chật thanh trên điện thoại) */}
           <Link
             href="/dang-tin"
-            className="btn-dangtin hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white sm:px-5 sm:py-2.5 xl:flex"
+            className="btn-dangtin hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-semibold text-white xl:flex"
           >
             <svg
               className="h-4 w-4"

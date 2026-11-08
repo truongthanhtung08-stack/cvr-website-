@@ -16,6 +16,12 @@ chạy lệnh push. Chỉ khi anh nhắn đúng chữ **"Push"** mới làm.
 **⛔ 07/11/2026 (anh): cấm tự push KHÔNG có nghĩa là im lặng.** Xong mỗi việc PHẢI báo đủ 3 ý: **đã build** (qua / lỗi) · **đã kiểm** (kiểm gì,
 ở đâu) · **cần Push mới lên web** (việc nào khách / Google chưa thấy cho tới khi Push). Không để anh phải hỏi "web thật là gì", "làm sao để thấy".
 
+## ⛔⛔⛔ CẤM XOÁ ẢNH DỰ ÁN · ẢNH BÀI VIẾT (anh chốt 08/11/2026)
+Claude / mọi kịch bản **CẤM xoá** ảnh trong kho (Supabase `listings`, `nho/`) thuộc **dự án** (khung ảnh, mặt bằng, ảnh chèn trong nội dung
+Tổng quan…) và **bài viết Tin tức** (ảnh bìa + ảnh chèn trong nội dung). Bài học: lần dọn kho 11/09/2026 (`.tmp-da-xoa-2026-09-11.json`,
+2.051 tệp) coi ảnh chèn trong nội dung là "rác" → ảnh trong nội dung trang dự án (vd. Sun Galaxy Complex) mất hẳn, web 404, không phục hồi được.
+Dọn kho (`scripts/don-kho-anh.mjs` hay bất kỳ cách nào) chỉ khi anh nói "xoá" từng đợt; trước đó liệt kê từng tệp + nơi dùng cho anh duyệt.
+
 ## ⛔⛔ CẤM CHÚ THÍCH VỚ VẨN — LÀM CHUẨN (anh chốt 06/11/2026, gắt)
 Giao diện (web + Zalo Mini App) KHÔNG viết câu giải thích / chỉ dẫn / "chúng tôi chỉ lấy…". Dựng **cấu trúc để khách tự hiểu**:
 bố cục, nhãn nút, ô nhập. Chữ còn lại chỉ là THÔNG TIN. Bài học: màn Đăng nhập Mini App ghi "Coastal Land chỉ lấy tên và ảnh
@@ -35,6 +41,24 @@ Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm.
   từ Zalo (template/info/v2): ô kiểu SỐ chỉ chữ số ("0đ"/"64.800đ" → Zalo -1124, bỏ cả tin — gốc lỗi duyệt/nạp/thanh toán không có Zalo
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
+
+## ⏳ BÀN GIAO 08/11/2026 TỐI (phiên 76e330d6, anh: "bàn giao cho người khác vào ngay") — ĐẦU TRANG + MENU ≡ ĐIỆN THOẠI KIỂU APPLE — CHƯA PUSH
+**Môi trường:** máy xem thử cổng 3002 (preview `cvr-ban-that`, chạy `next start` từ `.next-kiem`) · link điện thoại **http://192.168.0.189:3002** (IP đổi tối 08/11) ·
+giả lập `http://localhost:3002/khung-web.html` ở khung phải. Cập nhật bản: build NỀN `NEXT_DIST_DIR=.next-moi npx next build` (run_in_background) → dừng preview
+→ đổi `.next-kiem`↔`.next-moi` → bật lại. ⛔ **Đừng TaskStop build đang chạy**: tiến trình next build con vẫn chạy ngầm, giữ khoá → build sau báo "Another next build"
+(máy chặn Claude kill). **Lúc bàn giao còn 2 tiến trình `next build` ngầm** (bản build bị dừng) — chờ chúng tự xong rồi mới build.
+**Commit chưa push (sau b15e95e8):** 3407122e (nút ‹ toàn web: vào từ Google/Zalo ‹ về trang cha; ‹ về trang chủ đúng chỗ; Đăng tin chưa đăng nhập ‹ lùi thường;
+bỏ số 1/6 xem ảnh; khung xem ảnh/số liên hệ/video createPortal ra body) · 95e69cfa · 3ff5fa22 · 92de1303 · eea859a4 (đầu trang nền đen #161617; menu ≡ kiểu Apple:
+màn đen buông xuống `.menu-man`, chữ hiện dần `.menu-muc`, danh mục con trượt vào `.menu-trang-vao` có "‹ Mua bán", bỏ dòng "Tất cả…"; Đăng ký·Đăng nhập /
+Đăng xuất·Đăng tin; thanh dưới: Đăng tin cùng kiểu nét các nút khác).
+**CHƯA COMMIT (của phiên này):** `BrandLogo.tsx` logo 36px (`h-9`) · `globals.css` `--hdr` điện thoại 40px · `Header.tsx` menu lề 48px (`px-12`), chỉ chữ (bỏ biểu tượng
++ mũi tên), dòng 46px, **các dòng giãn đều lấp kín màn hình** (flex-1) · `TimTrangChu.tsx` ô tìm trang chủ nhích xuống `pt-1.5`. Hai việc sau cùng CHƯA build, link
+3002 đang là bản menu gọn (chưa giãn). ChonCoTim / PostListingForm / admin ListingForm: KHÔNG phải của phiên này, đừng add.
+**Logo đầu trang:** dùng `public/logo/logo-dau-trang-white.svg` = logo GỐC, chỉ slogan to 1,15 lần + hạ 18 đơn vị. Chữ COASTAL LAND giữ nguyên cỡ.
+**Còn treo, anh chưa chốt:** menu để trống phần dưới như Apple (Apple chừa trống ~nửa màn hình, ẩn logo khi mở menu) hay giãn đều kín màn hình — anh nói "cân đối",
+"cho tất cả các máy". Hiệu ứng + kiểu chữ toàn trang kiểu Apple (đã: hiện khi cuộn trồi 28px, đường cong Apple).
+**Anh mắng phiên này, ĐỪNG LẶP:** đổi cỡ logo qua lại cả buổi (anh "thu header" = thu THANH, KHÔNG thu logo) · sửa thứ anh không bảo (phóng chữ thương hiệu) ·
+build bị dừng → bản cũ chạy ngầm, chờ lâu · báo dài — **xong việc chỉ báo MỘT câu** · đừng hỏi lại điều anh vừa nói · anh đang gõ thì đừng chạy lệnh dài.
 
 ## ⏳ BÀN GIAO 08/11/2026 (phiên e7f4594c, anh: "bàn giao và cút ngay, người khác vào làm tiếp") — TRƯỜNG ĐỊA ĐIỂM / BỘ LỌC — CHƯA PUSH
 **Việc đang làm:** trường Địa điểm (bảng Khu vực) theo **14 yêu cầu của anh** ghi ở `.claude/LOI-BO-LOC-07-11.md` (khối "YÊU CẦU CỦA ANH VỀ ĐỊA DANH"

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { preload } from "react-dom";
+import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { asset } from "@/lib/asset";
@@ -216,10 +217,17 @@ export default async function GioiThieuPage() {
             <div className={about.market.image ? SPLIT : ""}>
               <Figure src={about.market.image} alt="Coastal Land" className="order-2 lg:order-1" />
               <div className="order-1 lg:order-2">
-                <Eyebrow>{about.market.eyebrow}</Eyebrow>
-                <Title>{about.market.title}</Title>
-                <p className="mt-4 text-[15px] leading-relaxed text-cvr-body sm:text-base">{about.market.desc}</p>
-                {/* (bỏ nút "Xem dự án" — anh 08/11/2026: để lại ảnh và nội dung anh viết bên phải) */}
+                {/* CỘT PHẢI THEO ADMIN (anh 08/11/2026): Nhãn nhỏ · Tiêu đề · Mô tả · nút CTA — ô nào trống thì không hiện; nút chỉ hiện khi có
+                    cả nhãn lẫn link (Admin → Nội dung → Giới thiệu, khối Thị trường) */}
+                {about.market.eyebrow?.trim() && <Eyebrow>{about.market.eyebrow}</Eyebrow>}
+                {about.market.title?.trim() && <Title>{about.market.title}</Title>}
+                {about.market.desc?.trim() && <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-cvr-body sm:text-base">{about.market.desc}</p>}
+                {about.market.ctaLabel?.trim() && about.market.ctaHref?.trim() && (
+                  <Link href={about.market.ctaHref} className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-cvr-blue px-7 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(0,113,227,0.28)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-cvr-blue-ink">
+                    {about.market.ctaLabel}
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                  </Link>
+                )}
               </div>
             </div>
           </div>

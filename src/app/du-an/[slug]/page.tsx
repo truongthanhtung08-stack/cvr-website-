@@ -6,7 +6,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProjectGallery from "@/components/ProjectGallery";
 import Gallery from "@/components/Gallery";
-import AnhTraCuu from "@/components/AnhTraCuu";
 import ProjectNav from "@/components/ProjectNav";
 import ProjectNearby from "@/components/ProjectNearby";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
@@ -327,7 +326,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // tải tài liệu. GIỮ "Dự án theo khu vực" (liên kết sang trang dự án từng tỉnh — SEO; chủ dự án: "không được bỏ")
   const coCotPhai = !traCuu || hasRelated || showPrice || !!contact || duAnTheoKhuVuc.length > 0;
   // Tra cứu: bảng thông tin ở hàng đầu trang → mục Tổng quan chỉ còn giới thiệu, không có thì ẩn
-  const coMucTongQuan = traCuu ? p.overview.length > 0 || !!p.capNhat : hangThongSo.length > 0;
+  const coMucTongQuan = hangThongSo.length > 0 || p.overview.length > 0 || (traCuu && !!p.capNhat);
   const nav = [
     ...(coMucTongQuan ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
     ...(!traCuu || p.mapPin || coDiaChi ? [{ id: "vi-tri", label: "Vị trí" }] : []),
@@ -396,10 +395,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
           {/* Khoảng thở giữa tên · địa chỉ · thanh mục (trước chật — chủ dự án 30/10/2026) */}
-          {/* ĐIỆN THOẠI: ẢNH LÊN TRÊN, tên + địa chỉ xuống dưới ảnh (anh 08/11/2026: "đưa các dòng trên xuống dưới — hình lên trên"); máy tính giữ tên trên ảnh */}
+          {/* ẢNH LÊN TRÊN, tên + địa chỉ xuống dưới ảnh — điện thoại (anh 08/11/2026) và máy tính như điện thoại (anh 08/11/2026: "đưa hình lên trên như Mobile") */}
           <div className="flex flex-col">
           {(
-          <div className={`pb-5 mt-3 max-sm:order-2`}>
+          <div className={`order-2 pb-5 mt-3 sm:mt-5`}>
             <div className="min-w-0">
             {/* Bỏ nhãn tình trạng trên tên (chủ dự án 30/10/2026: trùng dòng Tình trạng trong bảng Tổng quan) */}
             <h1 className="text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
@@ -421,8 +420,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {/* Thư viện ảnh DƯỚI tên + địa chỉ (bố cục kiểu Batdongsan — chủ dự án 31/10/2026) · MOBILE tràn viền sát 2 mép · bấm để xem lớn + zoom.
               Chưa có ảnh: không vẽ khung trống, tên dự án lên đầu trang (chủ dự án 30/10/2026) */}
-          {coAnh && !traCuu && (
-            <div className="relative -mx-4 mb-2 sm:mx-0 max-sm:order-1 max-sm:mb-0">
+          {/* dự án TRA CỨU dùng chung khung ảnh + bố cục 2 cột của dự án nổi bật (anh 08/11/2026: "dự án tra cứu mở lên cũng chia 2 cột cho dễ nhìn") */}
+          {coAnh && (
+            <div className="relative order-1 -mx-4 sm:mx-0 sm:mt-5">
               {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan.
                   Nhãn ở góc trái TRÊN khung ảnh (ô đếm ảnh đã xuống góc trái dưới — anh 08/11/2026) */}
               <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
@@ -435,48 +435,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           </div>
 
-          {/* TRA CỨU — HÀNG ĐẦU TRANG 3 CỘT BẰNG NHAU (chủ dự án 31/10/2026: khung ảnh đúng tỷ lệ ảnh, gọn, cân đối): khung ảnh 16:9 (≥ 2 ảnh
-              tự chạy, hiện trọn không cắt) | bảng thông tin (trường bắt buộc + mục Admin ghi thêm, thứ tự chuẩn) | Dự án theo khu vực. Ba cột cao
-              bằng nhau: bảng dài hơn thì khung ảnh cao theo (ảnh vẫn hiện trọn, phần thừa lấp ảnh mờ). Nằm TRÊN thanh mục như khung ảnh nổi bật */}
-          {traCuu && (
-            <div className="mb-2 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-              {/* Điện thoại: chưa có ảnh thì bỏ hẳn khung ảnh (chủ dự án 31/10/2026, chỉ điện thoại) — PC giữ khung xám + biểu tượng */}
-              <div className={`relative -mx-4 sm:mx-0 ${coAnh ? "" : "max-sm:hidden"}`}>
-                <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
-                {/* Điện thoại có ảnh: bộ ảnh trang tin (Gallery) như trang nổi bật; chưa có ảnh hoặc máy tính: khung tra cứu */}
-                {coAnh && <div className="sm:hidden"><Gallery images={gallery} videos={p.videos ?? []} alt={p.name} /></div>}
-                <div className={`h-full ${coAnh ? "hidden sm:block" : ""}`}>
-                  <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} khung="aspect-[16/9] lg:aspect-auto lg:h-full lg:min-h-[216px]" />
-                </div>
-              </div>
-              {/* Cùng kiểu hộp "Dự án theo khu vực" (đệm 16 px, viền, bo góc); các dòng giãn đều theo chiều cao hàng */}
-              <div className="flex flex-col justify-around gap-3 rounded-2xl border border-cvr-line bg-white p-4">
-                {hangThongSo.map((s) => (
-                  <div key={s.label} className="flex min-w-0 items-start gap-3 text-[15px]">
-                    <span className="w-28 shrink-0 text-sm leading-6 text-cvr-muted">{s.label}</span>
-                    <span className={`min-w-0 leading-6 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
-                      {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {duAnTheoKhuVuc.length > 0 && (
-                // Cao ĐÚNG bằng ảnh (h-0 + min-h-full: hộp không kéo hàng cao thêm); nhiều tỉnh hơn chỗ thì cuộn trong hộp
-                <div className="hidden h-0 min-h-full flex-col overflow-y-auto rounded-2xl border border-cvr-line bg-white p-4 lg:flex">
-                  <p className="text-base font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</p>
-                  <div className="mt-2 flex flex-1 flex-col justify-around">
-                    {duAnTheoKhuVuc.map(([ten, so]) => (
-                      <Link key={ten} href={`/du-an/${slugKhuVuc(ten)}`} className="flex items-center justify-between rounded-lg px-3 py-1.5 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink">
-                        <span>Dự án tại {ten}</span>
-                        <span className="text-xs text-cvr-muted">{so}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           </HomeCollapsible>
 
           {/* MENU MỤC DÍNH SUỐT TRANG (22/10/2026, đã chốt): nằm ngoài lưới nội dung nên cuộn tới khối tin thuộc dự án,
@@ -488,7 +446,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               (liên hệ, tin thuộc dự án, dự án tại tỉnh, nhận tài liệu), mép trên ngang khối đầu cột trái; phần nào chưa có thông tin thì ẩn */}
           <HomeCollapsible>
           {/* Tra cứu chưa có mục thông tin nào: không dựng lưới rỗng (lưới rỗng vẫn ăn khoảng trên → lệch 48 px chuẩn) */}
-          <div className={`mt-4 grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8 ${traCuu && !nav.some((n) => n.id !== "tin-du-an") ? "hidden" : ""}`}>
+          <div className="mt-4 grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8">
             <div className={`reveal is-visible cards-stagger ${coCotPhai ? "lg:col-span-2" : "lg:col-span-3"} [&>section:first-child]:mt-5 [&>section:first-child]:border-t-0 [&>section:first-child]:pt-0`}>
               {/* THÔNG TIN DỰ ÁN DÀI → THU GỌN (chủ dự án 31/10/2026, kiểu Batdongsan): bao TỪ Tổng quan TỚI mục cuối; "Xem thêm" ở chỗ cắt,
                   "Thu gọn" ở CUỐI phần thông tin; ngắn thì hiện hết. Hỏi đáp nằm ngoài (luôn hiện) */}
@@ -504,10 +462,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     thứ tự theo cặp (chủ đầu tư | tình trạng · loại hình | giá · quy mô | diện tích …); điện thoại 1 cột */}
                 {/* CHUẨN CHỮ TRANG DỰ ÁN (chủ dự án 31/10/2026): nội dung 15 px · nhãn 14 px · mọi dòng cao 24 px · các dòng cách 12 px ·
                     tiêu đề mục 24 px cách nội dung 20 px · mục cách mục 48 px · ghi chú 13 px */}
-                {!traCuu && bangThongSo(hangThongSo)}
+                {bangThongSo(hangThongSo)}
                 {p.overview.length > 0 && (
                 // Cách bảng thông số 32 px (chủ dự án 31/10/2026: cần cách biệt với phần nội dung bên dưới); tra cứu: bảng ở đầu trang
-                <div className={traCuu ? "" : "mt-8"}>
+                <div className={hangThongSo.length ? "mt-8" : ""}>
                 <div>
                   <div className="space-y-3 text-[15px] leading-6 text-cvr-body">
                     <RichContent paragraphs={p.overview} title={p.name} />
@@ -641,7 +599,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
             {coCotPhai && (
             // Cột phải chỉ máy tính (tra cứu: máy tính đã có hàng đầu trang). Điện thoại: Liên hệ + form GOM xuống sau khối tin thuộc dự án (31/10/2026)
-            <aside className={`hidden lg:col-span-1 ${traCuu ? "" : "lg:mt-5 lg:block"}`}>
+            <aside className="hidden lg:col-span-1 lg:mt-5 lg:block">
               {/* Cột phải CUỘN THEO TRANG, không dính: cột cao hơn màn hình mà dính thì cuộn bị khựng rồi trôi (chủ dự án 30/10/2026) */}
               <div className="h-full space-y-4">
                 <div className="space-y-4">

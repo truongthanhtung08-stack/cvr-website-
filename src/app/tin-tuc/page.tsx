@@ -48,7 +48,7 @@ export default async function TinTucPage() {
                   <p className="mt-2 text-xs text-white/75">{featured.category} · {featured.date}</p>
                 </div>
               </Link>
-              <div className="mt-8"><ArticleBrowser articles={articles} boQua={1} /></div>
+              <div className="mt-8"><ArticleBrowser articles={articles} boQua={1} cotPhai={false} /></div>
             </div>
             {benPhai.length > 0 && (
             <aside className="hidden lg:block">

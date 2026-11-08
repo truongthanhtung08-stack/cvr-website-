@@ -136,7 +136,7 @@ export default function BannerCarousel({
                 {i === active && (
                   <span
                     key={tick}
-                    className="absolute inset-y-0 left-0 rounded-full bg-white"
+                    className="absolute inset-0 origin-left rounded-full bg-white"
                     style={{
                       animation: playing ? `banner-progress ${DURATION}ms linear forwards` : "none",
                       width: playing ? undefined : "60%",

@@ -47,7 +47,7 @@
 /* CHIỀU CAO THANH LOGO — MỘT BIẾN cho mọi thanh dính bên dưới (ô tìm, ‹, menu ≡, cuộn tới neo). Điện thoại 52px (anh 08/11/2026: đầu
    trang hơi to so với toàn cục; trước 60px), máy tính giữ 60px. */
 :root { --hdr: 44px; } /* điện thoại: thanh 44px, logo 38px (anh 08/11/2026 khuya: "to lên một chút") */
-@media (min-width: 640px) { :root { --hdr: 60px; } }
+@media (min-width: 640px) { :root { --hdr: 52px; } } /* máy tính thanh 52px, logo 40px (anh 08/11/2026: "nó rất to rồi, nhỏ lại, nhỏ cả logo") */
 
 html {
   scroll-behavior: smooth;
@@ -377,9 +377,10 @@ select option {
 @keyframes card-shine {
   to { transform: translateX(120%); }
 }
+/* chạy bằng transform (không đổi bề rộng) — trước đây đổi width mỗi khung hình bắt cả trang tính lại bố cục, chạm ô tìm trang chủ giật (đo 08/11/2026) */
 @keyframes banner-progress {
-  from { width: 0%; }
-  to   { width: 100%; }
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
 }
 
 /* Điện thoại banner ứng dụng — trôi nổi nhẹ nhàng (chỉ transform) */

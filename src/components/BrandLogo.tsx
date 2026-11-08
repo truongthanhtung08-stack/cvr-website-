@@ -15,7 +15,7 @@ export default function BrandLogo({
   tone?: "dark" | "light";
 }) {
   const cls =
-    size === "lg" ? "h-[3.4rem]" : "h-[38px] sm:h-[3rem] lg:h-[3.15rem]"; // điện thoại logo 38px trong thanh 44px (anh 08/11/2026 khuya: "cụm header cùng logo to lên một chút") (anh 08/11/2026 tối: "cụm logo nhỏ lại thêm chút"); trước 40px (anh 08/11/2026 tối: "thu cả bộ logo nhỏ lại một chút"); trước 44px — logo như web thật, thanh nhỏ hơn web thật (60px) một chút (anh 08/11/2026 tối)
+    size === "lg" ? "h-[3.4rem]" : "h-[38px] sm:h-10"; // điện thoại logo 38px trong thanh 44px (anh 08/11/2026 khuya: "cụm header cùng logo to lên một chút") (anh 08/11/2026 tối: "cụm logo nhỏ lại thêm chút"); trước 40px (anh 08/11/2026 tối: "thu cả bộ logo nhỏ lại một chút"); trước 44px — logo như web thật, thanh nhỏ hơn web thật (60px) một chút (anh 08/11/2026 tối)
   const src =
     tone === "light"
       ? (size === "md" ? "/logo/logo-goc-white.svg" : "/logo/logo-horizontal-white.svg") // đầu trang: đúng file logo GỐC, không chỉnh gì (anh 08/11/2026 khuya: "lấy logo gốc thay vào")
