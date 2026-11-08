@@ -824,6 +824,8 @@ export function docMucDich(raw: string, laTenDuAn?: (nq: string) => boolean): "b
   if (pq.purpose) return pq.purpose;
   if (coDuAn) return "duan";
   const chiThue = pq.types.length > 0 && pq.types.every((t) => ["Phòng trọ", "Văn phòng", "Mặt bằng"].includes(t));
+  // LOẠI CHỈ CÓ CHO THUÊ (phòng trọ, văn phòng, mặt bằng) THẮNG GIÁ — như Google (anh 08/11/2026, ảnh Google: "nhà trọ đà nẵng dưới 2 tỷ"
+  // Google hiểu là thuê phòng trọ, đổi "tỷ" thành "triệu"); khách muốn mua cả dãy trọ thì gõ "bán / mua nhà trọ" (chữ mục đích đã xét trên)
   if (/ thang | nguyen can | o ghep | ngan han | dai han /.test(w) || chiThue) return "thue";
   // giá từ 100 TRIỆU trở lên ("căn hộ 800 triệu") là giá bán — không ai thuê trăm triệu một tháng
   const soTrieu = Number(w.match(/ (\d+[.,]?\d*) ?(trieu|tr) /)?.[1]?.replace(",", ".") ?? 0);

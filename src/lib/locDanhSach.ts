@@ -253,9 +253,14 @@ export function locDanhSach(
     if (!cum.length) return 0;
     return cum.some((t) => !["cach", "gan", "ve", "ra", "toi", "den", "vao", "sat"].includes(t)) ? 2 : 1;
   };
-  const khopDu = timTrungTam
+  const khopDuTT = timTrungTam
     ? khopDu0.map((l, i) => ({ l, i, m: mucTrungTam(l) })).sort((a, b) => b.m - a.m || a.i - b.i).map((x) => x.l)
     : khopDu0;
+  // NHÀ TRỌ Ở MỤC MUA BÁN (anh 08/11/2026: "nhà trọ đà nẵng dưới 2 tỷ" = mua cả dãy trọ; "cứ đọc đúng loại hình là Nhà trọ"): Mua bán chưa
+  // có loại "nhà trọ" riêng nên bộ lọc lấy nhóm Nhà — tin ghi nhà trọ / dãy trọ / phòng trọ đứng ĐẦU, các nhà khác xếp sau
+  const timTro = purpose === "ban" && / (nha|day|phong) tro /.test(` ${normalizeVi(kwGoc).replace(/[^a-z0-9]+/g, " ")} `);
+  const coTroTin = (l: Listing) => / (nha|day|phong) tro /.test(` ${normalizeVi([l.title, l.desc, l.searchText].filter(Boolean).join(" ")).replace(/[^a-z0-9]+/g, " ")} `);
+  const khopDu = timTro ? [...khopDuTT.filter(coTroTin), ...khopDuTT.filter((l) => !coTroTin(l))] : khopDuTT;
   // KHÁCH ĐÃ NÓI LOẠI HÌNH → gợi ý CHỈ cùng loại hình, nới khu vực chứ không nới loại (chủ dự án 21/10/2026: "Villa biển gần
   // Hội An" không có tin thì gợi ý villa Đà Nẵng gần biển — không đưa condotel, nhà phố). Hết tin cùng loại thì nói là không có.
   // KHÁCH ĐÃ NÓI NƠI → gợi ý CHỈ trong tỉnh đó (chủ dự án 21/10/2026: "Villa biển gần Hội An" mà ra Huế, Lâm Đồng là vô nghĩa)

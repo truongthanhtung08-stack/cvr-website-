@@ -69,6 +69,9 @@ export function goTiep(raw: string, boTu: string[], toiDa = 3): string[] {
   // số nhỏ (1–6) còn có thể là số phòng ngủ ("nhà hải châu 3" → "… 3 phòng ngủ")
   if (/^\d+([.,]\d+)?$/.test(cuoi)) return [noi(`${cuoi} tỷ`), noi(`${cuoi} triệu`), ...(/^[1-6]$/.test(cuoi) && !NOI_CAN_VE.has(normalizeVi(tu[tu.length - 2] ?? "")) ? [noi(`${cuoi} phòng ngủ`)] : [])];
 
+  // CHỮ CUỐI ĐÃ LÀ TÊN TỈNH / THÀNH VIẾT LIỀN ("danang", "hcm", "saigon") → câu đã trọn, KHÔNG điền tiếp — trước đây "can ho danang" bị
+  // nối thành "danang plaza" (tên dự án) rồi cả ô gợi ý ra dự án (anh 08/11/2026)
+  if (normalizeVi(cuoi).length >= 3 && parseQuery(cuoi).places.length > 0) return [raw.trim()];
   // Thử cụm dài trước: 3 chữ cuối, 2 chữ cuối, 1 chữ cuối là ĐẦU của một cụm trong bộ từ
   for (let k = Math.min(3, tu.length); k >= 1; k--) {
     const duoi = thuong(tu.slice(-k).join(" "));
@@ -366,8 +369,12 @@ export function goiYGoTiepDuAn(raw0: string, ds: DuAnLoc[], boTu: string[], toiD
   // dự án / chủ đầu tư khớp tên phần chữ chưa đọc thành trường nào ("sun" → Sun Galaxy…)
   // từng cụm chữ lạ, trong tập đúng loại · nơi trước, không có thì cả danh bạ
   for (const cum of la.split(/\s{2,}|,\s*/).map((x) => x.trim()).filter((x) => x.replace(/\s/g, "").length >= 2)) {
-    const khop = thuHepDuAn(tap, emptyFilters()).goiY(cum, 3);
-    for (const d of khop.length ? khop : thuHepDuAn(ds, emptyFilters()).goiY(cum, 3)) them(d.ten, `/du-an/${d.slug}`);
+    // tối đa 5 dự án khớp tên ("sun" → Sun Galaxy, Sun Symphony, Sun Ponte… — trước chỉ 3, anh 08/11/2026)
+    const khop = thuHepDuAn(tap, emptyFilters()).goiY(cum, 5);
+    for (const d of khop.length ? khop : thuHepDuAn(ds, emptyFilters()).goiY(cum, 5)) them(d.ten, `/du-an/${d.slug}`);
+    // TÊN CHỦ ĐẦU TƯ ("sun group", "vingroup") → các dự án của chủ đầu tư đó (anh 08/11/2026: gõ tên chủ đầu tư phải đọc ra dự án)
+    const nc = ` ${normalizeVi(cum).replace(/[^a-z0-9]+/g, " ").trim()} `;
+    if (nc.trim().length >= 3) for (const d of ds.filter((x) => x.chuDauTu && ` ${normalizeVi(x.chuDauTu).replace(/[^a-z0-9]+/g, " ")} `.includes(nc)).slice(0, 5)) them(d.ten, `/du-an/${d.slug}`);
   }
   // có chữ lạ → dự án khớp tên đứng trước, rồi câu khách gõ (trùng tên dự án thì thôi)
   // chữ lạ không khớp dự án, chủ đầu tư nào ("abc", "con mèo") → không gợi ý gì
