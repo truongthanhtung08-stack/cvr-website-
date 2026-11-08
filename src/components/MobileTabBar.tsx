@@ -214,19 +214,24 @@ export default function MobileTabBar() {
 
   // THANH DƯỚI GỌN (chủ dự án 07/11/2026): bỏ Mua bán · Cho thuê · Dự án — ô tìm tự đọc mục đích sang đúng mục, menu ≡ có đủ
   // ba mục; chỗ trống dành cho Chat (thay nút chat nổi đè nội dung) và Đăng tin. Chỉ điện thoại; máy tính không có thanh này.
+  // CHUẨN (anh 08/11/2026: "chuẩn chỉ có 1" · "bấm vào thì mới xanh, và chỉ xanh khi đang ở đó"): mỗi nút chỉ xanh ở ĐÚNG trang của
+  // nó, tối đa một nút xanh; trang không có nút riêng (Mua bán, Cho thuê, Dự án…) thì không nút nào xanh.
+  const onLuu = pathname.startsWith("/tin-luu");
+  const onDang = pathname.startsWith("/dang-tin");
+  const onHoSo = pathname.startsWith("/tai-khoan") || pathname.startsWith("/dang-nhap") || pathname.startsWith("/dang-ky");
   const tabs = [
     // THỨ TỰ (chủ dự án 07/11/2026): Trang chủ · ♡ Lưu · + Đăng tin (giữa) · Tin nhắn · Tài khoản
     { href: "/", label: "Home", icon: "home" as const, on: pathname === "/" }, // chủ dự án 07/11/2026: "Trang chủ = Home"
     // ♡ TIN ĐÃ LƯU chuyển từ đầu trang xuống đây (chủ dự án 07/11/2026) — cùng chữ "Lưu", cùng chấm đỏ đếm số tin như nút đầu trang
-    { href: "/tin-luu", label: "Lưu", icon: "tim" as const, on: pathname.startsWith("/tin-luu") },
-    { href: "/dang-tin", label: "Đăng tin", icon: "plus" as const, on: false },
+    { href: "/tin-luu", label: "Lưu", icon: "tim" as const, on: onLuu },
+    { href: "/dang-tin", label: "Đăng tin", icon: "plus" as const, on: onDang },
     // TIN NHẮN = nút chat chuẩn của web (cùng hình bong bóng, cùng đường Zalo OA với nút chat nổi) — chủ dự án 07/11/2026
     { href: ZALO_OA_URL, label: "Tin nhắn", icon: "home" as const, on: false, ngoai: true },
     {
       href: user ? "/tai-khoan" : "/dang-nhap",
       label: "Hồ sơ", // chủ dự án 07/11/2026: "Tài khoản = Hồ sơ"
       icon: "user" as const,
-      on: pathname.startsWith("/tai-khoan"),
+      on: onHoSo,
     },
   ];
 
@@ -240,6 +245,13 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
   // luôn menu ở footer khi cuộn"). Thanh nằm cố định đè lên trang nên ẩn / hiện không làm nội dung xê dịch.
   // Bộ đo chung với hàng trường lọc (08/11/2026): cuộn xuống quá 12px mới ẩn, cuộn lên hiện ngay, dừng tay hiện lại — hai thanh cùng nhịp
   const anKhiCuon = useAnKhiCuon();
+  // BẤM LÀ SÁNG NGAY (anh 08/11/2026): chạm nút nào thì nút đó sáng ngay lúc chạm, nút cũ tắt — không chờ trang mới tải xong (trước: hai
+  // nút cùng sáng trong lúc chờ). Sang trang xong thì về luật "trang nào nút đó" (t.on).
+  const pathname = usePathname();
+  const [chon, setChon] = useState<string | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- đã sang trang mới: bỏ nút chạm tạm, theo đường dẫn thật
+  useEffect(() => { setChon(null); }, [pathname]);
+  const sang = (t: { href: string; on: boolean }) => (chon ? t.href === chon : t.on);
   return (
     <>
       {/* Chỗ trống cuối trang để tab bar không che nội dung/footer */}
@@ -276,7 +288,7 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
               ) : nutDangTinNoi && t.href === "/dang-tin" ? (
                 // ĐĂNG TIN = NÚT CHÍNH của khu quản lý (25/09): vòng tròn xanh. 22/10/2026 chủ dự án: "cân đối, không phải
                 // cứ to là nổi bật mà cản trở giao diện" → bỏ nhô lên, cùng cỡ + cùng hàng với các tab khác, không che nội dung.
-                <Link href={t.href} aria-label="Đăng tin" className={`press relative flex min-h-[50px] flex-col items-center justify-center ${dangTinBang ? "gap-[3px] py-0.5" : "-top-[6px] gap-px"}`}>
+                <Link href={t.href} onClick={() => setChon(t.href)} aria-label="Đăng tin" className={`press relative flex min-h-[50px] flex-col items-center justify-center ${dangTinBang ? "gap-[3px] py-0.5" : "-top-[6px] gap-px"}`}>
                   {/* 22/10/2026 chủ dự án: giữ kiểu cũ, to hơn một chút — 35px. 29/10/2026: to thêm chút nữa + nhô lên một chút → 38px,
                       cả nút dời lên 6px để chữ "Đăng tin" thẳng hàng chữ các nút khác (vòng tròn nhô khỏi thanh ~5px). Các nút khác giữ nguyên. */}
                   {/* dangTinBang (thanh trang công khai, chủ dự án 07/11/2026: "các menu bằng nhau hết"): cùng kiểu vòng tròn xanh, cỡ BẰNG biểu tượng các nút khác, không nhô */}
@@ -285,19 +297,19 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
                       <path strokeLinecap="round" d="M12 5v14M5 12h14" />
                     </svg>
                   </span>
-                  <span className="whitespace-nowrap text-[12px] font-medium leading-none tracking-[-0.01em] text-cvr-blue">{t.label}</span>
+                  <span className={`whitespace-nowrap text-[12px] font-medium leading-none tracking-[-0.01em] text-cvr-blue`}>{t.label}</span>
                 </Link>
               ) : (
               <Link
                 href={t.href}
-                onClick={() => { if (t.href === "/") resetHomeIfOnHome(); }}
-                aria-current={t.on ? "page" : undefined}
+                onClick={() => { setChon(t.href); if (t.href === "/") resetHomeIfOnHome(); }}
+                aria-current={sang(t) ? "page" : undefined}
                 className="block"
               >
                 <TabBody
                   icon={t.icon}
                   label={t.label}
-                  on={t.on}
+                  on={sang(t)}
                   badge={t.href === "/tin-luu" ? count : t.href === "/tai-khoan/ca-nhan" ? (soViec["/tai-khoan/nap-tien"] ?? 0) + (soViec["/tai-khoan/hoi-vien"] ?? 0) : soViec[t.href] ?? 0}
                 />
               </Link>

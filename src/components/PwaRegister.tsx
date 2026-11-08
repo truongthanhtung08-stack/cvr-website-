@@ -11,6 +11,13 @@ export default function PwaRegister() {
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;
     if (!("serviceWorker" in navigator)) return;
+    // CHỈ WEB THẬT (anh 08/11/2026: "F5 rất nhiều lần vẫn không có thay đổi"): bản build chạy xem thử (link 192.168.x.x, localhost) cũng là
+    // "production" → service worker giữ bản cũ trên điện thoại anh đang kiểm. Ngoài coastalland.vn: gỡ service worker + xoá đệm, không đăng ký.
+    if (window.location.hostname !== "coastalland.vn") {
+      navigator.serviceWorker.getRegistrations().then((ds) => ds.forEach((r) => r.unregister())).catch(() => {});
+      if ("caches" in window) caches.keys().then((ks) => ks.forEach((k) => caches.delete(k))).catch(() => {});
+      return;
+    }
 
     const onLoad = () => {
       navigator.serviceWorker.register("/sw.js").then((reg) => {

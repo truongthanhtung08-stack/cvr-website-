@@ -741,12 +741,7 @@ html:has(.cvr-sheet) .an-khi-go-phim.float-above-tabbar { display: none !importa
   transition: transform 200ms cubic-bezier(0.4, 0, 1, 1), opacity 200ms cubic-bezier(0.4, 0, 1, 1);
 }
 @media (prefers-reduced-motion: reduce) { .chuyen-an-hien, .chuyen-an-hien.translate-y-full, .chuyen-an-hien.opacity-0 { transition: none; } }
-/* Chạm mọi link / nút / thẻ (HieuUngCham, 08/11/2026): mờ nhẹ rồi sáng lại; nút nhỏ nhún thêm */
-.vua-cham { animation: cham-mo 220ms var(--ease-out-soft); }
-.vua-cham-nho { animation: cham-mo 220ms var(--ease-out-soft), cham-nhun 220ms var(--ease-out-soft); }
-@keyframes cham-mo { 0% { opacity: 1; } 30% { opacity: 0.6; } 100% { opacity: 1; } }
-@keyframes cham-nhun { 0% { transform: scale(1); } 30% { transform: scale(0.95); } 100% { transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .vua-cham, .vua-cham-nho { animation: none; } }
+/* Chạm mọi link / nút / thẻ: HieuUngCham chạy bằng Web Animations (08/11/2026) — không còn lớp CSS .vua-cham */
 /* Logo: nhấn nhẹ hơn (logo ngang dài, thu nhiều trông giật) */
 .press-logo:active { transform: scale(0.965); opacity: 0.8; }
 
