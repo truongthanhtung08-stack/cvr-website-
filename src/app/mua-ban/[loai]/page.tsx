@@ -18,6 +18,7 @@ import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
 import { TRANG_DONG_BANG, giuSoCu, lienKetChoDu, lienKetLoaiHinh, moTaSoLieu } from "@/lib/pseo";
 import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
+import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 
 // ============================================================================
 // /mua-ban/<slug> phục vụ HAI loại trang, phân biệt bằng chính slug:
@@ -109,6 +110,13 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
   if (kv) {
     const ketQuaDau = await ketQuaTrangDau("ban", { initialProvince: kv.name });
     const tinTrongTinh = tinBan.filter((l) => normalizeVi(tinhCua(l.location)) === normalizeVi(kv.name));
+    const hetHan = await getListingsHetHan().catch(() => []);
+    // MỘT THỰC THỂ (08/11/2026): trang Giá nhà đất của tỉnh có trong sitemap nhưng không trang nào dẫn tới (vd /gia-nha-dat/lam-dong)
+    // → trang tỉnh (cha trong breadcrumb của trang giá) dẫn tới, cùng cổng với sitemap. Chỉ thêm một nhóm vào khối liên kết đang có.
+    const nhomLienKet = lienKetChoDu({ muc: "ban", tinh: kv }, listings, hetHan);
+    if (trangGiaNhaDat(kv, [...listings, ...hetHan]).index) {
+      nhomLienKet.push({ tieuDe: "Giá nhà đất", links: [{ href: `/gia-nha-dat/${kv.slug}`, nhan: `Giá nhà đất ${kv.name} ${thangHienTai()}` }] });
+    }
     return (
       <>
         <ListingListJsonLd items={tinTrongTinh} heading={tieuDeKhuVuc("ban", kv.name)} path={`/mua-ban/${kv.slug}`} />
@@ -130,7 +138,7 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
           {/* Bảng giá theo loại hình của cả tỉnh: ĐÃ GỠ (03/10/2026) — gộp tin nhiều phường ra một
               giá cho cả thành phố là sai luật "giá khu vực = số liệu đúng khu vực". Có số liệu chuẩn
               (docs/YEU-CAU-COWORK-LICH-SU-GIA.md) mới làm lại. */}
-          <LienKetPseo nhom={lienKetChoDu({ muc: "ban", tinh: kv }, listings, await getListingsHetHan().catch(() => []))} kieuGoogle />
+          <LienKetPseo nhom={nhomLienKet} kieuGoogle />
           <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>
         <Footer />

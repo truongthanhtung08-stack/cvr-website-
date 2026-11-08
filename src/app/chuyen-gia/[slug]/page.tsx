@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -49,7 +49,8 @@ export default async function HoSoChuyenGiaPage({
   const { slug } = await params;
   const tatCa = await getListings();
   const kq = await getChuyenGiaTheoSlug(slug, tatCa);
-  if (!kq) notFound();
+  // MỘT THỰC THỂ (chủ dự án 08/11/2026): trang đã xoá → 301 về trang cha, không để 404 (Search Console crawl stats: 192 lượt Googlebot gặp 404).
+  if (!kq) permanentRedirect("/chuyen-gia");
   const { cg, tin } = kq;
 
   return (

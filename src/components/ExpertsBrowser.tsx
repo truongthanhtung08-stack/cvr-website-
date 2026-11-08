@@ -9,6 +9,8 @@ import type { ChuyenGia } from "@/lib/chuyenGiaDb";
 // đọc bảng dữ liệu tay. Tab lọc theo tỉnh/thành sinh ra từ chính khu vực có tin,
 // nên không bao giờ có tab trống. `initialCity` để các trang con
 // (/chuyen-gia/da-nang, /chuyen-gia/hue) mở sẵn đúng tab.
+const TRANG_TP: Record<string, string> = { "Đà Nẵng": "/chuyen-gia/da-nang", "Huế": "/chuyen-gia/hue" };
+
 export default function ExpertsBrowser({
   ds = [],
   initialCity,
@@ -39,21 +41,31 @@ export default function ExpertsBrowser({
              nửa màn hình điện thoại. Mục đang chọn tự trượt vào giữa tầm mắt. */
           className="no-scrollbar -mx-1 mt-5 flex gap-2 overflow-x-auto px-1 py-0.5"
         >
-          {tabs.map((t) => (
-            <button
-              key={t}
-              type="button"
-              data-tp={t}
-              onClick={() => setTab(t)}
-              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                tab === t
-                  ? "scale-105 bg-cvr-ink text-white shadow-lg shadow-black/10"
-                  : "border border-black/15 text-cvr-body hover:border-black/40 hover:text-cvr-ink"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+          {tabs.map((t) => {
+            const cls = `shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              tab === t
+                ? "scale-105 bg-cvr-ink text-white shadow-lg shadow-black/10"
+                : "border border-black/15 text-cvr-body hover:border-black/40 hover:text-cvr-ink"
+            }`;
+            // MỘT THỰC THỂ (08/11/2026): tab có trang riêng (/chuyen-gia/da-nang, /hue) mang đường dẫn thật để Google đi theo
+            // (Search Console: 2 trang này không trang nào dẫn tới). Bấm vẫn lọc tại chỗ như cũ, chỉ đổi địa chỉ trang.
+            const href = TRANG_TP[t] ?? (initialCity && t === "Tất cả" ? "/chuyen-gia" : undefined);
+            return href ? (
+              <a
+                key={t}
+                href={href}
+                data-tp={t}
+                onClick={(e) => { e.preventDefault(); setTab(t); window.history.replaceState(window.history.state, "", href); }}
+                className={cls}
+              >
+                {t}
+              </a>
+            ) : (
+              <button key={t} type="button" data-tp={t} onClick={() => setTab(t)} className={cls}>
+                {t}
+              </button>
+            );
+          })}
         </div>
       )}
 

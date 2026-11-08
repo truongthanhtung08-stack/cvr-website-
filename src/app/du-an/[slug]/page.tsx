@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import { laChuDauTuThat, NGUONG_INDEX_CDT, nhomChuDauTu, slugChuDauTu } from "@/lib/chuDauTu";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -213,7 +213,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // MỘT KHUÔN cho mọi dự án (chủ dự án 30/10/2026): dự án nổi bật giữ nguyên trang đã dựng; dự án TRA CỨU (hồ sơ dạng thẻ, hoặc
   // dự án mới chỉ biết từ tin) chạy ĐÚNG khuôn đó — hồ sơ bổ sung tới đâu hiện tới đó, cái gì chưa có thì ẩn.
   const coban = hoSo ? null : duAnTuTin(listings, slug);
-  if (!hoSo && !coban) notFound();
+  // MỘT THỰC THỂ (chủ dự án 08/11/2026): trang đã xoá → 301 về trang cha, không để 404 (Search Console crawl stats: 192 lượt Googlebot gặp 404).
+  if (!hoSo && !coban) permanentRedirect("/du-an");
   const tuTin = !hoSo;
   const p: Project = hoSo ?? {
     slug, name: coban!.ten, location: coban!.viTri, ...(coban!.tin[0]?.locationCu ? { locationCu: coban!.tin[0].locationCu } : {}),

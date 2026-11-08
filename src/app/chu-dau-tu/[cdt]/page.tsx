@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -44,7 +44,8 @@ export async function generateMetadata({ params }: { params: Promise<{ cdt: stri
 export default async function ChuDauTuPage({ params }: { params: Promise<{ cdt: string }> }) {
   const { cdt } = await params;
   const [g, articles, listings, tatCa] = await Promise.all([nhom(cdt), getArticles(), getListings(), getProjects()]);
-  if (!g) notFound();
+  // MỘT THỰC THỂ (chủ dự án 08/11/2026): trang đã xoá → 301 về trang cha, không để 404 (Search Console crawl stats: 192 lượt Googlebot gặp 404).
+  if (!g) permanentRedirect("/du-an");
   // CÙNG CẤU TRÚC trang Dự án (30/10/2026): Nổi bật = dự án nổi bật của chủ đầu tư; Tra cứu = mọi dự án của chủ đầu tư
   const slugCdt = new Set(g.duAn.map((x) => x.slug));
   const traCuu = dongTraCuu(listings, tatCa).filter((d) => slugCdt.has(d.slug));

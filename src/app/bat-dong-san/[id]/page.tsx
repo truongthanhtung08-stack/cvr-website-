@@ -231,9 +231,11 @@ export async function generateStaticParams() {
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const doan = (await params).id;
   const id = await idTuDuongDan(doan);
-  if (!id) notFound();
+  // MỘT THỰC THỂ (chủ dự án 08/11/2026): trang đã xoá → 301 về trang cha, không để 404 (Search Console crawl stats: 192 lượt Googlebot gặp 404).
+  const veCha = /^cho-thue/.test(decodeURIComponent(doan)) ? "/cho-thue" : "/mua-ban";
+  if (!id) permanentRedirect(veCha);
   const [dGoc, hetHan] = await Promise.all([getListingDetail(id), tinDaHetHan(id)]); // DỮ LIỆU THẬT: ảnh, đặc điểm, tiện ích, người đăng
-  if (!dGoc) notFound();
+  if (!dGoc) permanentRedirect(veCha);
   // Đường cũ (mã đầy đủ) hoặc tiêu đề đã đổi → chuyển hướng vĩnh viễn sang đường chuẩn (Google coi như 301)
   const duongChuan = duongDanTin(dGoc.listing);
   if (`/bat-dong-san/${decodeURIComponent(doan)}` !== duongChuan) permanentRedirect(duongChuan);
