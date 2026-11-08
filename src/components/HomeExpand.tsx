@@ -38,6 +38,16 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
   // Số bước lịch sử đã thêm — để bấm logo là nhả đúng bấy nhiêu bước.
   const depthRef = useRef(0);
   const keyRef = useRef<string | null>(null);
+  // KHỐI VỪA BẤM "Xem thêm" — Back đóng danh sách thì cuộn về ĐÚNG KHỐI ĐÓ (đầu khối), không theo số y cũ: nội dung trang chủ
+  // dài ngắn khác lúc bấm (khối tin đã "+10" thu lại…) nên y cũ rơi lệch xuống gần cuối trang (đo 08/11/2026: bấm ở 7.003 → về 7.670).
+  // Ghi chỗ chạm cuối cùng (pointerdown) vì Safari không đặt focus cho nút khi bấm.
+  const chamRef = useRef<Element | null>(null);
+  const neoRef = useRef<Element | null>(null);
+  useEffect(() => {
+    const ghi = (e: PointerEvent) => { chamRef.current = e.target as Element; };
+    document.addEventListener("pointerdown", ghi, true);
+    return () => document.removeEventListener("pointerdown", ghi, true);
+  }, []);
   useEffect(() => { keyRef.current = openKey; }, [openKey]);
 
   // TẢI LẠI TRANG (F5): địa chỉ có ?muc=<khoá> → mở lại đúng khối đó,
@@ -63,8 +73,16 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
       depthRef.current = s.clDepth ?? 0;
       // Đóng danh sách → về đúng chỗ đã bấm "Xem thêm" (đợi trang vẽ lại các khối vừa hiện); mở lại → đầu danh sách
       const y = s.clSection ? 0 : (s.clY ?? 0);
-      window.scrollTo({ top: 0 });
-      if (y) { requestAnimationFrame(() => window.scrollTo({ top: y })); window.setTimeout(() => window.scrollTo({ top: y }), 350); }
+      const neo = s.clSection ? null : neoRef.current;
+      // Về đầu khối vừa bấm (trừ thanh dính: scroll-padding-top của trang), tức thì — không trượt êm kẻo thấy cả trang chạy qua
+      const den = () => {
+        if (neo && neo.isConnected) {
+          const tren = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+          window.scrollTo({ top: Math.max(0, neo.getBoundingClientRect().top + window.scrollY - tren), behavior: "instant" });
+        } else window.scrollTo({ top: y, behavior: "instant" });
+      };
+      window.scrollTo({ top: 0, behavior: "instant" });
+      if (neo || y) { requestAnimationFrame(den); window.setTimeout(den, 350); }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -112,6 +130,7 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
   const openSection = useCallback((key: string) => {
     // Ghi vị trí đang đứng vào bước lịch sử hiện tại (giữ nguyên dữ liệu Next.js trong đó) trước khi thêm bước mới
     window.history.replaceState({ ...(window.history.state ?? {}), clY: window.scrollY }, "");
+    neoRef.current = chamRef.current?.closest("section") ?? null;
     setOpenKey(key);
     depthRef.current += 1;
     const state: SectionHistoryState = { clSection: key, clDepth: depthRef.current, cvrKq: 1 };
