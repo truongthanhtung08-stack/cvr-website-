@@ -606,7 +606,7 @@ export default function Header() {
             aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="relative -mr-3 flex h-11 w-11 items-center justify-center xl:hidden"
+            className="relative -mr-3 flex h-[46px] w-11 items-center justify-center xl:hidden"
           >
             <span
               className={`absolute h-[1.5px] w-5 rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${

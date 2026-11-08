@@ -46,7 +46,7 @@
 :root { --at: env(safe-area-inset-top, 0px); }
 /* CHIỀU CAO THANH LOGO — MỘT BIẾN cho mọi thanh dính bên dưới (ô tìm, ‹, menu ≡, cuộn tới neo). Điện thoại 52px (anh 08/11/2026: đầu
    trang hơi to so với toàn cục; trước 60px), máy tính giữ 60px. */
-:root { --hdr: 48px; } /* điện thoại: thanh trên 48px như apple.com (08/11/2026) */
+:root { --hdr: 46px; } /* điện thoại: thanh 46px sát logo 44px (anh 08/11/2026 tối: "thu header cho sát vào bộ logo") */
 @media (min-width: 640px) { :root { --hdr: 60px; } }
 
 html {
