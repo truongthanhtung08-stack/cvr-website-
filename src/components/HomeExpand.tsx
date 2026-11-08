@@ -79,6 +79,16 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
         if (neo && neo.isConnected) {
           const tren = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
           window.scrollTo({ top: Math.max(0, neo.getBoundingClientRect().top + window.scrollY - tren), behavior: "instant" });
+          // Thanh dính khác (ô tìm trang chủ…) còn che tiêu đề khối → lùi thêm đúng phần bị che, chừa 12px
+          const tieuDe = neo.querySelector("h2") ?? neo;
+          const r = tieuDe.getBoundingClientRect();
+          const tren2 = document.elementFromPoint(Math.min(40, window.innerWidth - 1), Math.max(0, r.top) + 2);
+          if (tren2 && !neo.contains(tren2)) {
+            let dinh: Element | null = tren2;
+            while (dinh && dinh !== document.body && !/sticky|fixed/.test(getComputedStyle(dinh).position)) dinh = dinh.parentElement;
+            const day = dinh && dinh !== document.body ? dinh.getBoundingClientRect().bottom : 0;
+            if (day > r.top) window.scrollBy({ top: r.top - day - 12, behavior: "instant" });
+          }
         } else window.scrollTo({ top: y, behavior: "instant" });
       };
       window.scrollTo({ top: 0, behavior: "instant" });
