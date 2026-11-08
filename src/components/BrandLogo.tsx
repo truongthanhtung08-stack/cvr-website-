@@ -15,7 +15,7 @@ export default function BrandLogo({
   tone?: "dark" | "light";
 }) {
   const cls =
-    size === "lg" ? "h-[3.4rem]" : "h-10 sm:h-[3rem] lg:h-[3.15rem]"; // điện thoại logo 40px trong thanh 42px (anh 08/11/2026 tối: "thu cả bộ logo nhỏ lại một chút"); trước 44px — logo như web thật, thanh nhỏ hơn web thật (60px) một chút (anh 08/11/2026 tối)
+    size === "lg" ? "h-[3.4rem]" : "h-9 sm:h-[3rem] lg:h-[3.15rem]"; // điện thoại logo 36px trong thanh 40px (anh 08/11/2026 tối: "cụm logo nhỏ lại thêm chút"); trước 40px (anh 08/11/2026 tối: "thu cả bộ logo nhỏ lại một chút"); trước 44px — logo như web thật, thanh nhỏ hơn web thật (60px) một chút (anh 08/11/2026 tối)
   const src =
     tone === "light"
       ? (size === "md" ? "/logo/logo-dau-trang-white.svg" : "/logo/logo-horizontal-white.svg") // đầu trang: logo GỐC, dòng slogan dịch xuống ~2px (anh 08/11/2026 tối)
