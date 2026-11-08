@@ -742,6 +742,20 @@ html:has(.cvr-sheet) .an-khi-go-phim.float-above-tabbar { display: none !importa
 }
 @media (prefers-reduced-motion: reduce) { .chuyen-an-hien, .chuyen-an-hien.translate-y-full, .chuyen-an-hien.opacity-0 { transition: none; } }
 /* Chạm mọi link / nút / thẻ: HieuUngCham chạy bằng Web Animations (08/11/2026) — không còn lớp CSS .vua-cham */
+/* HIỆN DẦN KHI CUỘN (anh 08/11/2026, kiểu apple.com): thẻ tin, thẻ dự án, bài viết (article) và tiêu đề khối (section h2) trồi lên + hiện
+   dần khi cuộn tới. Gắn thẳng vào thanh cuộn (animation-timeline: view()) — chạy trên GPU, KHÔNG JS, không bao giờ kẹt ẩn; trình duyệt
+   chưa hỗ trợ thì nội dung hiện bình thường. Khoảng chạy "cover 0–12%": thứ đã nằm trong màn hình lúc mở trang (ảnh đầu, LCP) hiện đủ
+   ngay — CLAUDE.md 0C2. Trong dải trượt ngang không chạy (dải không cuộn dọc). */
+@keyframes hien-khi-cuon { from { opacity: 0; transform: translate3d(0, 20px, 0); } to { opacity: 1; transform: none; } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    main article, main section h2 {
+      animation: hien-khi-cuon linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 12%;
+    }
+  }
+}
 /* Logo: nhấn nhẹ hơn (logo ngang dài, thu nhiều trông giật) */
 .press-logo:active { transform: scale(0.965); opacity: 0.8; }
 
