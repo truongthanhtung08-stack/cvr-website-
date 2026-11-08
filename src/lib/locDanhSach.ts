@@ -188,15 +188,6 @@ export function locDanhSach(
   // đúng loại con. Loại khác cha (nhà, căn hộ) vẫn không vào (chốt 21/10/2026)
   const loaiCungCha = new Set(typeGroupsFor(purpose).filter((g) => g.items.some((x) => filters.types.includes(x))).flatMap((g) => g.items));
   const dungLoai = (l: Listing) => dungLoaiCon(l) || [...loaiCungCha].some((t) => matchType(l.type, t));
-  // phường HỆ MỚI không kèm quận → quận CŨ của nó theo bảng sáp nhập (Phường Hòa Xuân → Cẩm Lệ): tin cùng quận cũ là nơi gần nhất
-  // gần nhất = quận cũ của phường cũ CÙNG TÊN (Phường Hòa Xuân → Hòa Xuân, Cẩm Lệ); không có phường cùng tên mới lấy mọi quận cũ đã gộp
-  // vào (Hòa Xuân mới gộp cả Hòa Châu, Hòa Phước của Hòa Vang — lấy cả Hòa Vang thì Hòa Tiến xa lắc cũng thành "gần", 07/11/2026)
-  const quanCuCua = sauChon.filter((x) => x.ward && !x.district).flatMap((x) => {
-    const ds = choCuCua(x.province, x.ward!);
-    const boCapP = (s: string) => normalizeVi(s.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, ""));
-    const cungTen = ds.filter((c) => boCapP(c.phuong) === boCapP(x.ward!));
-    return [...new Set((cungTen.length ? cungTen : ds).map((c) => `${c.tinh}|${c.quan}`))].map((k) => ({ province: k.split("|")[0], district: k.split("|")[1] }));
-  });
   // XẾP THEO ĐÚNG 9 BẬC (chủ dự án 01/11/2026 — bảng ô search dùng chung, "kết quả sắp xếp theo dữ liệu, ưu tiên theo CHA – CON"):
   //   THEO THỨ TỰ CÁC TRƯỜNG DƯỚI Ô TÌM, TRÁI QUA PHẢI (chủ dự án 01/11/2026): mục đích = 3 tab · Toàn quốc: tỉnh/thành phố (bắt buộc) →
   //   quận/huyện, phường/xã · Loại BĐS (bắt buộc) · Giá · Diện tích · 6 chủ đầu tư, 7 dự án (tin ghi đúng dự án khách gõ) · 8 Lọc thêm: phòng ngủ → hướng → pháp lý → nội thất →
@@ -225,8 +216,12 @@ export function locDanhSach(
     const dungTinh = tinhChon.size === 0 || tinhChon.has(l.location.split(",").pop()?.trim() ?? "");
     const dungSau = sauChon.length > 0 && applyFilters([l], { ...emptyFilters(), locations: sauChon }).length > 0;
     // không có tin đúng PHƯỜNG thì tin cùng QUẬN/HUYỆN chứa phường đó ("hòa xuân" → Cẩm Lệ) đứng trước nơi khác trong tỉnh
-    const quanChon = [...sauChon.filter((x) => x.ward && x.district).map((x) => ({ province: x.province, district: x.district })), ...quanCuCua];
-    const dungQuan = quanChon.length > 0 && applyFilters([l], { ...emptyFilters(), locations: quanChon }).length > 0;
+    // GẦN THEO HAI HỆ ĐỊA CHỈ (anh 08/11/2026: "đất nền hòa xuân dưới 2 tỷ" — tin đất 2,55 tỷ Hòa Quý phải lên đầu, trước tin Cẩm Lệ 4,6 /
+    // 6,8 tỷ): đúng phường → CÙNG TỈNH CŨ của phường khách nói (Đà Nẵng cũ, không phải Quảng Nam cũ đã gộp vào) → trong đó GIÁ GẦN NHẤT
+    // trước (so ở bước sắp xếp, cachGia) — quận cũ không còn đè giá
+    const tinhCuChon = new Set(sauChon.filter((x) => x.ward).flatMap((x) => choCuCua(x.province, x.ward!).map((c) => c.tinh)));
+    const tinhCuTin = l.noiCu?.tinh ?? (l.locationCu ?? "").split(",").pop()?.trim() ?? "";
+    const dungQuan = tinhCuChon.size > 0 && !!tinhCuTin && tinhCuChon.has(tinhCuTin);
     // THỨ TỰ Ý KHÁCH (anh 07/11/2026: "1. loại hình, 2. ở đâu, 3. giá"): tỉnh (gợi ý đã chỉ trong tỉnh khách nói) → ĐÚNG LOẠI CON
     // ("đất nền" → tin đất nền trước tin đất khác) → phường → quận cũ chứa phường → loại cùng cha → các bậc con (giá, diện tích…)
     // THỨ TỰ (anh 08/11/2026: "không có dữ liệu thì sắp xếp theo Mục đích + loại hình + địa điểm + …"): đúng loại con → loại cùng cha → tỉnh
@@ -315,7 +310,6 @@ export function locDanhSach(
   let duPhong: Listing[] = [];
   let thongBao: string | undefined;
   const conHan = base.filter((l) => !l.banSao);
-  const theoCap = (ds: Listing[]) => [...ds].sort((a, b) => tierRank(a.badge) - tierRank(b.badge) || ngayDang(b) - ngayDang(a));
   // CÂU KHÔNG LIÊN QUAN ("ăn phở ngon"): chữ lạ không tin nào nhắc TRỌN cụm → cũng là không tìm thấy (khớp lẻ một chữ "ngon" không tính)
   const cumLaKq = coTuKhoa ? chuChuaHieu(filters.keyword).split(", ").map((c) => ` ${normalizeVi(c).replace(/[^a-z0-9]+/g, " ").trim()} `).filter((c) => c.trim()) : [];
   const coNoiDung = !cumLaKq.length || conHan.some((l) => { const nd = ` ${normalizeVi([l.title, l.desc, l.searchText].filter(Boolean).join(" ")).replace(/[^a-z0-9]+/g, " ")} `; return cumLaKq.every((c) => nd.includes(c)); });
