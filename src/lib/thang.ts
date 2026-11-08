@@ -6,6 +6,16 @@ export function thangHienTai(d = new Date()): string {
   return `tháng ${p.find((x) => x.type === "month")?.value}/${p.find((x) => x.type === "year")?.value}`;
 }
 
+// 00:00 ngày 1 tháng hiện tại theo giờ Việt Nam. Trang danh sách mang "tháng MM/YYYY" trong tiêu đề + H1 → sang tháng là
+// nội dung ĐỔI THẬT; sitemap phải khai ngày này làm lastmod, không thì Google giữ tiêu đề tháng cũ cả tháng (đo 08/11/2026:
+// Google đọc /cho-thue/can-ho-chung-cu/da-nang/gia-duoi-20-trieu lần cuối 29/10, Google Search vẫn hiện "tháng 10/2026").
+export function dauThang(d = new Date()): Date {
+  const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Ho_Chi_Minh", month: "numeric", year: "numeric" }).formatToParts(d);
+  const thang = Number(p.find((x) => x.type === "month")?.value);
+  const nam = Number(p.find((x) => x.type === "year")?.value);
+  return new Date(Date.UTC(nam, thang - 1, 1) - 7 * 3600 * 1000);
+}
+
 // Bỏ đuôi tháng khi cần ghép tiêu đề vào câu khác ("… theo khu vực")
 export const boDuoiThang = (s: string) => s.replace(/\s+tháng \d{1,2}\/\d{4}$/, "");
 

@@ -8,7 +8,7 @@ import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
-import { getListings } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { findCategory, saleCategories, nhomPseo, NGUONG_INDEX_DANH_MUC, soTinDanhMuc } from "@/lib/categories";
 // Trang NHÓM (Nhà, BĐS nghỉ dưỡng…) có trang gốc riêng — chuẩn thống nhất 17/10/2026, gộp loại hình cho dễ chọn
@@ -16,7 +16,7 @@ const DANH_MUC = [...saleCategories, ...nhomPseo("ban")];
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
-import { TRANG_DONG_BANG, giuSoCu, lienKetCho, lienKetLoaiHinh, moTaSoLieu } from "@/lib/pseo";
+import { TRANG_DONG_BANG, giuSoCu, lienKetChoDu, lienKetLoaiHinh, moTaSoLieu } from "@/lib/pseo";
 import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
 
 // ============================================================================
@@ -130,7 +130,7 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
           {/* Bảng giá theo loại hình của cả tỉnh: ĐÃ GỠ (03/10/2026) — gộp tin nhiều phường ra một
               giá cho cả thành phố là sai luật "giá khu vực = số liệu đúng khu vực". Có số liệu chuẩn
               (docs/YEU-CAU-COWORK-LICH-SU-GIA.md) mới làm lại. */}
-          <LienKetPseo nhom={lienKetCho({ muc: "ban", tinh: kv }, listings)} kieuGoogle />
+          <LienKetPseo nhom={lienKetChoDu({ muc: "ban", tinh: kv }, listings, await getListingsHetHan().catch(() => []))} kieuGoogle />
           <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>
         <Footer />

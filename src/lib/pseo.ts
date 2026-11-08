@@ -570,6 +570,25 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   return nhom;
 }
 
+// MỘT THỰC THỂ (chủ dự án 08/11/2026: "không rời rạc"): sitemap mở trang theo cả tin hết hạn (29/10) nhưng trang tỉnh
+// dựng khối liên kết chỉ theo tin còn hạn → trang con có trong sitemap mà không trang nào dẫn tới (Search Console:
+// "Referring page: None detected", vd /cho-thue/gia-lai/quy-nhon). Hàm này GIỮ NGUYÊN khối đang có (thứ tự, số link —
+// trang TRANG_TOP không mất link nào) và CHỈ THÊM link tới trang đủ chuẩn theo cùng cổng với sitemap.
+export function lienKetChoDu(dk: DieuKien, tinConHan: Listing[], tinHetHan: Listing[]): NhomLienKet[] {
+  const nhom = lienKetCho(dk, tinConHan).map((g) => ({ ...g, links: [...g.links] }));
+  if (!tinHetHan.length) return nhom;
+  const daCo = new Set(nhom.flatMap((g) => g.links.map((x) => x.href)));
+  for (const g of lienKetCho(dk, [...tinConHan, ...tinHetHan])) {
+    const them = g.links.filter((x) => !daCo.has(x.href));
+    if (!them.length) continue;
+    them.forEach((x) => daCo.add(x.href));
+    const cu = nhom.find((n) => n.tieuDe === g.tieuDe);
+    if (cu) cu.links.push(...them);
+    else nhom.push({ tieuDe: g.tieuDe, links: them });
+  }
+  return nhom;
+}
+
 // Liên kết từ trang LOẠI HÌNH gốc (/mua-ban/nha-rieng) xuống các tỉnh
 export function lienKetLoaiHinh(muc: Muc, cat: Category, tinConHan: Listing[]): NhomLienKet[] {
   const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === muc && p.dk.cat?.slug === cat.slug && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong);

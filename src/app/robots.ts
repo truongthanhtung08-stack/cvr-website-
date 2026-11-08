@@ -18,6 +18,7 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: ["AhrefsBot", "AhrefsSiteAudit"], disallow: "/" },
     ],
     sitemap: `${SITE}/sitemap.xml`,
-    host: SITE,
+    // Không khai "Host:" (08/11/2026): Google không hỗ trợ, Search Console báo cảnh báo robots.txt. Tên miền chính đã do
+    // chuyển hướng 308 (www → không www, http → https) + canonical quyết định.
   };
 }

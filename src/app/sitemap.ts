@@ -9,6 +9,7 @@ import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 import { banGocCua, tinDatChuan, trangIndex } from "@/lib/pseo";
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
 import { duongDanTin } from "@/lib/duongDanTin";
+import { dauThang } from "@/lib/thang";
 
 // TỰ LÀM MỚI MỖI GIỜ. Trước đây để `force-static` (di sản thời GitHub Pages):
 // sitemap chỉ sinh 1 lần lúc build, nên MỌI tin/dự án/bài viết đăng sau lần
@@ -33,7 +34,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/chuyen-gia/da-nang", "/chuyen-gia/hue", "/chuyen-gia/dang-ky",
   ].map((p) => ({
     url: `${SITE}${p}`,
-    // Không ghi lastmod cho trang tĩnh/danh mục: MASTER 6.4 chỉ cho ghi ngày nội dung đổi thật.
+    // Không ghi lastmod cho trang tĩnh: MASTER 6.4 chỉ cho ghi ngày nội dung đổi thật. Riêng /mua-ban, /cho-thue: tiêu đề
+    // mang "tháng MM/YYYY" → đổi thật mỗi đầu tháng (08/11/2026).
+    ...(p === "/mua-ban" || p === "/cho-thue" ? { lastModified: dauThang(now) } : {}),
     changeFrequency: "weekly" as const,
     priority: p === "" ? 1 : 0.8,
   }));
@@ -55,7 +58,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...saleCategories.filter((c) => soTinDanhMuc(tinDm, c, "ban") >= NGUONG_INDEX_DANH_MUC).map((c) => `/mua-ban/${c.slug}`),
     ...rentCategories.filter((c) => soTinDanhMuc(tinDm, c, "thue") >= NGUONG_INDEX_DANH_MUC).map((c) => `/cho-thue/${c.slug}`),
     ...projectCategories.filter((c) => duAnThuocNhom(duAnDm, c).length > 0).map((c) => `/du-an/${c.slug}`),
-  ].map((p) => ({ url: `${SITE}${p}`, changeFrequency: "daily" as const, priority: 0.9 }));
+  ].map((p) => ({
+    url: `${SITE}${p}`,
+    // Trang loại hình mua bán / cho thuê mang "tháng MM/YYYY" trong tiêu đề → lastmod đầu tháng (08/11/2026)
+    ...(p.startsWith("/du-an/") ? {} : { lastModified: dauThang(now) }),
+    changeFrequency: "daily" as const, priority: 0.9,
+  }));
 
   // Trang gói dịch vụ & công cụ tiện ích
   const toolRoutes: MetadataRoute.Sitemap = [...packages, ...utilityTools].filter(trangTienIchDat).map((t) => ({
@@ -101,7 +109,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         if (!kv) continue;
         dynamic.push({
           url: `${SITE}${duong}/${kv.slug}`,
-         
+          // Trang tỉnh mua bán / cho thuê: tiêu đề mang tháng → lastmod đầu tháng (08/11/2026)
+          ...(duong === "/du-an" ? {} : { lastModified: dauThang(now) }),
           changeFrequency: "daily",
           // Trang khu vực đông tin đáng ưu tiên ngang trang danh mục loại hình
           priority: so >= 10 ? 0.9 : 0.7,
@@ -111,10 +120,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // ── TRANG pSEO (src/lib/pseo.ts) — CHỈ trang qua cổng chất lượng (≥ 3 tin còn hạn,
     // không trùng trang cha). lastmod = lần đăng/đẩy tin mới nhất của chính trang đó.
+    // lastmod = muộn nhất của (tin mới nhất trên trang, đầu tháng) — tiêu đề "tháng MM/YYYY" đổi đầu tháng (08/11/2026).
     for (const p of trangIndex([...listings, ...tinHetHan])) { // cổng đếm cả tin hết hạn (29/10/2026)
       dynamic.push({
         url: `${SITE}${p.path}`,
-        ...(p.moiNhat ? { lastModified: new Date(p.moiNhat) } : {}),
+        lastModified: new Date(Math.max(p.moiNhat || 0, dauThang(now).getTime())),
         changeFrequency: "daily",
         priority: 0.8,
       });
