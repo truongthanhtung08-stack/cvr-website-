@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { preload } from "react-dom";
-import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { asset } from "@/lib/asset";
@@ -44,10 +43,6 @@ const ICON_BOX = "flex h-12 w-12 shrink-0 items-center justify-center rounded-2x
 // Hàng đầu thẻ: ICON và TIÊU ĐỀ NGANG HÀNG (không xếp trên–dưới nữa)
 const HEAD_ROW = "flex items-center gap-3.5";
 const CARD_TITLE = "min-w-0 text-lg font-semibold leading-snug tracking-tight text-cvr-ink";
-const BTN_BLUE =
-  "inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-cvr-blue px-7 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(0,113,227,0.28)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-cvr-blue-ink";
-const BTN_LINE =
-  "inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-cvr-line bg-white px-7 text-sm font-semibold text-cvr-ink transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-cvr-ink";
 
 // Cụm tiêu đề dùng chung cho MỌI khối → cỡ chữ và khoảng cách luôn giống nhau.
 function Eyebrow({ children }: { children: React.ReactNode }) {
@@ -224,27 +219,13 @@ export default async function GioiThieuPage() {
                 <Eyebrow>{about.market.eyebrow}</Eyebrow>
                 <Title>{about.market.title}</Title>
                 <p className="mt-4 text-[15px] leading-relaxed text-cvr-body sm:text-base">{about.market.desc}</p>
-                <Link href={about.market.ctaHref} className={`${BTN_BLUE} mt-6`}>
-                  {about.market.ctaLabel}
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                </Link>
+                {/* (bỏ nút "Xem dự án" — anh 08/11/2026: để lại ảnh và nội dung anh viết bên phải) */}
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── CTA cuối trang ── */}
-        <section className="border-t border-cvr-line bg-white">
-          <div className={`${SECTION} flex flex-col items-center text-center`}>
-            <Title>{about.cta.title}</Title>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-cvr-muted sm:text-base">{about.cta.desc}</p>
-            {/* Điện thoại: 2 nút TRÀN NGANG bằng nhau · Máy tính: nằm cạnh nhau canh giữa */}
-            <div className="mt-7 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-              <Link href={about.cta.primaryHref} className={BTN_BLUE}>{about.cta.primaryLabel}</Link>
-              <Link href={about.cta.secondaryHref} className={BTN_LINE}>{about.cta.secondaryLabel}</Link>
-            </div>
-          </div>
-        </section>
+        {/* (bỏ khối nút cuối trang Đăng tin · Xem Bất động sản — anh 08/11/2026: "dòng cuối bỏ hết") */}
       </main>
       <Footer />
     </>
