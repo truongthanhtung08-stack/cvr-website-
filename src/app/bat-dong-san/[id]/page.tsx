@@ -789,6 +789,23 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   bấm gửi mới xác minh (đã đăng nhập / đã xác minh số thì gửi luôn). */}
               {/* Điện thoại: cách khối Vị trí đúng bằng khoảng giữa các khối khác (20/10/2026) */}
               <div className="mt-5 lg:mt-0"><KhoiDanhGiaTin listingId={l.id} /></div>
+              {/* ĐIỆN THOẠI: Xác thực thông tin nằm trong phần thu gọn → nút "Thu gọn" ở dưới cùng, dưới mục này (anh 08/11/2026). Máy tính giữ ở cột phải. */}
+              <div className="mt-5 rounded-2xl border border-cvr-line bg-white p-5 text-[14px] shadow-sm lg:hidden">
+                {/* ⚠️ Thủ tục công chứng / sang tên là việc của MÔI GIỚI và hai
+                    bên giao dịch — KHÔNG phải của Coastal Land. Ô này chỉ nêu
+                    thông tin pháp lý + mức độ xác thực, không "cam kết". */}
+                {/* Câu chữ chủ dự án duyệt nguyên văn 21/10/2026 — không tự sửa. */}
+                <p className="font-semibold text-cvr-ink">Xác thực thông tin</p>
+                <ul className="mt-2.5 space-y-2 leading-relaxed text-cvr-body">
+                  {/* Pháp lý ghi ĐÚNG giấy tờ khách ghi trên tin (Hợp đồng mua bán / Sổ đỏ / Sổ hồng…).
+                      Không ghi, hoặc ghi "Thoả thuận" → bỏ hẳn dòng này (chủ dự án 21/10/2026). */}
+                  {d.legal && !/th(ỏa|oả)\s*thuận/i.test(d.legal.normalize("NFC")) && (
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> <span className="min-w-0 whitespace-pre-line break-words">Pháp lý: {d.legal}</span></li>
+                  )}
+                  <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Đúng đặc điểm, địa chỉ, hình ảnh</li>
+                  <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Trong khoảng giá thị trường</li>
+                </ul>
+              </div>
               </ThuGonTrang>
             </div>
 
@@ -826,7 +843,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-cvr-line bg-white p-5 text-[14px] shadow-sm lg:rounded-none">
+                <div className="hidden rounded-2xl border border-cvr-line bg-white p-5 text-[14px] shadow-sm lg:block lg:rounded-none">
                   {/* ⚠️ Thủ tục công chứng / sang tên là việc của MÔI GIỚI và hai
                       bên giao dịch — KHÔNG phải của Coastal Land. Ô này chỉ nêu
                       thông tin pháp lý + mức độ xác thực, không "cam kết". */}

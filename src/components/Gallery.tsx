@@ -157,19 +157,21 @@ export default function Gallery({
 
   // Huy hiệu đếm ở góc trên trái: tin có bao nhiêu VIDEO và bao nhiêu ẢNH.
   // Xếp video trước vì video đứng đầu dãy — đọc huy hiệu là hình dung đúng thứ
+  // ĐIỆN THOẠI: khung ảnh cao 61,8% bề ngang = tỷ lệ vàng 1,618 : 1 (anh 08/11/2026: "khung ảnh tin khi mở lên chuẩn tỷ lệ vàng, hiện tại hơi nhỏ") — trước co theo chiều cao màn hình, máy thấp chỉ còn 50%.
   // tự sẽ gặp khi vuốt.
   // Đếm ảnh · video: cùng biểu tượng, thứ tự, nền với thẻ tin ngoài trang chủ (DemAnhVideo — chủ dự án 22/10/2026)
-  const demMedia = <DemAnhVideo soAnh={images.length} soVideo={nVid} className="absolute left-3 top-3 z-[5]" />;
+  // góc TRÁI DƯỚI — MỘT CHỖ cho mọi khung ảnh trên web, y như thẻ tin (anh 08/11/2026: "đồng bộ hai ký hiệu trên khung hình mọi nơi"; góc trái trên là nhãn)
+  const demMedia = <DemAnhVideo soAnh={images.length} soVideo={nVid} className="absolute bottom-3 left-3 z-[5]" />;
 
   return (
     <>
       {media.length === 1 ? (
         media[0].kind === "video" ? (
-          <div className="relative aspect-[4/3] w-full max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] sm:aspect-[2/1] overflow-hidden rounded-none bg-black sm:border sm:border-cvr-line">
+          <div className="relative aspect-[4/3] w-full max-sm:h-[61.8vw] sm:aspect-[2/1] overflow-hidden rounded-none bg-black sm:border sm:border-cvr-line">
             <GallerySlideVideo url={media[0].src} active onHold={setHold} />
           </div>
         ) : (
-          <button type="button" onClick={() => open(0)} className="group relative block aspect-[4/3] w-full max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] sm:aspect-[2/1] overflow-hidden rounded-none border border-cvr-line">
+          <button type="button" onClick={() => setList(true)} className="group relative block aspect-[4/3] w-full max-sm:h-[61.8vw] sm:aspect-[2/1] overflow-hidden rounded-none border border-cvr-line">
             <Image src={anhNho(media[0].src)} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="object-cover" />
           </button>
         )
@@ -199,7 +201,7 @@ export default function Gallery({
                 // phát mà khung giãn cao kín màn là SAI — đã thử và bị bác).
                 <div
                   key={i}
-                  className="relative aspect-[4/3] max-h-[70dvh] max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] w-full shrink-0 snap-center overflow-hidden bg-black"
+                  className="relative aspect-[4/3] max-h-[70dvh] max-sm:h-[61.8vw] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
                   <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} onLon={(b) => setLonO(b ? "dt" : null)} />
                 </div>
@@ -209,7 +211,7 @@ export default function Gallery({
                   type="button"
                   onClick={() => setList(true)}
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
-                  className="relative aspect-[4/3] max-h-[70dvh] max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] w-full shrink-0 snap-center overflow-hidden bg-black"
+                  className="relative aspect-[4/3] max-h-[70dvh] max-sm:h-[61.8vw] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
                   <Image src={anhNho(m.src)} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} fetchPriority={i === nVid ? "high" : undefined} quality={90} sizes="100vw" className="object-cover" />
                 </button>
@@ -224,6 +226,8 @@ export default function Gallery({
               (chủ dự án 10/10/2026: xem video trong khung thì bấm play; muốn xem cả video lẫn ảnh
               kiểu Facebook thì bấm nút này). Chỉ tin CÓ video; LUÔN hiện (kể cả đang phát / đã dừng — chủ dự án 10/10/2026),
               chỉ ẩn khi đang xem full. Tin chỉ có ảnh thì vuốt xem trong khung, bấm ảnh ra danh sách. */}
+          {/* TIN CÓ VIDEO: GIỮ nút "Xem ảnh & video" — bấm vào khung video là PHÁT video nên cần lối riêng ra danh sách (anh 08/11/2026: "có cả
+              video và ảnh, cấu trúc đúng thì bỏ, không đúng thì để"). Tin chỉ có ảnh: không nút, bấm vào ảnh là ra danh sách. */}
           {nVid > 0 && !lonO && (
             <button
               type="button"
@@ -287,26 +291,8 @@ export default function Gallery({
                 TIN CÓ VIDEO: không có nút này — nút "Xem ảnh & video" góc trên phải đã làm đúng việc đó (chủ dự án 22/10/2026:
                 "sao phải để trùng 2 câu như vậy trên 1 cái khung hình"). */}
             <div className="mb-1 flex items-center justify-between px-2.5">
-              {nVid === 0 && (
-              <button
-                type="button"
-                onClick={() => setList(true)}
-                className="pointer-events-auto flex items-center gap-1.5 text-[12.5px] font-medium text-white drop-shadow active:opacity-70"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="7" height="7" rx="1.2" />
-                  <rect x="14" y="3" width="7" height="7" rx="1.2" />
-                  <rect x="3" y="14" width="7" height="7" rx="1.2" />
-                  <rect x="14" y="14" width="7" height="7" rx="1.2" />
-                </svg>
-                Tất cả ảnh
-              </button>
-              )}
-              {!mIsVideo && (
-                <span className="ml-auto text-[12.5px] font-medium text-white drop-shadow">
-                  {imgIdx(mCur) + 1}/{images.length}
-                </span>
-              )}
+              {/* (Bỏ nút "Tất cả ảnh" — bấm vào khung ảnh là ra danh sách, anh 08/11/2026) */}
+              {/* (Bỏ số thứ tự ảnh "4/7" — khung ảnh bớt rối, ô đếm góc trái dưới đã cho biết số ảnh; anh 08/11/2026: "hạn chế hiện trên thẻ tin vì rất rối") */}
             </div>
 
           </div>

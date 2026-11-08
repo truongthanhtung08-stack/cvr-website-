@@ -387,7 +387,7 @@ function MobileMenu({
                   <Link
                     href={item.href}
                     onClick={onClose}
-                    className="flex min-h-[48px] flex-1 items-center gap-4 text-[17px] font-medium text-[#f5f5f7]"
+                    className="flex min-h-[52px] flex-1 items-center gap-4 text-[17px] font-medium text-[#f5f5f7]"
                   >
                     {item.icon && (
                       <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
@@ -399,7 +399,7 @@ function MobileMenu({
                     onClick={() => setExpanded(expanded === item.label ? null : item.label)}
                     aria-expanded={expanded === item.label}
                     aria-label={`${expanded === item.label ? "Thu gọn" : "Mở rộng"} ${item.label}`}
-                    className="-mr-2 flex h-[48px] w-12 shrink-0 items-center justify-center"
+                    className="-mr-2 flex h-[52px] w-12 shrink-0 items-center justify-center"
                   >
                     <svg
                       className={`h-4 w-4 text-[#8e8e93] transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
@@ -462,7 +462,7 @@ function MobileMenu({
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="flex min-h-[48px] items-center gap-4 text-[17px] font-medium text-[#f5f5f7]"
+                className="flex min-h-[52px] items-center gap-4 text-[17px] font-medium text-[#f5f5f7]"
               >
                 {item.icon && (
                   <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
@@ -532,6 +532,21 @@ function MobileMenu({
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // F5 KHI ĐANG MỞ MENU → menu vẫn mở như trước (anh 08/11/2026: "bấm menu lên, F5 thì menu đứng yên"). Ghi dấu trong phiên khi mở,
+  // gỡ khi đóng; chỉ mở lại khi là TẢI LẠI trang (không mở khi sang trang mới hay Quay lại).
+  useEffect(() => {
+    try {
+      const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (nav?.type === "reload" && sessionStorage.getItem("cvr-menu-mo") === location.pathname + location.search) setMenuOpen(true);
+    } catch { /* bỏ qua */ }
+  }, []);
+  useEffect(() => {
+    try {
+      if (menuOpen) sessionStorage.setItem("cvr-menu-mo", location.pathname + location.search);
+      else sessionStorage.removeItem("cvr-menu-mo");
+    } catch { /* bỏ qua */ }
+  }, [menuOpen]);
   const { user } = useAuth();
   // ⛔ BẢN THỬ — XOÁ TRƯỚC KHI PUSH (08/11/2026): ?xem-dang-nhap=1 trên MÁY THỬ (không phải coastalland.vn) → menu hiện như đã đăng nhập,
   // tài khoản giả, để anh duyệt giao diện menu lúc đã đăng nhập (máy thử không đăng nhập được).
@@ -621,7 +636,7 @@ export default function Header() {
             aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="relative -mr-3 flex h-10 w-11 items-center justify-center xl:hidden"
+            className="relative -mr-3 flex h-11 w-11 items-center justify-center xl:hidden"
           >
             <span
               className={`absolute h-[1.5px] w-5 rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${

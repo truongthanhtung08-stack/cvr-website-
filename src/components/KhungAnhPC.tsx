@@ -108,12 +108,9 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
         </button>
         {/* Số ảnh, số video của tin — cùng biểu tượng, thứ tự, nền với thẻ tin ngoài trang chủ (DemAnhVideo, chủ dự án 22/10/2026) */}
-        <DemAnhVideo soAnh={images.length} soVideo={nVid} className="absolute left-3 top-3 z-[3]" />
-        {m.kind === "image" && (
-          <span className="pointer-events-none absolute bottom-3 left-3 z-[3] rounded-md bg-black/60 px-2.5 py-1 text-xs text-white">
-            {i - nVid + 1}/{images.length}
-          </span>
-        )}
+        {/* góc TRÁI DƯỚI — một chỗ với thẻ tin và mọi khung ảnh; góc trái trên dành cho nhãn (anh 08/11/2026) */}
+        <DemAnhVideo soAnh={images.length} soVideo={nVid} className="absolute bottom-3 left-3 z-[3]" />
+        {/* (Bỏ số thứ tự ảnh — bớt rối, một kiểu với khung điện thoại; anh 08/11/2026) */}
       </div>
 
       {/* Cột ảnh nhỏ bên phải, cao đúng bằng khung chính — video đầu, bấm để chọn */}

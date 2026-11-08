@@ -23,7 +23,8 @@ export default function NhanTinhTrang({ tier, tinhTrang }: { tier?: string; tinh
       <span className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: t.bar }} aria-hidden />
       {/* NHỎ GỌN (chủ dự án 31/10/2026): cao 18 px, chữ 9 px, rộng theo chữ, sát góc trái trên 8 px — cùng dáng viên thuốc,
           màu, chữ hoa của huy hiệu cấp thẻ tin (HUY_HIEU_CLS) nhưng nhỏ hơn để không che ảnh */}
-      <span className={NHAN_CLS} style={{ backgroundColor: t.accent, color: t.badgeText }}>
+      {/* màu NHẠT hơn màu cấp một chút (pha 18% trắng) — nhãn dự án trước đậm quá so với huy hiệu thẻ tin (anh 08/11/2026) */}
+      <span className={NHAN_CLS} style={{ backgroundColor: `color-mix(in srgb, ${t.accent} 82%, white)`, color: t.badgeText }}>
         {tinhTrang || "Đang cập nhật"}
       </span>
     </>

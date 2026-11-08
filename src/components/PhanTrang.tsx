@@ -16,10 +16,10 @@
 // Nút cao 40px (>= 44px cả padding) cho ngón tay bấm trúng — chuẩn chạm di động.
 // ============================================================================
 
-// DÃY SỐ TRANG: 1 2 3 4 5 … n (anh 08/11/2026) — luôn thấy 5 trang liền quanh trang đang xem (đầu danh sách: 1–5, cuối: n−4…n),
+// DÃY SỐ TRANG: ‹ 1 2 3 … n › (anh 08/11/2026 khuya) — luôn thấy 3 trang liền quanh trang đang xem (đầu danh sách: 1–3, cuối: n−2…n),
 // cộng trang đầu + trang cuối, phần lược là "…". Tối đa 7 ô số.
 export function daySoTrang(hienTai: number, tong: number): (number | "…")[] {
-  const KHUNG = 5;
+  const KHUNG = 3;
   let tu = Math.max(1, hienTai - Math.floor(KHUNG / 2));
   const den = Math.min(tong, tu + KHUNG - 1);
   tu = Math.max(1, den - KHUNG + 1);

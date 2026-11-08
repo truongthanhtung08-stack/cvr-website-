@@ -85,6 +85,7 @@ export default function FilterBar({
   demTheoNoi,
   demLoai,
   cauSeo,
+  mucDichTong,
 }: {
   value: Filters;
   onChange: (f: Filters) => void;
@@ -122,6 +123,8 @@ export default function FilterBar({
   demLoai?: (loai: string) => number;
   /** Câu SEO, pSEO của mục (tên trang pSEO có tin, kèm đường dẫn) — chữ chạy trong ô tìm theo đúng trang đang xem */
   cauSeo?: { nhan: string; href: string }[];
+  /** Danh sách TỔNG ở trang chủ: trường Mua bán · Cho thuê đứng đầu hàng lọc, lọc tại chỗ (anh 08/11/2026). Trang khác không truyền. */
+  mucDichTong?: { gia: "tat-ca" | "ban" | "thue"; doi: (v: "tat-ca" | "ban" | "thue") => void };
 }) {
   // coDiaDanh trong điều kiện tính lại của các useMemo dùng địa danh: dữ liệu về sau lần tính đầu thì phải tính lại
   const coDiaDanh = useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
@@ -1006,7 +1009,30 @@ export default function FilterBar({
   // ===== CÁC TRƯỜNG LỌC — KHAI MỘT LẦN, MỖI MÁY ĐẶT ĐÚNG MỘT CHỖ (01/11/2026) =====
   // Điện thoại: trong màn gõ, ngay dưới ô gõ · Máy tính: ngay dưới ô tìm ngoài trang. Không bao giờ dựng hai nơi cùng lúc — dựng hai nơi
   // thì bấm một nút mở cả bảng của nơi kia (hai bảng chồng nhau).
+  // Trường MỤC ĐÍCH (chỉ danh sách tổng): trường chọn một — chọn là lọc ngay, không nút Áp dụng
+  const NHAN_MD = { "tat-ca": "Tất cả", ban: "Mua bán", thue: "Cho thuê" } as const;
+  const mucDichDropdown = mucDichTong ? (
+      <FilterDropdown label="Mua bán · Cho thuê" tieuDe="Mua bán · Cho thuê" summary={mucDichTong.gia === "tat-ca" ? undefined : NHAN_MD[mucDichTong.gia]} active={mucDichTong.gia !== "tat-ca"} panelClassName="w-64" compact={compact} className={ddClass}>
+        {({ close }) => (
+          <div className="py-1">
+            {(["tat-ca", "ban", "thue"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => { mucDichTong.doi(v); close(); }}
+                className={`flex min-h-[44px] w-full items-center justify-between px-4 text-left text-[15px] active:bg-cvr-surface ${mucDichTong.gia === v ? "font-semibold text-cvr-ink" : "text-cvr-body"}`}
+              >
+                {NHAN_MD[v]}
+                {mucDichTong.gia === v && <svg className="h-4 w-4 text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </button>
+            ))}
+          </div>
+        )}
+      </FilterDropdown>
+  ) : null;
+
   const cacTruong = hangLoc ?? <>
+    {mucDichDropdown}
     {locationDropdown}
     {typeDropdown}
     {priceDropdown}

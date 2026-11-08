@@ -423,7 +423,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               Chưa có ảnh: không vẽ khung trống, tên dự án lên đầu trang (chủ dự án 30/10/2026) */}
           {coAnh && !traCuu && (
             <div className="relative -mx-4 mb-2 sm:mx-0 max-sm:order-1 max-sm:mb-0">
-              {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan */}
+              {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan.
+                  Nhãn ở góc trái TRÊN khung ảnh (ô đếm ảnh đã xuống góc trái dưới — anh 08/11/2026) */}
               <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
               {/* Điện thoại: CÙNG bộ ảnh trang tin mua bán / cho thuê (Gallery) — ảnh + video vuốt ngang, bấm ra danh sách kiểu Facebook
                   (chủ dự án 31/10/2026); từ máy tính bảng trở lên giữ khung ảnh dự án */}
@@ -618,7 +619,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               )}
 
               {/* Video (nếu có) — DƯỚI CÙNG các phần thông tin dự án (chủ dự án 30/10/2026) */}
+              {/* ĐIỆN THOẠI: video đã nằm chung khung ảnh đầu trang → bỏ khối Video riêng (anh 08/11/2026); mục "Video" trên thanh mục tự ẩn theo (ProjectNav chỉ hiện mục có khối thấy được). Máy tính giữ. */}
               {p.videos && p.videos.length > 0 && (
+                <div className="max-sm:hidden">
                 <Section id="video" title="Video dự án">
                   {/* CÂN ĐO CẢ TRANG (chủ dự án 30/10/2026): mọi khung cao ~320–336 (ảnh đầu 300 · mặt bằng 336 · dự án tương tự 328) — bản đồ 798×320,
                       video 16:9 cao 320 = 569×320 căn giữa · từ 2 video xếp 2 một hàng */}
@@ -626,6 +629,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     {p.videos.map((v, i) => <VideoEmbed key={i} url={v} />)}
                   </div>
                 </Section>
+                </div>
               )}
 
               </ThuGonTrang>

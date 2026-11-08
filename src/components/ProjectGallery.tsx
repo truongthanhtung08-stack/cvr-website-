@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import PhotoViewer from "@/components/PhotoViewer";
 import PhotoList from "@/components/PhotoList";
+import DemAnhVideo from "@/components/DemAnhVideo";
 import { anhNho } from "@/lib/asset";
 
 // Lưới ảnh chi tiết dự án kiểu Batdongsan: 1 ảnh lớn trái + 4 ảnh nhỏ phải (2×2),
@@ -28,12 +29,6 @@ export default function ProjectGallery({ images, alt }: Props) {
   const lopNho = (i: number) =>
     n === 2 ? "sm:col-span-2 sm:row-span-2" : n === 3 ? "sm:col-span-2" : n === 4 && i === 0 ? "sm:col-span-2" : "";
   const open = (i: number) => { setActive(i); setLightbox(true); };
-  // Điện thoại chỉ thấy 1 ảnh lớn → bộ đếm mở DANH SÁCH ảnh.
-  // Máy tính đã có lưới 5 ảnh → bộ đếm mở thẳng ảnh lớn như cũ.
-  const bamDem = () => {
-    if (window.matchMedia("(min-width: 1024px)").matches) open(0);
-    else setList(true);
-  };
 
   // MỘT ẢNH (dự án tra cứu — chủ dự án 30/10/2026): ẢNH NHỎ, khung nhỏ 16:10 ở cột trái (PC rộng 320 px; điện thoại hết bề ngang).
   // Chuẩn lọc ảnh: ảnh ngang 16:10 (vd 1600 × 1000) là khít khung, không phải chỉnh.
@@ -76,20 +71,9 @@ export default function ProjectGallery({ images, alt }: Props) {
           ))}
         </div>
 
-        {/* Bộ đếm ảnh — góc dưới phải; chỉ 1 ảnh thì không cần đếm (chủ dự án 30/10/2026) */}
-        {images.length > 1 && (
-          <button
-            type="button"
-            onClick={bamDem}
-            className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-sm font-semibold text-cvr-ink shadow-md transition hover:bg-white"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16a0 0 0 010 0v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a0 0 0 010 0z" />
-              <circle cx="15" cy="9" r="1.3" fill="currentColor" stroke="none" />
-            </svg>
-            {images.length}
-          </button>
-          )}
+        {/* Đếm ảnh — MỘT KIỂU với khung ảnh trang tin (DemAnhVideo, góc TRÁI DƯỚI như thẻ tin; góc trái trên là nhãn tình trạng) — anh 08/11/2026.
+            Bấm vào khung ảnh là mở ảnh, không cần nút đếm bấm riêng. */}
+        {images.length > 1 && <DemAnhVideo soAnh={images.length} soVideo={0} className="absolute bottom-3 left-3 z-[3]" />}
       </div>
 
       {/* Danh sách ảnh kiểu Facebook (điện thoại) — cuộn tiếp ở cuối trang là thoát */}

@@ -179,9 +179,9 @@ export default function NewsSection({
         {featured && (
           <div className="mt-3 divide-y divide-cvr-line/70 lg:hidden">
             {[featured, ...rest].slice(0, 5).map((a) => (
-              <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-row items-start gap-3 py-3">
-                <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-lg bg-cvr-surface">
-                  <Image src={anhNho(a.image)} alt={a.title} fill sizes="112px" className="object-cover" />
+              <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-row items-center gap-3 py-3">
+                <div className="relative aspect-[4/3] w-36 shrink-0 overflow-hidden rounded-lg bg-cvr-surface">
+                  <Image src={anhNho(a.image)} alt={a.title} fill sizes="144px" className="object-cover" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="line-clamp-3 text-[15px] font-semibold leading-snug text-cvr-ink">{a.title}</h3>

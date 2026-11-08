@@ -123,7 +123,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   }
 
   return (
-    <section className="section-edge bg-white">
+    <section className="section-edge bg-white max-sm:before:hidden">{/* điện thoại: bỏ đường kẻ trên khối — nằm ngay dưới 3 nút Mua bán · Cho thuê · Dự án, thành vạch lạ (anh 08/11/2026) */}
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:pb-7 sm:pt-4 lg:px-8">
 
         {/* Tiêu đề — chiếm TRỌN dòng (không để nút ép xuống 2 dòng). MÁY TÍNH (chủ dự án 23/10/2026, như Batdongsan): bên phải

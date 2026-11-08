@@ -275,6 +275,24 @@ export default function ListingBrowser({
   const cauHien = useMemo(() => (!nguyenVan && coDiaDanh && filters.keyword.trim() ? cauDaHieu(filters.keyword, purpose) : null), [nguyenVan, filters.keyword, coDiaDanh, purpose]); // eslint-disable-line react-hooks/exhaustive-deps
   const locThat = cauSua ? { ...filters, keyword: cauSua } : filters;
   const linkNguyenVan = (() => { const sp = new URLSearchParams(params.toString()); sp.set("q", filters.keyword); sp.set("nguyenvan", "1"); return `?${sp.toString()}`; })();
+  // TRƯỜNG MỤC ĐÍCH Ở DANH SÁCH TỔNG (anh 08/11/2026: "vẫn phải cần mục đích vào ô lọc"): Tất cả · Mua bán · Cho thuê, lọc ngay tại chỗ
+  // (nạp /api/danh-sach/ban|thue thay cho tat-ca), giữ thứ tự VIP như khối trang chủ. Ghi ?md=ban|thue vào địa chỉ (thay tại chỗ) để F5 giữ.
+  const [mucDichTong, setMucDichTong] = useState<"tat-ca" | "ban" | "thue">("tat-ca");
+  useEffect(() => {
+    if (nguon !== "tat-ca") return;
+    const md = new URLSearchParams(window.location.search).get("md");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (md === "ban" || md === "thue") setMucDichTong(md);
+  }, [nguon]);
+  const nguonNap = nguon === "tat-ca" ? mucDichTong : nguon;
+  const doiMucDichTong = (v: "tat-ca" | "ban" | "thue") => {
+    setMucDichTong(v);
+    setPage(1);
+    const u = new URL(window.location.href);
+    if (v === "tat-ca") u.searchParams.delete("md"); else u.searchParams.set("md", v);
+    u.searchParams.delete("trang");
+    window.history.replaceState(window.history.state, "", u);
+  };
   const yeuCau = JSON.stringify({ boLoc: locThat, sapXep: sort, trang: page, moiTrang, chiId, boQuaId, banDo: mapMode, matSo: true });
   const choDiaDanh = filters.keyword.trim() !== "" && !coDiaDanh;
   const dangNap = useRef(false); // không từ khoá thì luôn false → không gọi thêm lần nào
@@ -286,7 +304,7 @@ export default function ListingBrowser({
     dangNap.current = true;
     window.dispatchEvent(new Event("cvr-tim-nap")); // vạch xanh chung chạy tới khi danh sách hiện
     const lanDau = !daCoGoiY.current; // lần nạp đầu kèm dữ liệu câu gợi ý trong ô tìm
-    fetch(`/api/danh-sach/${nguon}/loc`, {
+    fetch(`/api/danh-sach/${nguonNap}/loc`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: lanDau ? JSON.stringify({ ...JSON.parse(yeuCau), goiY: true }) : yeuCau,
@@ -304,7 +322,7 @@ export default function ListingBrowser({
       .catch(() => { if (!huy) { dangNap.current = false; xongTim(); } });
     return () => { huy = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ gọi lại khi yêu cầu đổi (hoặc địa danh vừa về)
-  }, [nguon, yeuCau, choDiaDanh, daDocDiaChi]);
+  }, [nguonNap, yeuCau, choDiaDanh, daDocDiaChi]);
   const taiCho = useMemo(
     () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page, moiTrang)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- locThat suy ra từ filters + cauSua
@@ -445,7 +463,8 @@ export default function ListingBrowser({
         <FilterBar
           value={hieu ? { ...hieu, keyword: filtersSong.keyword } : filtersSong}
           onChange={doiBoLoc}
-          purpose={purpose}
+          // danh sách tổng: chọn Cho thuê thì các trường khác (Loại BĐS, mốc giá triệu/tháng…) đổi theo cho thuê — một bộ lọc nối liền
+          purpose={nguon === "tat-ca" && mucDichTong !== "tat-ca" ? mucDichTong : purpose}
           onMap={() => setMapMode((v) => !v)}
           mapActive={mapMode}
           // Câu gợi ý chạy trong ô tìm bám theo TIN MỚI + TIN HOT của chính trang này
@@ -455,6 +474,7 @@ export default function ListingBrowser({
           // Đủ toàn quốc khi khách chưa chọn gì khác; chỉ thu gọn theo các trường KHÁC khách đã chọn (chủ dự án 01/11/2026)
           // Toàn quốc LUÔN đủ tỉnh thành: chọn nơi chưa có tin thì kết quả ra gợi ý tương tự (chủ dự án 01/11/2026)
           demLoai={coTruongKhacLoai(filters) ? demLoai : undefined}
+          mucDichTong={nguon === "tat-ca" ? { gia: mucDichTong, doi: doiMucDichTong } : undefined}
         />
       </div>
 
@@ -470,7 +490,8 @@ export default function ListingBrowser({
       <div id="ket-qua" className="mt-4 flex scroll-mt-20 flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:scroll-mt-24">
         <div className="min-w-0">
           {trangChu || nested
-            ? <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{heading}</h2>
+            // danh sách tổng: tiêu đề theo trường Mua bán · Cho thuê đang chọn (anh 08/11/2026)
+            ? <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{nguon === "tat-ca" && mucDichTong === "ban" ? "Nhà đất bán" : nguon === "tat-ca" && mucDichTong === "thue" ? "Nhà đất cho thuê" : heading}</h2>
             // Một cỡ chuẩn cho tiêu đề danh sách (23/10/2026): điện thoại 20px vừa một dòng ("Mua bán nhà đất tháng 10/2026"), máy tính 24px — như tiêu đề khối trang chủ
             : <h1 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{heading}</h1>}
           {/* KHÔNG in số lượng tin ra đây — web đang ít tin, nói ra là tự phơi
