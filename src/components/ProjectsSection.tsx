@@ -10,7 +10,7 @@ import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
 import AnhChay from "@/components/AnhChay";
 import { anhNho } from "@/lib/asset";
-import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
+import { sortProjectsByTier } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
 import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
@@ -27,7 +27,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
   const diMobRef = useRef<HTMLDivElement>(null);
   const { dung: pausedMob, chamVao: chamDaiMob } = useTamDung(6000);
   // Nút "Xem thêm" → khối này thành danh sách theo trang, các khối khác ẩn.
-  const { expanded, hidden, toggle } = useHomeSection("du-an");
+  const { expanded, hidden } = useHomeSection("du-an");
   // "Xem thêm" cùng logic trang Dự án (30/10/2026): sau dự án nổi bật là danh bạ Tra cứu — nạp lúc mở danh sách (không nhúng vào HTML)
   const [traCuu, setTraCuu] = useState<DongTraCuu[] | undefined>(undefined);
   useEffect(() => {
@@ -238,8 +238,21 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
         {/* Danh sách mở ra có cả dự án tra cứu → không gọi "Dự án nổi bật" (chủ dự án 31/10/2026); dùng đúng tên trang Dự án */}
         {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} danhSachNoiBat traCuu={traCuu} tieuDeDs="Dự án bất động sản" /></div>}
 
-        {ranked.length > 0 && (
-          <div className="sm:-mt-4"><ExpandToggle expanded={expanded} onClick={toggle} /></div>
+        {/* CƠ CẤU TRANG CHỦ (anh 08/11/2026: "muốn xem Dự án, Tra cứu chỉ có một con đường là vào menu"): "Xem thêm" sang THẲNG trang tổng
+            /du-an (Dự án nổi bật + Tra cứu dự án) như Mua bán, Cho thuê — đường dẫn thật cho Google; đánh dấu trang đi ra từ trang chủ
+            để nút ‹ dính cạnh ô tìm hiện, bấm là về trang chủ. (Thay mở danh sách tại chỗ — khối còn mở được qua ?muc=du-an cũ.) */}
+        {ranked.length > 0 && !expanded && (
+          <div className="mt-6 flex justify-center sm:-mt-4 sm:pt-6">
+            <Link
+              href="/du-an"
+              prefetch={false}
+              className="btn-xemthem"
+              onClick={() => { try { sessionStorage.setItem("cvr-kq-den", "/du-an"); } catch { /* vẫn sang trang */ } }}
+            >
+              Xem thêm
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </Link>
+          </div>
         )}
       </div>
     </section>

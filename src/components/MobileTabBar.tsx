@@ -263,6 +263,16 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
         aria-label="Điều hướng nhanh"
         data-do-cao="tabbar-h"
         className={`an-khi-go-phim tabbar-glass fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] transition-transform duration-200 lg:hidden ${anKhiCuon ? "pointer-events-none translate-y-full" : ""}`}
+        // HIỆU ỨNG BẤM (anh 08/11/2026: "bấm vào hàng menu dưới không có hiệu ứng nào, bấm không biết đã bấm hay chưa"): :active trên
+        // điện thoại chỉ hiện khi giữ ngón tay đủ lâu (iPhone bỏ qua hẳn) → chạm là gắn lớp "vua-bam" 280ms cho nút đó (nhún + vệt sáng).
+        onPointerDown={(e) => {
+          const li = (e.target as HTMLElement).closest("li");
+          if (!li) return;
+          li.classList.remove("vua-bam");
+          void li.offsetWidth; // chạm liên tiếp vẫn chạy lại hiệu ứng
+          li.classList.add("vua-bam");
+          window.setTimeout(() => li.classList.remove("vua-bam"), 280);
+        }}
       >
         <ul className="flex items-stretch">
           {tabs.map((t) => (

@@ -721,6 +721,23 @@ html:has(.cvr-sheet) .an-khi-go-phim.float-above-tabbar { display: none !importa
   opacity: 0.72;
   transition-duration: 90ms;
 }
+/* Thanh dưới điện thoại (08/11/2026): chạm là nhún + vệt sáng tròn sau biểu tượng, chạm nhanh cũng thấy (MobileTabBar gắn .vua-bam).
+   Chỉ transform/opacity — không làm chậm trang. */
+.vua-bam .press { position: relative; animation: tab-nhun 280ms var(--ease-out-soft); }
+.vua-bam .press::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px;
+  border-radius: 9999px; background: currentColor; opacity: 0; pointer-events: none;
+  animation: tab-vet 280ms ease-out;
+}
+@keyframes tab-nhun { 0% { transform: scale(1); } 35% { transform: scale(0.86); } 100% { transform: scale(1); } }
+@keyframes tab-vet { 0% { opacity: 0.16; transform: scale(0.5); } 100% { opacity: 0; transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .vua-bam .press, .vua-bam .press::before { animation: none; } }
+/* Chạm mọi link / nút / thẻ (HieuUngCham, 08/11/2026): mờ nhẹ rồi sáng lại; nút nhỏ nhún thêm */
+.vua-cham { animation: cham-mo 220ms var(--ease-out-soft); }
+.vua-cham-nho { animation: cham-mo 220ms var(--ease-out-soft), cham-nhun 220ms var(--ease-out-soft); }
+@keyframes cham-mo { 0% { opacity: 1; } 30% { opacity: 0.6; } 100% { opacity: 1; } }
+@keyframes cham-nhun { 0% { transform: scale(1); } 30% { transform: scale(0.95); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .vua-cham, .vua-cham-nho { animation: none; } }
 /* Logo: nhấn nhẹ hơn (logo ngang dài, thu nhiều trông giật) */
 .press-logo:active { transform: scale(0.965); opacity: 0.8; }
 

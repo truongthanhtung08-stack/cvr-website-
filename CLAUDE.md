@@ -466,6 +466,20 @@ một dòng "cần Push vì …". Sửa xong từng việc: build, ghi "chưa pu
 
 ---
 
+## ⏳ VIỆC TỒN SEO KỸ THUẬT 08/11/2026 (phiên SEO — đã làm: commit d3a07afd · e36a9956 · 70a8cea2, CHƯA PUSH)
+**Đã làm (lên web khi anh nhắn "Push"):** sitemap lastmod đầu tháng (gốc lỗi "tháng 10 top, tháng 11 mất") · trang tỉnh nối đủ trang con
+trong sitemap (`lienKetChoDu`, chỉ thêm) · trang đã xoá 301 về trang cha · tab chuyên gia Đà Nẵng/Huế có đường dẫn · trang tỉnh dẫn tới
+Giá nhà đất · robots bỏ `Host` · thẻ tin có chữ ẩn "ảnh / video / phòng ngủ / phòng tắm". Sau Push: xin index lại trang chủ, /mua-ban, /cho-thue.
+| # | Việc tồn | Ở đâu | Cần |
+|---|---|---|---|
+| 1 | Mỗi thẻ tin in 2 lần trong HTML (bản điện thoại + máy tính, ẩn bằng CSS) → Google đọc trùng | `FeaturedListings`, `ListingBrowser`, `TheTinMobile`, `PropertyCard` | Giao diện đã duyệt — anh quyết |
+| 2 | Chân trang mọi trang có "hàng đầu tại Việt Nam", "ưu việt" — Google lấy làm mô tả /tin-tuc, /dang-tin | nội dung chân trang (admin) | Anh duyệt câu mới |
+| 3 | Trang chủ điện thoại đã bỏ menu Mua bán / Cho thuê → cách Google + khách đọc trang chủ chưa thống nhất | trang chủ điện thoại | Anh nói cách thống nhất (08/11) |
+| 4 | Google còn giữ tiêu đề cũ /cho-thue ("… Huế & Miền Trung"), /du-an, trang chủ | Search Console | Tự hết khi Google đọc lại sau Push |
+| 5 | `http://www` qua 2 lần chuyển (Vercel) | Vercel → Domains | Không sửa bằng mã được |
+| 6 | Google ghé ~10 trang HTML/ngày (72% lượt đọc là ảnh + JS) | Search Console → Crawl stats | Đo lại sau Push |
+| 7 | Kế hoạch từ khoá: câu lõi + điểm nhấn điều khiển tiêu đề / H1 / link toàn bộ pSEO | `HE-THONG-TU-KHOA.xlsx` → `categories.ts`, `pseo.ts` | Anh bàn yêu cầu chi tiết |
+
 ## ⏳ VIỆC TỒN SAU PUSH f8d2a0a (02/11/2026, bộ lọc điện thoại) — PHIÊN SAU ANH KIỂM RỒI QUYẾT, CHƯA AI ĐƯỢC TỰ LÀM
 
 > Đã lên web và đã kiểm trên coastalland.vn (cỡ điện thoại): bảng Khu vực một quy trình · hàng Đặt lại · Áp dụng là đáy cố định mọi

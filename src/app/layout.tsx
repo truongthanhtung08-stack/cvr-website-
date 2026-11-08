@@ -10,6 +10,7 @@ import BanPhimAo from "@/components/BanPhimAo";
 import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
 import MoMucTheoNeo from "@/components/MoMucTheoNeo";
 import RouteMotion from "@/components/RouteMotion";
+import HieuUngCham from "@/components/HieuUngCham";
 import VachTim from "@/components/VachTim";
 import SiteJsonLd from "@/components/SiteJsonLd";
 import Analytics from "@/components/Analytics";
@@ -218,6 +219,7 @@ export default function RootLayout({
         {children}
         <Chatbox />
         <MobileTabBar />
+        <HieuUngCham />
         <DoThanhDay />
         {/* Bàn phím ảo không được che ô khách đang gõ — mọi trang, mọi trình duyệt */}
         <BanPhimAo />
