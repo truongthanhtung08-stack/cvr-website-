@@ -364,7 +364,7 @@ function MobileMenu({
             khoảng trắng; mục đang mở được bọc khối kính sáng nhẹ để gom nhóm thị giác. */}
         {/* Danh sách menu — KHÔNG dùng đường kẻ phân chia (kiểu Apple): phân tách bằng
             khoảng trắng; mục đang mở được bọc khối kính sáng nhẹ để gom nhóm thị giác. */}
-        <div className="space-y-1">
+        <div className="flex flex-1 flex-col justify-around">{/* các dòng giãn đều lấp kín chiều cao menu — không còn khoảng trống thừa dưới cùng, mọi cỡ máy (anh 08/11/2026 tối) */}
         {navItems.map((item) => (
           <div
             key={item.href}
@@ -416,28 +416,28 @@ function MobileMenu({
                   <div className="pb-2 pl-9">
                     {item.children.map((child) => (
                       <div key={child.label}>
-                        <div className="py-1.5">
+                        <div className="py-2">
                           {child.href ? (
                             <Link
                               href={child.href}
                               onClick={onClose}
-                              className="block text-[16px] font-normal text-[#d2d2d7] transition-colors active:text-[#f5f5f7]"
+                              className="block text-[17px] font-medium text-[#e8e8ed] transition-colors active:text-[#f5f5f7]"
                             >
                               {child.label}
                             </Link>
                           ) : (
-                            <p className="pb-0.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#8e8e93]">
+                            <p className="pb-1 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">
                               {child.label}
                             </p>
                           )}
                           {child.children?.length ? (
-                            <div className="mt-1.5 space-y-2 border-l border-[#3a3a3c] pl-3.5">
+                            <div className="mt-2 space-y-2.5 border-l border-[#3a3a3c] pl-3.5">
                               {child.children.map((grandChild) => (
                                 <Link
                                   key={grandChild.label}
                                   href={grandChild.href ?? "#"}
                                   onClick={onClose}
-                                  className="block text-[15px] font-normal text-[#a1a1a6] transition-colors active:text-[#f5f5f7]"
+                                  className="block text-[16px] font-normal text-[#d2d2d7] transition-colors active:text-[#f5f5f7]"
                                 >
                                   {grandChild.label}
                                 </Link>
