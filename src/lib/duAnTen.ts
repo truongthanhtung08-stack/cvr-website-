@@ -19,11 +19,14 @@ export type DuAnTen = {
 const DAU_CHUNG = /^(the|du an|can ho( cao cap)?( \d+ sao)?|chung cu|khu do thi( moi)?|kdt|khu can ho|khu cong nghiep|toa nha|to hop)\s+/;
 const DIA_DANH_DUOI = /\s+(da nang|danang|hue|nha trang|quy nhon|son tra|hoi an|phan thiet|binh dinh|khanh hoa|quang nam|quang tri|quang ngai|gia lai|lam dong|da lat|binh thuan|ha noi|ho chi minh|hcm|sai gon)$/;
 const DUOI_CHUNG = /\s+(residences?|complex|tower|towers|city|plaza|apartment|apartments|central|center|centre|heights)$/;
+// Cách gọi CHỈ LÀ ĐỊA DANH / CHỮ CHUNG thì không phải tên dự án (anh 08/11/2026: gõ "chung cu danang" bị đưa sang Dự án vì "Danang Plaza"
+// bỏ đuôi còn "danang"). Khớp NGUYÊN cách gọi.
+const KHONG_LA_TEN = /^(da nang|danang|hue|nha trang|quy nhon|son tra|hoi an|phan thiet|binh dinh|khanh hoa|quang nam|quang tri|quang ngai|gia lai|lam dong|da lat|dalat|binh thuan|ha noi|hanoi|ho chi minh|hcm|sai gon|saigon|viet nam|vietnam|mien trung|plaza|tower|city|center|central|residence|complex)$/;
 
 /** Mọi cách gọi một dự án: tên đầy đủ, tên lõi, từng vế quanh dấu "-" — đã bỏ dấu, ≥ 4 ký tự */
 export function cachGoiDuAn(ten: string): string[] {
   const ra = new Set<string>();
-  const them = (x: string) => { const n = x.trim(); if (n.length >= 4 && !/^\d+$/.test(n)) ra.add(n); };
+  const them = (x: string) => { const n = x.trim(); if (n.length >= 4 && !/^\d+$/.test(n) && !KHONG_LA_TEN.test(n)) ra.add(n); };
   const veGoc = [ten, ...ten.split(/\s+[-–—|]\s+/)];
   for (const v of veGoc) {
     let n = normalizeVi(v).replace(/[^a-z0-9]+/g, " ").trim();

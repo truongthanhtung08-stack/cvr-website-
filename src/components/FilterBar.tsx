@@ -1655,23 +1655,25 @@ export function LocationPanel({
       if (soNoi([...conLai, { province: prov, district: name }]) <= MAX_LOCATIONS) onChange([...conLai, { province: prov, district: name }]);
     };
     return (
-      <div key={name} className={`flex items-center rounded-lg transition hover:bg-black/5 ${on ? "font-semibold text-cvr-blue-ink" : "text-cvr-ink/80"}`}>
-        <label className="flex shrink-0 cursor-pointer items-center py-1.5 pl-2 pr-1">
-          <input type="checkbox" checked={on && !phan} ref={(el) => { if (el) el.indeterminate = phan; }} onChange={doiTick} aria-label={`${on && !phan ? "Bỏ chọn" : "Chọn"} ${name}`} className="h-4 w-4 accent-cvr-blue" />
+      // VÙNG BẤM TO TRÊN ĐIỆN THOẠI (anh 08/11/2026: "nút chọn to lên để dễ chọn / bỏ chọn, kể cả bấm › chọn phường xã"): ô tick 44×44, ô vuông 20 px,
+      // nút › 48×44, dòng cao 44 px, chữ 15 px; máy tính giữ cỡ cũ (sm:)
+      <div key={name} className={`flex min-h-[44px] items-center rounded-lg transition hover:bg-black/5 sm:min-h-0 ${on ? "font-semibold text-cvr-blue-ink" : "text-cvr-ink/80"}`}>
+        <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center sm:h-auto sm:w-auto sm:py-1.5 sm:pl-2 sm:pr-1">
+          <input type="checkbox" checked={on && !phan} ref={(el) => { if (el) el.indeterminate = phan; }} onChange={doiTick} aria-label={`${on && !phan ? "Bỏ chọn" : "Chọn"} ${name}`} className="h-5 w-5 accent-cvr-blue sm:h-4 sm:w-4" />
         </label>
         {/* Ô VUÔNG = chọn / bỏ chọn · BẤM TÊN = vào phường / xã của tỉnh đó (anh 07/11/2026: "bấm vào là ra, chứ không phải bỏ chọn").
             Vào rồi quay ra bằng nút "‹ Tên tỉnh" đầu bảng để chọn tiếp tỉnh khác. Tầng phường: bấm tên = chọn / bỏ chọn. */}
         <button
           type="button"
           onClick={() => (level === "ward" ? doiTick() : pick(name))}
-          className="flex min-w-0 flex-1 items-center justify-between gap-2 py-2 pl-1.5 pr-2 text-left text-sm"
+          className="flex min-h-[44px] min-w-0 flex-1 items-center justify-between gap-2 py-2 pl-1 pr-2 text-left text-[15px] sm:min-h-0 sm:pl-1.5 sm:text-sm"
         >
           <span className="truncate">{name}</span>
           {/* bỏ số đếm cạnh lựa chọn (anh 07/11/2026: kết quả do dữ liệu quyết định) */}
         </button>
         {/* NÚT › VÀO PHƯỜNG / XÃ = ô riêng cuối dòng, vạch ngăn, vùng bấm 44×36 (anh 07/11/2026: "nút › chọn phường cho chuẩn") */}
         {level !== "ward" && (
-          <button type="button" onClick={() => pick(name)} aria-label={`Chọn phường / xã của ${name}`} className="flex h-9 w-11 shrink-0 items-center justify-center rounded-lg text-cvr-ink/60 active:bg-black/5">
+          <button type="button" onClick={() => pick(name)} aria-label={`Chọn phường / xã của ${name}`} className="flex h-11 w-12 shrink-0 items-center justify-center rounded-lg text-cvr-ink/60 active:bg-black/5 sm:h-9 sm:w-11">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" /></svg>
           </button>
         )}
@@ -1710,12 +1712,12 @@ export function LocationPanel({
               tầng trên. Bỏ breadcrumb "Toàn quốc › …", bỏ dòng "Chọn Phường / Xã của …" và dòng "Toàn bộ …" (tỉnh đã chọn ở tầng trên). */}
           {level === "province"
             ? <p className="min-w-0 truncate text-[13px] font-semibold text-cvr-ink">Chọn Tỉnh / Thành phố</p>
-            : <button type="button" onClick={() => { if (dist) setDist(""); else setProv(""); setQ(""); }} className="-ml-2 flex min-w-0 items-center gap-1 rounded-lg px-2 py-1.5 text-[15px] font-semibold text-cvr-blue-ink active:bg-black/5">
+            : <button type="button" onClick={() => { if (dist) setDist(""); else setProv(""); setQ(""); }} className="-ml-2 flex min-h-[44px] min-w-0 items-center gap-1 rounded-lg px-2 py-1.5 text-base font-semibold text-cvr-blue-ink active:bg-black/5 sm:min-h-0 sm:text-[15px]">
                 <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" /></svg>
                 <span className="truncate">{dist || prov}</span>
               </button>}
           {/* nút ‹ luôn hiện kể cả đang gõ tìm (anh 07/11/2026: mở ô tìm trong phường là mất đường quay ra) */}
-          {!moTim && <button type="button" onClick={() => setMoTim(true)} aria-label="Tìm" className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink transition hover:bg-black/5 active:bg-black/5">
+          {!moTim && <button type="button" onClick={() => setMoTim(true)} aria-label="Tìm" className="-mr-1 flex h-11 w-11 shrink-0 sm:h-9 sm:w-9 items-center justify-center rounded-full text-cvr-ink transition hover:bg-black/5 active:bg-black/5">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
             </svg>
@@ -1742,10 +1744,10 @@ export function LocationPanel({
           enterKeyHint="search"
           placeholder={level === "province" ? "Tìm tỉnh/thành…" : level === "district" ? "Tìm quận/huyện…" : "Tìm phường/xã…"}
           aria-label="Lọc nhanh khu vực"
-          className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] pl-9 pr-10 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
+          className="h-11 w-full rounded-lg border border-black/12 bg-black/[0.03] pl-9 pr-11 text-base text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60 sm:h-9 sm:pr-10 sm:text-sm"
         />
         {/* Cất chỗ gõ, về lại kính lúp */}
-        <button type="button" onClick={() => { setQ(""); setMoTim(false); }} aria-label="Đóng tìm" className="absolute right-0.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-muted active:bg-black/5">
+        <button type="button" onClick={() => { setQ(""); setMoTim(false); }} aria-label="Đóng tìm" className="absolute right-0.5 top-1/2 flex h-10 w-10 sm:h-8 sm:w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-muted active:bg-black/5">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>}
@@ -1763,8 +1765,8 @@ export function LocationPanel({
             if (soNoi(next) <= MAX_LOCATIONS) onChange(next);
           };
           return (
-            <label key={`${t}|${w}`} className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition hover:bg-black/5 ${on ? "font-semibold text-cvr-blue-ink" : "text-cvr-ink/80"}`}>
-              <input type="checkbox" checked={on} onChange={doi} className="h-4 w-4 shrink-0 accent-cvr-blue" />
+            <label key={`${t}|${w}`} className={`flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg px-3 py-1.5 text-[15px] transition hover:bg-black/5 sm:min-h-0 sm:gap-2.5 sm:px-2 sm:text-sm ${on ? "font-semibold text-cvr-blue-ink" : "text-cvr-ink/80"}`}>
+              <input type="checkbox" checked={on} onChange={doi} className="h-5 w-5 shrink-0 accent-cvr-blue sm:h-4 sm:w-4" />
               <span className="truncate">{w}, {t}</span>
             </label>
           );

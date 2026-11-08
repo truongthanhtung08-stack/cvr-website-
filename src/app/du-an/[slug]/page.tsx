@@ -247,8 +247,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     .filter((x) => x.slug !== p.slug)
     .sort((a, b) => (CAP[a.tier ?? "basic"] ?? 3) - (CAP[b.tier ?? "basic"] ?? 3) || ngayCn(b) - ngayCn(a))
     .map((x) => ({ slug: x.slug, name: x.name, image: x.image || "", diaChi: x.location }));
-  // CHỦ ĐẦU TƯ — chỉ chủ đầu tư đã có trang (đủ ngưỡng NGUONG_INDEX_CDT), nhiều dự án trước, tối đa 8
-  const theoCdt = [...nhomChuDauTu(tatCaDuAn).entries()].filter(([, g]) => g.duAn.length >= NGUONG_INDEX_CDT).sort((a, b) => b[1].duAn.length - a[1].duAn.length).slice(0, 8);
+  // CHỦ ĐẦU TƯ — top 10 (anh 08/11/2026: "theo cấp VIP của dự án nổi bật và dự án cập nhật mới nhất"): chủ đầu tư có dự án cấp cao nhất
+  // trước (Diamond → Gold → Silver → Basic), cùng cấp thì dự án cập nhật gần nhất trước, rồi nhiều dự án hơn. Chỉ chủ đầu tư đã có trang.
+  const capCdt = (ds: Project[]) => Math.min(...ds.map((x) => CAP[x.tier ?? "basic"] ?? 3));
+  const ngayCdt = (ds: Project[]) => Math.max(...ds.map(ngayCn));
+  const theoCdt = [...nhomChuDauTu(tatCaDuAn).entries()]
+    .filter(([, g]) => g.duAn.length >= NGUONG_INDEX_CDT)
+    .sort((a, b) => capCdt(a[1].duAn) - capCdt(b[1].duAn) || ngayCdt(b[1].duAn) - ngayCdt(a[1].duAn) || b[1].duAn.length - a[1].duAn.length)
+    .slice(0, 10);
   const duAnTheoLoai = projectCategories.map((c) => [c, projectsInCategory(tatCaDuAn, c).length] as const).filter(([, n]) => n > 0);
   // Bản đồ: điểm admin GHIM trước; chưa ghim thì tìm theo địa chỉ đầy đủ (số nhà, đường, phường, tỉnh) — 30/10/2026
   // ĐỊA CHỈ ĐẦY ĐỦ: hồ sơ ghi địa chỉ chi tiết ở dòng "Địa chỉ" của bảng thông số (vd "Giao lộ Nguyễn Đình Thi với 29/3, phường Hòa Xuân,

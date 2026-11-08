@@ -226,7 +226,9 @@ export function locDanhSach(
     const dungQuan = quanChon.length > 0 && applyFilters([l], { ...emptyFilters(), locations: quanChon }).length > 0;
     // THỨ TỰ Ý KHÁCH (anh 07/11/2026: "1. loại hình, 2. ở đâu, 3. giá"): tỉnh (gợi ý đã chỉ trong tỉnh khách nói) → ĐÚNG LOẠI CON
     // ("đất nền" → tin đất nền trước tin đất khác) → phường → quận cũ chứa phường → loại cùng cha → các bậc con (giá, diện tích…)
-    return (dungTinh ? 65536 : 0) + (dungLoaiCon(l) ? 32768 : 0) + (dungSau ? 16384 : 0) + (dungQuan ? 8192 : 0) + (dungLoai(l) ? 4096 : 0) + diemCon(l);
+    // THỨ TỰ (anh 08/11/2026: "không có dữ liệu thì sắp xếp theo Mục đích + loại hình + địa điểm + …"): đúng loại con → loại cùng cha → tỉnh
+    // → phường → quận cũ chứa phường → các bậc con (giá, diện tích, Lọc thêm, nội dung)
+    return (dungLoaiCon(l) ? 65536 : 0) + (dungLoai(l) ? 32768 : 0) + (dungTinh ? 16384 : 0) + (dungSau ? 8192 : 0) + (dungQuan ? 4096 : 0) + diemCon(l);
   };
   // GIÁ GẦN NHẤT TRƯỚC (anh 07/11/2026: "giá 3 tỷ" mà tin 6,8 tỷ đứng trên tin 3,2 tỷ): cùng mức khớp, tin có giá gần mức khách nói đứng trước
   const giaDich = coGia ? ((filters.priceMin ?? filters.priceMax!) + (filters.priceMax ?? filters.priceMin!)) / 2 : 0;
@@ -317,9 +319,10 @@ export function locDanhSach(
   // hiểu, khác cả loại) mới ghi "Bất động sản tương tự" (anh 07/11/2026)
   const TUONG_TU = "Bất động sản tương tự";
   if (khongHieu) {
-    duPhong = theoCap(conHan).slice(0, TOI_DA_GOI_Y);
-    thongBao = TUONG_TU;
-    ketQua = duPhong;
+    // CẤM GỢI Ý BẬY (anh 08/11/2026): câu vô nghĩa, không nội dung, viết bậy → không đưa tin nào ra, chỉ báo chưa có
+    duPhong = [];
+    thongBao = CHUA_CO;
+    ketQua = [];
   } else if (!ketQua.length) {
     // GỢI Ý khi không tin nào khớp hết: tin khớp được NHIỀU TRƯỜNG CÒN LẠI hơn đứng trước, theo thứ bậc giá → diện tích → phòng ngủ →
     // hướng → pháp lý → nội thất → đặc điểm (chủ dự án 01/11/2026).
@@ -346,7 +349,10 @@ export function locDanhSach(
   // KHÔNG TIN NÀO KHỚP ĐỦ các trường khách nói (anh 07/11/2026: "nhà đất phan thiết" — Phan Thiết không có tin mà web ghi "12 bất động sản
   // phù hợp", bày tin Đà Nẵng) → nói thẳng chưa có, phần dưới là tương tự. Khách nói NƠI mà nơi đó không có tin thì luôn báo.
   const soKhop = (coTuKhoa ? chuTrong.length + khopDu.filter((l) => !daCo.has(l.id)).length : khopDu.length) + ketQuaHetHan.length;
-  if (!soKhop && ketQua.length && !thongBao && (filters.locations.length > 0 || !ketQua.some((l) => noiDung(l) > 0))) thongBao = `${CHUA_CO} ${TUONG_TU}`;
+  // CÓ TIN KHỚP ĐỦ 3 THỨ CHÍNH — mục đích (nguồn đã theo mục) · loại hình · địa điểm — thì không báo "chưa có sẵn", chỉ xếp theo độ khớp
+  // (anh 08/11/2026: "có dữ liệu khớp mục đích · loại hình · địa điểm thì cứ hiện, xếp theo thứ tự độ khớp")
+  const khop3 = (filters.types.length > 0 || filters.locations.length > 0) && conHan.some((l) => dungLoaiCon(l) && (filters.locations.length === 0 || applyFilters([l], { ...emptyFilters(), locations: filters.locations }).length > 0));
+  if (!soKhop && !khop3 && ketQua.length && !thongBao && (filters.locations.length > 0 || !ketQua.some((l) => noiDung(l) > 0))) thongBao = `${CHUA_CO} ${TUONG_TU}`;
   // Không tin nào khớp đủ nhưng có tin cùng loại / nơi gần → vẫn là kết quả theo độ chính xác, không ghi gì (anh 07/11/2026)
   // Khách nói LOẠI HÌNH thì chỉ ra đúng loại đó (anh 07/11/2026: "đất thì chỉ tìm đất") — không thêm loại khác dù đúng nơi
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));

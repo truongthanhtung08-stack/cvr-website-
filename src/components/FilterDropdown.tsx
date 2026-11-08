@@ -190,12 +190,20 @@ export default function FilterDropdown({
     const dayThay = coPhim
       ? (phim > 80 && vv ? vv.offsetTop + vv.height : trangDaCo ? window.innerHeight : window.innerHeight * 0.5)
       : window.innerHeight - caoThanh;
-    const maxH = coPhim
-      ? Math.max(140, Math.round(dayThay - r.bottom - m - 8))
-      : Math.max(220, Math.round(Math.min(window.innerHeight * 0.7, dayThay - r.bottom - m - 8)));
-    const vert = openUp ? { top: r.top + window.scrollY - m, len: true } : { top: r.bottom + window.scrollY + m };
     // Màn hẹp (điện thoại): bảng rộng gần hết màn, chừa 8px hai bên — không tràn ra ngoài
     const hep = window.innerWidth < 640;
+    // ĐIỆN THOẠI ĐANG GÕ (bàn phím bật): bảng lên SÁT DƯỚI ĐẦU TRANG, dùng hết phần màn hình trên bàn phím — trước đây bảng vẫn nằm dưới
+    // hàng trường lọc nên chỉ còn 2–3 dòng, dòng tỉnh/thành bị cắt (anh 08/11/2026: "bị cắt dòng tỉnh thành khi ấn bàn phím trên mobile")
+    const lenDau = hep && coPhim;
+    const dauTrang = lenDau ? Math.max(0, document.querySelector("header")?.getBoundingClientRect().bottom ?? 0) : 0;
+    const maxH = lenDau
+      ? Math.max(160, Math.round(dayThay - dauTrang - 12))
+      : coPhim
+      ? Math.max(140, Math.round(dayThay - r.bottom - m - 8))
+      : Math.max(220, Math.round(Math.min(window.innerHeight * 0.7, dayThay - r.bottom - m - 8)));
+    const vert = lenDau
+      ? { top: window.scrollY + dauTrang + 4 }
+      : openUp ? { top: r.top + window.scrollY - m, len: true } : { top: r.bottom + window.scrollY + m };
     const horiz = hep
       ? { left: 8 + window.scrollX, w: window.innerWidth - 16 }
       : align === "right"

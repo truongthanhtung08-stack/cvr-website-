@@ -2,7 +2,7 @@
 // nạp chéo hai component (FilterBar ↔ TruongLocTrangChu) — nạp chéo làm trang chủ không chạy được.
 import { typeGroupsFor, normalizeVi, emptyFilters, dacDiemOptions, type Filters } from "@/lib/filters";
 import { tenLoaiHinhMenu } from "@/lib/categories";
-import { docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
+import { chuChuaHieu, docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
 import { phuongMoiCua, phuongMoiCuaQuan, newProvinceOf } from "@/lib/locations";
 import { provincesOld, provincesNew } from "@/lib/diaDanhNguon";
 
@@ -188,6 +188,9 @@ export function cauDaHieu(raw: string, mb: "ban" | "thue"): string | null {
   if (!goc) return null;
   const sua = suaChinhTa(goc);
   if (!sua) return null;
+  // CÂU CÓ CHỮ KHÔNG HIỂU (viết bậy, chữ lạ) → KHÔNG hiện dòng sửa (anh 08/11/2026: "không gợi ý được thì thôi, CẤM gợi ý bậy" — trước đây
+  // "…sổ hồngke ca goi ý thay thê kh" bị "sửa" thành "kề", "thê" vô nghĩa, in đậm)
+  if (chuChuaHieu(goc) || chuChuaHieu(sua)) return null;
   const f = locTuCau(goc, mb);
   const boCapTen = (x: string) => x.replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thị xã|Thành phố)\s+/i, "");
   const thoat = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

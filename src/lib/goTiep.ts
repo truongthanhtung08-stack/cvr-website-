@@ -400,7 +400,8 @@ export function timDuAnTrongCau(nq: string, ds: DuAnLoc[]): { d: DuAnLoc; c: str
   return ds.map((d) => ({ d, c: dauTen(d.ten) })).filter((x) => x.c).sort((a, b) => b.c.length - a.c.length)[0];
 }
 
-export function cauDaHieu(raw: string, md: "ban" | "thue" | "duan", ds: DuAnLoc[] = []): { cau: string; soPhan: number } {
+/** giuChuLa = false: dòng "Đang hiển thị kết quả cho …" — bỏ chữ không hiểu (anh 08/11/2026: không gợi ý được thì thôi, CẤM gợi ý bậy) */
+export function cauDaHieu(raw: string, md: "ban" | "thue" | "duan", ds: DuAnLoc[] = [], giuChuLa = true): { cau: string; soPhan: number } {
   const cau = thuongVi(raw);
   const p = parseQuery(cau);
   const nq = ` ${normalizeVi(cau).replace(/[^a-z0-9]+/g, " ")} `;
@@ -457,7 +458,7 @@ export function cauDaHieu(raw: string, md: "ban" | "thue" | "duan", ds: DuAnLoc[
   // chữ chưa đọc được thành trường nào (trừ tên dự án / chủ đầu tư đã nhận) giữ cuối — trang dò trong nội dung
   const daNhan = [khopDa?.c, cdt].filter((x): x is string => !!x);
   const la = chuChuaHieu(cau, daNhan);
-  if (la) phan.push(la.replace(/,/g, ""));
+  if (la && giuChuLa) phan.push(la.replace(/,/g, ""));
   return { cau: phan.join(" "), soPhan: so };
 }
 
