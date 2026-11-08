@@ -751,15 +751,16 @@ html:has(.cvr-sheet) .an-khi-go-phim.float-above-tabbar { display: none !importa
 /* CUỘN — dự phòng cho trình duyệt chưa hỗ trợ animation-timeline (HieuUngCham gắn .cho-hien / .da-hien) */
 .cho-hien { opacity: 0; transform: translate3d(0, 20px, 0); }
 .cho-hien.da-hien { opacity: 1; transform: none; transition: opacity 450ms var(--ease-out-soft), transform 450ms var(--ease-out-soft); }
-/* HIỆN DẦN KHI CUỘN (anh 08/11/2026, kiểu apple.com): CHỈ tiêu đề khối (section h2). ⛔ KHÔNG gắn vào thẻ tin (article): hiệu ứng
-   transform làm thẻ thành khung chứa cho phần tử fixed bên trong → thanh khung xem ảnh hiện lọt vào thẻ trang chủ (lỗi 08/11/2026). Tiêu đề trồi lên + hiện
+/* HIỆN DẦN KHI CUỘN (anh 08/11/2026, kiểu apple.com): thẻ tin, thẻ dự án, bài viết (article) + tiêu đề khối (section h2). ⛔ Mọi khung
+   nổi (xem ảnh, video, bảng chọn số, hộp xác thực) PHẢI createPortal ra body — nằm trong thẻ thì hiệu ứng transform nhốt khung vào thẻ
+   (lỗi 08/11/2026: thanh khung xem ảnh lọt vào thẻ trang chủ; đã đưa hết ra ngoài). Trồi lên + hiện
    dần khi cuộn tới. Gắn thẳng vào thanh cuộn (animation-timeline: view()) — chạy trên GPU, KHÔNG JS, không bao giờ kẹt ẩn; trình duyệt
    chưa hỗ trợ thì nội dung hiện bình thường. Khoảng chạy "cover 0–12%": thứ đã nằm trong màn hình lúc mở trang (ảnh đầu, LCP) hiện đủ
    ngay — CLAUDE.md 0C2. Trong dải trượt ngang không chạy (dải không cuộn dọc). */
 @keyframes hien-khi-cuon { from { opacity: 0; transform: translate3d(0, 20px, 0); } to { opacity: 1; transform: none; } }
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    main section h2 {
+    main article, main section h2 {
       animation: hien-khi-cuon linear both;
       animation-timeline: view();
       animation-range: cover 0% cover 12%;

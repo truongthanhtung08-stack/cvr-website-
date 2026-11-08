@@ -11,7 +11,7 @@ import { usePathname } from "next/navigation";
 //    · nhấc tay → sáng lại êm 220ms; chạm rất nhanh (< 50ms) vẫn nháy một nhịp lúc nhấc
 //    · ngón tay đi > 8px / trang cuộn / huỷ chạm → bỏ ngay (vuốt cuộn không làm thẻ nhấp nháy — lỗi giật trước đây)
 //    · chuột (máy tính): nhấn là mờ, nhả là sáng
-// 2. CUỘN: tiêu đề khối (main section h2) trồi lên + hiện dần — KHÔNG thẻ tin (transform làm phần tử fixed trong thẻ lọt vào thẻ, lỗi 08/11/2026). Trình duyệt hỗ trợ animation-timeline
+// 2. CUỘN: thẻ, bài viết (main article) + tiêu đề khối (main section h2) trồi lên + hiện dần (khung nổi trong thẻ đã createPortal ra body). Trình duyệt hỗ trợ animation-timeline
 //    thì CSS lo (globals.css, chạy trên GPU); không hỗ trợ (Samsung Internet cũ…) thì dự phòng ở đây bằng IntersectionObserver —
 //    chỉ ẩn thứ NẰM DƯỚI màn hình lúc đó (đầu trang, ảnh LCP luôn hiện ngay — CLAUDE.md 0C2), không bao giờ kẹt ẩn.
 const CHO = 50;
@@ -89,7 +89,7 @@ export default function HieuUngCham() {
     const quet = () => {
       khung = 0;
       const day = window.innerHeight;
-      document.querySelectorAll<HTMLElement>("main section h2:not([data-hien])").forEach((el) => {
+      document.querySelectorAll<HTMLElement>("main article:not([data-hien]), main section h2:not([data-hien])").forEach((el) => {
         el.dataset.hien = "1";
         if (el.getBoundingClientRect().top > day) { el.classList.add("cho-hien"); io.observe(el); } // chỉ thứ dưới màn hình
       });

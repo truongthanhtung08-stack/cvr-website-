@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -82,7 +83,8 @@ export default function HopXacThucSo({
 
   const next = typeof window === "undefined" ? "/" : window.location.pathname + window.location.search;
 
-  return (
+  // Đặt ra ngoài cùng trang (createPortal vào body, 08/11/2026) — mở từ nút liên hệ trong thẻ tin: nằm trong thẻ thì bị nhốt khi thẻ có hiệu ứng
+  return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={onDong}>
       <div
         className="w-full max-w-sm rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl"
@@ -147,7 +149,8 @@ export default function HopXacThucSo({
           Để sau
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

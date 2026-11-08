@@ -60,9 +60,12 @@ export default function ScrollTopOnRoute() {
   const pathname = usePathname();
   const lanDau = useRef(true);
   const quayLai = useRef(false); // vừa bấm Quay lại / Tiến tới
+  // Bản chụp chỗ đã lưu NGAY lúc bấm Quay lại — trước khi trang cũ/mới phát sự kiện cuộn ghi đè (đo 08/11/2026: ‹ từ trang 2 về trang chủ
+  // rơi y = 1.296 vì lúc đổi trang có nhịp cuộn ghi vào địa chỉ mới)
+  const banChup = useRef<BanDo | null>(null);
 
   useEffect(() => {
-    const onPop = () => { quayLai.current = true; };
+    const onPop = () => { quayLai.current = true; banChup.current = docBanDo(); };
     // Người dùng CHẠM/BẤM/GÕ PHÍM = chủ động mở trang mới → huỷ cờ quay lại.
     // Bảo đảm bấm tab hay mục menu LUÔN về đầu trang (chỗ thấy logo), không bao
     // giờ bị cờ còn sót lại làm nhảy vào giữa trang.
@@ -91,6 +94,9 @@ export default function ScrollTopOnRoute() {
     const laTrangNhap = pathname.startsWith("/dang-tin");
     const nenKhoiPhuc = !laTrangNhap && ((dauTien && taiLaiTrang) || quayLai.current);
     quayLai.current = false;
+    // Mở trang MỚI → chỗ đã lưu của lần xem trước (cùng địa chỉ) không còn đúng: ghi lại đầu trang ngay. Không ghi thì khách mở trang chủ,
+    // chưa cuộn, sang Mua bán rồi ‹ → rơi về chỗ cũ của lần trước (đo 08/11/2026: về trang chủ ở y = 7.251 thay vì đầu trang).
+    if (!nenKhoiPhuc) ghiViTri(diaChi(), 0);
 
     // Địa chỉ có NEO (#ket-qua, #goi-day-tin…) → đích là ĐẦU MỤC ĐÓ, không phải đầu trang. Trước đây chỉ "để trình duyệt tự cuộn"
     // — nhưng mở từ TRANG KHÁC trong web (menu Báo giá → Gói đẩy tin, trang Quy định → Gói tin đăng) thì Next giữ nguyên chỗ
@@ -103,7 +109,8 @@ export default function ScrollTopOnRoute() {
 
     {
       // Khôi phục thì về đúng chỗ đã đọc; mở trang mới thì về ĐẦU TRANG.
-      const daLuu = docBanDo()[diaChi()];
+      const daLuu = (banChup.current ?? docBanDo())[diaChi()];
+      banChup.current = null;
       const y = nenKhoiPhuc ? (daLuu ?? 0) : 0;
       // Tải cả trang (F5 / mở lại từ lịch sử) mà chưa có chỗ đã lưu → trình duyệt đã ở đầu trang, để nguyên. QUAY LẠI TRONG WEB thì
       // KHÔNG được để nguyên dù chỗ đã đứng là đầu trang (y = 0): Next giữ chỗ cuộn của trang vừa rời → trang chủ nhảy xuống 2.500px
@@ -155,8 +162,11 @@ export default function ScrollTopOnRoute() {
       const HAN = nenKhoiPhuc ? 4000 : 1200;
       const batDau = performance.now();
       let idFrame = 0;
+      const url0 = diaChi();
       const bam = () => {
-        if (!con) return;
+        // Địa chỉ đã đổi trong lúc đang bám (vd ‹ đóng danh sách ?muc= của trang chủ — cùng pathname nên effect này không chạy lại) → thôi
+        // bám, kẻo kéo trang về chỗ của địa chỉ cũ (đo 08/11/2026: ‹ từ Tin tức về trang chủ rơi y = 600 thay vì chỗ bấm Xem thêm)
+        if (!con || diaChi() !== url0) return;
         const d = dich();
         if (d != null && Math.abs(window.scrollY - d) > 2) window.scrollTo({ top: d, left: 0, behavior: "instant" });
         if (performance.now() - batDau < HAN) idFrame = requestAnimationFrame(bam);
@@ -184,9 +194,10 @@ export default function ScrollTopOnRoute() {
     const luu = () => {
       if (cho || dangKhoaCuon()) return;
       cho = true;
+      const url = diaChi(); // địa chỉ LÚC cuộn — rAF chạy sau, có thể đã sang trang khác (‹ về trang chủ ghi nhầm chỗ cuộn của trang vừa rời, đo 08/11/2026)
       requestAnimationFrame(() => {
         cho = false;
-        if (!dangKhoaCuon()) ghiViTri(diaChi(), window.scrollY);
+        if (!dangKhoaCuon() && diaChi() === url) ghiViTri(url, window.scrollY);
       });
     };
     window.addEventListener("scroll", luu, { passive: true });

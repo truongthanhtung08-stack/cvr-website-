@@ -1,5 +1,7 @@
 "use client";
 
+import { createPortal } from "react-dom";
+
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { khoaCuon, useNutQuayLai } from "@/lib/khoaCuon";
@@ -230,7 +232,9 @@ export default function PhotoList({
   const doMo = Math.min(0.5, Math.abs(keo) / 520);   // kéo càng xa càng mờ
   const hieuUng = "transform 0.26s cubic-bezier(0.22,1,0.36,1), opacity 0.24s ease-out";
 
-  return (
+  // KHUNG TOÀN MÀN HÌNH ĐẶT RA NGOÀI CÙNG TRANG (createPortal vào body — 08/11/2026): nằm trong thẻ tin thì hễ thẻ có hiệu ứng chuyển động
+  // (transform) là khung bị nhốt trong thẻ (thanh khung xem ảnh lọt vào thẻ trang chủ). Cách chuẩn như bảng chọn / bảng lọc của web.
+  return createPortal(
     <div className="fixed inset-0 z-[85] flex">
       <div
         ref={boc}
@@ -255,7 +259,8 @@ export default function PhotoList({
           </button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[15px] font-semibold text-cvr-ink">{title}</p>
-            <p className="text-xs text-cvr-muted">{videos.length > 0 ? `${videos.length} video · ` : ""}{images.length} ảnh</p>
+            {/* BỎ dòng "N ảnh" (anh 08/11/2026: "cái nào cũng 6 ảnh là sao — bỏ số ảnh phía dưới đi, còn ghi thì ghi cho đúng"): thẻ tin
+                chỉ mang 6 ảnh đầu cho trang nhẹ nên mở từ thẻ đếm sai. Số ảnh đúng đã có trên thẻ / khung ảnh. */}
           </div>
           {banDo && (
             <button type="button" aria-pressed={moBanDo} onClick={() => setMoBanDo((v) => !v)} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-cvr-blue px-3 text-[13px] font-semibold text-white">
@@ -303,9 +308,6 @@ export default function PhotoList({
                 loading={i < 2 ? "eager" : "lazy"}
                 className="h-auto w-full"
               />
-              <span className="absolute bottom-2 right-2 rounded-md bg-black/65 px-2 py-0.5 text-xs font-medium text-white">
-                {i + 1}/{images.length}
-              </span>
             </button>
             {listingId && <ThanhTuongTac listingId={listingId} anhSo={videos.length + i} dl={dl} capNhat={napTT} chiaSe={chiaSe} />}
             </div>
@@ -340,6 +342,7 @@ export default function PhotoList({
           </aside>
         </>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

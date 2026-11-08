@@ -1,5 +1,7 @@
 "use client";
 
+import { createPortal } from "react-dom";
+
 import { useEffect, useRef, useState } from "react";
 import { useNutQuayLai } from "@/lib/khoaCuon";
 import { asset } from "@/lib/asset";
@@ -76,7 +78,9 @@ export default function VideoToanManHinh({
   const nut =
     "flex h-11 items-center gap-2 rounded-full px-4 text-[15px] font-medium text-white active:bg-white/20";
 
-  return (
+  // KHUNG TOÀN MÀN HÌNH ĐẶT RA NGOÀI CÙNG TRANG (createPortal vào body — 08/11/2026): nằm trong thẻ tin thì hễ thẻ có hiệu ứng chuyển động
+  // (transform) là khung bị nhốt trong thẻ (thanh khung xem ảnh lọt vào thẻ trang chủ). Cách chuẩn như bảng chọn / bảng lọc của web.
+  return createPortal(
     <div className="fixed inset-0 z-[100] bg-black" onPointerDown={danhThuc}>
       {/* HAI NÚT ĐÈ THẲNG LÊN VIDEO, LUÔN HIỆN — không tự ẩn như nút của trình
           duyệt. Nút thu nhỏ đặt ĐÚNG GÓC TRÊN PHẢI, cùng chỗ với nút phóng to ở
@@ -158,6 +162,7 @@ export default function VideoToanManHinh({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

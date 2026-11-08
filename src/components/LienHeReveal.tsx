@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { napSupabase, coPhienDangNhap } from "@/lib/supabase/nap";
 import { tachNhieuSdt } from "@/lib/phone";
 import HopXacThucSo, { veDaLuu } from "@/components/HopXacThucSo";
@@ -268,7 +269,8 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
           <PhoneIcon />
           Gọi ngay
         </button>
-        {chon && (
+        {/* Bảng chọn số đặt ra ngoài cùng trang (createPortal vào body, 08/11/2026) — nằm trong thẻ tin thì bị nhốt khi thẻ có hiệu ứng */}
+        {chon && createPortal(
           <div className="fixed inset-0 z-[80] flex items-end bg-black/40" onClick={() => setChon(null)}>
             <div className="w-full space-y-2.5 rounded-t-2xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
               <p className="text-center text-sm font-semibold text-cvr-ink">{chon === "goi" ? "Gọi số nào?" : "Nhắn Zalo số nào?"}</p>
@@ -285,7 +287,8 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
               ))}
               <button type="button" onClick={() => setChon(null)} className="w-full py-2 text-sm text-cvr-muted">Đóng</button>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </>
     );

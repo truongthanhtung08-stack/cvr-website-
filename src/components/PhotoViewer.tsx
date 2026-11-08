@@ -1,5 +1,7 @@
 "use client";
 
+import { createPortal } from "react-dom";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import MapPaneMo from "@/components/MapPaneMo";
 import { useSaved } from "@/lib/useSaved";
@@ -259,7 +261,8 @@ export default function PhotoViewer({
   const doMo = Math.min(1, Math.abs(keo.y) / 400);
   const tyLeThoat = 1 - doMo * 0.2;
 
-  return (
+  // KHUNG TOÀN MÀN HÌNH ĐẶT RA NGOÀI CÙNG TRANG (createPortal vào body — 08/11/2026): xem chú thích PhotoList.
+  return createPortal(
     <div
       className="fixed inset-0 z-[90] select-none overscroll-contain"
       style={{
@@ -328,7 +331,6 @@ export default function PhotoViewer({
 
           <div className="min-w-0 flex-1">
             {title && <p className="truncate text-[15px] font-semibold text-white">{title}</p>}
-            <p className="text-xs text-white/75">{idx + 1} / {images.length}</p>
           </div>
 
           <button
@@ -411,6 +413,7 @@ export default function PhotoViewer({
           <div className="min-h-0 flex-1"><MapPaneMo query={banDo.q} cao="h-full w-full" /></div>
         </aside>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

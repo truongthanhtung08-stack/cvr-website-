@@ -1,5 +1,7 @@
 "use client";
 
+import { createPortal } from "react-dom";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
 import MapPaneMo from "@/components/MapPaneMo";
@@ -109,7 +111,9 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
   const nVid = slides.filter((x) => x.kind === "video").length;
   const nut = "absolute top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/30";
 
-  return (
+  // KHUNG TOÀN MÀN HÌNH ĐẶT RA NGOÀI CÙNG TRANG (createPortal vào body — 08/11/2026): nằm trong thẻ tin thì hễ thẻ có hiệu ứng chuyển động
+  // (transform) là khung bị nhốt trong thẻ (thanh khung xem ảnh lọt vào thẻ trang chủ). Cách chuẩn như bảng chọn / bảng lọc của web.
+  return createPortal(
     <div ref={goc0} className="fixed inset-0 z-[90] flex bg-black/95" onClick={thoat}>
      <div className="flex min-w-0 flex-1 flex-col">
       {/* Thanh trên: tiêu đề · số thứ tự · đóng */}
@@ -201,6 +205,7 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
           <div className="min-h-0 flex-1"><MapPaneMo query={banDo.q} cao="h-full w-full" /></div>
         </aside>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { coPhienDangNhap } from "@/lib/supabase/nap";
 
 // ============================================================================
 // NÚT QUAY LẠI — CHỈ TRÊN ĐIỆN THOẠI (< lg)
@@ -113,6 +114,23 @@ function ghiDuongDi(pathname: string) {
     }
   } catch { /* bị chặn bộ nhớ → dùng luật mặc định */ }
 }
+// TRANG VÀO ĐẦU TIÊN (từ Google, Zalo, Facebook, gõ địa chỉ): đánh dấu bước lịch sử đó (cvrVao). ‹ ở bước này KHÔNG lùi lịch sử — lùi là
+// ra khỏi web (về Google) — mà về trang cha. Trước đây xét history.length > 1: tab đã mở Google trước đó thì luôn > 1 → ‹ ra Google
+// (08/11/2026). Dấu nằm trong history.state nên F5 vẫn giữ; Next.js giữ khoá riêng khi tự ghi lại state (như cvrKq).
+let daDanhDauVao = false;
+function danhDauTrangVao() {
+  if (daDanhDauVao) return;
+  daDanhDauVao = true;
+  try {
+    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    if (nav && nav.type !== "navigate") return; // F5 / lùi-tiến tải lại: dấu (nếu có) đã nằm sẵn trong state
+    let tuTrongWeb = false;
+    try { tuTrongWeb = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch { /* referrer lạ */ }
+    if (!tuTrongWeb) history.replaceState({ ...(history.state ?? {}), cvrVao: 1 }, "");
+  } catch { /* bỏ qua */ }
+}
+const laTrangVao = () => { try { return !!(history.state as Record<string, unknown> | null)?.cvrVao; } catch { return false; } };
+
 function docPhien(khoa: string): string {
   try { return sessionStorage.getItem(khoa) ?? ""; } catch { return ""; }
 }
@@ -126,7 +144,7 @@ export default function BackBar() {
   // tin liên tiếp vẫn biết đang đứng ở tin nào, và bấm Quay lại là về đúng danh
   // sách vừa rời (chủ dự án chốt 11/9/2026).
   const [tenTrang, setTenTrang] = useState("");
-  useEffect(() => { ghiDuongDi(pathname); }, [pathname]);
+  useEffect(() => { danhDauTrangVao(); ghiDuongDi(pathname); }, [pathname]);
   useEffect(() => {
     let con = true;
     const doc = () => {
@@ -181,7 +199,9 @@ export default function BackBar() {
     // Lùi thật thì mỗi lần rơi về một nơi khác nhau, còn bỏ dở giữa chừng mà bị
     // ném ra trang chủ thì không biết tin mình đang ở đâu. Về tài khoản là chỗ
     // quản lý tin, đúng nơi khách cần tới (chủ dự án chốt 11/9/2026).
-    if (goc === "dang-tin") {
+    // Chưa đăng nhập (trang chỉ hiện ô đăng nhập) → không có tin nào đang soạn: ‹ lùi như mọi trang. Đưa về /tai-khoan là bị đá sang
+    // trang Đăng nhập — khách muốn thoát lại bị bắt đăng nhập (đo 08/11/2026).
+    if (goc === "dang-tin" && coPhienDangNhap()) {
       router.push("/tai-khoan");
       return;
     }
@@ -212,7 +232,7 @@ export default function BackBar() {
       return;
     }
     // NÚT BACK = LÙI THẬT. Còn lịch sử thì lùi đúng trang vừa xem.
-    if (typeof window !== "undefined" && window.history.length > 1) {
+    if (typeof window !== "undefined" && window.history.length > 1 && !laTrangVao()) {
       router.back();
       return;
     }
