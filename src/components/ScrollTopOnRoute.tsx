@@ -103,8 +103,12 @@ export default function ScrollTopOnRoute() {
 
     {
       // Khôi phục thì về đúng chỗ đã đọc; mở trang mới thì về ĐẦU TRANG.
-      const y = nenKhoiPhuc ? (docBanDo()[diaChi()] ?? 0) : 0;
-      if (nenKhoiPhuc && y <= 0) return; // chưa có vị trí đã lưu → để nguyên
+      const daLuu = docBanDo()[diaChi()];
+      const y = nenKhoiPhuc ? (daLuu ?? 0) : 0;
+      // Tải cả trang (F5 / mở lại từ lịch sử) mà chưa có chỗ đã lưu → trình duyệt đã ở đầu trang, để nguyên. QUAY LẠI TRONG WEB thì
+      // KHÔNG được để nguyên dù chỗ đã đứng là đầu trang (y = 0): Next giữ chỗ cuộn của trang vừa rời → trang chủ nhảy xuống 2.500px
+      // của trang Mua bán (đo 08/11/2026: Home → Mua bán → cuộn → ‹ về trang chủ lệch hẳn khỏi 3 menu).
+      if (nenKhoiPhuc && dauTien && !(y > 0)) return;
 
       // BÁM THEO KHUNG HÌNH — kể cả khi về đầu trang. Bấm một thẻ tin từ giữa danh
       // sách dài: trình duyệt giữ nguyên vị trí cũ cho tới khi trang mới dựng

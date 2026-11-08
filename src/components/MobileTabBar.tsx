@@ -11,7 +11,6 @@ import { useSoViecKhach, tongSoViec } from "@/lib/useSoTinCanXem";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { ZALO_OA_URL } from "@/lib/lienHe";
 import { useAnKhiCuon } from "@/lib/useAnKhiCuon";
-import { useTabTrangChu } from "@/lib/tabTrangChu";
 
 // Trang có thanh dưới (người mua có nút Tin nhắn; khu Tài khoản thì nút chat nổi đè thẻ "Số dư ví" — lỗi 23) — Chatbox ẩn nút
 // chat nổi trên điện thoại ở mọi trang có thanh dưới (07/11/2026)
@@ -191,8 +190,6 @@ export default function MobileTabBar() {
   // Chấm đỏ "Tin đăng" (chế độ người bán): chờ duyệt · bị từ chối · sắp hết hạn — chỉ đếm khi đang ở khu tài khoản (06/11/2026)
   // Đăng nhập rồi thì Ở MỌI TRANG đều đếm (chủ dự án 06/11/2026: "đăng nhập vào một tài khoản thì tất cả giống nhau")
   const soViec = useSoViecKhach(user?.id, pathname);
-  // Trang chủ đang xem riêng Mua bán / Cho thuê (nút ở khối tin) → không phải trang chủ tổng → Home không xanh (anh 08/11/2026)
-  const tabTC = useTabTrangChu();
 
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
@@ -224,7 +221,7 @@ export default function MobileTabBar() {
   const onHoSo = pathname.startsWith("/tai-khoan") || pathname.startsWith("/dang-nhap") || pathname.startsWith("/dang-ky");
   const tabs = [
     // THỨ TỰ (chủ dự án 07/11/2026): Trang chủ · ♡ Lưu · + Đăng tin (giữa) · Tin nhắn · Tài khoản
-    { href: "/", label: "Home", icon: "home" as const, on: pathname === "/" && tabTC !== "Mua bán" && tabTC !== "Cho thuê" }, // chủ dự án 07/11/2026: "Trang chủ = Home"
+    { href: "/", label: "Home", icon: "home" as const, on: pathname === "/" }, // chủ dự án 07/11/2026: "Trang chủ = Home"
     // ♡ TIN ĐÃ LƯU chuyển từ đầu trang xuống đây (chủ dự án 07/11/2026) — cùng chữ "Lưu", cùng chấm đỏ đếm số tin như nút đầu trang
     { href: "/tin-luu", label: "Lưu", icon: "tim" as const, on: onLuu },
     { href: "/dang-tin", label: "Đăng tin", icon: "plus" as const, on: onDang },

@@ -6,7 +6,6 @@ import PropertyCard from "@/components/PropertyCard";
 import { featuredListings, type Listing } from "@/lib/data";
 import ListingBrowser from "@/components/ListingBrowser";
 import { useHomeSection, HOME_RESET_EVENT } from "@/components/HomeExpand";
-import { baoTabTrangChu } from "@/lib/tabTrangChu";
 import { tierRank, tierFromBadge } from "@/lib/packages";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useTamDung } from "@/lib/useAutoSlide";
@@ -32,8 +31,6 @@ const MOB_LAN = 10; // điện thoại: ban đầu 10 tin, mỗi lần "Xem thê
 // items: tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
 export default function FeaturedListings({ items = featuredListings }: { items?: Listing[] }) {
   const [activeTab, setActiveTab] = useState("Tất cả");
-  // Báo thanh dưới nút đang chọn (08/11/2026): xem riêng Mua bán / Cho thuê thì nút Home không xanh
-  useEffect(() => { baoTabTrangChu(activeTab); return () => baoTabTrangChu("Tất cả"); }, [activeTab]);
   const [slideIdx, setSlideIdx] = useState(0);
   // Chạm thì dừng rồi TỰ CHẠY LẠI — màn cảm ứng không có động tác rê chuột ra,
   // để setPaused(true) trơ như cũ là chạm một cái slide chết tới khi tải lại trang.
@@ -45,14 +42,13 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   // quay lại (Back) đúng chỗ cũ. Vào trang chủ bằng cách khác (logo, gõ địa chỉ) thì về mặc định.
   useEffect(() => {
     try {
-      const nho = JSON.parse(sessionStorage.getItem("cl-tc-quay") ?? "null") as { lan: number; y: number; tab?: string } | null;
+      const nho = JSON.parse(sessionStorage.getItem("cl-tc-quay") ?? "null") as { lan: number; y: number } | null;
       sessionStorage.removeItem("cl-tc-quay");
       const laBack = (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type === "back_forward"
         || (window.history.state && nho !== null);
       if (nho && laBack) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLanXem(nho.lan);
-        if (nho.tab === "Mua bán" || nho.tab === "Cho thuê") setActiveTab(nho.tab); // về từ trang tổng: giữ nút đang chọn
         requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: nho.y })));
         window.setTimeout(() => window.scrollTo({ top: nho.y }), 350); // đè lại nếu trình duyệt tự cuộn sau
       }
@@ -143,25 +139,8 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
           </p>
         </div>
 
-        {/* ĐIỆN THOẠI (chủ dự án 07/11/2026): hai nút Mua bán nhà đất · Cho thuê nhà đất THAY CẢ HÀNG nút loại hình bên dưới — cùng
-            đường dẫn, cùng chữ với hai link bên phải tiêu đề ở máy tính; thay ba nút Mua bán · Cho thuê · Dự án đã bỏ khỏi thanh dưới. */}
-        <div className="mt-3 flex gap-2 sm:hidden">
-          {/* TAB LỌC TẠI CHỖ như hàng tab cũ: bấm → khối nổi bật chỉ còn tin bán / tin thuê; bấm lại tab đang chọn → về Tất cả */}
-          {/* ĐƯỜNG DẪN THẬT như Batdongsan (anh 08/11/2026: "đây là logic Google đọc"): nút mang href /mua-ban, /cho-thue để Google
-              đi từ trang chủ sang trang tổng; khách bấm vẫn lọc tại chỗ như đã chốt 07/11. */}
-          {([["Mua bán", "Mua bán nhà đất", "/mua-ban"], ["Cho thuê", "Cho thuê nhà đất", "/cho-thue"]] as const).map(([ma, nhan, href]) => (
-            <a
-              key={ma}
-              href={href}
-              onClick={(e) => { e.preventDefault(); setActiveTab(activeTab === ma ? "Tất cả" : ma); setSlideIdx(0); setLanXem(0); trackRef.current?.scrollTo({ left: 0 }); }}
-              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                activeTab === ma ? "bg-cvr-ink text-white shadow-lg shadow-black/10" : "border border-black/15 text-cvr-body"
-              }`}
-            >
-              {nhan}
-            </a>
-          ))}
-        </div>
+        {/* Điện thoại: 2 nút lọc Mua bán nhà đất · Cho thuê nhà đất ĐÃ BỎ (anh 08/11/2026: "bỏ 2 dòng dưới") — đã có 3 menu Mua bán ·
+            Cho thuê · Dự án ngay trên dòng tiêu đề (BaMucChinh). Khối này là danh sách tổng. */}
         {/* Tabs loại hình — chỉ MÁY TÍNH (điện thoại thay bằng hai nút trên, 07/11/2026) */}
         <div className="no-scrollbar -mx-4 mt-3 hidden gap-2 sm:flex overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-5 sm:flex-wrap sm:overflow-visible sm:px-0">
           {typeTabs.map((t) => (
@@ -194,28 +173,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
               </div>
               {/* MỘT NÚT (chủ dự án 09/10/2026): bấm "Xem thêm" 1 lần → đủ 20 tin; bấm nữa → mở danh sách
                   theo trang, BẮT ĐẦU TỪ TIN SỐ 1 (chủ dự án 23/10/2026: danh sách đầy đủ theo cấp → ngày đăng/đẩy, như trang Mua bán). Logo/Trang chủ về mặc định. */}
-              {/* Đang chọn Mua bán / Cho thuê → "Xem thêm" là ĐƯỜNG DẪN sang trang tổng /mua-ban, /cho-thue (anh 08/11/2026, như
-                  Batdongsan "Tin nhà đất bán mới nhất → /nha-dat-ban"). Đang ở "Tất cả" → giữ như cũ (+10 tin rồi mở danh sách). */}
-              {(activeTab === "Mua bán" || activeTab === "Cho thuê") ? (
-                <div className="mt-6 flex justify-center">
-                  <Link
-                    href={activeTab === "Mua bán" ? "/mua-ban" : "/cho-thue"}
-                    prefetch={false}
-                    className="btn-xemthem"
-                    // NỐI NÚT ‹ (anh 08/11/2026: "bỏ 2 menu Mua bán, Cho thuê thì phải liên kết với nút Back"): đánh dấu trang tổng là
-                    // trang đi ra từ trang chủ → nút ‹ dính cạnh ô tìm hiện (FilterBar veChoGo), bấm là về đúng chỗ + đúng nút đang chọn.
-                    onClick={() => {
-                      try {
-                        sessionStorage.setItem("cvr-kq-den", activeTab === "Mua bán" ? "/mua-ban" : "/cho-thue");
-                        sessionStorage.setItem("cl-tc-quay", JSON.stringify({ lan: lanXem, y: window.scrollY, tab: activeTab }));
-                      } catch { /* trình duyệt chặn sessionStorage → vẫn sang trang, chỉ không có nút ‹ */ }
-                    }}
-                  >
-                    Xem thêm
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  </Link>
-                </div>
-              ) : sorted.length > MOB_LAN && (
+              {sorted.length > MOB_LAN && (
                 <div className="mt-6 flex justify-center">
                   <button
                     type="button"
