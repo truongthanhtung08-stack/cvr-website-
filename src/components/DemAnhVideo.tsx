@@ -16,8 +16,9 @@ export const IconPlay = () => (
 export default function DemAnhVideo({ soAnh, soVideo = 0, className }: { soAnh: number; soVideo?: number; className: string }) {
   return (
     <span className={`pointer-events-none flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[12px] font-semibold text-white ${className}`}>
-      <IconAnh />{soAnh}
-      {soVideo > 0 && <><span className="ml-1.5"><IconPlay /></span>{soVideo}</>}
+      {/* Chữ ẩn "ảnh", "video" (08/11/2026): Google đọc thẻ thành "10 | Gold | …" — số đứng trơ. Giao diện không đổi. */}
+      <IconAnh />{soAnh}<span className="sr-only"> ảnh</span>
+      {soVideo > 0 && <><span className="ml-1.5"><IconPlay /></span>{soVideo}<span className="sr-only"> video</span></>}
     </span>
   );
 }
