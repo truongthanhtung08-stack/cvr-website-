@@ -16,12 +16,17 @@
 // Nút cao 40px (>= 44px cả padding) cho ngón tay bấm trúng — chuẩn chạm di động.
 // ============================================================================
 
+// DÃY SỐ TRANG: 1 2 3 4 5 … n (anh 08/11/2026) — luôn thấy 5 trang liền quanh trang đang xem (đầu danh sách: 1–5, cuối: n−4…n),
+// cộng trang đầu + trang cuối, phần lược là "…". Tối đa 7 ô số.
 export function daySoTrang(hienTai: number, tong: number): (number | "…")[] {
+  const KHUNG = 5;
+  let tu = Math.max(1, hienTai - Math.floor(KHUNG / 2));
+  const den = Math.min(tong, tu + KHUNG - 1);
+  tu = Math.max(1, den - KHUNG + 1);
   const so: (number | "…")[] = [];
-  for (let p = 1; p <= tong; p++) {
-    if (p === 1 || p === tong || Math.abs(p - hienTai) <= 1) so.push(p);
-    else if (so[so.length - 1] !== "…") so.push("…");
-  }
+  if (tu > 1) { so.push(1); if (tu > 2) so.push("…"); }
+  for (let p = tu; p <= den; p++) so.push(p);
+  if (den < tong) { if (den < tong - 1) so.push("…"); so.push(tong); }
   return so;
 }
 
@@ -52,7 +57,7 @@ export default function PhanTrang({
     doiTrang(p);
   };
   const oSo = (p: number) =>
-    `h-10 min-w-10 rounded-lg px-3 text-sm font-medium transition ${
+    `h-10 min-w-8 rounded-lg px-1.5 text-sm font-medium transition sm:min-w-10 sm:px-3 ${
       p === hienTai
         ? "bg-cvr-ink text-white"
         : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
@@ -62,13 +67,13 @@ export default function PhanTrang({
     <nav aria-label="Phân trang" className={`flex flex-col items-center gap-2 ${className}`}>
       {/* flex-wrap = lớp chặn cuối: dù số trang có ba chữ số thì hàng cũng
           XUỐNG DÒNG chứ không bao giờ tràn ngang khỏi màn hình điện thoại. */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5">
+      <div className="flex flex-nowrap items-center justify-center gap-0.5 sm:gap-1.5">{/* một hàng, không xuống dòng (anh 08/11/2026) */}
         <button
           type="button"
           disabled={hienTai === 1}
           onClick={() => doiTrang(hienTai - 1)}
           aria-label="Trang trước"
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex h-10 w-8 items-center justify-center rounded-lg border border-cvr-line sm:w-10 text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30"
         >
           ‹
         </button>
@@ -104,7 +109,7 @@ export default function PhanTrang({
           disabled={hienTai === tong}
           onClick={() => doiTrang(hienTai + 1)}
           aria-label="Trang sau"
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex h-10 w-8 items-center justify-center rounded-lg border border-cvr-line sm:w-10 text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30"
         >
           ›
         </button>

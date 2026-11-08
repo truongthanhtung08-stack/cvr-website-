@@ -396,8 +396,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
           {/* Khoảng thở giữa tên · địa chỉ · thanh mục (trước chật — chủ dự án 30/10/2026) */}
+          {/* ĐIỆN THOẠI: ẢNH LÊN TRÊN, tên + địa chỉ xuống dưới ảnh (anh 08/11/2026: "đưa các dòng trên xuống dưới — hình lên trên"); máy tính giữ tên trên ảnh */}
+          <div className="flex flex-col">
           {(
-          <div className={`pb-5 mt-3`}>
+          <div className={`pb-5 mt-3 max-sm:order-2`}>
             <div className="min-w-0">
             {/* Bỏ nhãn tình trạng trên tên (chủ dự án 30/10/2026: trùng dòng Tình trạng trong bảng Tổng quan) */}
             <h1 className="text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
@@ -420,7 +422,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* Thư viện ảnh DƯỚI tên + địa chỉ (bố cục kiểu Batdongsan — chủ dự án 31/10/2026) · MOBILE tràn viền sát 2 mép · bấm để xem lớn + zoom.
               Chưa có ảnh: không vẽ khung trống, tên dự án lên đầu trang (chủ dự án 30/10/2026) */}
           {coAnh && !traCuu && (
-            <div className="relative -mx-4 mb-2 sm:mx-0">
+            <div className="relative -mx-4 mb-2 sm:mx-0 max-sm:order-1 max-sm:mb-0">
               {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan */}
               <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
               {/* Điện thoại: CÙNG bộ ảnh trang tin mua bán / cho thuê (Gallery) — ảnh + video vuốt ngang, bấm ra danh sách kiểu Facebook
@@ -429,6 +431,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <div className="hidden sm:block"><ProjectGallery images={gallery} alt={p.name} /></div>
             </div>
           )}
+
+          </div>
 
           {/* TRA CỨU — HÀNG ĐẦU TRANG 3 CỘT BẰNG NHAU (chủ dự án 31/10/2026: khung ảnh đúng tỷ lệ ảnh, gọn, cân đối): khung ảnh 16:9 (≥ 2 ảnh
               tự chạy, hiện trọn không cắt) | bảng thông tin (trường bắt buộc + mục Admin ghi thêm, thứ tự chuẩn) | Dự án theo khu vực. Ba cột cao

@@ -215,7 +215,19 @@ export default function ListingBrowser({
 
   // Bấm sang trang khác → hiện NGAY từ tin đầu tiên của trang đó (nhảy thẳng lên
   // đầu danh sách, không phải cuộn tay). Áp dụng cho mọi danh sách phân trang.
-  const goPage = (p: number) => { setPage(p); ghiTrangVaoDiaChi(p); window.scrollTo({ top: 0 }); };
+  // MỖI TRANG MỘT BƯỚC LỊCH SỬ (anh 08/11/2026: "đứng trang thứ n bấm Back về trang chủ là sai"): Back / ‹ lùi n → n−1 → … → 1,
+  // từ trang 1 mới ra chỗ khách vào danh sách — như trang danh sách của các cổng nhà đất lớn (mỗi trang một đường dẫn thật).
+  // Đổi BỘ LỌC vẫn thay tại chỗ (setFilters → ghiTrangVaoDiaChi(1) không thêm bước).
+  const goPage = (p: number) => { setPage(p); ghiTrangVaoDiaChi(p, true); window.scrollTo({ top: 0 }); };
+  // Back / Forward giữa các trang của chính danh sách → đọc lại số trang từ địa chỉ
+  useEffect(() => {
+    const onPop = () => {
+      const m = window.location.pathname.match(/\/trang\/(\d+)$/);
+      setPage(m ? Number(m[1]) : trangTu(new URLSearchParams(window.location.search)));
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   // Đường dẫn ?trang=N cho nút phân trang — Google lần theo để tới tin ở các trang sau.
   // Không lọc gì thêm (địa chỉ chỉ có ?trang hoặc trống) → dùng đường dẫn phân trang thật <duongTrang>/trang/N.
@@ -232,20 +244,20 @@ export default function ListingBrowser({
   // Ghi ?trang=N vào địa chỉ mà KHÔNG tải lại trang (replaceState, không thêm bước
   // lịch sử — để nút Back vẫn quay ra chỗ khách vào danh sách, không phải bấm Back
   // đúng bằng số lần đổi trang).
-  function ghiTrangVaoDiaChi(p: number) {
+  function ghiTrangVaoDiaChi(p: number, themBuoc = false) {
     if (typeof window === "undefined") return;
     const u = new URL(window.location.href);
     if (duongTrang && chiCoTrang(u.searchParams)) {
       u.pathname = p > 1 ? `${duongTrang}/trang/${p}` : duongTrang;
       u.search = "";
-      window.history.replaceState(window.history.state, "", u);
+      (themBuoc ? window.history.pushState : window.history.replaceState).call(window.history, window.history.state, "", u);
       return;
     }
     // Đang ở /<duongTrang>/trang/N mà khách lọc thêm → về đường dẫn gốc + tham số (bộ lọc áp trên toàn danh sách)
     if (duongTrang && u.pathname.startsWith(`${duongTrang}/trang/`)) u.pathname = duongTrang;
     if (p > 1) u.searchParams.set("trang", String(p));
     else u.searchParams.delete("trang");
-    window.history.replaceState(window.history.state, "", u);
+    (themBuoc ? window.history.pushState : window.history.replaceState).call(window.history, window.history.state, "", u);
   }
 
   // LỌC Ở MÁY CHỦ (#1b kế hoạch SEO, 17/10/2026): trang có `nguon` gửi bộ lọc + trang đang xem

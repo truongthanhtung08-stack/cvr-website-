@@ -552,8 +552,8 @@ export default function ProjectsBrowser({
           {tieuDePhu ? (
             <h2 className="sr-only text-xl font-semibold tracking-tight text-cvr-ink sm:not-sr-only sm:text-2xl">{tieuDe}</h2>
           ) : (
-            // Điện thoại ẩn dòng "Dự án bất động sản" — thanh "‹ Dự án" đã ghi tên (chủ dự án 31/10/2026); vẫn là H1 cho Google
-            <h1 className="sr-only text-xl font-semibold tracking-tight text-cvr-ink sm:not-sr-only sm:text-2xl">{tieuDe}</h1>
+            // HIỆN tiêu đề trên điện thoại (anh 08/11/2026: "sao lại bỏ tiêu đề Dự án") — trước ẩn vì thanh "‹ Dự án" đã ghi tên, nhưng thanh đó đã bỏ ở trang danh sách từ 02/11
+            <h1 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDe}</h1>
           )}
           {/* bỏ câu "Dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land." (anh 07/11/2026 — chú thích thừa) */}
         </div>

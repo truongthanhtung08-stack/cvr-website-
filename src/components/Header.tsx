@@ -105,8 +105,9 @@ function DropdownPanel({
 }) {
   const pos = align === "right" ? "right-0" : "left-1/2 -translate-x-1/2";
   return (
-    <div className={`invisible absolute top-full z-50 ${wide ? "w-[600px]" : "w-64"} pt-3 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100 ${pos}`}>
-      <div className="origin-top translate-y-1.5 scale-[0.98] overflow-hidden rounded-2xl border border-cvr-line bg-white p-2 opacity-0 shadow-xl shadow-black/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100">
+  // RÊ CHUỘT VÀO trễ 0,18 s mới bung (anh 08/11/2026: "trỏ vào menu nó hiện nhanh quá") — lướt ngang thanh menu không bung từng bảng; rê ra đóng ngay
+    <div className={`invisible absolute top-full z-50 ${wide ? "w-[600px]" : "w-64"} pt-3 opacity-0 transition-[opacity,visibility] duration-200 group-hover:visible group-hover:opacity-100 group-hover:delay-[180ms] ${pos}`}>
+      <div className="origin-top translate-y-1.5 scale-[0.98] overflow-hidden rounded-2xl border border-cvr-line bg-white p-2 opacity-0 shadow-xl shadow-black/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:delay-[180ms] group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100">
         {children}
       </div>
     </div>
@@ -358,13 +359,19 @@ function MobileMenu({
               </span>
             </Link>
           )}
+          <Link href="/dang-tin" onClick={onClose} className="press btn-dangtin mt-4 flex h-11 w-full items-center justify-center gap-1 rounded-full text-[15px] font-semibold text-white">
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Đăng tin
+          </Link>
         </div>}
 
         {/* Danh sách menu — KHÔNG dùng đường kẻ phân chia (kiểu Apple): phân tách bằng
             khoảng trắng; mục đang mở được bọc khối kính sáng nhẹ để gom nhóm thị giác. */}
         {/* Danh sách menu — KHÔNG dùng đường kẻ phân chia (kiểu Apple): phân tách bằng
             khoảng trắng; mục đang mở được bọc khối kính sáng nhẹ để gom nhóm thị giác. */}
-        <div className="flex flex-1 flex-col justify-around">{/* các dòng giãn đều lấp kín chiều cao menu — không còn khoảng trống thừa dưới cùng, mọi cỡ máy (anh 08/11/2026 tối) */}
+        <div className="space-y-1">{/* dòng 48px; chữ: mục chính 17 đậm vừa · mục con 16 · mục cháu 15 · nhóm 12 in hoa, thoáng vừa phải — không giãn kín màn hình (anh 08/11/2026 tối: "không cần giãn cao nhiều, tương đối và hợp lý") */}
         {navItems.map((item) => (
           <div
             key={item.href}
@@ -380,7 +387,7 @@ function MobileMenu({
                   <Link
                     href={item.href}
                     onClick={onClose}
-                    className="flex min-h-[44px] flex-1 items-center gap-4 text-[17px] font-normal text-[#f5f5f7]"
+                    className="flex min-h-[48px] flex-1 items-center gap-4 text-[17px] font-medium text-[#f5f5f7]"
                   >
                     {item.icon && (
                       <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
@@ -392,7 +399,7 @@ function MobileMenu({
                     onClick={() => setExpanded(expanded === item.label ? null : item.label)}
                     aria-expanded={expanded === item.label}
                     aria-label={`${expanded === item.label ? "Thu gọn" : "Mở rộng"} ${item.label}`}
-                    className="-mr-2 flex h-[44px] w-12 shrink-0 items-center justify-center"
+                    className="-mr-2 flex h-[48px] w-12 shrink-0 items-center justify-center"
                   >
                     <svg
                       className={`h-4 w-4 text-[#8e8e93] transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
@@ -421,12 +428,12 @@ function MobileMenu({
                             <Link
                               href={child.href}
                               onClick={onClose}
-                              className="block text-[17px] font-medium text-[#e8e8ed] transition-colors active:text-[#f5f5f7]"
+                              className="block text-[16px] font-normal text-[#e8e8ed] transition-colors active:text-[#f5f5f7]"
                             >
                               {child.label}
                             </Link>
                           ) : (
-                            <p className="pb-1 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">
+                            <p className="pb-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">
                               {child.label}
                             </p>
                           )}
@@ -437,7 +444,7 @@ function MobileMenu({
                                   key={grandChild.label}
                                   href={grandChild.href ?? "#"}
                                   onClick={onClose}
-                                  className="block text-[16px] font-normal text-[#d2d2d7] transition-colors active:text-[#f5f5f7]"
+                                  className="block text-[15px] font-normal text-[#c7c7cc] transition-colors active:text-[#f5f5f7]"
                                 >
                                   {grandChild.label}
                                 </Link>
@@ -455,7 +462,7 @@ function MobileMenu({
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="flex min-h-[44px] items-center gap-4 text-[17px] font-normal text-[#f5f5f7]"
+                className="flex min-h-[48px] items-center gap-4 text-[17px] font-medium text-[#f5f5f7]"
               >
                 {item.icon && (
                   <BieuTuong ten={item.icon} className="h-5 w-5 shrink-0 text-[#a1a1a6]" />
@@ -499,18 +506,12 @@ function MobileMenu({
             </button>
           )}
         </div>
-        {<div className="menu-muc mt-6 grid grid-cols-2 gap-3 lg:hidden" style={open ? { animationDelay: `${40 + navItems.length * 30}ms` } : undefined}>
+        {<div className={`menu-muc mt-6 grid gap-3 lg:hidden ${user ? "grid-cols-1" : "grid-cols-2"}`} style={open ? { animationDelay: `${40 + navItems.length * 30}ms` } : undefined}>
           {user ? (
             <>
               <button type="button" onClick={() => { onLogout(); onClose(); }} className="press flex h-11 items-center justify-center gap-1 rounded-full border border-[#48484a] text-[15px] font-semibold text-[#f5f5f7]">
                 Đăng xuất
               </button>
-              <Link href="/dang-tin" onClick={onClose} className="press flex h-11 items-center justify-center gap-1 rounded-full border border-[#48484a] text-[15px] font-semibold text-[#f5f5f7]">
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Đăng tin
-              </Link>
             </>
           ) : (
             <>
@@ -532,6 +533,14 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
+  // ⛔ BẢN THỬ — XOÁ TRƯỚC KHI PUSH (08/11/2026): ?xem-dang-nhap=1 trên MÁY THỬ (không phải coastalland.vn) → menu hiện như đã đăng nhập,
+  // tài khoản giả, để anh duyệt giao diện menu lúc đã đăng nhập (máy thử không đăng nhập được).
+  const [userXemThu, setUserXemThu] = useState<typeof user>(null);
+  useEffect(() => {
+    if (/coastalland\.vn$/.test(location.hostname) || !new URLSearchParams(location.search).has("xem-dang-nhap")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUserXemThu({ id: "xem-thu", email: "khach.xemthu@gmail.com", phone: "84905000000", user_metadata: { full_name: "Khách Xem Thử" }, app_metadata: {}, aud: "authenticated", created_at: "" } as unknown as typeof user);
+  }, []);
   // Chấm đỏ thông báo của tài khoản — mọi trang, mọi máy như nhau (06/11/2026)
   const soViec = useSoViecKhach(user?.id, usePathname() || "/");
 
@@ -635,7 +644,7 @@ export default function Header() {
 
       {/* Menu mobile để NGOÀI <header>: header có backdrop-filter (.nav-glass) — mọi
           phần tử fixed nằm bên trong sẽ bị neo vào header thay vì vào màn hình. */}
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={signOut} />
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} user={user ?? userXemThu} onLogout={signOut} />
     </>
   );
 }
