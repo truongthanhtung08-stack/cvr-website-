@@ -16,6 +16,16 @@ chạy lệnh push. Chỉ khi anh nhắn đúng chữ **"Push"** mới làm.
 **⛔ 07/11/2026 (anh): cấm tự push KHÔNG có nghĩa là im lặng.** Xong mỗi việc PHẢI báo đủ 3 ý: **đã build** (qua / lỗi) · **đã kiểm** (kiểm gì,
 ở đâu) · **cần Push mới lên web** (việc nào khách / Google chưa thấy cho tới khi Push). Không để anh phải hỏi "web thật là gì", "làm sao để thấy".
 
+## ⛔⛔⛔ CÁCH LÀM VIỆC — MỌI PHIÊN (anh chốt 09/11/2026)
+1. **Chuẩn bị môi trường kết nối TRƯỚC khi làm:** máy thử 3002 + link điện thoại · khung giả lập · Chrome của anh · dữ liệu thật (tải qua API
+   `/api/danh-sach/<ban|thue>/loc`) · build nền sẵn sàng. Thiếu gì báo ngay.
+2. **Kiểm và soi TỪ GỐC, sửa TỪ GỐC, không chắp vá:** lỗi ở một câu / một tin → tìm luật chung sinh ra nó (cây loại hình, bảng sáp nhập 2 hệ
+   địa chỉ, một bộ lọc cho cả gõ lẫn chọn trường) rồi sửa ở đó, để dữ liệu mới cũng đúng. Không sửa riêng cho câu anh vừa gõ.
+3. **Đo bằng dữ liệu thật trước khi báo:** `.claude/kiem-ket-qua.ts` (mọi tin → câu tìm → phải lọt nhóm khớp đủ) · `kiem-doc-cau.ts` ·
+   `kiem-doc-du-an.ts` · `kiem-md.ts`. Giật / chậm thì đo trace CPU 4x, không đoán.
+4. **Mã sạch:** bỏ biến / import thừa do mình sinh ra, chú thích lý do ngắn, không để cờ tạm, không vá chồng.
+5. Anh đang bấm trên khung giả lập → không chạy lệnh / thao tác đè lên; anh nhắn "nhìn" mới chụp màn hình.
+
 ## ⛔⛔⛔ CẤM XOÁ ẢNH DỰ ÁN · ẢNH BÀI VIẾT (anh chốt 08/11/2026)
 Claude / mọi kịch bản **CẤM xoá** ảnh trong kho (Supabase `listings`, `nho/`) thuộc **dự án** (khung ảnh, mặt bằng, ảnh chèn trong nội dung
 Tổng quan…) và **bài viết Tin tức** (ảnh bìa + ảnh chèn trong nội dung). Bài học: lần dọn kho 11/09/2026 (`.tmp-da-xoa-2026-09-11.json`,
@@ -41,6 +51,25 @@ Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm.
   từ Zalo (template/info/v2): ô kiểu SỐ chỉ chữ số ("0đ"/"64.800đ" → Zalo -1124, bỏ cả tin — gốc lỗi duyệt/nạp/thanh toán không có Zalo
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
+
+## ⏳ 09/11/2026 RẠNG SÁNG (phiên 7f6fbd7e) — ĐÃ PUSH d8844e64 (anh "push luôn") — VIỆC CÒN LẠI
+**Đã lên web:** Tin tức PC 2 cột + trang bài viết 2 cột (Bài viết khác, nút chia sẻ) · trang dự án PC 2 cột (cột phải: form báo giá dự án nổi
+bật · theo khu vực · theo loại hình · Chủ đầu tư top 10 theo VIP · Dự án cập nhật cố định 10) · đầu trang PC 52px, logo 40px, menu 13px ·
+bộ lọc: đọc Dự án chỉ khi có "dự án" / tên dự án / tên CĐT, "danang" ≠ "danang plaza", loại hình theo cây cha – con (`loaiCuaTin`,
+`DONG_NGHIA_LOAI`, mục "… khác" tự gom), kết quả xếp theo loại hình → phường (2 hệ) → tỉnh cũ → giá gần nhất, "mới nhất" xếp tin mới,
+câu vô nghĩa không gợi ý · bảng Khu vực điện thoại nút 44px, bàn phím bật thì bảng lên sát đầu trang. Bộ kiểm: `.claude/kiem-ket-qua.ts`
+(600 câu trên tin thật, 0 sai) · `kiem-doc-cau.ts` · `kiem-doc-du-an.ts` — chạy lại sau mỗi đợt tin mới.
+**CÒN LẠI (chưa làm):**
+1. **Giật khi chạm ô tìm** (trang chủ điện thoại): đã sửa thanh tiến độ ảnh đầu trang (transform); đo CPU 4x vẫn bận 0,3–0,5 s sau chạm
+   (tính lại kiểu ~1.000 phần tử, Layerize, IntersectionObserver) — chưa tìm hết gốc, chưa đo máy thật. Máy đo: scratchpad phiên 7f6fbd7e
+   `do-giat.mjs` / `do-trace.mjs` / `do-inv.mjs` (trỏ cổng 3002).
+2. **Đăng nhập Zalo trên web thật hỏng**: trạm trung chuyển VN `zalo.coastalland.vn` (hosting PA Vietnam) không kết nối được graph.zalo.me
+   (lỗi "Connection timeout after 10001 ms"). Không do mã. Cần PA Vietnam mở kết nối ra ngoài tới graph.zalo.me cổng 443.
+3. **13 ảnh mất trong nội dung 7 trang** (dọn kho 11/09 xoá nhầm): anh chèn lại theo `.claude/ANH-MAT-CAN-CHEN-LAI.md` (tên tệp gốc + đoạn chữ
+   ngay trước chỗ đặt ảnh). Đã ghi luật CẤM XOÁ ẢNH ở đầu tệp này.
+4. **Gợi ý ô tìm kiểu Google**: trang chủ câu loại cho-thuê mà ghi giá tỷ ("nhà trọ đà nẵng dưới 2 tỷ") chưa đổi sang mức triệu như trang Cho
+   thuê; gợi ý chưa viết "danang" thành "Đà Nẵng"; chưa gợi ý theo quận/phường + "mới nhất" như Google (ảnh Google anh gửi 08/11).
+5. Form "Nhận tài liệu & báo giá" (trang dự án): anh nói "mẫu hiển thị báo giá trên PC không đúng" — anh tự sửa sau, chưa rõ chỗ.
 
 ## ⏳ BÀN GIAO 08/11/2026 TỐI (phiên 76e330d6, anh: "bàn giao cho người khác vào ngay") — ĐẦU TRANG + MENU ≡ ĐIỆN THOẠI KIỂU APPLE — CHƯA PUSH
 **Môi trường:** máy xem thử cổng 3002 (preview `cvr-ban-that`, chạy `next start` từ `.next-kiem`) · link điện thoại **http://192.168.0.189:3002** (IP đổi tối 08/11) ·
