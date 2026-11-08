@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/useAuth";
 import { useSoViecKhach, tongSoViec } from "@/lib/useSoTinCanXem";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { ZALO_OA_URL } from "@/lib/lienHe";
+import { useAnKhiCuon } from "@/lib/useAnKhiCuon";
 
 // Trang có thanh dưới (người mua có nút Tin nhắn; khu Tài khoản thì nút chat nổi đè thẻ "Số dư ví" — lỗi 23) — Chatbox ẩn nút
 // chat nổi trên điện thoại ở mọi trang có thanh dưới (07/11/2026)
@@ -237,23 +238,8 @@ export default function MobileTabBar() {
 function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang = false }: { dangTinBang?: boolean; tabs: { href: string; label: string; icon: keyof typeof ICONS; on: boolean; ngoai?: boolean }[]; count: number; soViec?: Record<string, number>; nutDangTinNoi?: boolean }) {
   // ĐANG CUỘN thì trượt thanh xuống khuất, DỪNG CUỘN 0,35 s thì hiện lại (chủ dự án 02/11/2026: "cần không gian hiển thị trên mobile, ẩn
   // luôn menu ở footer khi cuộn"). Thanh nằm cố định đè lên trang nên ẩn / hiện không làm nội dung xê dịch.
-  const [anKhiCuon, setAnKhiCuon] = useState(false);
-  useEffect(() => {
-    // Chỉ khách cuộn thật (vuốt / lăn chuột); trang tự dịch khi ảnh tải không tính — như hàng trường lọc (FilterBar)
-    let dung = 0;
-    let dangVuot = false;
-    const hen = () => { clearTimeout(dung); dung = window.setTimeout(() => { dangVuot = false; setAnKhiCuon(false); }, 350); };
-    // vuốt trong bảng chọn của bộ lọc không tính — thanh đứng yên (anh 07/11/2026: cuộn trong bảng mà thanh dưới trượt ẩn / hiện)
-    const vuot = (e: Event) => { if ((e.target as Element | null)?.closest?.("[data-cuon-bang]")) return; dangVuot = true; setAnKhiCuon(true); hen(); };
-    const cuon = () => { if (dangVuot) hen(); };
-    window.addEventListener("scroll", cuon, { passive: true });
-    window.addEventListener("touchmove", vuot, { passive: true });
-    window.addEventListener("wheel", vuot, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", cuon); window.removeEventListener("touchmove", vuot); window.removeEventListener("wheel", vuot);
-      clearTimeout(dung);
-    };
-  }, []);
+  // Bộ đo chung với hàng trường lọc (08/11/2026): cuộn xuống quá 12px mới ẩn, cuộn lên hiện ngay, dừng tay hiện lại — hai thanh cùng nhịp
+  const anKhiCuon = useAnKhiCuon();
   return (
     <>
       {/* Chỗ trống cuối trang để tab bar không che nội dung/footer */}
@@ -262,7 +248,7 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
       <nav
         aria-label="Điều hướng nhanh"
         data-do-cao="tabbar-h"
-        className={`an-khi-go-phim tabbar-glass fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] transition-transform duration-200 lg:hidden ${anKhiCuon ? "pointer-events-none translate-y-full" : ""}`}
+        className={`an-khi-go-phim tabbar-glass fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] chuyen-an-hien lg:hidden ${anKhiCuon ? "pointer-events-none translate-y-full" : ""}`}
         // HIỆU ỨNG BẤM (anh 08/11/2026: "bấm vào hàng menu dưới không có hiệu ứng nào, bấm không biết đã bấm hay chưa"): :active trên
         // điện thoại chỉ hiện khi giữ ngón tay đủ lâu (iPhone bỏ qua hẳn) → chạm là gắn lớp "vua-bam" 280ms cho nút đó (nhún + vệt sáng).
         onPointerDown={(e) => {

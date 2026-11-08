@@ -7,6 +7,7 @@ import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
 import { daCoDiaDanh, napDiaDanh } from "@/lib/diaDanhNguon";
 import { startTransition, useContext, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNutQuayLai } from "@/lib/khoaCuon";
+import { useAnKhiCuon } from "@/lib/useAnKhiCuon";
 import { useRouter } from "next/navigation";
 import { createPortal, flushSync } from "react-dom";
 import FilterDropdown, { PanelActions, FilterDropdownGroup, ChanBangContext } from "@/components/FilterDropdown";
@@ -430,12 +431,13 @@ export default function FilterBar({
   // gắn theo dõi đúng lúc khung dải lọc có trên trang (lần dựng đầu có trang chưa có khung — useRef + [] thì không bao giờ gắn lại)
   const [daiLoc, setDaiLoc] = useState<HTMLDivElement | null>(null);
   const [dinh, setDinh] = useState(false);
-  const [dangCuon, setDangCuon] = useState(false);
+  // Ẩn / hiện hàng trường khi cuộn: BỘ ĐO CHUNG với thanh dưới (08/11/2026 — cuộn xuống quá 12px mới ẩn, cuộn lên hiện ngay, dừng tay hiện
+  // lại; hai thanh cùng nhịp). Trước: chạm vuốt là ẩn ngay → đọc chậm thì hàng trường nhấp nháy.
+  const dangCuon = useAnKhiCuon();
   useEffect(() => {
     const khoi = daiLoc?.closest<HTMLElement>(".khoi-loc-dinh");
     if (!khoi) return;
     const dt = window.matchMedia("(max-width: 639px)");
-    let dung = 0;
     // ĐO MỖI LẦN CUỘN (không đo một lần lúc mở — trang chủ → Xem thêm mở danh sách đúng lúc trang đang nhảy, mốc đo lúc đó sai, phải cuộn
     // rất xa hàng trường mới ẩn: lỗi chủ dự án báo 02/11/2026): khối đã chạm chỗ dính sát logo và đã cuộn quá 80px thì bật; về gần đầu
     // trang hoặc khối rời chỗ dính thì tắt (hai mốc khác nhau — không chập chờn ở ranh)
@@ -445,24 +447,10 @@ export default function FilterBar({
       const sat = khoi.getBoundingClientRect().top <= parseFloat(getComputedStyle(khoi).top) + 1;
       setDinh((cu) => dt.matches && sat && (cu ? y > 4 : y > 80));
     };
-    // CHỈ KHÁCH CUỘN THẬT (vuốt tay / lăn chuột) mới ẩn — trang tự dịch (ảnh tải xong, trình duyệt tự chỉnh vị trí cuộn) cũng phát "scroll",
-    // nếu tính cả thì hàng trường tự ẩn lung tung khi khách đang đứng yên (đo 02/11/2026). Đã vuốt thì đà trôi vẫn tính là đang cuộn.
-    let dangVuot = false;
-    const hen = () => { clearTimeout(dung); dung = window.setTimeout(() => { dangVuot = false; setDangCuon(false); }, 350); }; // ngừng 0,35 s → hiện lại
-    // VUỐT TRONG BẢNG CHỌN không tính (anh 07/11/2026: cuộn danh sách trong bảng mà khối lọc co lại → cả màn hình xê dịch)
-    const vuot = (e: Event) => { if ((e.target as Element | null)?.closest?.("[data-cuon-bang]")) return; dangVuot = true; setDangCuon(true); hen(); };
-    const cuon = () => {
-      tinh();
-      if (dangVuot) hen();
-    };
+    // (Chỉ khách cuộn thật, bỏ vuốt trong bảng chọn — nay do bộ đo chung useAnKhiCuon lo.)
     tinh();
-    window.addEventListener("scroll", cuon, { passive: true });
-    window.addEventListener("touchmove", vuot, { passive: true });
-    window.addEventListener("wheel", vuot, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", cuon); window.removeEventListener("touchmove", vuot); window.removeEventListener("wheel", vuot);
-      clearTimeout(dung);
-    };
+    window.addEventListener("scroll", tinh, { passive: true });
+    return () => window.removeEventListener("scroll", tinh);
   }, [daiLoc]);
   const gonKhiCuon = dinh && dangCuon;
   useEffect(() => {
@@ -1312,7 +1300,7 @@ export default function FilterBar({
               Điện thoại không dựng hàng này — các trường đã nằm trong màn gõ (cacTruong) */}
           {/* ĐANG CUỘN (khối lọc đã dính trên đầu, điện thoại): hàng trường lọc THU GỌN, chỉ chừa thanh tìm (chủ dự án 02/11/2026: "khi cuộn
               xuống hoặc lên thì ẩn cái menu dưới thanh lọc, chỉ chừa lại mỗi thanh search"); cuộn về đầu trang thì hiện lại */}
-          {(!laDt || !overlay) && <div className={`no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 transition-opacity duration-200 sm:static sm:flex-wrap sm:overflow-visible sm:bg-transparent sm:px-0 sm:pb-0 sm:opacity-100 sm:shadow-none ${dinh ? "absolute inset-x-0 top-full bg-cvr-surface px-4 pb-2 shadow-[0_1px_0_rgba(0,0,0,0.08)]" : ""} ${gonKhiCuon ? "pointer-events-none opacity-0" : "opacity-100"}`}>
+          {(!laDt || !overlay) && <div className={`no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 chuyen-an-hien sm:static sm:flex-wrap sm:overflow-visible sm:bg-transparent sm:px-0 sm:pb-0 sm:opacity-100 sm:shadow-none sm:transform-none ${dinh ? "absolute inset-x-0 top-full bg-cvr-surface px-4 pb-2 shadow-[0_1px_0_rgba(0,0,0,0.08)]" : ""} ${gonKhiCuon ? "pointer-events-none -translate-y-2 opacity-0" : "opacity-100"}`}>
             {/* ĐÃ BỎ chip "Bản đồ" ở hàng ngay dưới thanh tìm kiếm — bị trùng với
                 nút "Xem bản đồ" nằm cạnh ô tìm phía trên. */}
             {/* Thứ tự chuẩn (mockup Mục I phần 2): Khu vực · Dự án · Loại BĐS · Mức giá · Diện tích · Lọc thêm.
