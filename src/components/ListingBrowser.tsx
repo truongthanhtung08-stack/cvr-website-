@@ -480,7 +480,7 @@ export default function ListingBrowser({
                 aria-pressed={mapMode}
                 // NỀN XANH cho dễ thấy — thống nhất với nút bản đồ ở tab Dự án.
                 // Đang mở bản đồ thì đậm hơn một nấc để biết mình đang ở chế độ nào.
-                className={`mr-auto inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-white transition sm:hidden ${
+                className={`mr-auto inline-flex min-h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[13px] font-semibold text-white transition sm:hidden ${
                   mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
                 }`}
               >

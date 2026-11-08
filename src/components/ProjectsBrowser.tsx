@@ -521,7 +521,7 @@ export default function ProjectsBrowser({
       {/* Trang Dự án có Tra cứu (29/10/2026): không còn cột phải → thanh tìm rộng hết khung, thẳng mép với Nổi bật + Tra cứu */}
       {/* ĐIỆN THOẠI: sát thanh "‹ Dự án" như Mua bán / Cho thuê — bỏ dải trắng 8px (chủ dự án 02/11/2026: căn lề chuẩn, một kiểu) */}
       {/* ĐIỆN THOẠI: khối tìm + lọc DÍNH ngay dưới thanh "‹ Dự án" khi cuộn — như Mua bán / Cho thuê (02/11/2026) */}
-      <div id="tra-cuu" className={`khoi-loc-dinh max-sm:sticky max-sm:top-[calc(var(--hdr)+var(--at))] max-sm:[html:has(.thanh-quay-lai)_&]:top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90] order-1 mt-0 scroll-mt-24 rounded-none bg-white pb-2.5 pt-0 max-sm:mb-4 max-sm:pb-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 lg:w-[calc(66.667%-10.667px)]`}>
+      <div id="tra-cuu" className={`khoi-loc-dinh max-sm:sticky max-sm:top-[calc(var(--hdr)+var(--at))] max-sm:[html:has(.thanh-quay-lai)_&]:top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90] order-1 mt-0 scroll-mt-24 rounded-none bg-white pb-2.5 pt-0 max-sm:mb-4 max-sm:pb-0 sm:order-2 sm:mt-4 lg:w-[calc(66.667%-10.667px)]`}>
         {/* MỘT KHUÔN với Mua bán / Cho thuê (chủ dự án 01/11/2026): CHÍNH khung tìm FilterBar — bấm vào ô, lúc gõ, màn tìm điện thoại,
             nút Làm mới, Xem bản đồ y hệt; chỉ khác HÀNG TRƯỜNG LỌC của dự án và gợi ý khi gõ (dự án khớp tên / chủ đầu tư). Lọc tại chỗ. */}
         <FilterBar
@@ -563,7 +563,7 @@ export default function ProjectsBrowser({
             type="button"
             onClick={() => setMapMode((v) => !v)}
             aria-pressed={mapMode}
-            className={`mr-auto inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-white transition sm:hidden ${
+            className={`mr-auto inline-flex min-h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[13px] font-semibold text-white transition sm:hidden ${
               mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
             }`}
           >
