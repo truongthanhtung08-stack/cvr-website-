@@ -6,6 +6,7 @@ import { goiYTrangChu, tinDem } from "@/lib/goiYTrangChu";
 import Hero from "@/components/Hero";
 import FeaturedListings from "@/components/FeaturedListings";
 import ProjectsSection from "@/components/ProjectsSection";
+import BaMucChinh from "@/components/BaMucChinh";
 // import ForYou from "@/components/ForYou"; // TẠM ẨN — chờ chốt vị trí đặt lại (component vẫn còn)
 import LocationGrid from "@/components/LocationGrid";
 import NewsSection from "@/components/NewsSection";
@@ -77,6 +78,8 @@ export default async function Home() {
               </div>
               <Hero banners={heroBanners} mobileTwoLine search={false} />
             </div>
+            {/* Ba mảng chính Mua bán · Cho thuê · Dự án NGAY TRÊN dòng "Bất động sản nổi bật" (điện thoại, anh 08/11/2026) — lối vào thẳng trang tổng */}
+            <BaMucChinh />
           </HomeCollapsible>
 
           {/* 4 khối có nút "Xem thêm" — mỗi khối tự ẩn khi khối khác đang mở.

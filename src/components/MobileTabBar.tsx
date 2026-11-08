@@ -11,6 +11,7 @@ import { useSoViecKhach, tongSoViec } from "@/lib/useSoTinCanXem";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { ZALO_OA_URL } from "@/lib/lienHe";
 import { useAnKhiCuon } from "@/lib/useAnKhiCuon";
+import { useTabTrangChu } from "@/lib/tabTrangChu";
 
 // Trang có thanh dưới (người mua có nút Tin nhắn; khu Tài khoản thì nút chat nổi đè thẻ "Số dư ví" — lỗi 23) — Chatbox ẩn nút
 // chat nổi trên điện thoại ở mọi trang có thanh dưới (07/11/2026)
@@ -190,6 +191,8 @@ export default function MobileTabBar() {
   // Chấm đỏ "Tin đăng" (chế độ người bán): chờ duyệt · bị từ chối · sắp hết hạn — chỉ đếm khi đang ở khu tài khoản (06/11/2026)
   // Đăng nhập rồi thì Ở MỌI TRANG đều đếm (chủ dự án 06/11/2026: "đăng nhập vào một tài khoản thì tất cả giống nhau")
   const soViec = useSoViecKhach(user?.id, pathname);
+  // Trang chủ đang xem riêng Mua bán / Cho thuê (nút ở khối tin) → không phải trang chủ tổng → Home không xanh (anh 08/11/2026)
+  const tabTC = useTabTrangChu();
 
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
@@ -221,7 +224,7 @@ export default function MobileTabBar() {
   const onHoSo = pathname.startsWith("/tai-khoan") || pathname.startsWith("/dang-nhap") || pathname.startsWith("/dang-ky");
   const tabs = [
     // THỨ TỰ (chủ dự án 07/11/2026): Trang chủ · ♡ Lưu · + Đăng tin (giữa) · Tin nhắn · Tài khoản
-    { href: "/", label: "Home", icon: "home" as const, on: pathname === "/" }, // chủ dự án 07/11/2026: "Trang chủ = Home"
+    { href: "/", label: "Home", icon: "home" as const, on: pathname === "/" && tabTC !== "Mua bán" && tabTC !== "Cho thuê" }, // chủ dự án 07/11/2026: "Trang chủ = Home"
     // ♡ TIN ĐÃ LƯU chuyển từ đầu trang xuống đây (chủ dự án 07/11/2026) — cùng chữ "Lưu", cùng chấm đỏ đếm số tin như nút đầu trang
     { href: "/tin-luu", label: "Lưu", icon: "tim" as const, on: onLuu },
     { href: "/dang-tin", label: "Đăng tin", icon: "plus" as const, on: onDang },
@@ -252,6 +255,9 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
   // eslint-disable-next-line react-hooks/set-state-in-effect -- đã sang trang mới: bỏ nút chạm tạm, theo đường dẫn thật
   useEffect(() => { setChon(null); }, [pathname]);
   const sang = (t: { href: string; on: boolean }) => (chon ? t.href === chon : t.on);
+  // Chỉ ghi "vừa bấm" khi SANG TRANG KHÁC — bấm nút của chính trang đang đứng (Home ở trang chủ) thì không ghi, kẻo nút kẹt xanh mãi vì
+  // đường dẫn không đổi (lỗi 08/11/2026: bấm Home rồi chọn Cho thuê, Home vẫn xanh)
+  const bam = (href: string) => { if (href !== pathname) setChon(href); };
   return (
     <>
       {/* Chỗ trống cuối trang để tab bar không che nội dung/footer */}
@@ -288,7 +294,7 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
               ) : nutDangTinNoi && t.href === "/dang-tin" ? (
                 // ĐĂNG TIN = NÚT CHÍNH của khu quản lý (25/09): vòng tròn xanh. 22/10/2026 chủ dự án: "cân đối, không phải
                 // cứ to là nổi bật mà cản trở giao diện" → bỏ nhô lên, cùng cỡ + cùng hàng với các tab khác, không che nội dung.
-                <Link href={t.href} onClick={() => setChon(t.href)} aria-label="Đăng tin" className={`press relative flex min-h-[50px] flex-col items-center justify-center ${dangTinBang ? "gap-[3px] py-0.5" : "-top-[6px] gap-px"}`}>
+                <Link href={t.href} onClick={() => bam(t.href)} aria-label="Đăng tin" className={`press relative flex min-h-[50px] flex-col items-center justify-center ${dangTinBang ? "gap-[3px] py-0.5" : "-top-[6px] gap-px"}`}>
                   {/* 22/10/2026 chủ dự án: giữ kiểu cũ, to hơn một chút — 35px. 29/10/2026: to thêm chút nữa + nhô lên một chút → 38px,
                       cả nút dời lên 6px để chữ "Đăng tin" thẳng hàng chữ các nút khác (vòng tròn nhô khỏi thanh ~5px). Các nút khác giữ nguyên. */}
                   {/* dangTinBang (thanh trang công khai, chủ dự án 07/11/2026: "các menu bằng nhau hết"): cùng kiểu vòng tròn xanh, cỡ BẰNG biểu tượng các nút khác, không nhô */}
@@ -302,7 +308,7 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
               ) : (
               <Link
                 href={t.href}
-                onClick={() => { setChon(t.href); if (t.href === "/") resetHomeIfOnHome(); }}
+                onClick={() => { bam(t.href); if (t.href === "/") resetHomeIfOnHome(); }}
                 aria-current={sang(t) ? "page" : undefined}
                 className="block"
               >

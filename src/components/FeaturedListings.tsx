@@ -6,6 +6,7 @@ import PropertyCard from "@/components/PropertyCard";
 import { featuredListings, type Listing } from "@/lib/data";
 import ListingBrowser from "@/components/ListingBrowser";
 import { useHomeSection, HOME_RESET_EVENT } from "@/components/HomeExpand";
+import { baoTabTrangChu } from "@/lib/tabTrangChu";
 import { tierRank, tierFromBadge } from "@/lib/packages";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useTamDung } from "@/lib/useAutoSlide";
@@ -31,6 +32,8 @@ const MOB_LAN = 10; // điện thoại: ban đầu 10 tin, mỗi lần "Xem thê
 // items: tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
 export default function FeaturedListings({ items = featuredListings }: { items?: Listing[] }) {
   const [activeTab, setActiveTab] = useState("Tất cả");
+  // Báo thanh dưới nút đang chọn (08/11/2026): xem riêng Mua bán / Cho thuê thì nút Home không xanh
+  useEffect(() => { baoTabTrangChu(activeTab); return () => baoTabTrangChu("Tất cả"); }, [activeTab]);
   const [slideIdx, setSlideIdx] = useState(0);
   // Chạm thì dừng rồi TỰ CHẠY LẠI — màn cảm ứng không có động tác rê chuột ra,
   // để setPaused(true) trơ như cũ là chạm một cái slide chết tới khi tải lại trang.
