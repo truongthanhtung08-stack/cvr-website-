@@ -302,7 +302,11 @@ function MobileMenu({
   user: ReturnType<typeof useAuth>["user"];
   onLogout: () => void;
 }) {
-  const [expanded, setExpanded] = useState<string | null>(null);
+  // MENU KIỂU APPLE (anh 08/11/2026: "hiệu ứng, chuyển động kiểu Apple, chỉnh lại menu tổng"): bấm mục có danh mục con → danh sách con
+  // TRƯỢT VÀO TỪ PHẢI thay cho danh sách chính, đầu có "‹ Menu" để trượt về — như apple.com điện thoại. Không còn kiểu xổ (accordion).
+  const [cap, setCap] = useState<string | null>(null);
+  const [huong, setHuong] = useState<"vao" | "ve">("vao");
+  const moCap = (ten: string | null) => { setHuong(ten ? "vao" : "ve"); setCap(ten); };
   // CHỈ DỰNG NỘI DUNG MENU KHI KHÁCH MỞ LẦN ĐẦU (tốc độ, đo 21/10/2026): menu đóng chỉ ẩn bằng độ mờ nên Next coi mọi link
   // trong đó là "đang thấy" → mỗi lần mở bất kỳ trang nào trên điện thoại là tải trước ~13 trang khác (~40 lượt gọi + ~15
   // tệp mã), giành máy với trang đang mở. Mở một lần rồi thì giữ nguyên như cũ (đóng mở mượt, link tải trước bình thường).
@@ -322,11 +326,12 @@ function MobileMenu({
   // + nút Quay lại của điện thoại chỉ ĐÓNG menu, không rời trang — cùng hàm chung useKhoaCuon của mọi bảng nổi
   useKhoaCuon(open, onClose);
 
-  // Đóng menu thì gập luôn accordion để lần mở sau sạch sẽ
+  // Đóng menu thì về danh sách chính để lần mở sau sạch sẽ
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!open) setExpanded(null);
+    if (!open) { setCap(null); setHuong("vao"); }
   }, [open]);
+  const mucMo = navItems.find((m) => m.label === cap && m.children);
 
   return (
     <div
@@ -347,7 +352,7 @@ function MobileMenu({
             hàng hai nút bằng nhau cao 44px — trái nút viền (chưa đăng nhập: Đăng nhập · đã đăng nhập: Tin đăng),
             phải nút xanh "+ Đăng tin". Đã đăng nhập thì thêm MỘT dòng ảnh đại diện + tên phía trên (bấm → Tổng quan).
             Các mục tài khoản còn lại (Khách hàng, Tài khoản) nằm ở nhóm cuối menu cùng Tin đã lưu · Đăng xuất. */}
-        {user && <div className="mb-6">
+        {user && !mucMo && <div className="mb-6">
           {(
             // Ảnh đại diện 40px + tên 16px đậm + dòng phụ "Thành viên" — CÙNG khối tên trong menu ảnh đại diện máy tính (25/10/2026)
             <Link href="/tai-khoan" onClick={onClose} className="flex min-w-0 items-center gap-3">
@@ -362,104 +367,61 @@ function MobileMenu({
 
         {/* Danh sách menu — KHÔNG dùng đường kẻ phân chia (kiểu Apple): phân tách bằng
             khoảng trắng; mục đang mở được bọc khối kính sáng nhẹ để gom nhóm thị giác. */}
-        <div className="space-y-1">
+        {mucMo ? (
+          // DANH MỤC CON — trượt vào từ phải; "‹ Menu" trượt về danh sách chính
+          <div key={mucMo.label} className="menu-trang-vao">
+            <button type="button" onClick={() => moCap(null)} className="-ml-1 mb-3 flex min-h-[36px] items-center gap-1 text-[14px] font-medium text-[#a1a1a6] active:text-[#f5f5f7]">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              Menu
+            </button>
+            <Link href={mucMo.href} onClick={onClose} className="mb-3 flex min-h-[44px] items-center justify-between text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]">
+              Tất cả {mucMo.label.toLowerCase()}
+              <svg className="h-4 w-4 shrink-0 text-[#6e6e73]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </Link>
+            {mucMo.children!.map((child, i) => (
+              <div key={child.label} className="menu-muc py-1.5" style={{ animationDelay: `${60 + i * 25}ms` }}>
+                {child.href ? (
+                  <Link href={child.href} onClick={onClose} className="block py-1 text-[16px] font-medium text-[#d2d2d7] active:text-[#f5f5f7]">
+                    {child.label}
+                  </Link>
+                ) : (
+                  <p className="pb-0.5 pt-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#8e8e93]">{child.label}</p>
+                )}
+                {child.children?.length ? (
+                  <div className="mt-1 space-y-2 border-l border-[#3a3a3c] pl-3.5">
+                    {child.children.map((grandChild) => (
+                      <Link key={grandChild.label} href={grandChild.href ?? "#"} onClick={onClose} className="block text-[15px] font-normal text-[#a1a1a6] active:text-[#f5f5f7]">
+                        {grandChild.label}
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : (
+        // DANH SÁCH CHÍNH — mở menu: từng dòng hiện dần từ trên xuống; về từ danh mục con: trượt vào từ trái
+        <div key="chinh" className={`space-y-1 ${huong === "ve" ? "menu-trang-ve" : ""}`}>
         {navItems.map((item, i) => (
           <div
             key={item.href}
-            // Mở menu: từng dòng hiện dần từ trên xuống như apple.com (chữ 17px đậm kiểu Apple, cỡ cân với web, không biểu tượng — anh: "chữ không quá to" — 08/11/2026)
-            style={open ? { animationDelay: `${40 + i * 30}ms` } : undefined}
-            className={`${open ? "menu-muc " : ""}-mx-3 rounded-2xl px-3 transition-colors duration-300 ${
-              expanded === item.label ? "bg-[#2c2c2e]" : ""
-            }`}
+            style={open && huong === "vao" ? { animationDelay: `${40 + i * 30}ms` } : undefined}
+            className={open && huong === "vao" ? "menu-muc" : ""}
           >
             {item.children ? (
-              <>
-                {/* Hàng menu tách đôi: BẤM VÀO TÊN = mở trang tổng (xem tất cả) ·
-                    BẤM MŨI TÊN = mở/gập danh mục con. Không còn dòng "Xem tất cả". */}
-                <div className="flex items-center">
-                  <Link
-                    href={item.href}
-                    onClick={onClose}
-                    className="flex min-h-[44px] flex-1 items-center text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]"
-                  >
-                    {item.label}
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(expanded === item.label ? null : item.label)}
-                    aria-expanded={expanded === item.label}
-                    aria-label={`${expanded === item.label ? "Thu gọn" : "Mở rộng"} ${item.label}`}
-                    className="-mr-2 flex h-[44px] w-12 shrink-0 items-center justify-center"
-                  >
-                    <svg
-                      className={`h-4 w-4 text-[#8e8e93] transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
-                      fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-                <div
-                  className="grid"
-                  // Inline (không dùng class grid-rows-[..] — Tailwind không sinh rule ổn định)
-                  style={{
-                    gridTemplateRows: expanded === item.label ? "1fr" : "0fr",
-                    transition: "grid-template-rows 300ms cubic-bezier(0.16,1,0.3,1)",
-                  }}
-                >
-                  {/* pl-9 = 22px icon + gap-3.5 → danh mục con thẳng hàng với CHỮ của mục cha */}
-                  {/* overflow-hidden + min-h-0: gập là 0px thật — phần đệm nằm trong khối con, các dòng menu cách ĐỀU nhau (07/11/2026) */}
-                  <div className="min-h-0 overflow-hidden">
-                  <div className="pb-2">
-                    {item.children.map((child) => (
-                      <div key={child.label}>
-                        <div className="py-1.5">
-                          {child.href ? (
-                            <Link
-                              href={child.href}
-                              onClick={onClose}
-                              className="block text-[16px] font-normal text-[#d2d2d7] transition-colors active:text-[#f5f5f7]"
-                            >
-                              {child.label}
-                            </Link>
-                          ) : (
-                            <p className="pb-0.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#8e8e93]">
-                              {child.label}
-                            </p>
-                          )}
-                          {child.children?.length ? (
-                            <div className="mt-1.5 space-y-2 border-l border-[#3a3a3c] pl-3.5">
-                              {child.children.map((grandChild) => (
-                                <Link
-                                  key={grandChild.label}
-                                  href={grandChild.href ?? "#"}
-                                  onClick={onClose}
-                                  className="block text-[15px] font-normal text-[#a1a1a6] transition-colors active:text-[#f5f5f7]"
-                                >
-                                  {grandChild.label}
-                                </Link>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  </div>
-                </div>
-              </>
+              <button type="button" onClick={() => moCap(item.label)} className="flex min-h-[50px] w-full items-center justify-between text-left text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]">
+                {item.label}
+                <svg className="h-4 w-4 shrink-0 text-[#6e6e73]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </button>
             ) : (
-              <Link
-                href={item.href}
-                onClick={onClose}
-                className="flex min-h-[44px] items-center text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]"
-              >
+              <Link href={item.href} onClick={onClose} className="flex min-h-[50px] items-center text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]">
                 {item.label}
               </Link>
             )}
           </div>
         ))}
         </div>
+        )}
 
         {/* Hành động phụ — Tin đã lưu · Đăng xuất (tài khoản & đăng tin đã nằm ở ĐẦU menu).
             Icon 22px + gap-3.5 để chữ thẳng hàng với các mục menu chính phía trên.
@@ -493,7 +455,7 @@ function MobileMenu({
             </button>
           )}
         </div>
-        <div className="menu-muc mt-8 grid grid-cols-2 gap-3 lg:hidden" style={open ? { animationDelay: `${40 + navItems.length * 30}ms` } : undefined}>
+        {!mucMo && <div className="menu-muc mt-6 grid grid-cols-2 gap-3 lg:hidden" style={open ? { animationDelay: `${40 + navItems.length * 30}ms` } : undefined}>
           {user ? (
             <>
               <button type="button" onClick={() => { onLogout(); onClose(); }} className="press flex h-10 items-center justify-center rounded-full border border-[#48484a] text-[14px] font-semibold text-[#f5f5f7]">
@@ -516,7 +478,7 @@ function MobileMenu({
               </Link>
             </>
           )}
-        </div>
+        </div>}
       </nav>}
     </div>
   );
@@ -606,7 +568,7 @@ export default function Header() {
             aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="relative -mr-3 flex h-[46px] w-11 items-center justify-center xl:hidden"
+            className="relative -mr-3 flex h-[42px] w-11 items-center justify-center xl:hidden"
           >
             <span
               className={`absolute h-[1.5px] w-5 rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${

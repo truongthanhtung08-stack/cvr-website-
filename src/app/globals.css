@@ -46,7 +46,7 @@
 :root { --at: env(safe-area-inset-top, 0px); }
 /* CHIỀU CAO THANH LOGO — MỘT BIẾN cho mọi thanh dính bên dưới (ô tìm, ‹, menu ≡, cuộn tới neo). Điện thoại 52px (anh 08/11/2026: đầu
    trang hơi to so với toàn cục; trước 60px), máy tính giữ 60px. */
-:root { --hdr: 46px; } /* điện thoại: thanh 46px sát logo 44px (anh 08/11/2026 tối: "thu header cho sát vào bộ logo") */
+:root { --hdr: 42px; } /* điện thoại: thanh 42px sát logo 40px (anh 08/11/2026 tối) */
 @media (min-width: 640px) { :root { --hdr: 60px; } }
 
 html {
@@ -757,13 +757,14 @@ html:has(.cvr-sheet) .an-khi-go-phim.float-above-tabbar { display: none !importa
    dần khi cuộn tới. Gắn thẳng vào thanh cuộn (animation-timeline: view()) — chạy trên GPU, KHÔNG JS, không bao giờ kẹt ẩn; trình duyệt
    chưa hỗ trợ thì nội dung hiện bình thường. Khoảng chạy "cover 0–12%": thứ đã nằm trong màn hình lúc mở trang (ảnh đầu, LCP) hiện đủ
    ngay — CLAUDE.md 0C2. Trong dải trượt ngang không chạy (dải không cuộn dọc). */
-@keyframes hien-khi-cuon { from { opacity: 0; transform: translate3d(0, 20px, 0); } to { opacity: 1; transform: none; } }
+/* Hiện khi cuộn kiểu apple.com (08/11/2026 tối, anh: "hiệu ứng, kiểu chữ toàn trang kiểu Apple"): trồi 28px, êm dần theo đường cong Apple, kéo dài hơn */
+@keyframes hien-khi-cuon { from { opacity: 0; transform: translate3d(0, 28px, 0); } to { opacity: 1; transform: none; } }
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     main article, main section h2 {
-      animation: hien-khi-cuon linear both;
+      animation: hien-khi-cuon cubic-bezier(0.25, 0.1, 0.25, 1) both;
       animation-timeline: view();
-      animation-range: cover 0% cover 12%;
+      animation-range: cover 0% cover 22%;
     }
   }
 }
@@ -957,3 +958,9 @@ nextjs-portal { display: none !important; }
   transition: clip-path 406ms cubic-bezier(0.4, 0, 0.6, 1), visibility 0s;
 }
 @media (prefers-reduced-motion: reduce) { .menu-man, .menu-man.menu-man-mo { transition: none; } }
+/* Menu điện thoại kiểu apple.com: danh mục con trượt vào từ phải, về danh sách chính trượt vào từ trái (08/11/2026) — chỉ opacity/transform */
+@keyframes menu-trang-vao { from { opacity: 0; transform: translate3d(28px, 0, 0); } to { opacity: 1; transform: none; } }
+@keyframes menu-trang-ve { from { opacity: 0; transform: translate3d(-28px, 0, 0); } to { opacity: 1; transform: none; } }
+.menu-trang-vao { animation: menu-trang-vao 320ms cubic-bezier(0.4, 0, 0.6, 1) both; }
+.menu-trang-ve { animation: menu-trang-ve 320ms cubic-bezier(0.4, 0, 0.6, 1) both; }
+@media (prefers-reduced-motion: reduce) { .menu-trang-vao, .menu-trang-ve { animation: none; } }
