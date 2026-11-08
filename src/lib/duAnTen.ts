@@ -51,6 +51,19 @@ export function khoaDuAn(ten: string): string {
 export type KhopDuAn = { duAn: DuAnTen; cach: string };
 
 /** Câu khách gõ có nhắc tên dự án không — khớp TRỌN TỪ, cách gọi dài nhất thắng. dangGo: chữ cuối có thể đang gõ dở. */
+/** TÊN CHỦ ĐẦU TƯ trong câu (anh 08/11/2026: đọc là Dự án khi câu có chữ "dự án", tên dự án hoặc tên chủ đầu tư) — bỏ phần pháp lý
+ *  ("Công ty Cổ phần", "Tập đoàn"…), so trọn tên còn lại (≥ 5 ký tự). Trả tên chủ đầu tư như hồ sơ dự án. */
+export function timChuDauTu(raw: string, ten: (string | undefined)[]): string | null {
+  const q = ` ${normalizeVi(raw).replace(/[^a-z0-9]+/g, " ").trim()} `;
+  let tot: { ten: string; c: string } | null = null;
+  for (const t of new Set(ten.filter((x): x is string => !!x))) {
+    const c = normalizeVi(t).replace(/[^a-z0-9]+/g, " ").trim()
+      .replace(/^((tong )?cong ty|tap doan|tct)( (co phan|cp|tnhh|trach nhiem huu han)( mot thanh vien| mtv)?)?\s+/, "").trim();
+    if (c.length >= 5 && q.includes(` ${c} `) && (!tot || c.length > tot.c.length)) tot = { ten: t, c };
+  }
+  return tot?.ten ?? null;
+}
+
 export function timDuAn(raw: string, ds: DuAnTen[], dangGo = false): KhopDuAn | null {
   const q = ` ${normalizeVi(raw).replace(/[^a-z0-9]+/g, " ").trim()} `;
   if (q.trim().length < 3) return null;

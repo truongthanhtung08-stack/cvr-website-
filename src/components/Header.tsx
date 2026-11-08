@@ -548,14 +548,6 @@ export default function Header() {
     } catch { /* bỏ qua */ }
   }, [menuOpen]);
   const { user } = useAuth();
-  // ⛔ BẢN THỬ — XOÁ TRƯỚC KHI PUSH (08/11/2026): ?xem-dang-nhap=1 trên MÁY THỬ (không phải coastalland.vn) → menu hiện như đã đăng nhập,
-  // tài khoản giả, để anh duyệt giao diện menu lúc đã đăng nhập (máy thử không đăng nhập được).
-  const [userXemThu, setUserXemThu] = useState<typeof user>(null);
-  useEffect(() => {
-    if (/coastalland\.vn$/.test(location.hostname) || !new URLSearchParams(location.search).has("xem-dang-nhap")) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUserXemThu({ id: "xem-thu", email: "khach.xemthu@gmail.com", phone: "84905000000", user_metadata: { full_name: "Khách Xem Thử" }, app_metadata: {}, aud: "authenticated", created_at: "" } as unknown as typeof user);
-  }, []);
   // Chấm đỏ thông báo của tài khoản — mọi trang, mọi máy như nhau (06/11/2026)
   const soViec = useSoViecKhach(user?.id, usePathname() || "/");
 
@@ -659,7 +651,7 @@ export default function Header() {
 
       {/* Menu mobile để NGOÀI <header>: header có backdrop-filter (.nav-glass) — mọi
           phần tử fixed nằm bên trong sẽ bị neo vào header thay vì vào màn hình. */}
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} user={user ?? userXemThu} onLogout={signOut} />
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={signOut} />
     </>
   );
 }

@@ -2,7 +2,7 @@
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { duongDanCau, goiYTheoY } from "@/lib/goiYTheoY";
 import { useGoiYThat } from "@/lib/useGoiYThat";
-import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
+import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen, timChuDauTu } from "@/lib/duAnTen";
 import { daCoDiaDanh, napDiaDanh } from "@/lib/diaDanhNguon";
 import { batDauTim } from "@/components/VachTim";
 import { startTransition, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -78,7 +78,7 @@ const tuCua = (s: string) => normalizeVi(s).replace(/[^a-z0-9]+/g, " ").split(" 
 //   Dự án:    "dự án …" không kèm loại nhà, không nói mua/thuê
 function mucDichCau(v: string, ds: DuAnTen[] = []): Muc | null {
   // MỘT HÀM đọc mục đích dùng chung với máy gợi ý (smartSearch.docMucDich, 01/11/2026); gõ trọn tên dự án → Dự án
-  return docMucDich(v, () => ds.length > 0 && !!timDuAn(v, ds, false));
+  return docMucDich(v, () => ds.length > 0 && (!!timDuAn(v, ds, false) || !!timChuDauTu(v, ds.map((d) => d.cdt))));
 }
 
 /** Cụm khớp chữ đang gõ: mọi từ gõ đều là ĐẦU một từ trong cụm ("nhà đà" → "Bán nhà đất Đà Nẵng") */
@@ -503,7 +503,9 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     const loc = n ? [n.loc] : [];
     const chu = n ? n.tuKhoa ?? "" : kw;
     if (muc === "duan") {
-      const p = filtersToParams({ ...emptyFilters(), keyword: chu, locations: loc });
+      // ĐỊA ĐIỂM ĐI CÙNG (anh 08/11/2026): "dự án căn hộ tại đà nẵng" → Dự án + Khu vực Đà Nẵng; có tên chủ đầu tư → trường Chủ đầu tư
+      const cdt = kw && !n ? timChuDauTu(kw, dsDa.map((d) => d.cdt)) : null;
+      const p = filtersToParams({ ...emptyFilters(), keyword: chu, locations: loc.length ? loc : kw ? locTuCau(kw, "ban").locations : [], chuDauTu: cdt ?? undefined });
       p.set("mode", "Dự án");
       return den(`/du-an?${p.toString()}`);
     }

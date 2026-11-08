@@ -3,7 +3,7 @@
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { duongDanCau, goiYTheoY } from "@/lib/goiYTheoY";
 import { useGoiYThat } from "@/lib/useGoiYThat";
-import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
+import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen, timChuDauTu } from "@/lib/duAnTen";
 import { daCoDiaDanh, napDiaDanh } from "@/lib/diaDanhNguon";
 import { startTransition, useContext, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNutQuayLai } from "@/lib/khoaCuon";
@@ -354,7 +354,7 @@ export default function FilterBar({
     // Mua bán · Cho thuê · Dự án như nhau). DÙNG CHUNG bộ đọc mục đích của ô tìm trang chủ (docMucDich + gõ trọn tên dự án = Dự án,
     // y hệt mucDichCau ở TimTrangChu — chủ dự án 02/11/2026). Sang tab mới bằng diKetQua: Quay lại về đúng trang đang đứng gõ.
     if (!next && kw && docCau && (!onSearch || mode === "duan")) {
-      const md = docMucDich(kw, () => dsDa.length > 0 && !!timDuAn(kw, dsDa, false));
+      const md = docMucDich(kw, () => dsDa.length > 0 && (!!timDuAn(kw, dsDa, false) || !!timChuDauTu(kw, dsDa.map((d) => d.cdt))));
       if (md && md !== (mode === "duan" ? "duan" : purpose)) {
         setDaTim(kw);
         const da = timDuAn(kw, dsDa);
@@ -555,7 +555,7 @@ export default function FilterBar({
   // trang Dự án (hintMode duan): gợi ý máy chủ của mục Dự án — đọc loại hình, tỉnh thành, mục đích trong câu (gợi ý tổng, lib/goiYTong)
   // GỢI Ý THEO MỤC ĐÍCH CỦA CÂU (chủ dự án 02/11/2026: "gõ câu mới, mục đích khác trang hiện tại thì phải chuyển qua đúng tab"): câu nói
   // rõ mục đích (bộ đọc chung docMucDich, như trang chủ) → gợi ý của mục đó, bấm vào là sang đúng tab; câu không nói → mục trang đang đứng
-  const mucCau = useMemo(() => (typed ? docMucDich(kwHieu, () => dsDuAn.length > 0 && !!timDuAn(kwHieu, dsDuAn, false)) : null), [typed, kwHieu, dsDuAn]);
+  const mucCau = useMemo(() => (typed ? docMucDich(kwHieu, () => dsDuAn.length > 0 && (!!timDuAn(kwHieu, dsDuAn, false) || !!timChuDauTu(kwHieu, dsDuAn.map((d) => d.cdt)))) : null), [typed, kwHieu, dsDuAn]);
   const mucGoiY = mucCau ?? (hintMode === "duan" ? "duan" : purpose === "thue" ? "thue" : "ban");
   // GỢI Ý GIỮ MỤC ĐÍCH CỦA CÂU (lỗi 9, 07/11/2026: gõ "bán đất huế" ở Cho thuê → gợi ý "đất nền tại huế", mất chữ "bán")
   const coMucDich = (nhan: string, m: string) => {
@@ -1555,9 +1555,26 @@ export function LocationPanel({
   const vaoTim = () => { clearTimeout(henTim.current); danhDauBang(true); if (window.innerWidth < 640) setGoTim(true); };
   const raTim = () => { clearTimeout(henTim.current); henTim.current = window.setTimeout(() => { danhDauBang(false); setGoTim(false); }, 250); };
   useEffect(() => () => { clearTimeout(henTim.current); danhDauBang(false); }, []);
+  // KHÁCH TẮT BÀN PHÍM mà ô tìm còn giữ con trỏ (nút ẩn bàn phím / vuốt xuống — ảnh máy anh 08/11/2026) → rời ô tìm: hiện lại công tắc
+  // địa chỉ mới / cũ, bảng về đủ cao. Chỉ khi trình duyệt có báo bàn phím (visualViewport co rồi giãn lại); Zalo không báo thì giữ như cũ.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!goTim || !vv) return;
+    let daCo = false;
+    const doi = () => {
+      const phim = window.innerHeight - vv.height - vv.offsetTop;
+      if (phim > 80) daCo = true;
+      else if (daCo && document.activeElement instanceof HTMLInputElement && document.activeElement.name === "loc-nhanh-khu-vuc") document.activeElement.blur();
+    };
+    doi();
+    vv.addEventListener("resize", doi);
+    return () => vv.removeEventListener("resize", doi);
+  }, [goTim]);
   // Cất chỗ gõ (×, đổi tầng, Đặt lại) mà ô gõ biến mất khi còn con trỏ thì không có lần "mất con trỏ" — tự hiện lại hai nút đáy
   useEffect(() => {
-    if (!moTim) { clearTimeout(henTim.current); danhDauBang(false); }
+    // ô tìm biến mất (×, đổi tầng, chọn) khi còn con trỏ thì không có onBlur → cũng trả công tắc địa chỉ mới / cũ về (lỗi anh 08/11/2026: mất công tắc)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!moTim) { clearTimeout(henTim.current); danhDauBang(false); setGoTim(false); }
   }, [moTim]);
   const chonTinh = (p: string) => {
     tatPhim();

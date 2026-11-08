@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timChuDauTu } from "@/lib/duAnTen";
 import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
 import { boTuGoTiep, coChuRac, diaDanhTuTin, goTiep, goiYGoTiep, goiYGoTiepDuAn, timDuAnTrongCau } from "@/lib/goTiep";
@@ -80,7 +81,7 @@ export async function GET(req: Request) {
   const noiDuAn = /^(dự|du)(\s+(án|an)?)?$/i.test(qGoc.normalize("NFC").trim());
   // MỘT HÀM ĐỌC MỤC ĐÍCH dùng chung với ô trang tổng (smartSearch.docMucDich) — gõ ra mục đích = bấm nút Mua bán · Cho thuê · Dự án
   // trên ô tìm (chủ dự án 01/11/2026); gõ tên dự án (kể cả gõ đầu tên) → Dự án
-  const mucCau = noiDuAn ? "duan" : docMucDich(hoan, (nq) => !!timDuAnTrongCau(nq, dsLoc));
+  const mucCau = noiDuAn ? "duan" : docMucDich(hoan, (nq) => !!timDuAnTrongCau(nq, dsLoc) || !!timChuDauTu(nq, dsLoc.map((d) => d.chuDauTu)));
   const mucTim = mucCau ?? tab;
   // CÂU CHUNG CHUNG (không nói mua / bán / thuê / dự án) ở trang tổng, tab Mua bán hoặc Cho thuê → gợi ý CẢ HAI mục (anh 07/11/2026:
   // "ra cả 2"), mục có nhiều dòng khớp dữ liệu hơn đứng trước, xen kẽ từng dòng — không tự gán "bán"

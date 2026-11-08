@@ -9,6 +9,10 @@ const DropdownGroupContext = createContext<{ openId: string | null; setOpenId: (
 
 // chiều cao màn hình lớn nhất đã thấy khi KHÔNG gõ — so để biết trình duyệt đã thu nhỏ trang vì bàn phím
 let caoManToiDa = 0;
+// Trình duyệt ĐÃ TỪNG BÁO bàn phím (màn co / visualViewport đổi) → tin số đo, không đoán nữa. Lỗi anh 08/11/2026 (ảnh máy thật): bấm kính lúp
+// ở bảng Khu vực rồi tắt bàn phím, ô tìm vẫn giữ con trỏ → máy đoán "bàn phím che nửa dưới" → bảng chỉ còn 3 dòng. Chỉ đoán khi trình duyệt
+// chưa bao giờ báo (Zalo…).
+let trinhDuyetBaoPhim = false;
 
 export function FilterDropdownGroup({ children }: { children: React.ReactNode }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -177,11 +181,12 @@ export default function FilterDropdown({
     const vv = window.visualViewport;
     const phim = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
     const dangGo = document.documentElement.classList.contains("ban-phim-mo");
-    const coPhim = phim > 80 || dangGo;
     if (!dangGo) caoManToiDa = Math.max(caoManToiDa, window.innerHeight);
     // trình duyệt THU NHỎ CẢ TRANG khi bật bàn phím (Samsung Internet, Chrome Android): innerHeight đã là phần trên bàn phím → dùng luôn;
     // chỉ khi không đo được gì (trang không co, visualViewport không đổi — Zalo) mới coi bàn phím che nửa dưới (ảnh máy anh 07/11/2026)
     const trangDaCo = window.innerHeight < caoManToiDa - 120;
+    if (phim > 80 || trangDaCo) trinhDuyetBaoPhim = true;
+    const coPhim = phim > 80 || trangDaCo || (dangGo && !trinhDuyetBaoPhim);
     const dayThay = coPhim
       ? (phim > 80 && vv ? vv.offsetTop + vv.height : trangDaCo ? window.innerHeight : window.innerHeight * 0.5)
       : window.innerHeight - caoThanh;

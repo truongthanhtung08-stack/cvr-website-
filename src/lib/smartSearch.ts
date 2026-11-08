@@ -815,7 +815,9 @@ export function docMucDich(raw: string, laTenDuAn?: (nq: string) => boolean): "b
   // chủ đầu tư · khu đô thị · tiến độ · trọn tên dự án) mà KHÔNG nói rõ mua / bán / thuê → Dự án. "mở bán", "bàn giao" có chữ "bán"/"ban"
   // nhưng là chữ của dự án, không phải khách nói mua bán (trước đây "dự án đang mở bán…" bị hiểu là Mua bán).
   const wDa = w.replace(/ dat nen du an /g, " dat nen ");
-  const coDuAn = / du an | mo ban | ban giao | chu dau tu | khu do thi | tien do /.test(wDa) || !!laTenDuAn?.(w);
+  // CHỈ BA DẤU HIỆU (anh 08/11/2026: "tập trung vào mua bán, cho thuê" — đọc là Dự án khi câu có chữ DỰ ÁN, tên dự án, tên chủ đầu tư):
+  // "mở bán", "bàn giao", "khu đô thị", "tiến độ" không còn kéo câu sang Dự án ("đất nền khu đô thị…" là tin Mua bán)
+  const coDuAn = / du an | chu dau tu /.test(wDa) || !!laTenDuAn?.(w);
   const noiMuaThue = / (mua|ban|thue|chuyen nhuong) /.test(w.replace(/ (mo ban|ban giao) /g, " "));
   if (coDuAn && !noiMuaThue) return "duan";
   if (/ (chuyen nhuong|can ban|ban gap) /.test(w) && !/ thue /.test(w)) return "ban";
