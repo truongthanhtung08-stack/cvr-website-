@@ -346,6 +346,8 @@ function timDiaGioi(nq: string, tinh: string[]): PlaceHit | null {
 // "2 phòng ngủ đà nẵng" không được đoán thành "Đăk Năng". "zz" không nằm trong tên nơi nào nên cắt đứt mọi ghép.
 // Các tỉnh web đang phục vụ (danh sách TINH) — tên phường trùng ở tỉnh khác xếp sau
 const TINH_WEB = new Set(TINH.map(([t]) => t));
+/** Các cách gõ khác của một tỉnh/thành ("danang", "da nang", "hcm") — để viết lại đúng tên trên dòng "Đang hiển thị kết quả cho …" */
+export function biDanhTinh(t: string): string[] { return TINH.find(([n]) => n === t)?.[1] ?? []; }
 const CUM_CHUNG = /\b(can ho|chung cu|nha dat|nha rieng|dat nen|ban dat|mua dat|ban nha|mua nha|thue nha|thue dat|phong ngu|phong tro|nha tro|van phong|mat bang|mat pho|du an|gia re|view bien|gan bien|cho thue|bat dong san|biet thu|lien ke)\b/g;
 function cheChuChung(nq: string): string {
   let s = nq.replace(CUM_CHUNG, " zz ");

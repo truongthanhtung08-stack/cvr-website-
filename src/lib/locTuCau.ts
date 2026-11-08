@@ -2,7 +2,7 @@
 // nạp chéo hai component (FilterBar ↔ TruongLocTrangChu) — nạp chéo làm trang chủ không chạy được.
 import { typeGroupsFor, normalizeVi, emptyFilters, dacDiemOptions, type Filters } from "@/lib/filters";
 import { tenLoaiHinhMenu } from "@/lib/categories";
-import { chuChuaHieu, docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
+import { biDanhTinh, chuChuaHieu, docDienTich, docLocThem, parseQuery, suaChinhTa } from "@/lib/smartSearch";
 import { phuongMoiCua, phuongMoiCuaQuan, newProvinceOf } from "@/lib/locations";
 import { provincesOld, provincesNew } from "@/lib/diaDanhNguon";
 
@@ -198,6 +198,10 @@ export function cauDaHieu(raw: string, mb: "ban" | "thue"): string | null {
   const ten = [...new Set(f.locations.flatMap((l) => [l.ward, l.district, l.province]).filter((x): x is string => !!x).map(boCapTen))]
     .sort((a, b) => b.length - a.length);
   for (const t of ten) cau = cau.replace(new RegExp(`(^|\\s)${thoat(t.toLowerCase())}(?=[\\s,]|$)`, "u"), (_, a: string) => a + t);
+  // gõ TÊN TỈNH VIẾT LIỀN / KHÔNG DẤU / VIẾT TẮT ("danang", "hcm") → viết lại đúng tên tỉnh (anh 08/11/2026: "nhà đất danang" phải hiện "nhà đất Đà Nẵng")
+  for (const tinh of new Set(f.locations.map((l) => l.province))) {
+    for (const k of biDanhTinh(tinh).filter((x) => x.length >= 3 && x !== "my khe")) cau = cau.replace(new RegExp(`(^|\\s)${thoat(k)}(?=[\\s,]|$)`, "iu"), (_, a: string) => a + tinh);
+  }
   const so = (s: string) => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
   return so(cau) === so(goc) ? null : cau;
 }
