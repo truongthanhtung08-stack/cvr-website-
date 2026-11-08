@@ -349,7 +349,7 @@ select option {
 
 /* ===== Card BĐS — vệt sáng lướt nhẹ khi hover (sang trọng) ===== */
 .card-lux {
-  will-change: transform;
+  /* (bỏ will-change: mỗi thẻ một lớp vẽ riêng → cuộn điện thoại nặng, giật — đo 08/11/2026) */
   transition:
     transform 0.45s var(--ease-out-soft),
     border-color 0.45s var(--ease-out-soft),
@@ -718,24 +718,19 @@ html:has(.cvr-sheet) .an-khi-go-phim.float-above-tabbar { display: none !importa
   transition:
     transform 300ms var(--ease-out-soft),
     opacity 300ms var(--ease-out-soft);
-  will-change: transform;
+  /* (bỏ will-change: mọi nút một lớp vẽ riêng → cuộn, chạm đơ trên điện thoại — đo 08/11/2026) */
 }
 .press:active {
   transform: scale(0.94);
   opacity: 0.72;
   transition-duration: 90ms;
 }
-/* Thanh dưới điện thoại (08/11/2026): chạm là nhún + vệt sáng tròn sau biểu tượng, chạm nhanh cũng thấy (MobileTabBar gắn .vua-bam).
-   Chỉ transform/opacity — không làm chậm trang. */
-.vua-bam .press { position: relative; animation: tab-nhun 280ms var(--ease-out-soft); }
-.vua-bam .press::before {
-  content: ""; position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px;
-  border-radius: 9999px; background: currentColor; opacity: 0; pointer-events: none;
-  animation: tab-vet 280ms ease-out;
-}
-@keyframes tab-nhun { 0% { transform: scale(1); } 35% { transform: scale(0.86); } 100% { transform: scale(1); } }
-@keyframes tab-vet { 0% { opacity: 0.16; transform: scale(0.5); } 100% { opacity: 0; transform: scale(1.15); } }
-@media (prefers-reduced-motion: reduce) { .vua-bam .press, .vua-bam .press::before { animation: none; } }
+/* Thanh dưới điện thoại — CHUẨN APPLE (anh 08/11/2026: "hiệu ứng chuẩn, animation chuẩn = Apple"): thanh tab iOS không nhún, không
+   vệt sáng lan (đó là kiểu Android). Chạm là nút MỜ ngay rồi sáng lại êm 0,25 s; nút đang ở trang đó đổi sang màu xanh + biểu tượng đặc.
+   MobileTabBar gắn .vua-bam lúc chạm (chạm nhanh trên iPhone :active không kịp hiện). Chỉ opacity. */
+.vua-bam .press { animation: tab-mo 250ms cubic-bezier(0.25, 0.1, 0.25, 1); }
+@keyframes tab-mo { 0% { opacity: 0.35; } 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .vua-bam .press { animation: none; } }
 /* ẨN / HIỆN THEO CUỘN (thanh dưới + hàng trường lọc, 08/11/2026): một nhịp cho cả web — hiện êm 320ms đường cong Apple, ẩn nhanh 200ms.
    Chỉ transform/opacity (chạy trên GPU, không vẽ lại bố cục). */
 .chuyen-an-hien {

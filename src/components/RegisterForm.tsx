@@ -7,11 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { baoCachDangNhap } from "@/lib/useAuth";
 import { dichSauDangNhap, thamSoNext } from "@/lib/dieuHuong";
 import SocialAuth from "@/components/SocialAuth";
-import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
-import { useBilling } from "@/lib/useBilling";
-import { chuongTrinhTvMoi, freeDangChay } from "@/lib/billing";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
-import { homNayVn } from "@/lib/gioVn";
 
 // ============================================================================
 // ĐĂNG KÝ TÀI KHOẢN — QUY TRÌNH CHUẨN, CHỦ DỰ ÁN CHỐT 11/09/2026
@@ -129,12 +125,6 @@ export default function RegisterForm() {
       </p>
     );
 
-  const { billing, loading: billingLoading } = useBilling();
-  const dongUuDai =
-    (billingLoading || !freeDangChay(billing.free, homNayVn())
-      ? null
-      : chuongTrinhTvMoi(billing));
-
   // ── BƯỚC 1 → 2: kiểm tại chỗ rồi xin mã ───────────────────────────────────
   async function xinMa(e: React.FormEvent) {
     e.preventDefault();
@@ -250,14 +240,8 @@ export default function RegisterForm() {
     return (
       <div className="w-full max-w-md rounded-2xl border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
         <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Tạo tài khoản</h1>
-        {/* Chương trình đang chạy = Tên (đúng admin) + Nội dung — hàm chung chuongTrinhTvMoi (22/10/2026) */}
-        {dongUuDai ? (
-          <div className="mt-3 rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.05] px-4 py-3">
-            <NoiDungChuongTrinh ct={dongUuDai} />
-          </div>
-        ) : (
-          <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">Đăng tin, quản lý tin và lưu bất động sản bạn quan tâm.</p>
-        )}
+        {/* KHÔNG đưa chương trình khuyến mãi lên màn đăng ký / đăng nhập (anh 08/11/2026) */}
+        <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">Đăng tin, quản lý tin và lưu bất động sản bạn quan tâm.</p>
 
         {/* 4 cửa theo thứ tự chủ dự án chốt 27/09/2026: Gmail · Số điện thoại · Zalo · Email
             (email là cột riêng cho khách doanh nghiệp). Số điện thoại & email mở form ngay tại đây. */}

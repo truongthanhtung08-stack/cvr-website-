@@ -105,9 +105,9 @@ function DropdownPanel({
 }) {
   const pos = align === "right" ? "right-0" : "left-1/2 -translate-x-1/2";
   return (
-  // RÊ CHUỘT VÀO trễ 0,18 s mới bung (anh 08/11/2026: "trỏ vào menu nó hiện nhanh quá") — lướt ngang thanh menu không bung từng bảng; rê ra đóng ngay
-    <div className={`invisible absolute top-full z-50 ${wide ? "w-[600px]" : "w-64"} pt-3 opacity-0 transition-[opacity,visibility] duration-200 group-hover:visible group-hover:opacity-100 group-hover:delay-[180ms] ${pos}`}>
-      <div className="origin-top translate-y-1.5 scale-[0.98] overflow-hidden rounded-2xl border border-cvr-line bg-white p-2 opacity-0 shadow-xl shadow-black/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:delay-[180ms] group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100">
+  // RÊ CHUỘT VÀO trễ 0,3 s mới bung (anh 08/11/2026: "trỏ vào menu nó hiện nhanh quá") — lướt ngang thanh menu không bung từng bảng; rê ra đóng ngay
+    <div className={`invisible absolute top-full z-50 ${wide ? "w-[600px]" : "w-64"} pt-3 opacity-0 transition-[opacity,visibility] duration-200 group-hover:visible group-hover:opacity-100 group-hover:delay-[300ms] ${pos}`}>
+      <div className="origin-top translate-y-1.5 scale-[0.98] overflow-hidden rounded-2xl border border-cvr-line bg-white p-2 opacity-0 shadow-xl shadow-black/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:delay-[300ms] group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100">
         {children}
       </div>
     </div>

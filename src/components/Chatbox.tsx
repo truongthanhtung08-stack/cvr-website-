@@ -20,6 +20,8 @@ import { coThanhChat } from "@/components/MobileTabBar";
 // Trang ĐÃ CÓ thanh hành động bám đáy trên điện thoại (Gọi · Zalo ở trang chi
 // tiết) — nút chat nổi đúng vùng đó sẽ đè lên, nên ẩn hẳn trên mobile.
 const TRANG_CO_THANH_DAY = ["/bat-dong-san/"];
+// Màn đăng nhập / đăng ký / quên mật khẩu: điện thoại không vẽ nút chat Zalo nổi (anh 08/11/2026: "sao lại nổi lên cái nút chat")
+const TRANG_DANG_NHAP = ["/dang-nhap", "/dang-ky", "/quen-mat-khau"];
 
 // Vị trí nút chat (khoảng cách tới mép PHẢI/DƯỚI màn hình). null = góc mặc định.
 type ChatPos = { right: number; bottom: number };
@@ -48,7 +50,7 @@ export default function Chatbox() {
   //     tiết, hoặc thanh So sánh đang bật. Máy tính KHÔNG đổi (các thanh đó
   //     hoặc ẩn, hoặc nằm giữa màn hình nên không tranh chỗ với nút).
   // (07/11/2026) trang có thanh dưới chế độ người mua: Chat đã là một nút của thanh → điện thoại không vẽ nút nổi nữa (hết đè nội dung)
-  const vuongMobile = TRANG_CO_THANH_DAY.some((p) => pathname.startsWith(p)) || soSanh > 0 || coThanhChat(pathname);
+  const vuongMobile = TRANG_CO_THANH_DAY.some((p) => pathname.startsWith(p)) || soSanh > 0 || coThanhChat(pathname) || TRANG_DANG_NHAP.some((p) => pathname.startsWith(p));
 
   // (b) Cuộn XUỐNG (đang đọc nội dung) → thu nút lại; cuộn LÊN → hiện lại.
   //     Chỉ áp cho mobile qua biến thể max-lg: bên dưới.

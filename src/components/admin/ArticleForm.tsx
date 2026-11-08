@@ -160,7 +160,7 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
       </Panel>
 
       <Panel title="Ảnh bài viết (ảnh đầu = ảnh đại diện)">
-        <ImagePicker value={images} onChange={setImages} />
+        <ImagePicker value={images} onChange={setImages} dauChim={false} />
       </Panel>
 
       {error && (

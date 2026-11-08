@@ -168,6 +168,7 @@ export default function ImagePicker({
   maxVideos,
   tierName,
   chuaChonGoi,
+  dauChim = true,
 }: {
   value: string[];
   onChange: (imgs: string[]) => void;
@@ -176,6 +177,8 @@ export default function ImagePicker({
   tierName?: string;
   /** Form đăng tin, khách CHƯA chọn gói (chủ dự án 22/10/2026): giới hạn tạm, lời nhắc là "chọn gói tin để đăng thêm". */
   chuaChonGoi?: boolean;
+  /** false = không đóng dấu COASTAL LAND (ảnh bài Tin tức — anh 08/11/2026). Mặc định đóng dấu như cũ. */
+  dauChim?: boolean;
 }) {
   // Mỗi lối chọn ảnh giữ riêng ô chọn tệp của mình, để nút bấm gọi đúng ô đó.
   const oRef = useRef<Record<string, HTMLInputElement | null>>({});
@@ -243,7 +246,7 @@ export default function ImagePicker({
     setUploadingImg(true);
     const added: string[] = [];
     for (const file of ds) {
-      const { url, error: e } = await uploadImageFile(file);
+      const { url, error: e } = await uploadImageFile(file, { dauChim });
       if (e) setError(e);
       else if (url) added.push(url);
     }

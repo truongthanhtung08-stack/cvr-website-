@@ -359,13 +359,15 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
       if (Array.isArray(r)) setGanDay(r);
       // KHÁCH QUAY LẠI mở sẵn mục lần trước (người thuê quay lại để thuê — không bắt chọn lại menu)
       const m = localStorage.getItem(MUC_KEY);
-      if (m === "ban" || m === "thue" || m === "duan") setMuc(m);
+      // CHỈ NHỚ Mua bán / Cho thuê (anh 08/11/2026: "tập trung vào mua bán, cho thuê") — gõ "dự án…" một lần không làm ô tìm trang chủ
+      // kẹt ở mục Dự án mãi (câu gợi ý chạy "Dự án căn hộ tại Đà Nẵng" ở lần mở sau)
+      if (m === "ban" || m === "thue") setMuc(m);
     } catch { /* bỏ qua */ }
     daDocMuc.current = true;
   }, []);
   useEffect(() => {
     if (!daDocMuc.current) return;
-    try { localStorage.setItem(MUC_KEY, muc); } catch { /* bỏ qua */ }
+    try { if (muc !== "duan") localStorage.setItem(MUC_KEY, muc); } catch { /* bỏ qua */ }
     // khối "Tìm kiếm phổ biến" cuối trang nghe tín hiệu này để đổi tab theo mục khách vừa chọn
     window.dispatchEvent(new Event("cvr-muc-tim"));
   }, [muc]);

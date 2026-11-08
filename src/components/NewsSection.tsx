@@ -120,11 +120,12 @@ export default function NewsSection({
         {/* MÁY TÍNH (24/10/2026): bài chính TRÁI gọn (2/5), chỉ tiêu đề 3 dòng in đậm · 4 tin PHẢI (3/5): ảnh và chữ KHỚP KHUNG
             (tiêu đề ngang mép trên ảnh, mục · ngày NGAY DƯỚI tiêu đề — không chừa khoảng trống), hai cột gần bằng nhau */}
         {featured && (
-        <div className="mt-5 hidden grid-cols-1 gap-5 lg:grid lg:grid-cols-5 lg:items-start">
+        <div className="mt-5 hidden grid-cols-1 gap-6 lg:grid lg:grid-cols-2 lg:items-start">
+          {/* CÂN ĐỐI ẢNH – CHỮ (anh 08/11/2026): hai cột bằng nhau; tin phải ảnh to hơn + 2 dòng tóm tắt lấp chỗ trống; bài chính có tóm tắt + mục · ngày */}
           {/* Bài nổi bật */}
           <Link
             href={`/tin-tuc/${featured.slug}`}
-            className="card-lux group relative -mx-4 hidden flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:mx-0 lg:col-span-2 lg:flex"
+            className="card-lux group relative -mx-4 hidden flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:mx-0 lg:col-span-1 lg:flex"
           >
             <span className="card-sheen" aria-hidden />
             {/* Điện thoại (chủ dự án 24/10/2026): khung ảnh thấp hơn (2:1), chỉ tiêu đề 3 dòng in đậm — máy tính giữ 16:9 + mô tả */}
@@ -133,7 +134,7 @@ export default function NewsSection({
                 src={anhNho(featured.image)}
                 alt={featured.title}
                 fill
-                sizes="(max-width: 1024px) 100vw, 40vw"
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
               />
             </div>
@@ -142,22 +143,25 @@ export default function NewsSection({
               <h3 className="line-clamp-3 text-[17px] font-bold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink lg:text-lg">
                 {featured.title}
               </h3>
+              {/* mục · ngày như các tin bên phải (anh 08/11/2026) */}
+              <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-cvr-muted">{featured.excerpt}</p>
+              <p className="mt-2 text-xs text-cvr-faint">{featured.category} · {featured.date}</p>
             </div>
           </Link>
 
           {/* Danh sách tin — mỗi tin: ảnh nhỏ + tiêu đề + mô tả + thể loại/ngày */}
           {headlines.length > 0 && (
-          <div className="hidden divide-y divide-cvr-line/70 lg:col-span-3 lg:flex lg:flex-col">
+          <div className="hidden divide-y divide-cvr-line/70 lg:col-span-1 lg:flex lg:flex-col">
             {headlines.map((a) => (
               <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-row items-start gap-4 py-3 first:pt-0 last:pb-0">
                 {/* MOBILE: hình TRÊN (tràn ngang), chữ DƯỚI — kiểu Báo Mới (T19). DESKTOP: hình trái.
                     PC: ảnh + chữ TO hơn để cân với bài nổi bật bên trái (file V3 10.08.2026). */}
-                <div className="relative aspect-[16/10] w-32 shrink-0 overflow-hidden rounded-xl">
+                <div className="relative aspect-[16/10] w-40 shrink-0 overflow-hidden rounded-xl">
                   <Image
                     src={anhNho(a.image)}
                     alt={a.title}
                     fill
-                    sizes="128px"
+                    sizes="160px"
                     className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
                   />
                 </div>
@@ -165,7 +169,8 @@ export default function NewsSection({
                   <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
                     {a.title}
                   </h3>
-                  <p className="mt-1.5 text-xs text-cvr-faint">{a.category} · {a.date}</p>
+                  <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-cvr-muted">{a.excerpt}</p>
+                  <p className="mt-1 text-xs text-cvr-faint">{a.category} · {a.date}</p>
                 </div>
               </Link>
             ))}

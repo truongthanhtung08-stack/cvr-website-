@@ -251,7 +251,12 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
   const [chon, setChon] = useState<string | null>(null);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- đã sang trang mới: bỏ nút chạm tạm, theo đường dẫn thật
   useEffect(() => { setChon(null); }, [pathname]);
-  const sang = (t: { href: string; on: boolean }) => (chon ? t.href === chon : t.on);
+  // NÚT XANH TÍNH SAU KHI TRANG CHẠY (lỗi 08/11/2026: web thật trang chủ nút Home xám — HTML máy chủ lệch, React không sửa thuộc tính lúc
+  // nạp trang): máy chủ vẽ mọi nút xám, mã chạy xong mới tô xanh đúng nút của trang → máy nào cũng như nhau
+  const [daGan, setDaGan] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- tô nút sau khi trang chạy
+  useEffect(() => { setDaGan(true); }, []);
+  const sang = (t: { href: string; on: boolean }) => daGan && (chon ? t.href === chon : t.on);
   // Chỉ ghi "vừa bấm" khi SANG TRANG KHÁC — bấm nút của chính trang đang đứng (Home ở trang chủ) thì không ghi, kẻo nút kẹt xanh mãi vì
   // đường dẫn không đổi (lỗi 08/11/2026: bấm Home rồi chọn Cho thuê, Home vẫn xanh)
   const bam = (href: string) => { if (href !== pathname) setChon(href); };
