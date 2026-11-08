@@ -30,13 +30,14 @@ export default function ProjectGallery({ images, alt }: Props) {
     n === 2 ? "sm:col-span-2 sm:row-span-2" : n === 3 ? "sm:col-span-2" : n === 4 && i === 0 ? "sm:col-span-2" : "";
   const open = (i: number) => { setActive(i); setLightbox(true); };
 
-  // MỘT ẢNH (dự án tra cứu — chủ dự án 30/10/2026): ẢNH NHỎ, khung nhỏ 16:10 ở cột trái (PC rộng 320 px; điện thoại hết bề ngang).
+  // MỘT ẢNH (dự án tra cứu): khung CÙNG CỠ khung nhiều ảnh (hết bề ngang, cao 300 px máy tính) — anh 08/11/2026: "cấu trúc lại dự án tra cứu gọn tốt",
+  // ảnh nhỏ 320 px lệch khi trang đã 2 cột như dự án nổi bật (trước: 30/10/2026 ảnh nhỏ 16:10).
   // Chuẩn lọc ảnh: ảnh ngang 16:10 (vd 1600 × 1000) là khít khung, không phải chỉnh.
   if (images.length === 1) {
     return (
       <>
-        <button type="button" onClick={() => open(0)} className="relative block aspect-[16/10] w-full overflow-hidden rounded-xl bg-cvr-surface sm:mt-4 sm:w-80">
-          <Image src={anhNho(images[0])} alt={alt} fill priority quality={90} sizes="(max-width:640px) 100vw, 320px" className="object-cover" />
+        <button type="button" onClick={() => open(0)} className="group relative block h-[190px] w-full overflow-hidden bg-cvr-surface sm:h-[300px] sm:rounded-xl">
+          <Image src={anhNho(images[0])} alt={alt} fill priority quality={90} sizes="(max-width:640px) 100vw, 88vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         </button>
         {lightbox && <PhotoViewer images={images} start={active} title={alt} onClose={() => setLightbox(false)} />}
       </>
