@@ -120,11 +120,11 @@ export default function NewsSection({
         {/* MÁY TÍNH (24/10/2026): bài chính TRÁI gọn (2/5), chỉ tiêu đề 3 dòng in đậm · 4 tin PHẢI (3/5): ảnh và chữ KHỚP KHUNG
             (tiêu đề ngang mép trên ảnh, mục · ngày NGAY DƯỚI tiêu đề — không chừa khoảng trống), hai cột gần bằng nhau */}
         {featured && (
-        <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-5 lg:items-start">
+        <div className="mt-5 hidden grid-cols-1 gap-5 lg:grid lg:grid-cols-5 lg:items-start">
           {/* Bài nổi bật */}
           <Link
             href={`/tin-tuc/${featured.slug}`}
-            className="card-lux group relative -mx-4 flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:mx-0 lg:col-span-2"
+            className="card-lux group relative -mx-4 hidden flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:mx-0 lg:col-span-2 lg:flex"
           >
             <span className="card-sheen" aria-hidden />
             {/* Điện thoại (chủ dự án 24/10/2026): khung ảnh thấp hơn (2:1), chỉ tiêu đề 3 dòng in đậm — máy tính giữ 16:9 + mô tả */}
@@ -174,22 +174,21 @@ export default function NewsSection({
         </div>
         )}
 
-        {/* MOBILE: slide 10 tin (ảnh TRÀN VIỀN trên · chữ dưới) + nút Xem thêm. Desktop ẩn. */}
-        {rest.length > 0 && (
-          <div className="lg:hidden">
-            <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
-              {rest.slice(0, 10).map((a) => (
-                <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="flex w-[62%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
-                  <div className="relative aspect-[16/9] w-full overflow-hidden">
-                    <Image src={anhNho(a.image)} alt={a.title} fill sizes="62vw" className="object-cover" />
-                  </div>
-                  <div className="p-3">
-                    <h3 className="clamp-2 min-h-[3em] text-[15px] font-semibold leading-[1.5] text-cvr-ink">{a.title}</h3>
-                    <p className="mt-1.5 text-xs text-cvr-faint">{a.category} · {a.date}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+        {/* ĐIỆN THOẠI (anh 08/11/2026: "khối tin tức gọn lại — hình và nội dung"): 5 bài, mỗi bài MỘT HÀNG ảnh nhỏ trái · tiêu đề +
+            mục · ngày phải — đúng kiểu hàng tin bản máy tính đang dùng (bên dưới bài nổi bật), không vẽ kiểu mới. Thay bài lớn + dải trượt. */}
+        {featured && (
+          <div className="mt-3 divide-y divide-cvr-line/70 lg:hidden">
+            {[featured, ...rest].slice(0, 5).map((a) => (
+              <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-row items-start gap-3 py-3">
+                <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-lg bg-cvr-surface">
+                  <Image src={anhNho(a.image)} alt={a.title} fill sizes="112px" className="object-cover" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="line-clamp-3 text-[15px] font-semibold leading-snug text-cvr-ink">{a.title}</h3>
+                  <p className="mt-1 text-xs text-cvr-faint">{a.category} · {a.date}</p>
+                </div>
+              </Link>
+            ))}
           </div>
         )}
         </>

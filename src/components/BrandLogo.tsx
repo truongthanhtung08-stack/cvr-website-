@@ -15,7 +15,7 @@ export default function BrandLogo({
   tone?: "dark" | "light";
 }) {
   const cls =
-    size === "lg" ? "h-[3.4rem]" : "h-[3rem] lg:h-[3.15rem]"; // điện thoại 48px: logo gốc to nhất vừa thanh 60px để đọc được slogan (anh 07/11/2026)
+    size === "lg" ? "h-[3.4rem]" : "h-[2.25rem] sm:h-[3rem] lg:h-[3.15rem]"; // điện thoại 36px trong thanh 52px (anh 08/11/2026: đầu trang hơi to; trước 48px/60px chốt 07/11) · máy tính giữ
   const src =
     tone === "light"
       ? (size === "md" ? "/logo/logo-goc-white.svg" : "/logo/logo-horizontal-white.svg") // đầu trang: đúng logo GỐC (anh 07/11/2026)

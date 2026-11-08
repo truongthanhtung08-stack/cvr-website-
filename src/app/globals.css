@@ -44,16 +44,20 @@
    trạng thái → đầu trang hở một khoảng vô lý (chủ dự án chụp 27/09/2026). Mở trong Zalo thì
    layout.tsx chèn thêm style :root{--at:0px} (theo user agent, không đụng thuộc tính <html> của React). */
 :root { --at: env(safe-area-inset-top, 0px); }
+/* CHIỀU CAO THANH LOGO — MỘT BIẾN cho mọi thanh dính bên dưới (ô tìm, ‹, menu ≡, cuộn tới neo). Điện thoại 52px (anh 08/11/2026: đầu
+   trang hơi to so với toàn cục; trước 60px), máy tính giữ 60px. */
+:root { --hdr: 52px; }
+@media (min-width: 640px) { :root { --hdr: 60px; } }
 
 html {
   scroll-behavior: smooth;
   /* Chừa chỗ cho thanh header dính khi trang tự cuộn tới một mục (link có #,
      mở từ Zalo/Facebook) → tiêu đề mục không bị header đè lên. */
-  scroll-padding-top: calc(60px + var(--at));
+  scroll-padding-top: calc(var(--hdr) + var(--at));
 }
 /* Trang có thanh "← Quay lại" dính dưới header (điện thoại): chừa thêm chiều cao thanh đó → ô đang gõ, mục cuộn tới
    không bị thanh đè (chủ dự án 17/10/2026). Trình duyệt cũ không hiểu :has thì giữ như trên. */
-html:has(.thanh-quay-lai) { scroll-padding-top: calc(60px + var(--backbar-h) + var(--at)); }
+html:has(.thanh-quay-lai) { scroll-padding-top: calc(var(--hdr) + var(--backbar-h) + var(--at)); }
 
 /* ── CẮT CHỮ ĐÚNG THEO DÒNG (2 dòng / 1 dòng) ──────────────────────────────
    Trước đây tiêu đề thẻ tin đặt CHIỀU CAO CỨNG h-[3em] + overflow-hidden.

@@ -29,7 +29,9 @@ export const HOME_RESET_EVENT = "cl-home-reset";
 // Mỗi bước lịch sử do khối "Xem thêm" tạo ra mang dấu này để phân biệt với
 // điều hướng thật (chuyển trang).
 // clY: vị trí cuộn lúc bấm "Xem thêm" — BACK đóng danh sách thì về đúng chỗ đó, không văng lên đầu trang (30/10/2026)
-type SectionHistoryState = { clSection?: string; clDepth?: number; clY?: number };
+// cvrKq: dấu "trang kết quả đi ra từ trang trước" (cùng dấu FilterBar dùng) — danh sách mở tại chỗ có ô tìm thì nút ‹ cạnh ô tìm tự hiện
+// (anh 08/11/2026: "trang chủ bấm Xem thêm ở các mục ra danh sách — nút back đâu!")
+type SectionHistoryState = { clSection?: string; clDepth?: number; clY?: number; cvrKq?: number };
 
 export function HomeExpandProvider({ children }: { children: React.ReactNode }) {
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -45,6 +47,8 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
     if (key) {
       setOpenKey(key);
       depthRef.current = 1;
+      // F5 ngay trên danh sách → giữ dấu để nút ‹ vẫn hiện
+      window.history.replaceState({ ...(window.history.state ?? {}), clSection: key, clDepth: 1, cvrKq: 1 }, "");
     }
   }, []);
 
@@ -110,7 +114,7 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
     window.history.replaceState({ ...(window.history.state ?? {}), clY: window.scrollY }, "");
     setOpenKey(key);
     depthRef.current += 1;
-    const state: SectionHistoryState = { clSection: key, clDepth: depthRef.current };
+    const state: SectionHistoryState = { clSection: key, clDepth: depthRef.current, cvrKq: 1 };
     // Ghi khoá khối vào địa chỉ → bấm F5 vẫn giữ nguyên danh sách đang xem.
     const url = new URL(window.location.href);
     url.searchParams.set("muc", key);
@@ -119,7 +123,10 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   return (
-    <HomeExpandCtx.Provider value={{ openKey, openSection, closeAll }}>{children}</HomeExpandCtx.Provider>
+    <HomeExpandCtx.Provider value={{ openKey, openSection, closeAll }}>
+      {openKey && <ThanhVeKhoi khoa={openKey} />}
+      {children}
+    </HomeExpandCtx.Provider>
   );
 }
 
@@ -161,4 +168,27 @@ export function HomeCollapsible({ children, className }: { children: React.React
 export function CotKhiMo({ children, className, classKhiMo }: { children: React.ReactNode; className: string; classKhiMo: string }) {
   const { openKey } = useContext(HomeExpandCtx);
   return <div className={`${className} ${openKey ? classKhiMo : ""}`}>{children}</div>;
+}
+
+// NÚT ‹ CHO DANH SÁCH MỞ TẠI CHỖ KHÔNG CÓ Ô TÌM (vd Tin tức ở trang chủ) — một kiểu với thanh "‹ …" các trang (BackBar), chỉ điện thoại.
+// Danh sách có ô tìm (FilterBar) đã có nút ‹ cạnh ô tìm (dấu cvrKq) → không vẽ thêm. Trang khác trang chủ đã có BackBar (Quay lại = lùi
+// lịch sử = đóng danh sách) → không vẽ thêm. Bấm = lùi một bước lịch sử → khối đóng, về đúng chỗ đã bấm "Xem thêm" (onPop ở trên).
+// Khối mở tại chỗ KHÔNG có ô tìm (danh sách có ô tìm đã có nút ‹ cạnh ô — không vẽ trùng). Thêm khối mới không có ô tìm → thêm vào đây.
+const KHOI_KHONG_O_TIM: Record<string, string> = { "tin-tuc": "Tin tức" };
+function ThanhVeKhoi({ khoa }: { khoa: string }) {
+  const [hien, setHien] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- chỉ đọc đường dẫn sau khi dựng (trang chủ mới vẽ; trang khác đã có BackBar)
+  useEffect(() => { setHien(window.location.pathname === "/" && khoa in KHOI_KHONG_O_TIM); }, [khoa]);
+  if (!hien) return null;
+  return (
+    <div className="thanh-quay-lai sticky top-[calc(var(--hdr)+var(--at))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden">
+      <div className="flex items-center gap-2 px-4 py-[10px]">
+        <button type="button" onClick={() => window.history.back()} aria-label="Quay lại"
+          className="-ml-1 flex h-8 w-8 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <span className="truncate text-[15px] font-medium text-cvr-ink">{KHOI_KHONG_O_TIM[khoa]}</span>
+      </div>
+    </div>
+  );
 }

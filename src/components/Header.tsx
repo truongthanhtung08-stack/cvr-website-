@@ -335,7 +335,7 @@ function MobileMenu({
       // header dính + body khoá cuộn làm mốc neo sai: menu bị đẩy lệch lên và cụt
       // (trông như "ẩn"). Fixed neo thẳng vào màn hình nên cuộn tới đâu cũng đúng.
       // z-[45]: trên thanh tab đáy (z-40), dưới header (z-50) để nút ☰ vẫn bấm đóng được.
-      className={`menu-solid fixed inset-x-0 bottom-0 top-[calc(60px+var(--at))] z-[45] flex flex-col overflow-y-auto overscroll-contain transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] xl:hidden ${
+      className={`menu-solid fixed inset-x-0 bottom-0 top-[calc(var(--hdr)+var(--at))] z-[45] flex flex-col overflow-y-auto overscroll-contain transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] xl:hidden ${
         open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0 pointer-events-none"
       }`}
     >
@@ -541,7 +541,7 @@ export default function Header() {
         scrolled ? "shadow-lg shadow-black/25" : ""
       }`}
     >
-      <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-[var(--hdr)] max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
         {/* Logo trắng (nền tối) — bấm là thấy phản hồi NGAY: logo nhún nhẹ rồi bật lại
             (thay cho rung), thanh tiến trình chạy trên đỉnh, trang chủ hiện dần lên. */}
         <Link

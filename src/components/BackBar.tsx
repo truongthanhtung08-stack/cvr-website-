@@ -226,7 +226,7 @@ export default function BackBar() {
   return (
     // Trang có khối tìm + lọc ngay dưới (Mua bán · Cho thuê · Dự án): BỎ đường kẻ đáy — thanh và dải lọc liền một khối (chủ dự án
     // 02/11/2026: "sát, cân đối lên menu tab, bỏ dấu ngang ngăn cách"); trang khác giữ đường kẻ
-    <div className="thanh-quay-lai sticky top-[calc(60px+var(--at))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden [html:has(.khoi-loc-dinh)_&]:border-transparent">
+    <div className="thanh-quay-lai sticky top-[calc(var(--hdr)+var(--at))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden [html:has(.khoi-loc-dinh)_&]:border-transparent">
       {/* nút ← nhỏ lại (chủ dự án 18/10/2026) — giữ ĐÚNG chiều cao thanh 53px (trang khác bám mốc này) */}
       <div className="flex items-center gap-2 px-4 py-[10px]">
         <button

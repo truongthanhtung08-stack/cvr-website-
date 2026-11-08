@@ -70,7 +70,7 @@ export default async function Home() {
             <h1 className="sr-only">Cổng đăng tin mua bán, cho thuê nhà đất</h1>
             <div className="relative max-sm:contents">
               {/* NỀN BỘ LỌC trên điện thoại (chủ dự án 01/11/2026: "cần cái nền, kiểu đơn giản để nhìn là biết ngay bộ lọc, cả 4 phần"): dải nền xám nhạt tràn hết bề ngang bao ô tìm + hàng trường lọc; ô tìm, nút trường lọc trắng nổi trên nền — kiểu Google. Máy tính giữ nguyên. */}
-              <div className="khoi-loc-dinh bg-cvr-surface pb-0 pt-1 max-sm:sticky max-sm:top-[calc(60px+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90] sm:absolute sm:inset-x-0 sm:top-0 sm:z-20 sm:bg-transparent sm:pb-0 sm:pt-8">
+              <div className="khoi-loc-dinh bg-cvr-surface pb-0 pt-1 max-sm:sticky max-sm:top-[calc(var(--hdr)+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90] sm:absolute sm:inset-x-0 sm:top-0 sm:z-20 sm:bg-transparent sm:pb-0 sm:pt-8">
                 {/* Suspense: chạm ô tìm khi trang chưa nạp xong mã → React nạp ô tìm trước, không mất cú chạm đầu */}
                 <Suspense>
                   <TimTrangChu goiYTin={goiYTrangChu(tinDu)} tinDem={tinDem(tinDu)} trenAnh />

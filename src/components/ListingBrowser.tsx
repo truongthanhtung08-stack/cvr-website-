@@ -429,7 +429,7 @@ export default function ListingBrowser({
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
       {/* Máy tính: thanh tìm gọn trong CỘT TIN bên trái (= lg:col-span-3 của lưới 4 cột, khe 24px), như Batdongsan — chủ dự án 18/10/2026 */}
       {/* ĐIỆN THOẠI: khối tìm + lọc DÍNH ngay dưới thanh "‹ Mua bán" khi cuộn (chủ dự án 02/11/2026: "bộ lọc là trái tim — cố định khi cuộn") */}
-      <div className="khoi-loc-dinh lg:w-[calc(75%-6px)] max-sm:sticky max-sm:top-[calc(60px+var(--at))] max-sm:[html:has(.thanh-quay-lai)_&]:top-[calc(60px+var(--backbar-h)+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90]">
+      <div className="khoi-loc-dinh lg:w-[calc(75%-6px)] max-sm:sticky max-sm:top-[calc(var(--hdr)+var(--at))] max-sm:[html:has(.thanh-quay-lai)_&]:top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90]">
         <FilterBar
           value={hieu ? { ...hieu, keyword: filtersSong.keyword } : filtersSong}
           onChange={doiBoLoc}

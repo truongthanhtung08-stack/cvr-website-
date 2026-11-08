@@ -1024,12 +1024,12 @@ export default function FilterBar({
           (cvrKq) — bấm là về đúng trang khách đứng gõ tìm (luật một vòng tìm: trang kết quả thay nhau nên một bước lùi là về chỗ gõ) */}
       {!compact && veChoGo && (
         <button type="button" aria-label="Quay lại chỗ đang tìm" title="Quay lại chỗ đang tìm" onClick={() => history.back()}
-          className="-ml-1 -mr-1.5 flex h-11 w-7 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface sm:h-12">
+          className="-ml-1 -mr-1.5 flex h-10 w-7 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface sm:h-12">
           {/* cùng kiểu nút ‹ của màn tìm (mũi tên trơn), gọn, cao bằng ô tìm, căn giữa theo ô */}
           <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         </button>
       )}
-      <div className={compact ? "relative flex-1" :"relative flex h-11 min-w-0 flex-1 items-center rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.14)] ring-1 ring-black/15 transition sm:bg-cvr-surface sm:shadow-none focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-xl sm:ring-1"}>
+      <div className={compact ? "relative flex-1" :"relative flex h-10 min-w-0 flex-1 items-center rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.12)] ring-1 ring-black/12 transition sm:bg-cvr-surface sm:shadow-none focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-xl sm:ring-1"}>
         {/* Kính lúp trái — trang Mua bán / Cho thuê: HIỆN cả trên điện thoại cho khách nhận ra ngay là ô tìm (chủ dự án
             20/10/2026); ô tìm lớn ở Hero điện thoại vẫn ẩn (đã có nút tìm xanh) */}
         <svg className={`pointer-events-none absolute top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-muted ${compact ? "left-4 hidden sm:block" : "left-3.5 sm:left-4"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
