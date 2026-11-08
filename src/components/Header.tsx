@@ -370,14 +370,11 @@ function MobileMenu({
         {mucMo ? (
           // DANH MỤC CON — trượt vào từ phải; "‹ Menu" trượt về danh sách chính
           <div key={mucMo.label} className="menu-trang-vao">
-            <button type="button" onClick={() => moCap(null)} className="-ml-1 mb-3 flex min-h-[36px] items-center gap-1 text-[14px] font-medium text-[#a1a1a6] active:text-[#f5f5f7]">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-              Menu
+            {/* Đầu danh mục con: "‹ Mua bán" — bấm là về danh sách chính (anh 08/11/2026: bỏ dòng "Tất cả mua bán" — vào Mua bán rồi thì "tất cả mua bán" là thừa) */}
+            <button type="button" onClick={() => moCap(null)} className="-ml-1 mb-2 flex min-h-[48px] items-center gap-1.5 text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]">
+              <svg className="h-5 w-5 text-[#a1a1a6]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              {mucMo.label}
             </button>
-            <Link href={mucMo.href} onClick={onClose} className="mb-3 flex min-h-[44px] items-center justify-between text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]">
-              Tất cả {mucMo.label.toLowerCase()}
-              <svg className="h-4 w-4 shrink-0 text-[#6e6e73]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-            </Link>
             {mucMo.children!.map((child, i) => (
               <div key={child.label} className="menu-muc py-1.5" style={{ animationDelay: `${60 + i * 25}ms` }}>
                 {child.href ? (
@@ -401,21 +398,22 @@ function MobileMenu({
           </div>
         ) : (
         // DANH SÁCH CHÍNH — mở menu: từng dòng hiện dần từ trên xuống; về từ danh mục con: trượt vào từ trái
-        <div key="chinh" className={`space-y-1 ${huong === "ve" ? "menu-trang-ve" : ""}`}>
+        <div key="chinh" className={`flex flex-1 flex-col ${huong === "ve" ? "menu-trang-ve" : ""}`}>
         {navItems.map((item, i) => (
           <div
             key={item.href}
             style={open && huong === "vao" ? { animationDelay: `${40 + i * 30}ms` } : undefined}
-            className={open && huong === "vao" ? "menu-muc" : ""}
+            className={`flex flex-1 ${open && huong === "vao" ? "menu-muc" : ""}`}
           >
             {item.children ? (
-              <button type="button" onClick={() => moCap(item.label)} className="flex min-h-[50px] w-full items-center justify-between text-left text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]">
+              <button type="button" onClick={() => moCap(item.label)} className="flex min-h-[48px] w-full self-stretch items-center justify-between text-left text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]">
                 {item.label}
                 <svg className="h-4 w-4 shrink-0 text-[#6e6e73]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </button>
             ) : (
-              <Link href={item.href} onClick={onClose} className="flex min-h-[50px] items-center text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]">
+              <Link href={item.href} onClick={onClose} className="flex min-h-[48px] w-full self-stretch items-center justify-between text-[17px] font-semibold leading-snug tracking-tight text-[#e8e8ed]">
                 {item.label}
+                <svg className="h-4 w-4 shrink-0 text-[#6e6e73]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
             )}
           </div>
@@ -458,10 +456,10 @@ function MobileMenu({
         {!mucMo && <div className="menu-muc mt-6 grid grid-cols-2 gap-3 lg:hidden" style={open ? { animationDelay: `${40 + navItems.length * 30}ms` } : undefined}>
           {user ? (
             <>
-              <button type="button" onClick={() => { onLogout(); onClose(); }} className="press flex h-10 items-center justify-center rounded-full border border-[#48484a] text-[14px] font-semibold text-[#f5f5f7]">
+              <button type="button" onClick={() => { onLogout(); onClose(); }} className="press flex h-11 items-center justify-center gap-1 rounded-full border border-[#48484a] text-[15px] font-semibold text-[#f5f5f7]">
                 Đăng xuất
               </button>
-              <Link href="/dang-tin" onClick={onClose} className="press btn-dangtin flex h-10 items-center justify-center gap-1 rounded-full text-[14px] font-semibold text-white">
+              <Link href="/dang-tin" onClick={onClose} className="press flex h-11 items-center justify-center gap-1 rounded-full border border-[#48484a] text-[15px] font-semibold text-[#f5f5f7]">
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
@@ -470,10 +468,10 @@ function MobileMenu({
             </>
           ) : (
             <>
-              <Link href="/dang-ky" onClick={onClose} className="press flex h-10 items-center justify-center rounded-full border border-[#48484a] text-[14px] font-semibold text-[#f5f5f7]">
+              <Link href="/dang-ky" onClick={onClose} className="press flex h-11 items-center justify-center gap-1 rounded-full border border-[#48484a] text-[15px] font-semibold text-[#f5f5f7]">
                 Đăng ký
               </Link>
-              <Link href="/dang-nhap" onClick={onClose} className="press flex h-10 items-center justify-center rounded-full bg-[#f5f5f7] text-[14px] font-semibold text-[#1d1d1f]">
+              <Link href="/dang-nhap" onClick={onClose} className="press flex h-11 items-center justify-center gap-1 rounded-full border border-[#48484a] text-[15px] font-semibold text-[#f5f5f7]">
                 Đăng nhập
               </Link>
             </>

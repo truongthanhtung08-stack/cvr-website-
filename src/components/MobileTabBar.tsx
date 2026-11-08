@@ -295,11 +295,20 @@ function ThanhTab({ tabs, count, soViec = {}, nutDangTinNoi = false, dangTinBang
                   {/* 22/10/2026 chủ dự án: giữ kiểu cũ, to hơn một chút — 35px. 29/10/2026: to thêm chút nữa + nhô lên một chút → 38px,
                       cả nút dời lên 6px để chữ "Đăng tin" thẳng hàng chữ các nút khác (vòng tròn nhô khỏi thanh ~5px). Các nút khác giữ nguyên. */}
                   {/* dangTinBang (thanh trang công khai, chủ dự án 07/11/2026: "các menu bằng nhau hết"): cùng kiểu vòng tròn xanh, cỡ BẰNG biểu tượng các nút khác, không nhô */}
-                  <span className={`flex items-center justify-center rounded-full bg-cvr-blue text-white ${dangTinBang ? "-mt-[4px] h-[30px] w-[30px]" : "h-[38px] w-[38px]"}`}>
-                    <svg className={dangTinBang ? "h-[18px] w-[18px]" : "h-[22px] w-[22px]"} fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
+                  {dangTinBang ? (
+                    // thanh công khai: CÙNG MỘT KIỂU với Home · Lưu · Tin nhắn · Hồ sơ — biểu tượng nét 1,6 cỡ 26px, không vòng tròn đặc nhô lên; chỉ khác màu xanh
+                    // (anh 08/11/2026 tối: "thanh điều hướng treo ngoe — chuẩn nào ra chuẩn ấy, một kiểu")
+                    <svg className="h-[26px] w-[26px] text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24" aria-hidden>
+                      <circle cx="12" cy="12" r="9" />
+                      <path strokeLinecap="round" d="M12 8v8M8 12h8" />
+                    </svg>
+                  ) : (
+                  <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-cvr-blue text-white">
+                    <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" d="M12 5v14M5 12h14" />
                     </svg>
                   </span>
+                  )}
                   <span className={`whitespace-nowrap text-[12px] font-medium leading-none tracking-[-0.01em] text-cvr-blue`}>{t.label}</span>
                 </Link>
               ) : (
