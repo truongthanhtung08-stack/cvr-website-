@@ -1,6 +1,7 @@
 import { provinceNamesNew, provinceNames } from "@/lib/locations";
 import { normalizeVi } from "@/lib/filters";
 import { thangHienTai } from "@/lib/thang";
+import { loiCuaTrang } from "@/lib/tuKhoaLoiStore";
 
 // ============================================================================
 // TRANG THEO KHU VỰC — /mua-ban/da-nang · /cho-thue/hue · /du-an/quang-ngai …
@@ -48,9 +49,11 @@ export const khuVucTrongDiem: string[] = [
 // tiêu đề giữa các trang là lỗi khiến Google chỉ chọn một trang để hiện).
 export function tieuDeKhuVuc(muc: "ban" | "thue" | "duan", ten: string): string {
   // Tiêu đề theo chữ người gõ (chủ dự án chốt 16/10/2026): "Bán nhà đất Đà Nẵng tháng 10/2026"
-  if (muc === "thue") return `Cho thuê nhà đất ${ten} ${thangHienTai()}`;
+  // Chữ lõi tầng tỉnh theo bảng từ khoá (Admin → Từ khoá lõi; trang đang top không có trong bảng nạp — tuKhoaLoiDoc.ts loại)
+  const loi = muc === "duan" ? undefined : loiCuaTrang(`/${muc === "thue" ? "cho-thue" : "mua-ban"}/${slugKhuVuc(ten)}`);
+  if (muc === "thue") return `${loi ?? "Cho thuê nhà đất"} ${ten} ${thangHienTai()}`;
   if (muc === "duan") return `Dự án bất động sản tại ${ten}`;
-  return `Bán nhà đất ${ten} ${thangHienTai()}`;
+  return `${loi ?? "Bán nhà đất"} ${ten} ${thangHienTai()}`;
 }
 
 export function moTaKhuVuc(muc: "ban" | "thue" | "duan", ten: string, soTin: number): string {

@@ -5,7 +5,7 @@ import { normalizeVi, type Filters } from "@/lib/filters";
 import { choCuCua, newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
 import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
 import { tenPhuongChuan } from "@/lib/tenPhuongChuan";
-import tuKhoaLoi from "@/data/tu-khoa-loi.json";
+import { loiCuaTrang } from "@/lib/tuKhoaLoiStore";
 
 // ============================================================================
 // PROGRAMMATIC SEO — Template 1 "Dynamic Listing" (docs/PHAN-TICH-PSEO-2-FILE.md)
@@ -188,17 +188,17 @@ export type DieuKien = {
 const danhMuc = (muc: Muc) => [...(muc === "thue" ? rentCategories : saleCategories), ...nhomPseo(muc)];
 // CHỮ LÕI THEO BẢNG TỪ KHOÁ (anh 09/11/2026): sheet "Từ khoá lõi" của HE-THONG-TU-KHOA.xlsx, cột "Lên web" = x → scripts/nap-tu-khoa.ts
 // → src/data/tu-khoa-loi.json. Áp cho trang lõi <loại>/<tỉnh> và mọi trang con của nó; trang đang top / giữ bản cũ (giuSoCu) không đổi.
-// Bản mặc định trong mã; Admin → Từ khoá lõi (tải tệp) ghi site_content "tu_khoa_loi" → tuKhoaLoiDb.napTuKhoaLoi() thay bằng bản Admin.
-let tuKhoaBang: Record<string, { loi?: string }> = (tuKhoaLoi as { trang: Record<string, { loi?: string }> }).trang;
-export function datTuKhoaLoi(trang: Record<string, { loi?: string }>) { tuKhoaBang = trang; }
+// Chữ lõi giữ ở tuKhoaLoiStore.ts (bản mặc định trong mã, Admin tải tệp thì thay bằng bản Admin).
 const tuKhoa = (c: Category, dk?: DieuKien) => {
   if (dk) {
-    const loi = tuKhoaBang[duongDan({ muc: dk.muc, tinh: dk.tinh, cat: c })]?.loi;
+    const loi = loiCuaTrang(duongDan({ muc: dk.muc, tinh: dk.tinh, cat: c }));
     if (loi && !giuSoCu(duongDan(dk))) return loi;
   }
   return c.tuKhoa ?? c.h1;
 };
 const goc = (muc: Muc) => (muc === "thue" ? "/cho-thue" : "/mua-ban");
+// Chữ lõi tầng tỉnh ("Bán nhà đất" / "Cho thuê nhà đất" hoặc chữ anh đặt trong bảng cho /mua-ban/<tỉnh>) — trang tỉnh đang top giữ chữ cũ
+const nhaDat = (muc: Muc, tinh: KhuVuc) => { const p = `${goc(muc)}/${tinh.slug}`; return (!giuSoCu(p) && loiCuaTrang(p)) || (muc === "thue" ? "Cho thuê nhà đất" : "Bán nhà đất"); };
 
 export function khop(l: Listing, dk: DieuKien): boolean {
   if (mucCuaTin(l) !== dk.muc) return false;
@@ -246,7 +246,7 @@ export function tieuDe(dk: DieuKien): string {
     ].filter(Boolean).join(" ");
   }
   if (dk.kiet) return `Bán nhà kiệt, hẻm ${noi}`;
-  return dk.muc === "thue" ? `Cho thuê nhà đất ${noi}` : `Bán nhà đất ${noi}`;
+  return `${nhaDat(dk.muc, dk.tinh)} ${noi}`;
 }
 
 // Mô tả cho Google — câu chủ dự án duyệt 24/10/2026 (mỗi trang một đoạn riêng từ chính các tin của trang, Google/AI
@@ -289,11 +289,14 @@ export function moTa(dk: DieuKien, tin: Listing[] = []): string {
 export type Crumb = { name: string; href: string };
 export function duongDanPhanCap(dk: DieuKien): Crumb[] {
   const g = goc(dk.muc);
+  const cu = giuSoCu(duongDan(dk));
   const c: Crumb[] = [
     { name: dk.muc === "thue" ? "Nhà đất cho thuê" : "Nhà đất bán", href: g },
-    { name: dk.tinh.name, href: `${g}/${dk.tinh.slug}` },
+    // NỐI NGƯỢC LÊN BẰNG ĐÚNG CHỮ LÕI (anh 09/11/2026): tầng tỉnh = "Bán nhà đất Đà Nẵng", tầng loại hình = chữ lõi "Bán căn hộ Đà Nẵng" —
+    // mọi trang con, trang tin trỏ về trang lõi với cùng chữ → Google hiểu trang lõi nhắm từ khoá ngắn đó. Trang đang top giữ tên cũ.
+    { name: cu ? dk.tinh.name : tieuDe({ muc: dk.muc, tinh: dk.tinh }), href: `${g}/${dk.tinh.slug}` },
   ];
-  if (dk.cat) c.push({ name: dk.cat.label, href: duongDan({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat }) });
+  if (dk.cat) c.push({ name: cu ? dk.cat.label : tieuDe({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat }), href: duongDan({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat }) });
   const cuoi = dk.thanhPho?.name ?? dk.phuong ?? (dk.duong ? `Đường ${dk.duong}` : dk.huong ? `Hướng ${dk.huong}` : dk.giaDuoi ? viHoa(dk.giaDuoi.nhan)
     : dk.phapLy ? viHoa(dk.phapLy.nhan) : dk.phongNgu ? viHoa(phongNguNhan(dk.phongNgu)) : dk.kiet ? "Nhà kiệt, hẻm" : "");
   if (cuoi) c.push({ name: cuoi, href: duongDan(dk) });

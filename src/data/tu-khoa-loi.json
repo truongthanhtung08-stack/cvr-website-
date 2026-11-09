@@ -1,8 +1,20 @@
 {
   "nguon": "HE-THONG-TU-KHOA.xlsx · sheet Từ khoá lõi · cột Lên web",
   "trang": {
-    "/mua-ban/nha/da-nang": {
-      "longtail": "Bán nhà Đà Nẵng 3 phòng ngủ"
+    "/mua-ban/hue": {
+      "longtail": "Bán nhà đất Huế giá dưới 1 tỷ"
+    },
+    "/mua-ban/khanh-hoa": {
+      "longtail": "Bán nhà đất Khánh Hòa dưới 2 tỷ"
+    },
+    "/mua-ban/gia-lai": {
+      "longtail": "Bán nhà đất Gia Lai dưới 2 tỷ"
+    },
+    "/mua-ban/lam-dong": {
+      "longtail": "Bán nhà đất Lâm Đồng từ 500 đến 800 triệu"
+    },
+    "/mua-ban/quang-ngai": {
+      "longtail": "Bán nhà đất Quảng Ngãi dưới 400 triệu"
     },
     "/mua-ban/nha/hue": {
       "longtail": "Bán nhà Huế dưới 10 tỷ"
@@ -16,9 +28,6 @@
     "/cho-thue/nha/khanh-hoa": {
       "longtail": "Cho thuê nhà Khánh Hòa 3 phòng ngủ"
     },
-    "/cho-thue/can-ho-chung-cu/da-nang": {
-      "longtail": "Cho thuê căn hộ Đà Nẵng dưới 20 triệu"
-    },
     "/cho-thue/can-ho-chung-cu/hue": {
       "longtail": "Cho thuê căn hộ Huế phường Vỹ Dạ"
     },
@@ -30,9 +39,6 @@
     },
     "/mua-ban/can-ho-chung-cu/da-nang": {
       "longtail": "Bán căn hộ Đà Nẵng dưới 1 tỷ",
-      "loi": "Bán căn hộ"
-    },
-    "/mua-ban/can-ho-chung-cu/hue": {
       "loi": "Bán căn hộ"
     },
     "/mua-ban/can-ho-chung-cu/khanh-hoa": {

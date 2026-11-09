@@ -1,4 +1,4 @@
-import { datTuKhoaLoi } from "@/lib/pseo";
+import { datTuKhoaLoi } from "@/lib/tuKhoaLoiStore";
 
 // CHỮ LÕI TỪ ADMIN (anh 09/11/2026: "chỉnh bảng – lưu – tải lên Admin là web tự cập nhật, không cần Push").
 // Đọc site_content "tu_khoa_loi" (Admin → Từ khoá lõi ghi) → nạp vào pseo.ts. Cache thẻ "noi-dung" như mọi khối nội dung Admin:

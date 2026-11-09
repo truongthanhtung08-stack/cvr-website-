@@ -12,6 +12,8 @@ import type { Listing } from "@/lib/data";
 import { chuanHoaTienIch, chuanHoaNoiThat, chuanHoaPhapLy, chuanHoaMucNoiThat } from "@/lib/chuanHoaThuocTinh";
 import { linkHopLe } from "@/lib/linkChen";
 import { napTuKhoaLoi } from "@/lib/tuKhoaLoiDb";
+// Loại hình đã đổi tên trong cây (tên cũ → tên mới) — tin đăng trước ngày đổi vẫn lưu tên cũ
+const TEN_LOAI_CU: Record<string, string> = { "Đất nông nghiệp": "Đất khác" };
 import { chuanHoaDiaChiCu, dongBoHaiHe, haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
 import { choCuCua } from "@/lib/locations";
 // chữ thường không dấu, chỉ chữ + số cách nhau một dấu cách (dò tên nơi trong nội dung tin)
@@ -244,6 +246,7 @@ function rowToListing(r: Row): Listing {
       return v ? { viTri: v } : {};
     })(),
     ...((r.details?.specs?.loaiCanho || r.details?.specs?.landType) ? { loaiCon: chuanLoaiCon(r.details?.specs?.loaiCanho || r.details?.specs?.landType) } : {}),
+    ...(!(r.details?.specs?.loaiCanho || r.details?.specs?.landType) && TEN_LOAI_CU[r.type ?? ""] ? { loaiCon: r.type } : {}), // tin loại cũ: tên cũ là loại con
     ...(r.beds != null ? { beds: r.beds } : {}),
     ...(r.baths != null ? { baths: r.baths } : {}),
     // ĐỊA CHỈ HIỂN THỊ THEO HỆ MỚI — áp cho MỌI tin, kể cả tin đã đăng từ trước.
@@ -314,7 +317,9 @@ function rowToListing(r: Row): Listing {
       };
     })(),
     diaGioi: { ward: r.ward ?? "", district: r.district ?? "", province: r.province ?? "" },
-    type: r.type,
+    // Tên loại cũ trước khi đổi (30/10/2026 "Đất nông nghiệp" → "Đất khác"): tin cũ đọc theo tên mới để trang cha "Đất" và trang con
+    // gom đủ (anh 09/11/2026: "lấy loại hình cha là Đất sẽ có hết loại con"). Loại con giữ ở loaiCon để bộ lọc "đất nông nghiệp" vẫn khớp.
+    type: TEN_LOAI_CU[r.type ?? ""] ?? r.type,
     // Ảnh đại diện = ẢNH đầu tiên (bỏ qua video nếu đứng trước)
     image: anhTheoThuTu(r)[0] ? asset(anhTheoThuTu(r)[0]) : "",
     // Số ẢNH thật (không tính video) → badge "📷 n" đúng thay vì cứng "1"
