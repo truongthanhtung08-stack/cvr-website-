@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { khoaPayos, maDonPayos, taiKhoanCoSo, taoDonPayos } from "@/lib/payos";
 
 // ============================================================================
 // CỔNG THANH TOÁN PayOS — tạo link thanh toán cho một đơn nạp tiền / mua gói.
@@ -15,14 +15,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // Chưa có khoá: hệ thống trả thông báo rõ ràng, phần còn lại của web vẫn chạy.
 // ============================================================================
 
-const PAYOS_ENDPOINT = "https://api-merchant.payos.vn/v2/payment-requests";
-
 export async function POST(req: Request) {
-  const clientId = process.env.PAYOS_CLIENT_ID;
-  const apiKey = process.env.PAYOS_API_KEY;
-  const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
-
-  if (!clientId || !apiKey || !checksumKey) {
+  const khoa = khoaPayos();
+  if (!khoa) {
     return NextResponse.json(
       {
         ok: false,
@@ -62,19 +57,13 @@ export async function POST(req: Request) {
   // tiền"): tài khoản chưa xác minh số chính chủ thì không tạo đơn nạp — trang Nạp tiền mở hộp xác minh (gộp một lần) rồi nạp tiếp.
   if (nguoiNap) {
     const admin = createAdminClient();
-    if (admin) {
-      const [{ data: hs }, { data: u }] = await Promise.all([
-        admin.from("profiles").select("phone,role").eq("id", nguoiNap.id).maybeSingle(),
-        admin.auth.admin.getUserById(nguoiNap.id),
-      ]);
-      // Chỉ hỏi DUY NHẤT khi tài khoản KHÔNG CÓ số (chủ dự án 05/11/2026 chốt) — có số thì nạp luôn
-      const coSo = !!String(hs?.phone ?? "").trim() || hs?.role === "admin" || !!u?.user?.phone || !!(u?.user?.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he;
-      if (!coSo)
-        return NextResponse.json({ ok: false, code: "CAN_XAC_MINH_SDT", message: "Xác minh số điện thoại trước khi nạp tiền." }, { status: 403 });
+    // Chỉ hỏi DUY NHẤT khi tài khoản KHÔNG CÓ số (chủ dự án 05/11/2026 chốt) — có số thì nạp luôn
+    if (admin && !(await taiKhoanCoSo(admin, nguoiNap.id))) {
+      return NextResponse.json({ ok: false, code: "CAN_XAC_MINH_SDT", message: "Xác minh số điện thoại trước khi nạp tiền." }, { status: 403 });
     }
   }
 
-  const orderCode = Number(String(Date.now()).slice(-10));
+  const orderCode = maDonPayos();
   // PayOS giới hạn mô tả 25 ký tự
   const description = (body.description || `Nap tien CL ${orderCode}`).slice(0, 25);
 
@@ -84,73 +73,50 @@ export async function POST(req: Request) {
   const returnUrl = `${origin}/tai-khoan/nap-tien?ket-qua=thanh-cong${ve}`;
   const cancelUrl = `${origin}/tai-khoan/nap-tien?ket-qua=huy${ve}`;
 
-  // Chữ ký theo đúng thứ tự PayOS quy định
-  const raw = `amount=${amount}&cancelUrl=${cancelUrl}&description=${description}&orderCode=${orderCode}&returnUrl=${returnUrl}`;
-  const signature = crypto.createHmac("sha256", checksumKey).update(raw).digest("hex");
+  const kq = await taoDonPayos(khoa, {
+    orderCode,
+    amount,
+    description,
+    returnUrl,
+    cancelUrl,
+    buyerName: body.buyerName ?? undefined,
+    buyerEmail: body.buyerEmail ?? undefined,
+    buyerPhone: body.buyerPhone ?? undefined,
+  });
+  if (!kq.ok) return NextResponse.json({ ok: false, message: kq.message, detail: kq.detail }, { status: 502 });
+  const json = { data: kq.data as Record<string, string | undefined> };
 
-  try {
-    const res = await fetch(PAYOS_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-client-id": clientId,
-        "x-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        orderCode,
-        amount,
-        description,
-        returnUrl,
-        cancelUrl,
-        signature,
-        buyerName: body.buyerName ?? undefined,
-        buyerEmail: body.buyerEmail ?? undefined,
-        buyerPhone: body.buyerPhone ?? undefined,
-      }),
-    });
-
-    const json = await res.json();
-    if (json?.code !== "00" || !json?.data?.checkoutUrl) {
-      return NextResponse.json(
-        { ok: false, message: json?.desc || "Cổng thanh toán từ chối đơn hàng.", detail: json },
-        { status: 502 },
-      );
-    }
-
-    // ── GHI ĐƠN VÀO SỔ (payments, trạng thái "pending") ────────────────────
-    // Bắt buộc: lát nữa PayOS báo "đã nhận tiền" thì webhook dò theo order_code
-    // trong sổ này để biết cộng cho AI và cộng BAO NHIÊU. Không ghi ở đây thì
-    // tiền về mà không biết của ai.
-    // Ghi bằng khoá quản trị vì phiên khách không chắc còn sống lúc chuyển trang.
-    const admin = createAdminClient();
-    if (admin) {
-      await admin.from("payments").insert({
-        user_id: nguoiNap?.id ?? null,
-        user_email: nguoiNap?.email ?? body.buyerEmail ?? null,
-        order_code: String(orderCode),
-        amount,
-        kind: "topup",
-        status: "pending",
-        note: nguoiNap ? null : "Đơn tạo khi chưa đăng nhập — cần đối soát tay.",
-      });
-    }
-
-    return NextResponse.json({
-      ok: true,
-      orderCode,
+  // ── GHI ĐƠN VÀO SỔ (payments, trạng thái "pending") ────────────────────
+  // Bắt buộc: lát nữa PayOS báo "đã nhận tiền" thì webhook dò theo order_code
+  // trong sổ này để biết cộng cho AI và cộng BAO NHIÊU. Không ghi ở đây thì
+  // tiền về mà không biết của ai.
+  // Ghi bằng khoá quản trị vì phiên khách không chắc còn sống lúc chuyển trang.
+  const admin = createAdminClient();
+  if (admin) {
+    await admin.from("payments").insert({
+      user_id: nguoiNap?.id ?? null,
+      user_email: nguoiNap?.email ?? body.buyerEmail ?? null,
+      order_code: String(orderCode),
       amount,
-      checkoutUrl: json.data.checkoutUrl as string,
-      // MÃ QR NGAY TRÊN COASTALLAND.VN có logo Coastal Land (chủ dự án 26/10/2026 — trang PayOS chỉ cho logo payOS giữa mã)
-      qrCode: json.data.qrCode as string | undefined,
-      bin: json.data.bin as string | undefined,
-      accountNumber: json.data.accountNumber as string | undefined,
-      accountName: json.data.accountName as string | undefined,
-      description: json.data.description as string | undefined,
-      paymentLinkId: json.data.paymentLinkId as string | undefined,
+      kind: "topup",
+      status: "pending",
+      note: nguoiNap ? null : "Đơn tạo khi chưa đăng nhập — cần đối soát tay.",
     });
-  } catch {
-    return NextResponse.json({ ok: false, message: "Không kết nối được cổng thanh toán." }, { status: 502 });
   }
+
+  return NextResponse.json({
+    ok: true,
+    orderCode,
+    amount,
+    checkoutUrl: json.data.checkoutUrl as string,
+    // MÃ QR NGAY TRÊN COASTALLAND.VN có logo Coastal Land (chủ dự án 26/10/2026 — trang PayOS chỉ cho logo payOS giữa mã)
+    qrCode: json.data.qrCode as string | undefined,
+    bin: json.data.bin as string | undefined,
+    accountNumber: json.data.accountNumber as string | undefined,
+    accountName: json.data.accountName as string | undefined,
+    description: json.data.description as string | undefined,
+    paymentLinkId: json.data.paymentLinkId as string | undefined,
+  });
 }
 
 // Kiểm tra nhanh: đã cắm khoá chưa (dùng cho trang admin Thanh toán).

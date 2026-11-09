@@ -7,6 +7,7 @@ import { baoLoi } from "@/lib/baoLoi";
 import { SU_CO } from "@/lib/chuThongBao";
 import { revalidateTag } from "next/cache";
 import { xuLyUpCho } from "@/lib/upTin";
+import { baoTrangThaiDonZalo, docOrderIdZalo, ghiChuZalo } from "@/lib/zaloCheckout";
 
 // ============================================================================
 // PayOS GỌI NGƯỢC VỀ WEB KHI KHÁCH ĐÃ CHUYỂN TIỀN (webhook)
@@ -95,12 +96,12 @@ export async function POST(req: Request) {
   // Tìm đơn đã ghi lúc tạo link thanh toán
   const { data: rows, error: loiDoc } = await supabase
     .from("payments")
-    .select("id,user_id,amount,status")
+    .select("id,user_id,amount,status,note")
     .eq("order_code", orderCode)
     .limit(1);
   if (loiDoc) return NextResponse.json({ ok: false, message: loiDoc.message }, { status: 500 });
 
-  const don = rows?.[0] as { id: string; user_id: string | null; amount: number; status: string } | undefined;
+  const don = rows?.[0] as { id: string; user_id: string | null; amount: number; status: string; note: string | null } | undefined;
   if (!don) {
     // Không tìm thấy đơn (vd đơn tạo từ máy khác) — ghi lại để đối soát tay, không cộng ví.
     await supabase.from("payments").insert({
@@ -131,8 +132,12 @@ export async function POST(req: Request) {
   // ĐÃ CỘNG RỒI thì thôi — PayOS gửi lại nhiều lần là chuyện bình thường.
   if (don.status === "paid") return NextResponse.json({ ok: true, message: "Đơn đã xử lý trước đó." });
 
+  // Đơn nạp từ Zalo Mini App (Checkout Popup): báo trạng thái đơn cho Zalo — Zalo bắt buộc ghi nhận mọi giao dịch trong Mini App
+  const orderIdZalo = docOrderIdZalo(don.note);
+
   if (!thanhCong) {
     await supabase.from("payments").update({ status: "cancelled" }).eq("id", don.id);
+    if (orderIdZalo) await baoTrangThaiDonZalo(orderIdZalo, -1);
     return NextResponse.json({ ok: true, message: "Đơn không thành công — đã ghi nhận." });
   }
 
@@ -145,7 +150,7 @@ export async function POST(req: Request) {
   // dòng thì lệnh trượt vẫn chạy tiếp xuống dưới và CỘNG VÍ LẦN THỨ HAI.
   const { data: gianh, error: loiCapNhat } = await supabase
     .from("payments")
-    .update({ status: "paid", note: "PayOS xác nhận đã nhận tiền." })
+    .update({ status: "paid", note: "PayOS xác nhận đã nhận tiền." + (orderIdZalo ? ghiChuZalo(orderIdZalo) : "") })
     .eq("id", don.id)
     .eq("status", "pending") // chốt chặn cuối: chỉ cộng khi vẫn đang chờ
     .select("id");
@@ -232,7 +237,7 @@ export async function POST(req: Request) {
       });
       // Trả đơn về "đang chờ" để PayOS gọi lại thì cộng ví lại được — nếu để "đã thanh toán",
       // lần gọi lại thấy "đã xử lý" và bỏ qua, ví khách không bao giờ được cộng tự động.
-      await supabase.from("payments").update({ status: "pending", note: "Cộng ví lỗi — chờ PayOS gọi lại." }).eq("id", don.id).eq("status", "paid");
+      await supabase.from("payments").update({ status: "pending", note: "Cộng ví lỗi — chờ PayOS gọi lại." + (orderIdZalo ? ghiChuZalo(orderIdZalo) : "") }).eq("id", don.id).eq("status", "paid");
       return NextResponse.json({ ok: false, message: loiVi.message }, { status: 500 });
     }
 
@@ -267,6 +272,7 @@ export async function POST(req: Request) {
     if (daUp > 0) revalidateTag("listings", "max");
   }
 
+  if (orderIdZalo) await baoTrangThaiDonZalo(orderIdZalo, 1);
   return NextResponse.json({ ok: true, message: "Đã cộng vào ví." });
 }
 

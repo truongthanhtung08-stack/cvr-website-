@@ -94,11 +94,15 @@ export default function DangNhap() {
       <Box p={4} style={{ display: "grid", gap: 12 }}>
         {buoc === "chon" && (
           <>
-            {/* Bố cục tự nói (chủ dự án 06/11/2026: "cấu trúc để khách hiểu, không giải thích vô vẩn"): logo · tên · nút Zalo chính · lối phụ */}
+            {/* Bố cục: logo · tên · câu Zalo bắt buộc · nút Zalo chính · lối phụ */}
             <Box flex flexDirection="column" alignItems="center" style={{ gap: 10, margin: "24px 0 12px" }}>
               <img src={logoTron} alt="Coastal Land" width={72} height={72} style={{ borderRadius: "50%" }} />
               <Text.Title size="large">COASTAL LAND</Text.Title>
             </Box>
+            {/* Zalo bắt buộc nói rõ lấy thông tin gì, để làm gì trước khi hỏi quyền (bản 51 bị trả về) — câu anh duyệt 09/11/2026 */}
+            <Text size="small" className="chu-phu" style={{ textAlign: "center" }}>
+              Dùng tên và ảnh đại diện Zalo để tạo tài khoản Coastal Land: đăng tin, lưu tin, nạp tiền và nhận thông báo.
+            </Text>
             <Button fullWidth size="large" loading={dang} onClick={nhanhBangZalo}>Đăng nhập bằng Zalo</Button>
             <Button fullWidth variant="tertiary" onClick={() => setBuoc("so")}>Nhận mã qua số điện thoại</Button>
           </>

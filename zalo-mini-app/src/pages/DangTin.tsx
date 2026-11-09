@@ -9,7 +9,8 @@ import { chonAnh, taiAnhLen } from "../lib/taiAnh";
 import { laVideo, tachAnh } from "../lib/media";
 import { useTai } from "../lib/useTai";
 import { layNguoiZalo } from "../lib/zalo";
-import { getAccessToken, getLocation, getPhoneNumber } from "zmp-sdk";
+import { getAccessToken, getLocation } from "zmp-sdk";
+import XacMinhSo from "../components/XacMinhSo";
 import BangGiaMaTran, { TEN_HANG } from "../components/BangGiaMaTran";
 
 const { Option } = Select;
@@ -68,9 +69,6 @@ export default function DangTin() {
   // XÁC MINH SỐ KHI ĐĂNG TIN (luật tài khoản 06/11/2026): liên hệ trong tin = tài khoản (tên · số), không gõ tay; tài khoản chưa có
   // số đã xác minh → nhập số, mã gửi về Zalo của CHÍNH số đó, nhập mã — cùng đường web /api/xac-thuc/xac-minh-sdt (gộp tài khoản
   // theo luật web, máy chủ tự làm). Đăng nhập bằng Zalo không đòi số; chỉ đăng tin mới cần.
-  const [buocXm, setBuocXm] = useState<"so" | "ma">("so");
-  const [maXm, setMaXm] = useState("");
-  const [dangXm, setDangXm] = useState(false);
   const [daXmXong, setDaXmXong] = useState(false);
   const [hang, setHang] = useState("basic"); // hạng tin: diamond · gold · silver · basic (như web)
   const [soNgay, setSoNgay] = useState<number>();
@@ -216,39 +214,6 @@ export default function DangTin() {
       /* khách từ chối chia sẻ vị trí */
     } finally {
       setDangViTri(false);
-    }
-  };
-
-  // SỐ ZALO MỘT CHẠM (Zalo getPhoneNumber): Zalo hỏi khách cho chia sẻ số → máy chủ đổi token ra số, coi như đã xác minh.
-  const xacMinhSo = async (buoc: "gui-ma" | "xac-nhan" | "so-zalo") => {
-    setLoi(undefined);
-    setDangXm(true);
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`);
-      const r = await fetch("https://coastalland.vn/api/xac-thuc/xac-minh-sdt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(
-          buoc === "so-zalo"
-            ? { buoc, dangTin: true, tokenSo: (await getPhoneNumber()).token, zaloAccessToken: await getAccessToken() }
-            : { buoc, sdt, ma: maXm, dangTin: true },
-        ),
-      });
-      const j = (await r.json().catch(() => ({}))) as { ok?: boolean; loi?: string; sdt?: string; doiTaiKhoan?: { access_token: string; refresh_token: string } };
-      if (!j.ok) return setLoi(j.loi || "Chưa xác minh được số. Vui lòng thử lại.");
-      if (buoc === "gui-ma") return setBuocXm("ma");
-      // Số đã thuộc tài khoản khác → máy chủ gộp về tài khoản đó và trả phiên mới (như web)
-      if (j.doiTaiKhoan) await supabase.auth.setSession({ access_token: j.doiTaiKhoan.access_token, refresh_token: j.doiTaiKhoan.refresh_token });
-      if (j.sdt) setSdt(soVN(j.sdt));
-      setDaXmXong(true);
-    } catch (e) {
-      // Khách bấm Từ chối ở hộp hỏi số của Zalo → không báo lỗi, vẫn nhập số khác được (Chính sách kiểm duyệt Zalo 6.3).
-      if (buoc !== "so-zalo") setLoi("Không kết nối được. Vui lòng thử lại.");
-      void e;
-    } finally {
-      setDangXm(false);
     }
   };
 
@@ -485,18 +450,13 @@ export default function DangTin() {
       <Nhom tieuDe="Liên hệ">
         {daXacMinh || tinSua ? (
           <Text size="small">{ten || "—"} · {sdt}</Text>
-        ) : buocXm === "so" ? (
-          <>
-            <Button loading={dangXm} onClick={() => xacMinhSo("so-zalo")}>Dùng số điện thoại Zalo để đăng tin</Button>
-            <Input label="Hoặc nhập số khác" inputMode="tel" value={sdt} onChange={(e) => setSdt(e.target.value)} />
-            <Button size="small" loading={dangXm} disabled={sdt.replace(/\D/g, "").length < 10} onClick={() => xacMinhSo("gui-ma")}>Nhận mã qua Zalo</Button>
-          </>
         ) : (
-          <>
-            <Input label={`Mã đã gửi về Zalo của số ${sdt}`} inputMode="numeric" value={maXm} onChange={(e) => setMaXm(e.target.value.replace(/\D/g, "").slice(0, 6))} />
-            <Button size="small" loading={dangXm} disabled={maXm.length < 6} onClick={() => xacMinhSo("xac-nhan")}>Xác minh số</Button>
-            <Button size="small" variant="tertiary" onClick={() => { setBuocXm("so"); setMaXm(""); }}>Đổi số khác</Button>
-          </>
+          <XacMinhSo
+            dangTin
+            nutZalo="Dùng số điện thoại Zalo để đăng tin"
+            chuaDangNhap={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`)}
+            xong={(so) => { setSdt(so); setDaXmXong(true); }}
+          />
         )}
       </Nhom>
 

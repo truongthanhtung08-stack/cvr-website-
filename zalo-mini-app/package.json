@@ -12,7 +12,7 @@
     "@supabase/supabase-js": "^2.109.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zmp-sdk": "latest",
+    "zmp-sdk": "^2.53.4",
     "zmp-ui": "latest"
   },
   "devDependencies": {
