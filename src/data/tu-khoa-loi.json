@@ -19,8 +19,66 @@
     "/mua-ban/nha/hue": {
       "longtail": "Bán nhà Huế dưới 10 tỷ"
     },
-    "/mua-ban/nha-rieng/da-nang": {
-      "longtail": "Bán nhà Đà Nẵng phường Thanh Khê"
+    "/mua-ban/nha/khanh-hoa": {
+      "longtail": "Bán nhà Khánh Hòa dưới 6 tỷ",
+      "uuTien": true
+    },
+    "/mua-ban/nha/gia-lai": {
+      "longtail": "Bán nhà Gia Lai dưới 1 tỷ",
+      "uuTien": true
+    },
+    "/mua-ban/nha/lam-dong": {
+      "longtail": "Bán nhà Lâm Đồng 600 triệu",
+      "uuTien": true
+    },
+    "/mua-ban/nha/quang-ngai": {
+      "longtail": "Bán nhà Quảng Ngãi giá rẻ trong hẻm",
+      "uuTien": true
+    },
+    "/mua-ban/dat/khanh-hoa": {
+      "longtail": "Bán đất Khánh Hòa dưới 1 tỷ",
+      "uuTien": true
+    },
+    "/mua-ban/dat/da-nang": {
+      "longtail": "Bán đất Đà Nẵng dưới 2 tỷ",
+      "uuTien": true
+    },
+    "/mua-ban/dat/hue": {
+      "longtail": "Bán đất Huế 200 triệu",
+      "uuTien": true
+    },
+    "/mua-ban/dat/gia-lai": {
+      "longtail": "Bán đất Gia Lai giá rẻ",
+      "uuTien": true
+    },
+    "/mua-ban/dat/lam-dong": {
+      "longtail": "Bán đất Lâm Đồng dưới 2 tỷ",
+      "uuTien": true
+    },
+    "/mua-ban/dat/quang-ngai": {
+      "longtail": "Bán đất Quảng Ngãi giá rẻ",
+      "uuTien": true
+    },
+    "/mua-ban/dat/quang-tri": {
+      "uuTien": true
+    },
+    "/mua-ban/can-ho-chung-cu/da-nang": {
+      "longtail": "Bán căn hộ Đà Nẵng dưới 1 tỷ",
+      "loi": "Bán căn hộ",
+      "uuTien": true
+    },
+    "/mua-ban/can-ho-chung-cu/khanh-hoa": {
+      "longtail": "Bán căn hộ Khánh Hòa dưới 2 tỷ",
+      "loi": "Bán căn hộ",
+      "uuTien": true
+    },
+    "/mua-ban/can-ho-chung-cu/gia-lai": {
+      "loi": "Bán căn hộ",
+      "uuTien": true
+    },
+    "/mua-ban/nghi-duong/da-nang": {
+      "longtail": "Bán condotel Đà Nẵng quận Hải Châu",
+      "uuTien": true
     },
     "/cho-thue/nha/hue": {
       "longtail": "Cho thuê nhà Huế phường An Cựu"
@@ -28,55 +86,38 @@
     "/cho-thue/nha/khanh-hoa": {
       "longtail": "Cho thuê nhà Khánh Hòa 3 phòng ngủ"
     },
+    "/cho-thue/nha/da-nang": {
+      "longtail": "Cho thuê nhà Đà Nẵng dưới 5 triệu",
+      "uuTien": true
+    },
+    "/cho-thue/nha/gia-lai": {
+      "longtail": "Cho thuê nhà Gia Lai giá 2tr",
+      "uuTien": true
+    },
+    "/cho-thue/nha/lam-dong": {
+      "longtail": "Cho thuê nhà Lâm Đồng giá 2tr",
+      "uuTien": true
+    },
     "/cho-thue/can-ho-chung-cu/hue": {
       "longtail": "Cho thuê căn hộ Huế phường Vỹ Dạ"
+    },
+    "/cho-thue/can-ho-chung-cu/khanh-hoa": {
+      "longtail": "Cho thuê căn hộ Khánh Hòa 60 trần phú",
+      "uuTien": true
+    },
+    "/cho-thue/van-phong-mat-bang/da-nang": {
+      "longtail": "Cho thuê văn phòng Đà Nẵng quận Hải Châu",
+      "uuTien": true
+    },
+    "/cho-thue/van-phong-mat-bang/khanh-hoa": {
+      "longtail": "Cho thuê văn phòng Khánh Hòa phường Bắc",
+      "uuTien": true
     },
     "/cho-thue/kho-nha-xuong/gia-lai": {
       "longtail": "Cho thuê kho xưởng Gia Lai Quy Nhơn"
     },
-    "/mua-ban/nha/khanh-hoa": {
-      "longtail": "Bán nhà Khánh Hòa dưới 6 tỷ"
-    },
-    "/mua-ban/can-ho-chung-cu/da-nang": {
-      "longtail": "Bán căn hộ Đà Nẵng dưới 1 tỷ",
-      "loi": "Bán căn hộ"
-    },
-    "/mua-ban/can-ho-chung-cu/khanh-hoa": {
-      "longtail": "Bán căn hộ Khánh Hòa dưới 2 tỷ",
-      "loi": "Bán căn hộ"
-    },
-    "/mua-ban/dat/khanh-hoa": {
-      "longtail": "Bán đất Khánh Hòa dưới 1 tỷ"
-    },
-    "/cho-thue/nha/da-nang": {
-      "longtail": "Cho thuê nhà Đà Nẵng dưới 5 triệu"
-    },
-    "/cho-thue/van-phong-mat-bang/da-nang": {
-      "longtail": "Cho thuê văn phòng Đà Nẵng quận Hải Châu"
-    },
-    "/cho-thue/nha-rieng/da-nang": {
-      "longtail": "Cho thuê nhà Đà Nẵng dưới 5 triệu"
-    },
-    "/cho-thue/nha-rieng/hue": {
-      "longtail": "Cho thuê nhà Huế mới nhất"
-    },
-    "/cho-thue/cua-hang-ki-ot/da-nang": {
-      "longtail": "Cho thuê mặt bằng Đà Nẵng quận Hải Châu"
-    },
-    "/mua-ban/nha/gia-lai": {
-      "longtail": "Bán nhà Gia Lai dưới 1 tỷ"
-    },
-    "/mua-ban/nha/lam-dong": {
-      "longtail": "Bán nhà Lâm Đồng 600 triệu"
-    },
-    "/mua-ban/nha/quang-ngai": {
-      "longtail": "Bán nhà Quảng Ngãi giá rẻ trong hẻm"
-    },
-    "/mua-ban/nghi-duong/da-nang": {
-      "longtail": "Bán condotel Đà Nẵng quận Hải Châu"
-    },
-    "/mua-ban/can-ho-chung-cu/gia-lai": {
-      "loi": "Bán căn hộ"
+    "/mua-ban/nha-rieng/da-nang": {
+      "longtail": "Bán nhà Đà Nẵng phường Thanh Khê"
     },
     "/mua-ban/nha-rieng/hue": {
       "longtail": "Bán nhà Huế dưới 1 tỷ"
@@ -115,35 +156,17 @@
     "/mua-ban/dat-nen-du-an/da-nang": {
       "longtail": "Bán đất nền Đà Nẵng quận Liên Chiểu"
     },
-    "/mua-ban/dat/da-nang": {
-      "longtail": "Bán đất Đà Nẵng dưới 2 tỷ"
+    "/cho-thue/nha-rieng/da-nang": {
+      "longtail": "Cho thuê nhà Đà Nẵng dưới 5 triệu"
     },
-    "/mua-ban/dat/hue": {
-      "longtail": "Bán đất Huế 200 triệu"
-    },
-    "/mua-ban/dat/gia-lai": {
-      "longtail": "Bán đất Gia Lai giá rẻ"
-    },
-    "/mua-ban/dat/lam-dong": {
-      "longtail": "Bán đất Lâm Đồng dưới 2 tỷ"
-    },
-    "/mua-ban/dat/quang-ngai": {
-      "longtail": "Bán đất Quảng Ngãi giá rẻ"
-    },
-    "/cho-thue/nha/gia-lai": {
-      "longtail": "Cho thuê nhà Gia Lai giá 2tr"
-    },
-    "/cho-thue/nha/lam-dong": {
-      "longtail": "Cho thuê nhà Lâm Đồng giá 2tr"
-    },
-    "/cho-thue/van-phong-mat-bang/khanh-hoa": {
-      "longtail": "Cho thuê văn phòng Khánh Hòa phường Bắc"
-    },
-    "/cho-thue/can-ho-chung-cu/khanh-hoa": {
-      "longtail": "Cho thuê căn hộ Khánh Hòa 60 trần phú"
+    "/cho-thue/nha-rieng/hue": {
+      "longtail": "Cho thuê nhà Huế mới nhất"
     },
     "/cho-thue/shophouse/hue": {
       "loi": "Cho thuê shophouse"
+    },
+    "/cho-thue/cua-hang-ki-ot/da-nang": {
+      "longtail": "Cho thuê mặt bằng Đà Nẵng quận Hải Châu"
     },
     "/cho-thue/van-phong/da-nang": {
       "longtail": "Cho thuê văn phòng Đà Nẵng quận Hải Châu"

@@ -5,7 +5,7 @@ import { normalizeVi, type Filters } from "@/lib/filters";
 import { choCuCua, newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
 import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
 import { tenPhuongChuan } from "@/lib/tenPhuongChuan";
-import { loiCuaTrang } from "@/lib/tuKhoaLoiStore";
+import { loiCuaTrang, laLoiUuTien, phienBanTuKhoa } from "@/lib/tuKhoaLoiStore";
 
 // ============================================================================
 // PROGRAMMATIC SEO — Template 1 "Dynamic Listing" (docs/PHAN-TICH-PSEO-2-FILE.md)
@@ -464,7 +464,7 @@ export function banGocCua(l: Listing, tatCa: Listing[]): Listing | null {
 // (metadata, liên kết nội bộ, dựng sẵn), build gọi hàng trăm lần.
 let nhoTrang: { khoa: string; kq: Map<string, TrangPseo> } | null = null;
 export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
-  const khoa = tinConHan.map((l) => l.id + (l.bumpedAt ?? "")).join(",");
+  const khoa = phienBanTuKhoa() + "|" + tinConHan.map((l) => l.id + (l.bumpedAt ?? "")).join(","); // bảng từ khoá đổi → tính lại
   if (nhoTrang?.khoa === khoa) return nhoTrang.kq;
   const m = tinhTatCaTrang(tinConHan);
   // CHỈ THÊM, KHÔNG BỚT (chủ dự án 29/10/2026): đếm cả tin hết hạn mở thêm trang, nhưng trang đang đủ chuẩn theo tin còn hạn
@@ -533,7 +533,9 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   // mục rộng hơn — "Bán đất…" là cụm nhiều người tìm hơn).
   const daIndex = [...m.values()]
     .filter((p) => p.index)
-    .sort((a, b) => b.n - a.n || Number(!!b.dk.thanhPho) - Number(!!a.dk.thanhPho) || (b.dk.cat?.types.length ?? 0) - (a.dk.cat?.types.length ?? 0));
+    // Cùng số tin: trang lõi anh đánh x trong bảng từ khoá (laLoiUuTien) đứng trước trang con của nó (anh 09/11/2026: "Bán đất Khánh Hòa"
+    // trùng hệt "Bán đất Nha Trang" → giữ trang lõi) → rồi trang thành phố → rồi danh mục rộng hơn
+    .sort((a, b) => b.n - a.n || Number(laLoiUuTien(b.path)) - Number(laLoiUuTien(a.path)) || Number(!!b.dk.thanhPho) - Number(!!a.dk.thanhPho) || (b.dk.cat?.types.length ?? 0) - (a.dk.cat?.types.length ?? 0));
   const giu: TrangPseo[] = [];
   for (const p of daIndex) {
     if (giu.some((q) => q.dk.muc === p.dk.muc && q.dk.tinh.slug === p.dk.tinh.slug && giong(p.ids, q.ids))) p.index = false;

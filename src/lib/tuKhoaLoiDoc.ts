@@ -7,7 +7,7 @@ import zlib from "node:zlib";
 import { saleCategories, rentCategories, nhomPseo, type Category } from "@/lib/categories";
 import { giuSoCu } from "@/lib/pseo";
 
-export type TuKhoaLoiTrang = Record<string, { loi?: string; longtail?: string }>;
+export type TuKhoaLoiTrang = Record<string, { loi?: string; longtail?: string; uuTien?: true }>;
 export type KetQuaDocBang = { trang: TuKhoaLoiTrang; doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number };
 
 function moZip(buf: Buffer): Map<string, Buffer> {
@@ -60,8 +60,9 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
   const bang = docSheet(buf, "Từ khoá lõi");
   const dau = bang[0] ?? [];
   const i = (ten: string) => { const k = dau.findIndex((h) => (h ?? "").startsWith(ten)); if (k < 0) throw new Error(`Sheet "Từ khoá lõi" thiếu cột "${ten}"`); return k; };
-  const C = { uu: i("Ưu tiên"), noi: i("Địa điểm"), loi: i("LÕI GỌN"), lt: i("LONGTAIL"), trang: i("Trang lõi"), len: i("Lên web") };
-  type Dong = { trang: string; muc: string; slug: string; tinh: string; loi: string; longtail: string; uu: string };
+  const C = { uu: i("Ưu tiên"), noi: i("Địa điểm"), loi: i("LÕI GỌN"), lt: i("LONGTAIL"), trang: i("Trang lõi"), len: i("Lên web"),
+    tang: dau.findIndex((h) => (h ?? "").trim() === "Tầng") }; // cột Tầng (Tỉnh / Cha / Con) — có thể chưa có
+  type Dong = { trang: string; muc: string; slug: string; tinh: string; loi: string; longtail: string; uu: string; cha: boolean };
   const chon: Dong[] = [];
   const giu: string[] = [];
   for (const r of bang.slice(1)) {
@@ -76,7 +77,7 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
     const noi = (r[C.noi] ?? "").trim();
     chon.push({ trang: m[0], muc: m[1] === "mua-ban" ? "ban" : "thue", slug: m[2], tinh: m[3],
       loi: (r[C.loi] ?? "").trim().replace(new RegExp(`\\s+${noi.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), ""),
-      longtail: (r[C.lt] ?? "").trim(), uu: (r[C.uu] ?? "").trim() });
+      longtail: (r[C.lt] ?? "").trim(), uu: (r[C.uu] ?? "").trim(), cha: C.tang < 0 || (r[C.tang] ?? "").trim().startsWith("Cha") });
   }
   const trang: TuKhoaLoiTrang = {};
   const doi: KetQuaDocBang["doi"] = [];
@@ -88,14 +89,17 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
   for (const d of chon) dangMang.set(khoa(d.muc, d.tinh, macDinh(d.muc, "")!), ""); // tầng tỉnh "Bán nhà đất"
   for (const d of chon) {
     const cu = macDinh(d.muc, d.slug) ?? "";
-    const muc: { loi?: string; longtail?: string } = d.longtail ? { longtail: d.longtail } : {};
+    const muc: { loi?: string; longtail?: string; uuTien?: true } = d.longtail ? { longtail: d.longtail } : {};
     if (d.loi && d.loi !== cu) {
       const chu = dangMang.get(khoa(d.muc, d.tinh, d.loi));
       if (d.uu.startsWith("1")) giu.push(`${d.trang}: giữ "${cu}" (trang đang top)`);
       else if (chu !== undefined && chu !== d.slug) giu.push(`${d.trang}: giữ "${cu}" ("${d.loi}" đã thuộc trang /${d.muc === "ban" ? "mua-ban" : "cho-thue"}/${chu ? chu + "/" : ""}${d.tinh})`);
       else { muc.loi = d.loi; doi.push({ trang: d.trang, cu, moi: d.loi }); dangMang.set(khoa(d.muc, d.tinh, d.loi), d.slug); }
     }
-    if (muc.loi || muc.longtail) trang[d.trang] = muc;
+    // LÕI ƯU TIÊN INDEX (anh 09/11/2026): dòng loại hình + tỉnh có x, ưu tiên 2–3 → khi trùng tin với trang con của nó, trang lõi được giữ
+    // (pseo.ts bước ⑤). Dòng "1 · Đang top" không gắn — trang con đang lên Google giữ nguyên.
+    if (d.slug && d.cha && /^[23]/.test(d.uu)) muc.uuTien = true; // chỉ loại CHA (anh 09/11/2026: SEO tập trung loại cha Nhà, Đất…)
+    if (muc.loi || muc.longtail || muc.uuTien) trang[d.trang] = muc;
   }
   return { trang, doi, giu, soDong: chon.length };
 }
