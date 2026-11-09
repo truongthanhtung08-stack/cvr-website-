@@ -8,7 +8,7 @@ import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
-import { getListings, getListingsHetHan } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { findCategory, rentCategories, nhomPseo, NGUONG_INDEX_DANH_MUC, soTinDanhMuc } from "@/lib/categories";
 // Trang NHÓM (Nhà, Văn phòng mặt bằng…) có trang gốc riêng — chuẩn thống nhất 17/10/2026, gộp loại hình cho dễ chọn
@@ -51,7 +51,8 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
   if (c) {
     // Cổng index (20/10/2026): danh mục chưa đủ 3 tin còn hạn → xem được nhưng KHÔNG cho Google lập chỉ mục (sitemap cũng bỏ).
     const tatCa = await getListings().catch(() => []);
-    const dmTin = soTinDanhMuc(tatCa, c, "thue");
+    // Cổng đếm CẢ tin hết hạn — một luật với trang pSEO <loại>/<tỉnh> (getTinXetTrang, anh chốt 29/10 + 09/11/2026)
+    const dmTin = soTinDanhMuc(await getTinXetTrang().catch(() => tatCa), c, "thue");
     const title = `${c.title} ${thangHienTai()}`;
     // Mô tả có số liệu thật của các tin trong danh mục — câu chủ dự án duyệt 24/10/2026 (lib/pseo moTaSoLieu)
     const tinDm = tatCa.filter((l) => !l.banSao && ((l.purpose ?? "ban") === "thue" ? "thue" : "ban") === "thue" && c.types.includes(l.type));
@@ -74,6 +75,8 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
   const listings = await getListings().catch(() => []);
   const soTin = demTinTheoKhuVuc(listings.filter((l) => (l.purpose ?? "ban") === "thue"), kv.name);
 
+  // Cổng index đếm CẢ tin hết hạn — một luật với trang pSEO (09/11/2026); soTin (còn hạn) giữ cho câu mô tả
+  const soTinXet = demTinTheoKhuVuc((await getTinXetTrang().catch(() => listings)).filter((l) => (l.purpose ?? "ban") === "thue"), kv.name);
   const title = tieuDeKhuVuc("thue", kv.name);
   const tinTinh = listings.filter((l) => (l.purpose ?? "ban") === "thue" && normalizeVi(tinhCua(l.location)) === normalizeVi(kv.name));
   const description = moTaSoLieu(title, tinTinh, "thue", !giuSoCu(`/cho-thue/${loai}`)) ?? moTaKhuVuc("thue", kv.name, soTin); // câu duyệt 24/10/2026
@@ -82,7 +85,7 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
     description,
     alternates: { canonical: `/cho-thue/${kv.slug}` },
     openGraph: { title, description, url: `/cho-thue/${kv.slug}`, type: "website" },
-    ...(soTin < NGUONG_INDEX_DANH_MUC ? { robots: { index: false, follow: true } } : {}), // cổng 3 tin (20/10/2026)
+    ...(soTinXet < NGUONG_INDEX_DANH_MUC ? { robots: { index: false, follow: true } } : {}), // cổng 3 tin (20/10/2026), đếm cả tin hết hạn (09/11/2026)
   };
 }
 

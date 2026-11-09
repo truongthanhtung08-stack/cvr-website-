@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getProjects, getArticles } from "@/lib/contentDb";
-import { getListings, getListingsHetHan } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { getChuyenGia, NGUONG_INDEX_HO_SO } from "@/lib/chuyenGiaDb";
 import { duAnThuocNhom, NGUONG_INDEX_DANH_MUC, nhomPseo, projectCategories, rentCategories, saleCategories, soTinDanhMuc } from "@/lib/categories";
 import { packages, trangTienIchDat, utilityTools } from "@/lib/packages";
@@ -52,7 +52,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Trang DANH MỤC loại hình — nhóm từ khoá quan trọng nhất của sàn
   // ("bán căn hộ chung cư Đà Nẵng", "cho thuê văn phòng Huế"…)
   // Cổng 3 tin (20/10/2026): danh mục mua bán / cho thuê chưa đủ 3 tin còn hạn đã noindex ở trang → không khai ở đây.
-  const tinDm = await getListings().catch(() => []);
+  // Cổng đếm CẢ tin hết hạn — cùng luật trang /mua-ban|cho-thue/<loại|tỉnh> + pSEO (09/11/2026)
+  const tinDm = await getTinXetTrang().catch(() => []);
   const duAnDm = await getProjects().catch(() => []); // nhóm dự án chưa có dự án nào: không khai (22/10/2026)
   const categoryRoutes: MetadataRoute.Sitemap = [
     // Cùng danh sách với trang /mua-ban/[loai] (loại hình + nhóm cha Nhà, BĐS nghỉ dưỡng…) — trước 09/11/2026 sót nhóm cha: trang index mà không có trong sitemap
@@ -98,8 +99,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
       return m;
     };
-    const demBan = demTheo(listings.filter((l) => (l.purpose ?? "ban") === "ban"));
-    const demThue = demTheo(listings.filter((l) => (l.purpose ?? "ban") === "thue"));
+    // Đếm cả tin hết hạn — cùng cổng với trang tỉnh (09/11/2026)
+    const demBan = demTheo([...listings, ...tinHetHan].filter((l) => (l.purpose ?? "ban") === "ban"));
+    const demThue = demTheo([...listings, ...tinHetHan].filter((l) => (l.purpose ?? "ban") === "thue"));
     const demDuAn = demTheo(projects);
 
     for (const [duong, dem] of [["/mua-ban", demBan], ["/cho-thue", demThue], ["/du-an", demDuAn]] as const) {
