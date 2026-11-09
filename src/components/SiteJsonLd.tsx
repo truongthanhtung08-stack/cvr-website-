@@ -52,7 +52,7 @@ const data = {
       // Lệch một chữ (viết tắt tên đường, thiếu phường) là Google coi như 2 nơi khác nhau.
       // Kênh chính thức của Coastal Land — giúp Google gom các kênh về MỘT thực thể (E-E-A-T, 15/10/2026).
       // 20/10/2026: thêm Fanpage (tạo 16/10, KE-HOACH-MXH.md) + kênh YouTube. Hồ sơ Google Doanh nghiệp (link cid cố định, anh gửi 29/10/2026).
-      sameAs: [ZALO_OA_URL, ZALO_MINI_APP_URL, "https://www.facebook.com/profile.php?id=61595622503937", "https://www.youtube.com/@CoastalLandvn", "https://maps.google.com/?cid=4963426532946079372"],
+      sameAs: [ZALO_OA_URL, ZALO_MINI_APP_URL, "https://www.facebook.com/profile.php?id=61595622503937", "https://www.youtube.com/@CoastalLandvn", "https://maps.google.com/?cid=4963426532946079372", "https://www.wikidata.org/wiki/Q142088915"],
       telephone: "+84377985036",
       address: {
         "@type": "PostalAddress",
