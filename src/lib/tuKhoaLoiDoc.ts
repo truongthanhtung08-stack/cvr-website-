@@ -62,10 +62,13 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
   const C = { uu: i("Ưu tiên"), noi: i("Địa điểm"), loi: i("LÕI GỌN"), lt: i("LONGTAIL"), trang: i("Trang lõi"), len: i("Lên web") };
   type Dong = { trang: string; muc: string; slug: string; tinh: string; loi: string; longtail: string; uu: string };
   const chon: Dong[] = [];
+  const giu: string[] = [];
   for (const r of bang.slice(1)) {
     if ((r[C.len] ?? "").trim().toLowerCase() !== "x") continue;
     const m = (r[C.trang] ?? "").trim().match(/^\/(mua-ban|cho-thue)\/([^/]+)\/([^/\s]+)$/);
     if (!m) continue; // Dự án / Tin tức / Tra cứu: web chưa có trang <loại>/<tỉnh>
+    // TRÙNG TRANG (anh 09/11/2026: "nhập trùng thì chỉ lấy 1"): một trang lõi nhiều dòng → lấy dòng đứng trước trong bảng
+    if (chon.some((x) => x.trang === m[0])) { giu.push(`${m[0]}: dòng trùng trang — lấy dòng đứng trước`); continue; }
     const noi = (r[C.noi] ?? "").trim();
     chon.push({ trang: m[0], muc: m[1] === "mua-ban" ? "ban" : "thue", slug: m[2], tinh: m[3],
       loi: (r[C.loi] ?? "").trim().replace(new RegExp(`\\s+${noi.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), ""),
@@ -73,18 +76,19 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
   }
   const trang: TuKhoaLoiTrang = {};
   const doi: KetQuaDocBang["doi"] = [];
-  const giu: string[] = [];
+  // TRÙNG CHỮ LÕI (cùng mục đích + tỉnh): MỘT chữ chỉ một trang mang. Trang vốn mang chữ đó (mặc định web) giữ; không có thì dòng đứng
+  // trước trong bảng nhận, trang sau giữ chữ cũ — hai trang một tiêu đề thì Google chỉ chọn một.
+  const dangMang = new Map<string, string>(); // `${muc}|${tinh}|${chữ}` → slug đang mang
+  const khoa = (muc: string, tinh: string, chu: string) => `${muc}|${tinh}|${chu}`;
+  for (const d of chon) for (const c of tatCaLoai(d.muc)) dangMang.set(khoa(d.muc, d.tinh, c.tuKhoa ?? c.h1), c.slug);
   for (const d of chon) {
     const cu = macDinh(d.muc, d.slug) ?? "";
     const muc: { loi?: string; longtail?: string } = d.longtail ? { longtail: d.longtail } : {};
     if (d.loi && d.loi !== cu) {
+      const chu = dangMang.get(khoa(d.muc, d.tinh, d.loi));
       if (d.uu.startsWith("1")) giu.push(`${d.trang}: giữ "${cu}" (trang đang top)`);
-      else {
-        const khac = tatCaLoai(d.muc).filter((c) => c.slug !== d.slug).map((c) => c.tuKhoa ?? c.h1)
-          .concat(chon.filter((x) => x !== d && x.muc === d.muc && x.tinh === d.tinh).map((x) => x.loi));
-        if (khac.includes(d.loi)) giu.push(`${d.trang}: giữ "${cu}" ("${d.loi}" trùng loại hình khác)`);
-        else { muc.loi = d.loi; doi.push({ trang: d.trang, cu, moi: d.loi }); }
-      }
+      else if (chu && chu !== d.slug) giu.push(`${d.trang}: giữ "${cu}" ("${d.loi}" đã thuộc trang /${d.muc === "ban" ? "mua-ban" : "cho-thue"}/${chu}/${d.tinh})`);
+      else { muc.loi = d.loi; doi.push({ trang: d.trang, cu, moi: d.loi }); dangMang.set(khoa(d.muc, d.tinh, d.loi), d.slug); }
     }
     if (muc.loi || muc.longtail) trang[d.trang] = muc;
   }
