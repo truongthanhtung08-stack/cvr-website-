@@ -231,6 +231,15 @@ export function locDanhSach(
   // GIÁ GẦN NHẤT TRƯỚC (anh 07/11/2026: "giá 3 tỷ" mà tin 6,8 tỷ đứng trên tin 3,2 tỷ): cùng mức khớp, tin có giá gần mức khách nói đứng trước
   const giaDich = coGia ? ((filters.priceMin ?? filters.priceMax!) + (filters.priceMax ?? filters.priceMin!)) / 2 : 0;
   const cachGia = (l: Listing) => (coGia && (l.priceVnd ?? 0) > 0 ? Math.abs((l.priceVnd ?? 0) - giaDich) : Number.MAX_SAFE_INTEGER);
+  // SAU GIÁ: cùng QUẬN CŨ của phường khách nói đứng trước (anh 09/11/2026 "Đất nền hòa xuan": không có tin Hòa Xuân thì tin Cẩm Lệ cũ trước
+  // tin Ngũ Hành Sơn) — xếp SAU giá gần nhất nên không đè luật 08/11 (câu có giá thì giá gần vẫn đứng đầu)
+  const quanCuChon = new Set(sauChon.filter((x) => x.ward).flatMap((x) => choCuCua(x.province, x.ward!).map((c) => normalizeVi(c.quan))));
+  const cungQuanCu = (l: Listing) => {
+    if (!quanCuChon.size) return 0;
+    const p = (l.locationCu ?? "").split(",").map((s) => s.trim());
+    const q = l.noiCu?.quan ?? (p.length >= 2 ? p[p.length - 2] : "");
+    return q && quanCuChon.has(normalizeVi(q)) ? 1 : 0;
+  };
   // GỢI Ý TƯƠNG TỰ THEO NỘI DUNG, KHÔNG THEO GẦN / XA (anh 07/11/2026: "gợi ý là tương tự = nội dung, ý định khách cần tìm"): sau các trường,
   // tin có NỘI DUNG khớp chữ khách gõ (tên nơi, dự án, mô tả — "hòa xuân" → tin dự án Nam Hòa Xuân) đứng trước; cùng mức giữ thứ tự cấp tin
   const chuKhach = [...sauChon.flatMap((x) => [x.ward, x.district]), ...chuChuaHieu(filters.keyword).split(",")]
@@ -267,7 +276,7 @@ export function locDanhSach(
     .map((l, i) => ({ l, i, d: diemGoiY(l), nd: noiDung(l) }))
     // cùng mức khớp: tin NỘI DUNG tương tự đứng trước (không theo gần / xa — anh 07/11/2026)
     // THỨ TỰ Ý KHÁCH (anh 07/11/2026): 1 loại hình → 2 ở đâu (đã trong d) → 3 GIÁ: khách nói "giá rẻ" thì cùng mức, giá thấp trước (i = thứ tự giá tăng)
-    .sort((a, b) => b.d - a.d || (timRe ? a.i - b.i : 0) || cachGia(a.l) - cachGia(b.l) || b.nd - a.nd || a.i - b.i)
+    .sort((a, b) => b.d - a.d || (timRe ? a.i - b.i : 0) || cachGia(a.l) - cachGia(b.l) || cungQuanCu(b.l) - cungQuanCu(a.l) || b.nd - a.nd || a.i - b.i)
     .slice(0, TOI_DA_GOI_Y)
     .map((x) => x.l);
   // TIN HẾT HẠN CŨNG GỢI Ý THEO CÙNG LUẬT (chủ dự án 21/10/2026: kho còn ít tin, "Villa biển gần Hội An" bỏ sót biệt thự Đà Nẵng
@@ -329,7 +338,7 @@ export function locDanhSach(
     // GỢI Ý khi không tin nào khớp hết: tin khớp được NHIỀU TRƯỜNG CÒN LẠI hơn đứng trước, theo thứ bậc giá → diện tích → phòng ngủ →
     // hướng → pháp lý → nội thất → đặc điểm (chủ dự án 01/11/2026).
     // TƯƠNG TỰ XẾP THEO Ý KHÁCH: mục đích → loại hình → các đặc điểm trong câu tìm (anh 08/11/2026: "bỏ chuyện gần với các tỉnh") — không xếp theo tỉnh gần
-    const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, k: diemGoiY(l), nd: noiDung(l) })).sort((a, b) => b.k - a.k || (timRe ? a.i - b.i : 0) || cachGia(a.l) - cachGia(b.l) || b.nd - a.nd || a.i - b.i).map((x) => x.l);
+    const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, k: diemGoiY(l), nd: noiDung(l) })).sort((a, b) => b.k - a.k || (timRe ? a.i - b.i : 0) || cachGia(a.l) - cachGia(b.l) || cungQuanCu(b.l) - cungQuanCu(a.l) || b.nd - a.nd || a.i - b.i).map((x) => x.l);
     if (filters.types.length) {
       const cungLoai = conHan.filter(dungLoai);
       if (cungLoai.length) {
@@ -351,10 +360,11 @@ export function locDanhSach(
   // KHÔNG TIN NÀO KHỚP ĐỦ các trường khách nói (anh 07/11/2026: "nhà đất phan thiết" — Phan Thiết không có tin mà web ghi "12 bất động sản
   // phù hợp", bày tin Đà Nẵng) → nói thẳng chưa có, phần dưới là tương tự. Khách nói NƠI mà nơi đó không có tin thì luôn báo.
   const soKhop = (coTuKhoa ? chuTrong.length + khopDu.filter((l) => !daCo.has(l.id)).length : khopDu.length) + ketQuaHetHan.length;
-  // CÓ TIN KHỚP ĐỦ 3 THỨ CHÍNH — mục đích (nguồn đã theo mục) · loại hình · địa điểm — thì không báo "chưa có sẵn", chỉ xếp theo độ khớp
-  // (anh 08/11/2026: "có dữ liệu khớp mục đích · loại hình · địa điểm thì cứ hiện, xếp theo thứ tự độ khớp")
-  const khop3 = (filters.types.length > 0 || filters.locations.length > 0) && conHan.some((l) => dungLoaiCon(l) && (filters.locations.length === 0 || applyFilters([l], { ...emptyFilters(), locations: filters.locations }).length > 0));
-  if (!soKhop && !khop3 && ketQua.length && !thongBao && (filters.locations.length > 0 || !ketQua.some((l) => noiDung(l) > 0))) thongBao = `${CHUA_CO} ${TUONG_TU}`;
+  // CÂU ĐÃ HIỂU (đọc ra loại hình hoặc nơi chốn) → HIỆN THẲNG KẾT QUẢ THEO MỨC ĐỘ CHÍNH XÁC, KHÔNG GHI "chưa có sẵn" — kể cả khi không tin
+  // nào khớp đủ mọi trường (anh 09/11/2026, "Đất nền hòa xuan": "câu tìm khớp thông tin thì không để CHƯA CÓ SẴN, phải hiển thị kết quả trực
+  // tiếp theo cấp độ chính xác"). "Chưa có sẵn" chỉ còn: câu vô nghĩa (khongHieu) · không tin nào cùng loại lẫn gần nghĩa (nhánh trên).
+  const daHieu = filters.types.length > 0 || filters.locations.length > 0;
+  if (!soKhop && !daHieu && ketQua.length && !thongBao && !ketQua.some((l) => noiDung(l) > 0)) thongBao = `${CHUA_CO} ${TUONG_TU}`;
   // Không tin nào khớp đủ nhưng có tin cùng loại / nơi gần → vẫn là kết quả theo độ chính xác, không ghi gì (anh 07/11/2026)
   // Khách nói LOẠI HÌNH thì chỉ ra đúng loại đó (anh 07/11/2026: "đất thì chỉ tìm đất") — không thêm loại khác dù đúng nơi
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));
