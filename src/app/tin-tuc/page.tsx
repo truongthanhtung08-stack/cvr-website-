@@ -27,7 +27,7 @@ export default async function TinTucPage() {
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-6xl px-4 pt-6 pb-footer sm:px-8 lg:px-10">
           <h1 className="text-center text-2xl font-semibold tracking-tight text-cvr-ink sm:text-4xl">Tin tức bất động sản</h1>
-          <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-cvr-muted sm:text-[15px]">Phân tích thị trường, cẩm nang &amp; kinh nghiệm đầu tư tại Duyên hải miền Trung.</p>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-cvr-muted sm:text-[15px]">Phân tích thị trường, cẩm nang &amp; kinh nghiệm mua bán, cho thuê nhà đất.</p>
 
           {/* Chưa có bài viết nào (admin chưa đăng) → trạng thái trống, không crash */}
           {articles.length === 0 && (

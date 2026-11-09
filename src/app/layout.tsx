@@ -143,7 +143,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "vi_VN",
       url: SITE_URL,
-      siteName: "COASTAL LAND",
+      siteName: "Coastal Land", // tên trang web Google hiện ở dòng trên kết quả — khớp WebSite.name (SiteJsonLd)
       // Đây mới là chữ hiện ra khi GỬI LINK qua Zalo/Messenger/Facebook — trước
       // đây để trống chỉ có "COASTAL LAND", khách không biết mình bán gì.
       title: SITE_TAGLINE,

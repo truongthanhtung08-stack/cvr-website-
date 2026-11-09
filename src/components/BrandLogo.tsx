@@ -24,7 +24,7 @@ export default function BrandLogo({
   return (
     <Image
       src={asset(src)}
-      alt="COASTAL LAND — Gateway to Central Coast property"
+      alt="Coastal Land – Cổng thông tin bất động sản trực tuyến" // chữ thương hiệu anh chốt 09/11/2026 (Google lấy alt logo làm đoạn mô tả — câu cũ "Gateway…" lệch thương hiệu)
       width={size === "md" && tone === "light" ? 2012 : 2005}
       height={389}
       // Chỉ logo thanh trên (md) tải trước; logo chân trang (lg) nằm cuối trang → trình duyệt tự tải khi khách cuộn gần tới,

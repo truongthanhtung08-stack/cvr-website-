@@ -66,8 +66,9 @@ const data = {
       // TÊN HIỆN Ở DÒNG TRÊN KẾT QUẢ GOOGLE (site name): Google chọn trong name + alternateName của WebSite. Chỉ khai tên thương hiệu —
       // không khai tên miền, không khai cách gõ sai (29/10/2026: Google đang hiện "coastalland.vn" thay vì COASTAL LAND).
       // Cách gõ khác vẫn khai ở Organization để Google và AI nhận ra thương hiệu.
-      name: "COASTAL LAND",
-      alternateName: ["Coastal Land"],
+      // 09/11/2026 (anh): dòng trên kết quả Google phải là "Coastal Land" — tên viết thường-hoa như người đọc, trùng og:site_name (layout.tsx)
+      name: "Coastal Land",
+      alternateName: ["COASTAL LAND"],
       inLanguage: "vi-VN",
       publisher: { "@id": `${SITE}/#to-chuc` },
       potentialAction: {
