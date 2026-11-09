@@ -188,7 +188,9 @@ export type DieuKien = {
 const danhMuc = (muc: Muc) => [...(muc === "thue" ? rentCategories : saleCategories), ...nhomPseo(muc)];
 // CHỮ LÕI THEO BẢNG TỪ KHOÁ (anh 09/11/2026): sheet "Từ khoá lõi" của HE-THONG-TU-KHOA.xlsx, cột "Lên web" = x → scripts/nap-tu-khoa.ts
 // → src/data/tu-khoa-loi.json. Áp cho trang lõi <loại>/<tỉnh> và mọi trang con của nó; trang đang top / giữ bản cũ (giuSoCu) không đổi.
-const tuKhoaBang: Record<string, { loi?: string }> = (tuKhoaLoi as { trang: Record<string, { loi?: string }> }).trang;
+// Bản mặc định trong mã; Admin → Từ khoá lõi (tải tệp) ghi site_content "tu_khoa_loi" → tuKhoaLoiDb.napTuKhoaLoi() thay bằng bản Admin.
+let tuKhoaBang: Record<string, { loi?: string }> = (tuKhoaLoi as { trang: Record<string, { loi?: string }> }).trang;
+export function datTuKhoaLoi(trang: Record<string, { loi?: string }>) { tuKhoaBang = trang; }
 const tuKhoa = (c: Category, dk?: DieuKien) => {
   if (dk) {
     const loi = tuKhoaBang[duongDan({ muc: dk.muc, tinh: dk.tinh, cat: c })]?.loi;

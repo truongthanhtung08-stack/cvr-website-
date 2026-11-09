@@ -11,6 +11,7 @@
 import type { Listing } from "@/lib/data";
 import { chuanHoaTienIch, chuanHoaNoiThat, chuanHoaPhapLy, chuanHoaMucNoiThat } from "@/lib/chuanHoaThuocTinh";
 import { linkHopLe } from "@/lib/linkChen";
+import { napTuKhoaLoi } from "@/lib/tuKhoaLoiDb";
 import { chuanHoaDiaChiCu, dongBoHaiHe, haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
 import { choCuCua } from "@/lib/locations";
 // chữ thường không dấu, chỉ chữ + số cách nhau một dấu cách (dò tên nơi trong nội dung tin)
@@ -447,6 +448,7 @@ const isSeedId = (id: string) => /^\d+$/.test(id);
 // TIN THẬT 100%: DB trả 0 tin thật → hiện trống thật (KHÔNG độn dữ liệu mẫu).
 // Chỉ fallback mẫu khi Supabase LỖI/chưa cấu hình (rows=null) để web không trắng trang.
 export async function getListings(): Promise<Listing[]> {
+  await napTuKhoaLoi(); // chữ lõi Admin → Từ khoá lõi, trước khi trang ghép tiêu đề pSEO (tuKhoaLoiDb.ts)
   const rows = await rest(`select=${COLS}&status=eq.approved&order=bumped_at.desc.nullslast,published_at.desc.nullslast,created_at.desc&limit=500`);
   if (!rows) return featuredListings; // lỗi kết nối/chưa cấu hình → fallback mẫu
   // THỨ TỰ TRONG CÙNG HẠNG (chủ dự án 23/10/2026): xét MỐC GẦN NHẤT giữa ngày đăng và lần đẩy — cùng ngày đăng thì tin

@@ -40,6 +40,7 @@ const navGroups: { group: string; items: { label: string; href: string; icon: st
     group: "Website",
     items: [
       { label: "Nội dung web", href: "/admin/noi-dung", icon: "doc" },
+      { label: "Từ khoá lõi", href: "/admin/tu-khoa-loi", icon: "upload" },
       { label: "Dọn kho ảnh", href: "/admin/kho-anh", icon: "doc" },
     ],
   },
