@@ -20,8 +20,8 @@ export const FOOTER_DEFAULT: FooterData = {
   // footer loé tên cũ rồi mới đổi, và Google đọc được tên cũ trong HTML.
   tagline: "Cổng thông tin bất động sản trực tuyến",
   description:
-    // MỘT câu giới thiệu cho web, Google, AI, Zalo, Facebook (anh chọn câu duyệt 29/10 — 09/11/2026); trùng SiteJsonLd + llms.txt
-    "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản trực tuyến ưu việt, chuyên cung cấp dịch vụ đăng tin mua bán, cho thuê nhà đất, căn hộ và các dự án Bất động sản.",
+    // MỘT câu giới thiệu cho web, Google, AI, Zalo, Facebook (câu anh sửa trong Admin 09/11/2026); trùng SiteJsonLd + llms.txt
+    "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản, cung cấp giải pháp toàn diện cho người dùng trong việc tìm kiếm, đăng tin mua bán, cho thuê nhà đất và dự án bất động sản.",
   hotline: "+84 377 985 036",
   email: "hotro@coastalland.vn",
   // Địa chỉ công ty — ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã)

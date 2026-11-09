@@ -33,9 +33,9 @@ const data = {
       // Logo vuông nền trắng, đúng logo hồ sơ Google Doanh nghiệp.
       logo: { "@type": "ImageObject", url: `${SITE}/logo/app-icon-1024.png`, width: 1024, height: 1024 },
       image: `${SITE}/logo/logo-horizontal.jpg`,
-      // Câu giới thiệu = đúng câu chân trang chủ dự án duyệt 29/10/2026 (một câu cho web, Google, AI)
+      // Câu giới thiệu = đúng câu chân trang chủ dự án sửa trong Admin 09/11/2026 (một câu cho web, Google, AI)
       description:
-        "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản trực tuyến ưu việt, chuyên cung cấp dịch vụ đăng tin mua bán, cho thuê nhà đất, căn hộ và các dự án Bất động sản.",
+        "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản, cung cấp giải pháp toàn diện cho người dùng trong việc tìm kiếm, đăng tin mua bán, cho thuê nhà đất và dự án bất động sản.",
       slogan: "Cổng thông tin bất động sản trực tuyến",
       // Câu phân biệt (28/10/2026): gõ "coastal land" thì khung AI của Google trả nghĩa từ điển "đất ven biển" — nói rõ đây là TÊN
       // THƯƠNG HIỆU của cổng thông tin bất động sản (schema.org disambiguatingDescription).
