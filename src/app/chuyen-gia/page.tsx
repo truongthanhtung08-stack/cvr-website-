@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -18,6 +19,7 @@ export default async function ChuyenGiaPage() {
   const ds = (await getChuyenGia()).filter((cg) => !cg.laCongTy);
   return (
     <>
+      <BreadcrumbJsonLd items={[{ name: "Danh bạ chuyên gia", href: "/chuyen-gia" }]} />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-6 pb-footer sm:px-6 lg:px-8">

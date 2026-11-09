@@ -13,6 +13,7 @@
 //    Hướng dẫn đầy đủ: HUONG-DAN-SUA-NOI-DUNG-VA-ANH.md (mục 4.4)
 // ════════════════════════════════════════════════════════════════════════════
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -237,6 +238,7 @@ export default function FaqPage() {
           }),
         }}
       />
+      <BreadcrumbJsonLd items={[{ name: "Câu hỏi thường gặp", href: "/faq" }]} />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-3xl px-4 pt-8 pb-footer sm:px-6">

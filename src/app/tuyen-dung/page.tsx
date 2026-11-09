@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function TuyenDungPage() {
   return (
-    <TrangPhapLy
+    <TrangPhapLy duongDan="/tuyen-dung"
       title="Tuyển dụng"
       moDau="Coastal Land vận hành theo mô hình start up Công nghệ và tự động hoá toàn bộ. Chúng tôi luôn khuyên khích và rộng mở với nhân sự am hiểu công nghệ và đam mê trong lĩnh vực bất động sản."
     >

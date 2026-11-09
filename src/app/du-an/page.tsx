@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
@@ -34,6 +35,7 @@ export default async function DuAnPage() {
     <>
       {/* Danh sách cho Google: MỌI dự án có hồ sơ (nổi bật + tra cứu) — dự án mới chỉ từ tin chưa có trang mở cho Google nên không khai */}
       <ProjectListJsonLd items={[...xep, ...tatCa.filter((x) => !xep.some((y) => y.slug === x.slug))]} heading="Dự án bất động sản" path="/du-an" />
+      <BreadcrumbJsonLd items={[{ name: "Dự án", href: "/du-an" }]} />
       <Header />
       <main className="flex-1 bg-white">
         {/* "Xem thêm" ở Dự án nổi bật: mở danh sách → phần còn lại ẩn, Quay lại về như cũ (chuẩn chung HomeExpand) */}

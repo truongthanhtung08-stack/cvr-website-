@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
@@ -56,6 +57,8 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
+      {/* Gói dịch vụ thuộc mục Báo giá; công cụ (tính lãi vay, giá đất) không có trang cha — /tien-ich chưa có trang */}
+      <BreadcrumbJsonLd items={[...(p.kind === "tool" ? [] : [{ name: "Báo giá", href: "/bao-gia-dang-tin" }]), { name: p.title, href: `/tien-ich/${p.slug}` }]} />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-6 pb-footer sm:px-6 lg:px-8">

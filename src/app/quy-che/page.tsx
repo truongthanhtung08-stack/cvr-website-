@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function QuyChePage() {
   return (
-    <TrangPhapLy
+    <TrangPhapLy duongDan="/quy-che"
       title="Quy chế hoạt động"
       capNhat="17/08/2026"
       moDau="Quy chế này mô tả cách cổng thông tin coastalland.vn vận hành: Đối tượng được tham gia, tin/ bài đăng thực hiện qua những bước nào, mỗi bên có quyền và nghĩa vụ gì. Quy chế áp dụng cho toàn bộ thành viên và khách truy cập."

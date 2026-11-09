@@ -4,6 +4,7 @@ import { khuVucList, slugKhuVuc, timKhuVuc, type KhuVuc } from "@/lib/khuVuc";
 import { normalizeVi, type Filters } from "@/lib/filters";
 import { choCuCua, newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
 import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
+import { tenPhuongChuan } from "@/lib/tenPhuongChuan";
 
 // ============================================================================
 // PROGRAMMATIC SEO — Template 1 "Dynamic Listing" (docs/PHAN-TICH-PSEO-2-FILE.md)
@@ -34,7 +35,7 @@ import { thangHienTai } from "@/lib/thang";
 export const tinhCuaTin = (l: Listing) => l.location.split(",").pop()?.trim() ?? "";
 export const phuongCuaTin = (l: Listing) => {
   const p = l.location.split(",").map((s) => s.trim());
-  return p.length >= 2 ? p[0] : "";
+  return p.length >= 2 ? tenPhuongChuan(p[p.length - 1], p[0]) : "";
 };
 // Tên quận/huyện CŨ của một nhóm tin (chủ dự án 27/10/2026: người tìm vẫn gõ "nhà Hải Châu", "đất Ngũ Hành Sơn") — lấy từ địa chỉ cũ
 // của chính tin (locationCu "Phường cũ, Quận cũ, Tỉnh"), tên xuất hiện nhiều nhất; cấp chỉ ghi khi biết chắc. Dùng ở khối giá theo khu vực
@@ -257,7 +258,10 @@ export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc, phoBien = fals
     if (pl) so.push(pl.toLowerCase());
   }
   const ten = dau.replace(/\s*tháng \d{1,2}\/\d{4}$/, "");
-  return `${muc === "ban" ? ten.replace(/^Bán /, "Mua bán ") : ten} ${so.join(", ")}. Tin xác thực.`;
+  const cau = () => `${muc === "ban" ? ten.replace(/^Bán /, "Mua bán ") : ten} ${so.join(", ")}. Tin xác thực.`;
+  // > 160 ký tự Google cắt giữa câu (đo 09/11/2026: 2 trang 161, 163) → bỏ dần phần cuối (pháp lý, số phòng ngủ), giữ giá + diện tích
+  while ([...cau()].length > 160 && so.length > 1) so.pop();
+  return cau();
 }
 export function moTa(dk: DieuKien, tin: Listing[] = []): string {
   // Trang phường: kèm tên quận cũ ngay sau tên phường ("Phường Hải Châu (quận Hải Châu cũ), Đà Nẵng") — 27/10/2026

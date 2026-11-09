@@ -32,7 +32,7 @@ export default async function QuyDinhPage() {
   const qd = await getQuyDinhGia();
   const quyDinhGoiTin = [...qd.quyDinhGoiTin, ...qd.quyDinhChung.filter((x) => !/^\(\*+\)/.test(x.trim()))];
   return (
-    <TrangPhapLy
+    <TrangPhapLy duongDan="/quy-dinh"
       title="Quy định đăng tin"
       capNhat="17/08/2026"
       moDau="Những quy định để tin đăng trên coastalland.vn giữ được chất lượng và hiệu quả. Áp dụng cho tin mua bán, cho thuê và dự án."

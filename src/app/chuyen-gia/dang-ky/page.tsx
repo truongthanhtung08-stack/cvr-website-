@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
@@ -18,6 +19,7 @@ const benefits = [
 export default function DangKyChuyenGiaPage() {
   return (
     <>
+      <BreadcrumbJsonLd items={[{ name: "Danh bạ chuyên gia", href: "/chuyen-gia" }, { name: "Trở thành chuyên gia Coastal Land", href: "/chuyen-gia/dang-ky" }]} />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-6 pb-footer sm:px-6 lg:px-8">

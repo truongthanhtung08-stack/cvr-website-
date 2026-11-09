@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Image from "next/image";
 import { preload } from "react-dom";
 import Link from "next/link";
@@ -97,6 +98,7 @@ export default async function GioiThieuPage() {
 
   return (
     <>
+      <BreadcrumbJsonLd items={[{ name: "Giới thiệu", href: "/gioi-thieu" }]} />
       <Header />
       <main className="flex-1 bg-white">
         {/* ── Hero giới thiệu ──

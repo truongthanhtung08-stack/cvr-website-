@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function GopYPage() {
   return (
-    <TrangPhapLy
+    <TrangPhapLy duongDan="/gop-y"
       title="Góp ý, báo lỗi"
       moDau="Website phát triển và được hoàn thiện sẽ nhờ người dùng góp ý. Khi phát hiện hoặc thấy thông tin chưa chính xác, hình ảnh không khớp, lỗi hiển thị, hay bất cứ vấn đề gì liên quan đến thao tác đăng tin và hiển thị... rất mong bạn hãy góp ý cho chúng tôi."
     >

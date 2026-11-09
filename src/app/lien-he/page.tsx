@@ -35,7 +35,7 @@ const DIA_CHI = PHAP_LY.diaChiDayDu;
 
 export default function LienHePage() {
   return (
-    <TrangPhapLy
+    <TrangPhapLy duongDan="/lien-he"
       title="Liên hệ"
       moDau="Bạn cần hỗ trợ đăng tin, có thắc mắc về dịch vụ hoặc muốn hợp tác? Gọi hotline để được trả lời ngay, hoặc để lại yêu cầu bên dưới — chúng tôi liên hệ lại trong giờ làm việc."
     >

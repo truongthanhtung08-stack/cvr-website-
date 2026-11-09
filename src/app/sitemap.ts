@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getProjects, getArticles } from "@/lib/contentDb";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getChuyenGia, NGUONG_INDEX_HO_SO } from "@/lib/chuyenGiaDb";
-import { duAnThuocNhom, NGUONG_INDEX_DANH_MUC, projectCategories, rentCategories, saleCategories, soTinDanhMuc } from "@/lib/categories";
+import { duAnThuocNhom, NGUONG_INDEX_DANH_MUC, nhomPseo, projectCategories, rentCategories, saleCategories, soTinDanhMuc } from "@/lib/categories";
 import { packages, trangTienIchDat, utilityTools } from "@/lib/packages";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
@@ -55,8 +55,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const tinDm = await getListings().catch(() => []);
   const duAnDm = await getProjects().catch(() => []); // nhóm dự án chưa có dự án nào: không khai (22/10/2026)
   const categoryRoutes: MetadataRoute.Sitemap = [
-    ...saleCategories.filter((c) => soTinDanhMuc(tinDm, c, "ban") >= NGUONG_INDEX_DANH_MUC).map((c) => `/mua-ban/${c.slug}`),
-    ...rentCategories.filter((c) => soTinDanhMuc(tinDm, c, "thue") >= NGUONG_INDEX_DANH_MUC).map((c) => `/cho-thue/${c.slug}`),
+    // Cùng danh sách với trang /mua-ban/[loai] (loại hình + nhóm cha Nhà, BĐS nghỉ dưỡng…) — trước 09/11/2026 sót nhóm cha: trang index mà không có trong sitemap
+    ...[...saleCategories, ...nhomPseo("ban")].filter((c) => soTinDanhMuc(tinDm, c, "ban") >= NGUONG_INDEX_DANH_MUC).map((c) => `/mua-ban/${c.slug}`),
+    ...[...rentCategories, ...nhomPseo("thue")].filter((c) => soTinDanhMuc(tinDm, c, "thue") >= NGUONG_INDEX_DANH_MUC).map((c) => `/cho-thue/${c.slug}`),
     ...projectCategories.filter((c) => duAnThuocNhom(duAnDm, c).length > 0).map((c) => `/du-an/${c.slug}`),
   ].map((p) => ({
     url: `${SITE}${p}`,

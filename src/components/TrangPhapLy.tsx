@@ -1,15 +1,19 @@
 import Header from "@/components/Header";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Footer from "@/components/Footer";
 
 // Khung dùng chung cho các trang văn bản dài (Điều khoản · Chính sách bảo mật).
 // Cột chữ hẹp (max-w-3xl) để mỗi dòng ~75 ký tự — dễ đọc, đúng tinh thần Apple.
 export default function TrangPhapLy({
   title,
+  duongDan,
   capNhat,
   moDau,
   children,
 }: {
   title: string;
+  // Đường dẫn trang → BreadcrumbList cho Google (một thực thể, 09/11/2026); không hiện gì trên màn hình
+  duongDan: string;
   // Trang thông tin (Liên hệ, Tuyển dụng, FAQ…) không cần dòng "Cập nhật lần cuối" → bỏ trống.
   capNhat?: string;
   moDau: string;
@@ -17,6 +21,7 @@ export default function TrangPhapLy({
 }) {
   return (
     <>
+      <BreadcrumbJsonLd items={[{ name: title, href: duongDan }]} />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-3xl px-4 pt-8 pb-footer sm:px-6">

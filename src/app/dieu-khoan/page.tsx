@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function DieuKhoanPage() {
   return (
-    <TrangPhapLy
+    <TrangPhapLy duongDan="/dieu-khoan"
       title="Điều khoản thoả thuận"
       capNhat="15/08/2026"
       moDau="Khi truy cập và sử dụng trên nền tảng coastalland.vn, bạn đồng ý với các điều khoản dưới đây"

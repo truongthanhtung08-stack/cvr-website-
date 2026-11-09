@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -21,6 +22,7 @@ export default async function TinTucPage() {
 
   return (
     <>
+      <BreadcrumbJsonLd items={[{ name: "Tin tức", href: "/tin-tuc" }]} />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-6xl px-4 pt-6 pb-footer sm:px-8 lg:px-10">

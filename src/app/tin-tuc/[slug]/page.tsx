@@ -65,8 +65,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             inLanguage: "vi-VN",
             mainEntityOfPage: `https://coastalland.vn/tin-tuc/${a.slug}`,
             ...(a.image ? { image: [a.image] } : {}),
-            author: { "@type": "Organization", name: "COASTAL LAND", url: "https://coastalland.vn/gioi-thieu" },
-            publisher: { "@type": "Organization", name: "COASTAL LAND", logo: { "@type": "ImageObject", url: "https://coastalland.vn/logo/logo-horizontal-dark.svg" } },
+            // MỘT thực thể: trỏ về tổ chức khai ở SiteJsonLd (logo PNG) — không khai Organization rời, logo SVG Google không nhận
+            author: { "@id": "https://coastalland.vn/#to-chuc" },
+            publisher: { "@id": "https://coastalland.vn/#to-chuc" },
           }),
         }}
       />

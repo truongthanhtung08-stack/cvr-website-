@@ -12,6 +12,7 @@ import { nhomChonLoaiHinh, tenLoaiHinhMenu, tachChonLoaiHinh } from "@/lib/categ
 // Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
 // dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
 import { chuanHoaDiaChiCu } from "@/lib/diaChiHaiHe";
+import { tenPhuongChuan } from "@/lib/tenPhuongChuan";
 // Dùng CHUNG hàm tạo slug với form dự án trong admin → tên dự án trong file Excel
 // và slug dự án thật luôn khớp nhau, không bao giờ lệch quy tắc.
 import { slugify } from "@/lib/contentAdmin";
@@ -680,7 +681,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     built_area_m2: soHoacNull(lay(COT.dienTichXayDung), "dien_tich_xay_dung"),
     beds: soHoacNull(lay(COT.phongNgu), "phong_ngu", true),
     baths: soHoacNull(lay(COT.phongTam), "phong_tam", true),
-    ward: phuongXa || null,
+    ward: (phuongXa && tenPhuongChuan(tinhThanh, phuongXa)) || null, // đúng dấu theo danh mục hệ mới (tenPhuongChuan.ts)
     district: quanHuyen || null,
     province: tinhThanh || null,
     images: [...anh, ...video],

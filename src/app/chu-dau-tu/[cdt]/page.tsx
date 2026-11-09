@@ -10,6 +10,7 @@ import { getListings } from "@/lib/listingsDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { HomeExpandProvider } from "@/components/HomeExpand";
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
+import { tieuDeGoogle } from "@/lib/thang";
 
 // pSEO trục 11 — /chu-dau-tu/<tên>: danh sách dự án của một chủ đầu tư (kiểu Mã số thuế).
 // Index khi có ≥ 2 dự án đã đăng (src/lib/chuDauTu.ts).
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ cdt: stri
   const title = `Dự án của ${g.ten}`;
   const description = `Danh sách dự án bất động sản của ${g.ten}: vị trí, loại hình, tình trạng, quy mô và hình ảnh.`;
   return {
-    title,
+    title: tieuDeGoogle(title), // tên chủ đầu tư dài → cắt đúng ranh giới từ (chung với trang dự án)
     description,
     alternates: { canonical: `/chu-dau-tu/${cdt}` },
     openGraph: { title, description, url: `/chu-dau-tu/${cdt}`, type: "website" },

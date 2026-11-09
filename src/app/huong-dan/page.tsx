@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 
 export default function HuongDanPage() {
   return (
-    <TrangPhapLy
+    <TrangPhapLy duongDan="/huong-dan"
       title="Hướng dẫn đăng tin"
       moDau="Việc đăng một tin mua bán, cho thuê hoặc các mục đích liên quan (Tin đăng) trên Coastal Land mất khoảng 05 phút nếu bạn đã chuẩn bị sẵn hình ảnh và thông tin. Hãy làm theo các bước dưới đây, tin của bạn sẽ được duyệt nhanh nhất."
     >

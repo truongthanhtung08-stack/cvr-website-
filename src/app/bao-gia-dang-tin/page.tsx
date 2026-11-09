@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -141,6 +142,7 @@ export default async function BaoGiaPage() {
 
   return (
     <>
+      <BreadcrumbJsonLd items={[{ name: "Báo giá", href: "/bao-gia-dang-tin" }]} />
       <Header />
       <main className="flex-1 bg-white">
         {/* CẤU TRÚC = CÂY MENU BÁO GIÁ (chủ dự án 22/10/2026 tối): Báo giá → Gói tin đăng CVR (Bảng giá · Đặc điểm · Quy định) →

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function BaoMatPage() {
   return (
-    <TrangPhapLy
+    <TrangPhapLy duongDan="/bao-mat"
       title="Chính sách bảo mật"
       capNhat="28/09/2026"
       moDau="Coastal Land (coastalland.vn) là cổng thông tin bất động sản. Chúng tôi thu thập dữ liệu gì của bạn, dùng để làm gì, chia sẻ với ai và bạn có quyền gì đối với dữ liệu đó. Bằng việc sử dụng website, bạn đồng ý với chính sách này."

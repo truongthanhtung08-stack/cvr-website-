@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
 import ChuyenGiaCard from "@/components/ChuyenGiaCard";
@@ -55,6 +56,7 @@ export default async function HoSoChuyenGiaPage({
 
   return (
     <>
+      <BreadcrumbJsonLd items={[{ name: "Danh bạ chuyên gia", href: "/chuyen-gia" }, { name: cg.ten, href: `/chuyen-gia/${slug}` }]} />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-6 pb-footer sm:px-6 lg:px-8">
