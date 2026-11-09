@@ -52,6 +52,12 @@ Hộp hỏi quyền của Zalo tự giải thích — mình không viết thêm.
   từ 26/10), đủ ô bắt buộc, bỏ ô thừa, cắt đúng độ dài. Gửi hỏng (Zalo hoặc email) → ghi sự cố, hiện Admin → Tổng quan, không email.
   Sửa / thêm mẫu bên ZBS → đọc lại template/info rồi sửa bảng `MAU_ZBS`. Chưa sửa thì cấm báo "đã xong" khi chưa gửi thử thật.
 
+## ⏳ ZALO MINI APP BẢN 52 — ĐÃ GỬI XÉT DUYỆT 17:54 09/11/2026 (phiên 7f6fbd7e) — bản 51 bị trả về vì thanh toán + đăng nhập
+- Thanh toán: nạp ví qua Checkout SDK, **Tích hợp tùy chỉnh · Chuyển khoản ngân hàng (Beta)**: web tạo đơn PayOS → mã VietQR → `Payment.openCheckoutPopup` → PayOS webhook cộng ví + `baoTrangThaiDonZalo` (purchase-payment). Khoá `ZALO_CHECKOUT_KEY` (= Private Key Checkout) đã có trên Vercel; App Status ACTIVE; Callback URL = /api/thanh-toan/zalo-checkout/callback. Đã nạp thật 10.000 đ: ví + Zalo "Thành công".
+- Đăng nhập: câu anh duyệt trên nút Zalo. Điều khoản sử dụng trên Zalo sửa 09/11 (tên/ảnh, số, vị trí, ảnh, thanh toán).
+- Số điện thoại + vị trí Zalo (me/info) đi qua trạm VN (`hoiZaloInfo`, taiKhoanZalo.ts) — gọi thẳng từ Vercel bị Zalo chặn IP.
+- Zalo duyệt xong: làm 4 việc ở khối "ZALO MINI APP + VERCEL — 07/11" (menu OA, nút hồ sơ OA, mẫu ZBS, quét QR thử).
+
 ## ⏳ 09/11/2026 RẠNG SÁNG (phiên 7f6fbd7e) — ĐÃ PUSH d8844e64 (anh "push luôn") — VIỆC CÒN LẠI
 **Đã lên web:** Tin tức PC 2 cột + trang bài viết 2 cột (Bài viết khác, nút chia sẻ) · trang dự án PC 2 cột (cột phải: form báo giá dự án nổi
 bật · theo khu vực · theo loại hình · Chủ đầu tư top 10 theo VIP · Dự án cập nhật cố định 10) · đầu trang PC 52px, logo 40px, menu 13px ·
