@@ -14,7 +14,9 @@ const data = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "Organization",
+      // OnlineBusiness (con của Organization, Google đọc được): nói rõ đây là DOANH NGHIỆP TRỰC TUYẾN — giúp AI Search phân biệt
+      // tên thương hiệu "Coastal Land" với nghĩa từ điển "đất ven biển" (09/11/2026)
+      "@type": ["Organization", "OnlineBusiness"],
       "@id": `${SITE}/#to-chuc`,
       name: "COASTAL LAND",
       // Tên gọi khác khách hay gõ — AI tìm kiếm của Google (24/10/2026) đang lẫn "coastalland" với khu nghỉ dưỡng
