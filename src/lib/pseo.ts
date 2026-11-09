@@ -5,6 +5,7 @@ import { normalizeVi, type Filters } from "@/lib/filters";
 import { choCuCua, newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
 import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
 import { tenPhuongChuan } from "@/lib/tenPhuongChuan";
+import tuKhoaLoi from "@/data/tu-khoa-loi.json";
 
 // ============================================================================
 // PROGRAMMATIC SEO — Template 1 "Dynamic Listing" (docs/PHAN-TICH-PSEO-2-FILE.md)
@@ -185,7 +186,16 @@ export type DieuKien = {
 
 // Danh mục menu + nhóm "Nhà" chỉ dùng cho trang pSEO
 const danhMuc = (muc: Muc) => [...(muc === "thue" ? rentCategories : saleCategories), ...nhomPseo(muc)];
-const tuKhoa = (c: Category) => c.tuKhoa ?? c.h1;
+// CHỮ LÕI THEO BẢNG TỪ KHOÁ (anh 09/11/2026): sheet "Từ khoá lõi" của HE-THONG-TU-KHOA.xlsx, cột "Lên web" = x → scripts/nap-tu-khoa.ts
+// → src/data/tu-khoa-loi.json. Áp cho trang lõi <loại>/<tỉnh> và mọi trang con của nó; trang đang top / giữ bản cũ (giuSoCu) không đổi.
+const tuKhoaBang: Record<string, { loi?: string }> = (tuKhoaLoi as { trang: Record<string, { loi?: string }> }).trang;
+const tuKhoa = (c: Category, dk?: DieuKien) => {
+  if (dk) {
+    const loi = tuKhoaBang[duongDan({ muc: dk.muc, tinh: dk.tinh, cat: c })]?.loi;
+    if (loi && !giuSoCu(duongDan(dk))) return loi;
+  }
+  return c.tuKhoa ?? c.h1;
+};
 const goc = (muc: Muc) => (muc === "thue" ? "/cho-thue" : "/mua-ban");
 
 export function khop(l: Listing, dk: DieuKien): boolean {
@@ -223,10 +233,10 @@ export function duongDan(dk: DieuKien): string {
 export function tieuDe(dk: DieuKien): string {
   const noi = dk.thanhPho ? `${dk.thanhPho.name}, ${dk.tinh.name}` : dk.phuong ? `${dk.phuong}, ${dk.tinh.name}` : dk.tinh.name;
   if (dk.duong) return `Bán nhà đất đường ${dk.duong}, ${dk.tinh.name}`;
-  if (dk.huong) return dk.cat ? `${tuKhoa(dk.cat)} hướng ${dk.huong} ${noi}` : `Bán nhà đất hướng ${dk.huong} ${noi}`;
+  if (dk.huong) return dk.cat ? `${tuKhoa(dk.cat, dk)} hướng ${dk.huong} ${noi}` : `Bán nhà đất hướng ${dk.huong} ${noi}`;
   if (dk.cat) {
     return [
-      tuKhoa(dk.cat),
+      tuKhoa(dk.cat, dk),
       dk.phongNgu ? phongNguNhan(dk.phongNgu) : "",
       noi,
       dk.giaDuoi ? dk.giaDuoi.nhan : "",
