@@ -37,6 +37,25 @@ export async function hoiZaloMe(accessToken: string, fields = "id,name,picture")
   return (await r.json()) as ZaloMe;
 }
 
+/** Đổi token Mini App (getPhoneNumber / getLocation) ra số hoặc toạ độ: graph.zalo.me/v2.0/me/info + khoá bí mật Zalo App.
+ *  Zalo chỉ trả cho IP Việt Nam → qua trạm VN (loai "sdt" của tools/zalo-proxy-vn/zalo-me.php — trạm gọi đúng me/info, dùng chung cho vị trí).
+ *  Trước 09/11/2026 hai đường số + vị trí gọi thẳng từ Vercel (Mỹ) → Zalo từ chối, Mini App báo "Chưa lấy được số từ Zalo". */
+export async function hoiZaloInfo(accessToken: string, code: string): Promise<{ error?: number; data?: { number?: string; latitude?: string; longitude?: string } }> {
+  const secret = process.env.ZALO_APP_SECRET;
+  if (!secret) return { error: -1 };
+  const proxyUrl = process.env.ZALO_PROXY_URL;
+  const proxyKey = process.env.ZALO_PROXY_KEY;
+  const r = proxyUrl && proxyKey
+    ? await fetch(proxyUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-cl-key": proxyKey },
+        body: JSON.stringify({ loai: "sdt", access_token: accessToken, code, secret_key: secret }),
+        cache: "no-store",
+      })
+    : await fetch("https://graph.zalo.me/v2.0/me/info", { headers: { access_token: accessToken, code, secret_key: secret }, cache: "no-store" });
+  return r.json();
+}
+
 /** Tìm / tạo tài khoản của người dùng Zalo (đúng luật web callback). Trả id tài khoản khách sẽ vào + email để mở phiên. */
 export async function taiKhoanTheoZalo(admin: Admin, me: ZaloMe & { id: string }): Promise<{ uid: string; email: string } | null> {
   let email = emailKyThuat(me.id);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hoiNominatim } from "@/lib/nominatim";
 import { nguoiGoi, optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
+import { hoiZaloInfo } from "@/lib/taiKhoanZalo";
 
 // ============================================================================
 // VỊ TRÍ HIỆN TẠI CHO ZALO MINI APP — ĐĂNG TIN điền sẵn Tỉnh · Phường · đường (06/11/2026).
@@ -18,12 +19,10 @@ async function xuLy(req: Request) {
   const loi = (s: string, code = 400) => NextResponse.json({ ok: false, loi: s }, { status: code });
   if (!(await nguoiGoi(req))) return loi("Vui lòng đăng nhập lại.", 401);
   const b = (await req.json().catch(() => ({}))) as { tokenViTri?: string; zaloAccessToken?: string };
-  const secret = process.env.ZALO_APP_SECRET;
-  if (!b.tokenViTri || !b.zaloAccessToken || !secret) return loi("Chưa lấy được vị trí.");
+  if (!b.tokenViTri || !b.zaloAccessToken) return loi("Chưa lấy được vị trí.");
   let lat: string | undefined, lng: string | undefined;
   try {
-    const r = await fetch("https://graph.zalo.me/v2.0/me/info", { headers: { access_token: b.zaloAccessToken, code: b.tokenViTri, secret_key: secret } });
-    const j = (await r.json()) as { error?: number; data?: { latitude?: string; longitude?: string } };
+    const j = await hoiZaloInfo(b.zaloAccessToken, b.tokenViTri); // qua trạm VN — Zalo chặn IP ngoài Việt Nam
     if (j.error === 0) { lat = j.data?.latitude; lng = j.data?.longitude; }
   } catch { /* trả lỗi bên dưới */ }
   if (!lat || !lng) return loi("Chưa lấy được vị trí.");

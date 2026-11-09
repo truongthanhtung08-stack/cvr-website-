@@ -6,6 +6,7 @@ import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
 import { danhDauGop } from "@/lib/gopTaiKhoan";
 import { baoLoi } from "@/lib/baoLoi";
+import { hoiZaloInfo } from "@/lib/taiKhoanZalo";
 
 // ============================================================================
 // POST /api/xac-thuc/xac-minh-sdt — TÀI KHOẢN ĐANG ĐĂNG NHẬP XÁC MINH SỐ CỦA MÌNH
@@ -128,11 +129,9 @@ export async function POST(req: Request) {
 // khoá bí mật Zalo App. Số này là số của chính tài khoản Zalo đang dùng, khách vừa bấm đồng ý chia sẻ → coi như ĐÃ XÁC MINH (như nhập
 // đúng mã gửi tới chính số đó), đi tiếp đúng đường "xac-nhan" bên dưới (gộp tài khoản, đánh dấu đã xác minh…).
 async function soTuZalo(accessToken?: string, code?: string): Promise<string | null> {
-  const secret = process.env.ZALO_APP_SECRET;
-  if (!accessToken || !code || !secret) return null;
+  if (!accessToken || !code) return null;
   try {
-    const r = await fetch("https://graph.zalo.me/v2.0/me/info", { headers: { access_token: accessToken, code, secret_key: secret } });
-    const j = (await r.json()) as { error?: number; data?: { number?: string } };
+    const j = await hoiZaloInfo(accessToken, code); // qua trạm VN — Zalo chặn IP ngoài Việt Nam
     const so = j.error === 0 ? j.data?.number : undefined;
     return so ? so.replace(/\D/g, "").replace(/^84/, "0") : null;
   } catch {
