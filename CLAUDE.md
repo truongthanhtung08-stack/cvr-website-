@@ -35,6 +35,7 @@ Bài học 10/11: tin khách 1e3be917 lên web với video chỉ có tiếng (n�
   không inputMode, không blur/focus lạ, không touchstart preventDefault. Máy giả lập không có bàn phím thật → KHÔNG tái hiện được. Việc tiếp: cắm cáp
   điện thoại anh, Chrome PC `chrome://inspect` xem trực tiếp (focus/blur, useLayoutEffect đặt lại innerHTML khi bàn phím bật làm mất bộ gõ?);
   không ra gốc nhanh → điện thoại dùng `<textarea>` thường cho Mô tả (bàn phím chắc chắn hiện), máy tính giữ trình soạn — hỏi anh trước.
+  Sau 24b90c0b (BanPhimAo bỏ cuộn đoán) anh vẫn báo cả ô Tiêu đề (textarea) lẫn Nội dung không hiện bàn phím. **Đang lên web TẠM:** `public/_go-loi.js` + dòng `<script src="/_go-loi.js">` trong `src/app/layout.tsx` (db85ec74) — mở `coastalland.vn/dang-tin?go-loi=1`, chạm ô, khung xanh ghi focus/blur/bàn phím; anh chụp gửi là thấy gốc. ⛔ Xong lỗi GỠ cả hai.
 - **⏳ CHƯA LÀM KỊP — PHIÊN SAU LÀM (theo thứ tự):**
   1. Thử trọn ①→⑥ có bấm Đăng thật (tài khoản thử, gói 0 ₫) → Admin duyệt → tin lên web, ảnh + video hiện đúng; rồi xoá tin thử.
   2. Thử quy trình trên **điện thoại thật** (iPhone Safari, Samsung Internet), **web mở trong Zalo** và **Zalo Mini App** — chưa kiểm nơi nào.
