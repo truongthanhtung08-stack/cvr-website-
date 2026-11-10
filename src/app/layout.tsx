@@ -199,7 +199,6 @@ export default function RootLayout({
   return (
     <html lang="vi" style={{ ["--font-inter" as string]: FONT_INTER }} className={`${interLatin.variable} ${interViet.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
-        <script src="/_go-loi.js" async />{/* TẠM 10/11/2026: ghi sự kiện bàn phím khi link có ?go-loi=1 (anh chụp gửi) — xong lỗi thì gỡ cùng public/_go-loi.js */}
         {/* Mở trong trình duyệt của Zalo → bỏ khoảng chừa đỉnh máy (xem --at trong globals.css). Chạy trước khi vẽ để không giật. */}
         <script dangerouslySetInnerHTML={{ __html: "if(/Zalo|FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly/i.test(navigator.userAgent)){var s=document.createElement('style');s.textContent=':root{--at:0px}';document.head.appendChild(s)}" }} />
         <SiteJsonLd />
