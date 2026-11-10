@@ -135,6 +135,8 @@ export default function BanPhimAo() {
           const dich = giaDinh || r.height > vvCao() * 0.6 ? r.top - k.top - 8 : r.top - k.top - (k.height - r.height) / 2;
           khung.scrollBy({ top: dich, behavior: "smooth" });
         } else if (phu) { /* lớp phủ cố định: không kéo trang phía sau */ }
+        // Máy KHÔNG báo bàn phím → không tự cuộn đoán, để trình duyệt tự đưa ô lên trên bàn phím (10/11/2026: chạm ô trên điện thoại không hiện bàn phím)
+        else if (giaDinh) { /* trình duyệt tự lo */ }
         else {
           // Cuộn TỰ TÍNH theo phần thật sự nhìn thấy (dưới mọi thanh dính, trên bàn phím) — scrollIntoView của trình
           // duyệt chỉ biết scroll-padding nên đặt ô xuống dưới thanh bước
