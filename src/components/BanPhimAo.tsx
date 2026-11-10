@@ -73,7 +73,9 @@ export default function BanPhimAo() {
         .map((n) => n.getBoundingClientRect())
         .filter((r) => r.height > 0 && r.width >= window.innerWidth * 0.5 && r.height <= window.innerHeight * 0.4)
         .sort((a, b) => a.top - b.top);
-      for (const r of ds) if (r.top - vvTop() <= day + 4) day = Math.max(day, r.bottom - vvTop());
+      // Mọi thanh dính bắt đầu trong 40% trên màn hình đều tính là che — không đòi nối sát nhau (10/11/2026: thanh bước đăng tin hở
+      // 16px dưới thanh Quay lại / máy chữ to → không được tính → ô đang gõ bị đẩy xuống dưới thanh bước, khách không gõ được).
+      for (const r of ds) if (r.top - vvTop() < vvCao() * 0.4) day = Math.max(day, r.bottom - vvTop());
       return day;
     };
     const dangNhin = (el: HTMLElement, giaDinh: boolean) => {
