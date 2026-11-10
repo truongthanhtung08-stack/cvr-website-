@@ -1340,7 +1340,7 @@ export default function PostListingForm() {
           {done === "capNhat" ? "Đã cập nhật thông tin tin đăng!" : done === "draft" ? "Đã lưu nháp!" : editId && editStatus !== "draft" ? "Đã cập nhật — tin chờ duyệt lại!" : "Tin đăng đã được gửi!"}
         </h3>
         <div className="mx-auto mt-6 grid max-w-sm gap-2.5">
-          <Link href="/tai-khoan/tin-dang" replace className="flex h-12 w-full items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
+          <Link href={`/tai-khoan/tin-dang?muc=${done === "draft" ? "draft" : done === "capNhat" ? "approved" : "pending"}`} replace className="flex h-12 w-full items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
           {!editId && (
             <button type="button" onClick={() => { setDone(""); setTitle(""); setImages([]); }} className="h-12 w-full rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">Đăng tin khác</button>
           )}

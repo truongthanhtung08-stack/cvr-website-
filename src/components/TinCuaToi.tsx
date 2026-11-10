@@ -58,6 +58,12 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
   const [leadsByListing, setLeadsByListing] = useState<Record<string, Lead[]>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"all" | ListingStatus>("all");
+  // ?muc=draft|approved|pending — vào thẳng đúng mục (form đăng tin lưu xong đưa về đây, anh 10/11/2026)
+  useEffect(() => {
+    const m = new URLSearchParams(window.location.search).get("muc");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (m === "draft" || m === "approved" || m === "pending") setTab(m);
+  }, []);
   // Mục đang chọn phải nằm trong tầm mắt của dòng cuộn ngang.
   const hangLoc = useRef<HTMLDivElement>(null);
   useEffect(() => {
