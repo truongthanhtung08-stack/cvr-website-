@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
@@ -216,6 +216,12 @@ export default function ImagePicker({
 
   // Số VIDEO đang có và còn nhận thêm được bao nhiêu (đếm riêng, không lẫn với ảnh)
   const soVideo = value.filter(isVideoUrl).length;
+  // VIDEO LUÔN ĐỨNG ĐẦU (anh 10/11/2026: "video vẫn ở giữa") — tin cũ lưu video giữa/cuối dải ảnh thì tự xếp lại; ảnh giữ nguyên thứ tự.
+  useEffect(() => {
+    const vid = value.filter(isVideoUrl);
+    if (!vid.length || value.slice(0, vid.length).every(isVideoUrl)) return;
+    onChange([...vid, ...value.filter((x) => !isVideoUrl(x))]);
+  }, [value, onChange]);
   const conNhanVideo = maxVideos == null ? Infinity : Math.max(0, maxVideos - soVideo);
 
   // Xoá nội dung CẢ BA ô chọn tệp sau mỗi lần nhận ảnh. Trước đây chỉ xoá ô
