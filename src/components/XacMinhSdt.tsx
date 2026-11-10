@@ -72,14 +72,14 @@ export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, dangTin, ti
     onSoMoi?.(sdt);
   }
 
-  const oCls = "h-11 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink";
+  const oCls = "h-11 w-full rounded-lg border border-cvr-line bg-white px-3 text-[16px] text-cvr-ink outline-none focus:border-cvr-ink sm:text-sm"; // điện thoại: ô trên một hàng riêng, đủ rộng cho số 10 chữ (anh 10/11/2026)
   const nutCls = "h-11 shrink-0 rounded-lg bg-cvr-ink px-4 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60";
 
   return (
     <div className="rounded-xl border border-cvr-line bg-cvr-surface p-4 sm:p-5">
       <p className="text-[15px] font-semibold text-cvr-ink">{tieuDe}</p>
       {daGui && <p className="mt-1 text-sm text-cvr-muted">Mã 6 số vừa gửi tới {noiGui || "Zalo của số này"}.</p>}
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <input
           value={sdt}
           onChange={(e) => { setSdt(e.target.value); setDaGui(false); setMa(""); }}
@@ -92,7 +92,7 @@ export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, dangTin, ti
         </button>
       </div>
       {daGui && (
-        <div className="mt-2 flex gap-2">
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <input
             value={ma}
             onChange={(e) => setMa(e.target.value.replace(/\D/g, "").slice(0, 6))}

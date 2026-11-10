@@ -112,7 +112,7 @@ export default function SoDienThoaiKhac() {
           value={moi}
           onChange={(e) => { setMoi(e.target.value); setDaGui(false); setMa(""); }}
           placeholder="0905123456"
-          className="h-11 min-w-0 flex-1 rounded-lg border border-cvr-line px-4 text-sm text-cvr-ink outline-none transition placeholder:text-cvr-faint focus:border-cvr-ink"
+          className="h-11 min-w-0 basis-full flex-1 rounded-lg border border-cvr-line px-4 text-[16px] sm:basis-auto sm:text-sm text-cvr-ink outline-none transition placeholder:text-cvr-faint focus:border-cvr-ink"
         />
         <button
           type="submit"
