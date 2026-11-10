@@ -126,6 +126,10 @@ export default function ContentEditor({
   rows?: number;
 }) {
   const khungRef = useRef<HTMLDivElement>(null);
+  // ĐIỆN THOẠI (màn cảm ứng) → ô gõ chữ thường thay khung soạn kiểu Word (anh 10/11/2026, ảnh 15:19: chạm ô Mô tả có con trỏ mà
+  // KHÔNG hiện bàn phím — contenteditable trên nhiều máy Android; ô Tiêu đề là textarea thì gõ được). Máy tính giữ khung soạn.
+  const [laCham, setLaCham] = useState(false);
+  useEffect(() => { setLaCham(window.matchMedia("(pointer: coarse)").matches); }, []);
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
@@ -203,6 +207,7 @@ export default function ContentEditor({
 
   // Chèn ảnh / video thành một khối riêng ngay sau dòng đang đứng, kèm một dòng trống để gõ tiếp.
   const chenKhoi = (dong: string) => {
+    if (laCham) { onChange((value.trim() ? value.replace(/\n+$/, "") + "\n" : "") + dong + "\n"); return; }
     const el = khungRef.current;
     if (!el) return;
     const tam = document.createElement("div");
@@ -272,7 +277,7 @@ export default function ContentEditor({
   return (
     <div className="space-y-2">
       {/* Thanh định dạng: đậm · nghiêng · canh lề — hiện kết quả NGAY trong khung soạn */}
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className={laCham ? "hidden" : "flex flex-wrap items-center gap-1.5"}>
         <ToolBtn label="In đậm" onMouseDown={giuChon} onClick={() => lenh("bold")}>
           <span className="text-[13px] font-bold">B</span>
         </ToolBtn>
@@ -347,6 +352,15 @@ export default function ContentEditor({
       )}
 
       {/* KHUNG SOẠN — chữ hiện đúng định dạng ngay khi gõ, như trên trang tin */}
+      {laCham ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          rows={Math.max(rows, 6)}
+          className="w-full resize-y whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[16px] leading-relaxed text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink"
+        />
+      ) : (
       <div className="relative">
         <div
           ref={khungRef}
@@ -381,6 +395,7 @@ export default function ContentEditor({
           <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-sm leading-relaxed text-cvr-faint">{placeholder}</p>
         )}
       </div>
+      )}
 
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
