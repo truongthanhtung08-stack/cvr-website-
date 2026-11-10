@@ -10,7 +10,9 @@ Phiên **local_d7590912-b09a-4e9b-bed6-2a99617b7cc4** (bản ghi e7f4594c-0544-4
 Lỗi phải nói lại nhiều lần: xem bảng "⛔ LỖI PHIÊN e7f4594c" trong khối bàn giao 08/11 bên dưới.
 **CẤM VÀO LÀM VIỆC Ở BẤT KỲ PHIÊN NÀO.** Không phiên nào được giao việc, nhắn, bàn giao hay nhận bàn giao từ phiên này.
 
-## ⛔⛔⛔ WEB ĐÃ CHẠY CHÍNH THỨC — QUY TRÌNH KHÁCH ĐĂNG TIN KHÔNG ĐƯỢC LỖI (anh chốt 10/11/2026)
+## ⛔⛔⛔ WEB ĐÃ THƯƠNG MẠI — ĐÃ BÁN GÓI ĐĂNG TIN CHO KHÁCH — QUY TRÌNH KHÁCH ĐĂNG TIN KHÔNG ĐƯỢC LỖI (anh chốt 10/11/2026)
+**Khách đã trả tiền mua gói.** Từ Admin / trang tài khoản của khách: tạo tin → ảnh → video → mua gói → đăng → chờ duyệt → duyệt → lên web **KHÔNG được có bất kỳ lỗi nào nữa.**
+**Mọi chỉnh sửa là sửa TỪ CÁI ĐÃ CÓ** (không viết lại, không đổi cơ chế đang chạy). **CẤM làm hỏng việc khách đang làm** — từ lúc khách đăng nhập đến lúc tin lên web / chờ duyệt. Lỗi rơi vào tin khách đã trả tiền → Claude sửa trên tin đó luôn (Admin, Chrome của anh), không bắt khách làm lại.
 Web làm ra để **khách / thành viên tự đăng tin**. Mọi lần cập nhật, sửa mã (bất kỳ phần nào) PHẢI nhìn ngay quy trình này và kiểm lại trước khi báo xong:
 **① Đăng nhập (số · email · Google · Zalo) → ② Tạo tin (form, loại hình, địa chỉ 2 hệ) → ③ Chọn gói (giá Admin + VAT, ví, Nạp thêm) → ④ Tải ảnh → ⑤ Tải video (mọi định dạng → MP4 H.264 có hình, `src/lib/nenVideo.ts`) → ⑥ Đăng → chờ Admin duyệt → lên web (ảnh + video hiện đúng).**
 Đụng mã dùng chung của các bước này (`PostListingForm`, `ImagePicker`, `uploadImage`, `nenVideo`, `ChonCoTim`, gói / ví / thanh toán, đăng nhập) → thử lại trọn ①→⑥ trên điện thoại (khổ 375 + máy thật) và máy tính. Không thử được bước nào → nói rõ bước đó chưa kiểm.
