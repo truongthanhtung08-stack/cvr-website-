@@ -30,6 +30,11 @@ Bài học 10/11: tin khách 1e3be917 lên web với video chỉ có tiếng (n�
   --hdr + --backbar-h thay 113px cứng) · 34b789e5 (BackBar tự đo chiều cao thật → --backbar-h, máy chữ to) · 03fe856f (BanPhimAo tính mọi thanh
   dính trong 40% trên là che). Máy thử 375 đạt (cả khi ép hở 16px). **CHƯA được anh xác nhận trên điện thoại thật** — mở phiên là hỏi anh kết quả;
   còn lỗi thì xin ảnh chụp ngay lúc chạm ô, kiểm cả Chrome · Samsung Internet · Zalo. Link thử: máy 3000 `/dang-tin?xem-thu=1` (khổ 375).
+  **Sau 03fe856f anh vẫn báo: chạm ô NỘI DUNG (Mô tả) không hiện bàn phím** — ô này là `contenteditable` (`src/components/admin/ContentEditor.tsx`),
+  ô Tiêu đề là textarea thường. Ảnh 14:25: ô Mô tả có viền xanh + con trỏ mà không có bàn phím. Đã rà: không user-select/pointer-events/touch-action,
+  không inputMode, không blur/focus lạ, không touchstart preventDefault. Máy giả lập không có bàn phím thật → KHÔNG tái hiện được. Việc tiếp: cắm cáp
+  điện thoại anh, Chrome PC `chrome://inspect` xem trực tiếp (focus/blur, useLayoutEffect đặt lại innerHTML khi bàn phím bật làm mất bộ gõ?);
+  không ra gốc nhanh → điện thoại dùng `<textarea>` thường cho Mô tả (bàn phím chắc chắn hiện), máy tính giữ trình soạn — hỏi anh trước.
 - **⏳ CHƯA LÀM KỊP — PHIÊN SAU LÀM (theo thứ tự):**
   1. Thử trọn ①→⑥ có bấm Đăng thật (tài khoản thử, gói 0 ₫) → Admin duyệt → tin lên web, ảnh + video hiện đúng; rồi xoá tin thử.
   2. Thử quy trình trên **điện thoại thật** (iPhone Safari, Samsung Internet), **web mở trong Zalo** và **Zalo Mini App** — chưa kiểm nơi nào.
