@@ -213,7 +213,12 @@ export default function BackBar() {
     // Chưa đăng nhập (trang chỉ hiện ô đăng nhập) → không có tin nào đang soạn: ‹ lùi như mọi trang. Đưa về /tai-khoan là bị đá sang
     // trang Đăng nhập — khách muốn thoát lại bị bắt đăng nhập (đo 08/11/2026).
     if (goc === "dang-tin" && coPhienDangNhap()) {
-      router.push("/tai-khoan");
+      // ĐANG SỬA một tin (?id=) → về danh sách Tin đăng, nơi khách vừa bấm Sửa (anh 10/11/2026: Tin đăng → Sửa → ‹ nhảy về Tổng quan,
+      // không quản lý được tin). Đăng tin mới → Tổng quan như cũ. Vừa từ đúng trang đó sang → lùi lịch sử, khỏi chồng trang.
+      const dich = new URLSearchParams(window.location.search).get("id") ? "/tai-khoan/tin-dang" : "/tai-khoan";
+      const truoc = docPhien("cl_trang_truoc") ?? "";
+      if ((truoc === dich || (dich !== "/tai-khoan" && truoc.startsWith(dich))) && window.history.length > 1) router.back();
+      else router.push(dich);
       return;
     }
     // NẠP TIỀN ĐI TỪ GÓI TIN (?ve= — form đăng tin / Tin của tôi): ‹ về đúng chỗ vừa đến, không lên tầng Tài khoản
