@@ -15,7 +15,19 @@ const MUC = [
 
 export default function BaMucChinh() {
   return (
-    <nav aria-label="Ba mảng chính" className="flex gap-2 bg-white px-4 pb-1 pt-3 sm:hidden">
+    <nav
+      aria-label="Ba mảng chính"
+      className="flex gap-2 bg-white px-4 pb-1 pt-3 sm:hidden"
+      // :active trên điện thoại chỉ hiện khi giữ ngón lâu (iPhone bỏ qua) → chạm là gắn "vua-bam" như thanh dưới (MobileTabBar), 10/11/2026
+      onPointerDown={(e) => {
+        const a = (e.target as HTMLElement).closest("a");
+        if (!a) return;
+        a.classList.remove("vua-bam");
+        void a.offsetWidth;
+        a.classList.add("vua-bam");
+        window.setTimeout(() => a.classList.remove("vua-bam"), 280);
+      }}
+    >
       {MUC.map((m) => (
         <Link
           key={m.href}

@@ -729,9 +729,9 @@ html:has(.cvr-sheet) .an-khi-go-phim.float-above-tabbar { display: none !importa
 /* Thanh dưới điện thoại — CHUẨN APPLE (anh 08/11/2026: "hiệu ứng chuẩn, animation chuẩn = Apple"): thanh tab iOS không nhún, không
    vệt sáng lan (đó là kiểu Android). Chạm là nút MỜ ngay rồi sáng lại êm 0,25 s; nút đang ở trang đó đổi sang màu xanh + biểu tượng đặc.
    MobileTabBar gắn .vua-bam lúc chạm (chạm nhanh trên iPhone :active không kịp hiện). Chỉ opacity. */
-.vua-bam .press { animation: tab-mo 250ms cubic-bezier(0.25, 0.1, 0.25, 1); }
+.vua-bam .press, .press.vua-bam { animation: tab-mo 250ms cubic-bezier(0.25, 0.1, 0.25, 1); }
 @keyframes tab-mo { 0% { opacity: 0.35; } 100% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .vua-bam .press { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .vua-bam .press, .press.vua-bam { animation: none; } }
 /* ẨN / HIỆN THEO CUỘN (thanh dưới + hàng trường lọc, 08/11/2026): một nhịp cho cả web — hiện êm 320ms đường cong Apple, ẩn nhanh 200ms.
    Chỉ transform/opacity (chạy trên GPU, không vẽ lại bố cục). */
 .chuyen-an-hien {
