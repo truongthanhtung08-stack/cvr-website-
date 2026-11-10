@@ -185,6 +185,7 @@ export default function ImagePicker({
   const videoRef = useRef<HTMLInputElement>(null);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [tienDoVideo, setTienDoVideo] = useState(0); // % chuẩn hoá video trên máy (nenVideo) — video HEVC / MOV có thể mất 1–3 phút
   const [link, setLink] = useState("");
   const [error, setError] = useState("");
   // Link ảnh không tải được (trang nguồn chặn hotlink / không phải ảnh trực tiếp)
@@ -284,7 +285,8 @@ export default function ImagePicker({
       return;
     }
     setUploadingVideo(true);
-    const { url, error: e } = await uploadVideoFile(file);
+    setTienDoVideo(0);
+    const { url, error: e } = await uploadVideoFile(file, setTienDoVideo);
     setUploadingVideo(false);
     if (e) setError(e);
     else if (url) onChange([...value, url]);
@@ -432,11 +434,11 @@ export default function ImagePicker({
           <button
             type="button"
             onClick={() => setMoChon(true)}
-            disabled={uploadingImg}
-            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 sm:w-auto sm:px-8 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+            disabled={uploadingImg || uploadingVideo}
+            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 sm:w-auto sm:px-8 ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-            {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh/Video"}
+            {uploadingImg ? "Đang tải ảnh…" : uploadingVideo ? `Đang tải video…${tienDoVideo ? ` ${tienDoVideo}%` : ""}` : "Thêm ảnh/Video"}
           </button>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]">

@@ -160,12 +160,12 @@ async function taoBanNho(file: File, url: string) {
 // Kho: đã lên Supabase Pro (17/09/2026) — 100GB, không còn kẹt 1GB như gói miễn phí.
 // 08/10/2026: kho chỉ nhận 50MB/tệp → video trên 44MB TỰ NÉN trên máy trước khi tải
 // (src/lib/nenVideo.ts). Nhận tệp gốc tới 200MB, tải lên tối đa 50MB.
-export const uploadVideoFile = async (file: File) => {
-  if (!file.type.startsWith("video/")) return uploadMedia(file, "video", TRAN_VIDEO_MB);
+// 10/11/2026: mọi định dạng video đều chuẩn hoá về MP4 H.264 có hình (nenVideo) — kể cả tệp không khai "video/" (.mov, .mkv trên vài máy).
+export const uploadVideoFile = async (file: File, onTienDo?: (phanTram: number) => void) => {
   if (file.size > 200 * 1024 * 1024)
     return { error: `Video "${file.name}" quá 200MB — chọn video ngắn hơn.` };
-  const nen = await nenVideo(file);
-  if (nen.size > TRAN_VIDEO_MB * 1024 * 1024)
+  const nen = await nenVideo(file, onTienDo);
+  if (!nen || nen.size > TRAN_VIDEO_MB * 1024 * 1024)
     return { error: `Video "${file.name}" quá dài, máy không nén được xuống ${TRAN_VIDEO_MB}MB — chọn video ngắn hơn.` };
   return uploadMedia(nen, "video", TRAN_VIDEO_MB);
 };
