@@ -2369,7 +2369,7 @@ function ThanhBuoc({ boQua = [] }: { boQua?: string[] }) {
       </nav>
     </aside>
     {/* ĐIỆN THOẠI / MÁY TÍNH BẢNG: thanh mục dính trên đầu, vuốt ngang */}
-    <div className="sticky top-[calc(113px+var(--at))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
+    <div className="sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
       {/* MÁY TÍNH HIỆN ĐỦ MỌI MỤC (chủ dự án 23/10/2026: "trên PC phải làm cho logic như bản mobile — vào đăng tin bấm mục 6 thì
           như thế nào"): điện thoại vuốt ngang được, máy tính dùng chuột thì không → trước đây mục 5–7 khuất ngoài khung, không
           bấm tới được. Máy tính chia đều bề ngang cho các mục, tên dài xuống hai dòng; điện thoại giữ thanh vuốt như cũ. */}
