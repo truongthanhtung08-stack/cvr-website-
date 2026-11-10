@@ -28,6 +28,7 @@ Bài học 10/11: tin khách 1e3be917 lên web với video chỉ có tiếng (n�
 - **⏳ CHƯA LÀM KỊP — PHIÊN SAU LÀM (theo thứ tự):**
   1. Thử trọn ①→⑥ có bấm Đăng thật (tài khoản thử, gói 0 ₫) → Admin duyệt → tin lên web, ảnh + video hiện đúng; rồi xoá tin thử.
   2. Thử quy trình trên **điện thoại thật** (iPhone Safari, Samsung Internet), **web mở trong Zalo** và **Zalo Mini App** — chưa kiểm nơi nào.
+  2b. **VỊ TRÍ khi mở trên Zalo — chưa kiểm:** web trong Zalo: nút "Tôi đang đứng ở đây" (form đăng tin, bản đồ) + "Dự án gần tôi" (`ProjectNearby`, `navigator.geolocation`) — Zalo có cho trình duyệt trong app lấy vị trí không; không được thì phải có lối khác (gõ địa chỉ / dán link Google Maps), không treo. Mini App: `DangTin.tsx` lấy vị trí qua Zalo → `/api/vi-tri-zalo` (trạm VN `hoiZaloInfo`); quyền Vị trí Zalo đang chờ duyệt — thử thật khi bản 52 được duyệt.
   3. Nút ≡ mở menu (`Header.tsx` ~dòng 626) chưa có hiệu ứng chạm — làm như 3 nút trang chủ (`press` + `vua-bam`).
   4. Rà mọi nút / liên kết chính trên điện thoại còn chỉ có `:active` (không thấy khi chạm nhanh) → dùng cách `vua-bam`.
   5. Kho ảnh — xoá khi anh dọn một lần: tệp thử `listings/cc7ee9f4b8d463436544834f-thu-hevc.mp4` · video hỏng cũ của tin 1e3be917 `listings/911d498f16cd0ee05957fc1d-1007_BT_QTT_-1_sdt_anh_bia.mp4` (không còn dùng). ⛔ Không đụng ảnh dự án / bài viết.
