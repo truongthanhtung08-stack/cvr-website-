@@ -25,7 +25,17 @@ Bài học 10/11: tin khách 1e3be917 lên web với video chỉ có tiếng (n�
 - **3 nút Mua bán · Cho thuê · Dự án trang chủ điện thoại** (beb4a388, 7ee2b24e): `:active` trên điện thoại không thấy → chạm gắn lớp `vua-bam` (cách của thanh dưới `MobileTabBar`), CSS `.press.vua-bam`.
 - **Luật mới đầu tệp:** web đã thương mại · quy trình khách ①→⑥ không được lỗi · sửa từ cái đã có · ba nơi web / web trong Zalo / Mini App.
 - **Kiểm nhanh web thật 10/11:** ① đăng nhập · ② form 7 mục · ③ gói + VAT + "Nạp thêm" · ④ ảnh · ⑤ video — đạt. ⑥ chưa bấm Đăng thật (tạo tin + giữ tiền). Chưa kiểm máy thật, trình duyệt trong Zalo, Mini App.
-- **Còn lại:** xoá tệp thử trên kho `listings/cc7ee9f4b8d463436544834f-thu-hevc.mp4` (90 KB) khi anh dọn kho · anh duyệt chữ "Đang tải video… X%" · Zalo duyệt bản 52 → làm 4 việc khối Mini App · xin index tiếp theo Admin → Xin index.
+- **⏳ CHƯA LÀM KỊP — PHIÊN SAU LÀM (theo thứ tự):**
+  1. Thử trọn ①→⑥ có bấm Đăng thật (tài khoản thử, gói 0 ₫) → Admin duyệt → tin lên web, ảnh + video hiện đúng; rồi xoá tin thử.
+  2. Thử quy trình trên **điện thoại thật** (iPhone Safari, Samsung Internet), **web mở trong Zalo** và **Zalo Mini App** — chưa kiểm nơi nào.
+  3. Nút ≡ mở menu (`Header.tsx` ~dòng 626) chưa có hiệu ứng chạm — làm như 3 nút trang chủ (`press` + `vua-bam`).
+  4. Rà mọi nút / liên kết chính trên điện thoại còn chỉ có `:active` (không thấy khi chạm nhanh) → dùng cách `vua-bam`.
+  5. Kho ảnh — xoá khi anh dọn một lần: tệp thử `listings/cc7ee9f4b8d463436544834f-thu-hevc.mp4` · video hỏng cũ của tin 1e3be917 `listings/911d498f16cd0ee05957fc1d-1007_BT_QTT_-1_sdt_anh_bia.mp4` (không còn dùng). ⛔ Không đụng ảnh dự án / bài viết.
+  6. Tin 1e3be917: khách gửi video gốc thì thay video ghép bằng video gốc (Admin → Sửa tin).
+  7. Anh duyệt nguyên văn chữ "Đang tải video… X%" (ImagePicker).
+  8. Zalo duyệt Mini App bản 52 → làm 4 việc khối "ZALO MINI APP + VERCEL — 07/11" (menu OA, nút hồ sơ OA, mẫu ZBS, quét QR thử); Mini App cần cùng sửa video (`nenVideo`) nếu Mini App tải video riêng — kiểm.
+  9. Xin index tiếp theo Admin → Xin index (10 trang/ngày): Cho thuê nhà Lâm Đồng, Cho thuê căn hộ Khánh Hòa, các trang đổi chữ lõi.
+  10. Sau mỗi Push: Vercel → "Production Deployment" phải đúng commit vừa Push (lệch → anh Promote).
 
 ## ⛔⛔⛔ CẤM TỰ PUSH (anh chốt 06/11/2026)
 Claude **CẤM tự push** ở phiên này và mọi phiên. Không push, không chạy lệnh push, không nhắc / hỏi / gợi ý push, không bảo anh tự
