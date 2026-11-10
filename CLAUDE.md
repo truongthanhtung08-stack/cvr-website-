@@ -19,6 +19,14 @@ Web làm ra để **khách / thành viên tự đăng tin**. Mọi lần cập n
 Đụng mã dùng chung của các bước này (`PostListingForm`, `ImagePicker`, `uploadImage`, `nenVideo`, `ChonCoTim`, gói / ví / thanh toán, đăng nhập) → thử lại trọn ①→⑥ trên điện thoại (khổ 375 + máy thật) và máy tính. Không thử được bước nào → nói rõ bước đó chưa kiểm.
 Bài học 10/11: tin khách 1e3be917 lên web với video chỉ có tiếng (nén bỏ mất phần hình) — không ai kiểm bước ⑤.
 
+## ✅ 10/11/2026 (phiên 18419c5a) — ĐÃ PUSH HẾT, web chạy 7ee2b24e
+- **Video khách đăng — sửa gốc** (c6e93345): `src/lib/nenVideo.ts` ① MP4 H.264 ≤ 44MB giữ nguyên ② mediabunny chỉ khi giữ được track hình ③ không thì ffmpeg.wasm (mã `public/ffmpeg/`, lõi jsDelivr @ffmpeg/core 0.12.10). Nút ghi "Đang tải video… X%" (chữ mới, anh chưa duyệt nguyên văn). Đã thử trên web thật: HEVC kiểu iPhone → MP4 H.264 720×1280 có hình + tiếng.
+- **Tin khách 1e3be917** (biệt thự Hòa Xuân, khách đã mua gói): video cũ chỉ có tiếng, không cứu được → ghép 13 ảnh của tin + tiếng gốc thành MP4 (`.claude/video-tin-1e3be917.mp4`), Claude thay trong Admin trên Chrome của anh, trang tin chạy có hình. Gói, hạn giữ nguyên.
+- **3 nút Mua bán · Cho thuê · Dự án trang chủ điện thoại** (beb4a388, 7ee2b24e): `:active` trên điện thoại không thấy → chạm gắn lớp `vua-bam` (cách của thanh dưới `MobileTabBar`), CSS `.press.vua-bam`.
+- **Luật mới đầu tệp:** web đã thương mại · quy trình khách ①→⑥ không được lỗi · sửa từ cái đã có · ba nơi web / web trong Zalo / Mini App.
+- **Kiểm nhanh web thật 10/11:** ① đăng nhập · ② form 7 mục · ③ gói + VAT + "Nạp thêm" · ④ ảnh · ⑤ video — đạt. ⑥ chưa bấm Đăng thật (tạo tin + giữ tiền). Chưa kiểm máy thật, trình duyệt trong Zalo, Mini App.
+- **Còn lại:** xoá tệp thử trên kho `listings/cc7ee9f4b8d463436544834f-thu-hevc.mp4` (90 KB) khi anh dọn kho · anh duyệt chữ "Đang tải video… X%" · Zalo duyệt bản 52 → làm 4 việc khối Mini App · xin index tiếp theo Admin → Xin index.
+
 ## ⛔⛔⛔ CẤM TỰ PUSH (anh chốt 06/11/2026)
 Claude **CẤM tự push** ở phiên này và mọi phiên. Không push, không chạy lệnh push, không nhắc / hỏi / gợi ý push, không bảo anh tự
 chạy lệnh push. Chỉ khi anh nhắn đúng chữ **"Push"** mới làm.
