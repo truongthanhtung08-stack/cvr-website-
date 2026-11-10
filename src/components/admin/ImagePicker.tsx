@@ -289,7 +289,7 @@ export default function ImagePicker({
     const { url, error: e } = await uploadVideoFile(file, setTienDoVideo);
     setUploadingVideo(false);
     if (e) setError(e);
-    else if (url) onChange([...value, url]);
+    else if (url) onChange([url, ...value]); // video lên ĐẦU danh sách (anh 10/11/2026); ảnh đại diện vẫn là ẢNH đầu tiên
     if (videoRef.current) videoRef.current.value = "";
   }
 
@@ -305,7 +305,7 @@ export default function ImagePicker({
       setError(chuaChonGoi ? "Chọn gói tin để đăng video." : `Mỗi tin chỉ đăng tối đa ${maxVideos} video.`);
       return;
     }
-    onChange([...value, url]);
+    onChange(isVideoUrl(url) ? [url, ...value] : [...value, url]);
     setLink("");
   }
 

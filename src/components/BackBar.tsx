@@ -217,7 +217,8 @@ export default function BackBar() {
       // không quản lý được tin). Đăng tin mới → Tổng quan như cũ. Vừa từ đúng trang đó sang → lùi lịch sử, khỏi chồng trang.
       const dich = new URLSearchParams(window.location.search).get("id") ? "/tai-khoan/tin-dang" : "/tai-khoan";
       const truoc = docPhien("cl_trang_truoc") ?? "";
-      if ((truoc === dich || (dich !== "/tai-khoan" && truoc.startsWith(dich))) && window.history.length > 1) router.back();
+      // Tạo tin mới đi từ một trang trong tài khoản (Tin đăng, Tổng quan…) → về đúng trang đó
+      if ((truoc === dich || truoc.startsWith(dich === "/tai-khoan" ? "/tai-khoan" : dich)) && window.history.length > 1) router.back();
       else router.push(dich);
       return;
     }
