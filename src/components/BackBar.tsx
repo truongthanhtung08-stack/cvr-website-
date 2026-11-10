@@ -145,6 +145,17 @@ export default function BackBar() {
   // sách vừa rời (chủ dự án chốt 11/9/2026).
   const [tenTrang, setTenTrang] = useState("");
   useEffect(() => { danhDauTrangVao(); ghiDuongDi(pathname); }, [pathname]);
+  // CHIỀU CAO THẬT của thanh → --backbar-h (10/11/2026): máy chữ to / trình duyệt Zalo phóng chữ làm thanh cao hơn 53px cứng →
+  // thanh bước đăng tin (và mọi thanh dính dưới) hở ra, bộ tự cuộn khi gõ không tính là thanh che → ô đang gõ bị đè.
+  const [thanh, setThanh] = useState<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!thanh) return;
+    const ghi = () => document.documentElement.style.setProperty("--backbar-h", `${Math.ceil(thanh.getBoundingClientRect().height)}px`);
+    ghi();
+    const ro = new ResizeObserver(ghi);
+    ro.observe(thanh);
+    return () => { ro.disconnect(); document.documentElement.style.removeProperty("--backbar-h"); };
+  }, [thanh]);
   useEffect(() => {
     let con = true;
     const doc = () => {
@@ -246,7 +257,7 @@ export default function BackBar() {
   return (
     // Trang có khối tìm + lọc ngay dưới (Mua bán · Cho thuê · Dự án): BỎ đường kẻ đáy — thanh và dải lọc liền một khối (chủ dự án
     // 02/11/2026: "sát, cân đối lên menu tab, bỏ dấu ngang ngăn cách"); trang khác giữ đường kẻ
-    <div className="thanh-quay-lai sticky top-[calc(var(--hdr)+var(--at))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden [html:has(.khoi-loc-dinh)_&]:border-transparent">
+    <div ref={setThanh} className="thanh-quay-lai sticky top-[calc(var(--hdr)+var(--at))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden [html:has(.khoi-loc-dinh)_&]:border-transparent">
       {/* nút ← nhỏ lại (chủ dự án 18/10/2026) — giữ ĐÚNG chiều cao thanh 53px (trang khác bám mốc này) */}
       <div className="flex items-center gap-2 px-4 py-[10px]">
         <button
