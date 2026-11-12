@@ -50,6 +50,13 @@ tên thành phố ("Nhà đất Nha Trang tháng 11/2026") · liên kết nội 
 lọc Mua bán / Cho thuê) — `api/admin/tu-khoa-loi` GET trả `theoDoi` · 3 nút Mua bán · Cho thuê · Dự án trang chủ điện thoại bỏ biểu tượng,
 chỉ chữ (`BaMucChinh.tsx`, đã xem khổ 375).
 **Zalo Mini App:** bản 61 gửi Zalo xét duyệt 17:32 12/11 (phiên local_76b49610), 9 commit trong `zalo-mini-app` chưa push.
+**Đêm 12–13/11 (CHƯA PUSH):** c9e2a5cb Admin index một luật (Đã index · Chưa index · Chưa đủ tin, `src/lib/xinIndex.ts`) · 77105450 trang Giới thiệu làm lại
+(tiêu đề "Coastal Land là gì?…", 6 mục có số tin thật, 7 khu vực kèm tên cũ, người mua / người đăng tin, doanh nghiệp + kênh, AboutPage; bỏ khối ảnh + "Xem dự án")
+· 816dabe8 mô tả trang tỉnh / thành phố kèm tỉnh cũ ("Khánh Hòa (Ninh Thuận cũ)") · 2dedbfcb Báo cáo thị trường `/bao-cao-thi-truong/<tỉnh>`
+— **anh: "không hiểu ý, để đó"**: báo cáo thật = form chuẩn DKRA có BIỂU ĐỒ, số web làm nền + Cowork lọc phần thiếu (kinh tế, hạ tầng, chính sách,
+dự án mở bán); bản 2dedbfcb chỉ có số tin rao → TRƯỚC KHI PUSH hỏi anh giữ hay gỡ (đang mở index + sitemap). Form: `D:\Coastal Land\SEO\MAU\bao-cao-thi-truong\`.
+Đã lên web không cần push: 3 hỏi đáp thương hiệu + câu tiếng Anh (sheet Thương hiệu, nạp Admin). GBP: đổi danh mục → "Dịch vụ quảng cáo" đang chờ Google duyệt.
+Còn treo: mục E Wikidata (anh cho làm, chưa làm) · thiết kế banner MXH anh chê, để sau · sheet "Nghiên cứu từ khoá" + "Đối thủ top 10" + "Địa điểm mới – cũ" đã có trong bảng.
 **PHIÊN SAU LÀM TIẾP (theo thứ tự):**
 1. Anh nhắn "Push" → push → Vercel "Production Deployment" đúng commit → Admin → Xin index → "Cập nhật từ Search Console": dán nội dung
    `D:\Coastal Land\SEO\Plan SEO - pSEO\TRANG-DA-INDEX-GSC.txt` (459 trang Google đã index, cập nhật 09/11; tin ghi `ma:`), ngày 2026-11-09 → Lưu
