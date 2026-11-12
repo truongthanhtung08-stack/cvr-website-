@@ -225,7 +225,7 @@ export function getPackage(slug: string): Pkg | undefined {
 // CÔNG CỤ ĐÃ CÓ NỘI DUNG THẬT (SEO 15/10/2026 — "không đạt thì không index"). Trang công cụ còn
 // khối "Nội dung đang được cập nhật" là trang mỏng: noindex + không vào sitemap cho tới khi công cụ
 // chạy thật / có dữ liệu thật. Làm xong công cụ nào thì thêm slug đó vào đây.
-export const CONG_CU_DA_CO_NOI_DUNG: string[] = ["tinh-lai-suat-vay", "gia-nha-dat"];
+export const CONG_CU_DA_CO_NOI_DUNG: string[] = ["tinh-lai-suat-vay", "gia-nha-dat", "bao-cao-thi-truong-bds"];
 
 // MENU TIỆN ÍCH — các mục chủ dự án chốt 25/10/2026, XẾP THEO HÀNH TRÌNH NGƯỜI MUA (giống menu chính: người tìm nhà trước,
 // phần cho người bán/môi giới cuối): tìm hiểu giá → thị trường → so sánh → tính khoản vay → pháp lý → phong thủy → môi giới → Chuyên gia (cuối cùng, chủ dự án 25/10/2026).

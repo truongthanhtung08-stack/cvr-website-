@@ -137,6 +137,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const t of khuVucTrongDiem) {
       const kv = timKhuVuc(slugKhuVuc(t));
       if (kv && trangGiaNhaDat(kv, [...listings, ...tinHetHan]).index) dynamic.push({ url: `${SITE}/gia-nha-dat/${kv.slug}`, changeFrequency: "weekly", priority: 0.8 });
+      // Báo cáo thị trường theo tỉnh (12/11/2026) — cùng cổng trang Giá nhà đất
+      if (kv && trangGiaNhaDat(kv, [...listings, ...tinHetHan]).index) dynamic.push({ url: `${SITE}/bao-cao-thi-truong/${kv.slug}`, changeFrequency: "weekly", priority: 0.7 });
     }
 
     // TRANG CHỦ ĐẦU TƯ — chỉ chủ đầu tư có ≥ 2 dự án đã đăng (src/lib/chuDauTu.ts)

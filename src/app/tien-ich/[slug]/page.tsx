@@ -10,6 +10,10 @@ import TinhLaiVay from "@/components/TinhLaiVay";
 import { packages, utilityTools, getPackage, tiers, trangTienIchDat } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { bangTheoMucDich } from "@/lib/billing";
+import { khuVucTrongDiem, slugKhuVuc, timKhuVuc } from "@/lib/khuVuc";
+import { getTinXetTrang } from "@/lib/listingsDb";
+import { trangGiaNhaDat } from "@/lib/giaNhaDat";
+import { thangHienTai } from "@/lib/thang";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 
 export function generateStaticParams() {
@@ -54,6 +58,10 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
   // Giá từng cấp: CÙNG NGUỒN với trang Bảng giá (admin) — không viết số ở đây.
   const bangBan = bangTheoMucDich(await getBilling(), "ban");
   const quyDinh = await getQuyDinhGia();
+  // Báo cáo thị trường: chỉ liệt kê tỉnh có số (cùng cổng trang báo cáo) — không để link dẫn tới trang 404
+  const baoCaoCo = slug === "bao-cao-thi-truong-bds"
+    ? await getTinXetTrang().then((tin) => khuVucTrongDiem.filter((t) => { const kv = timKhuVuc(slugKhuVuc(t)); const g = kv && trangGiaNhaDat(kv, tin); return !!g && g.ban.length + g.thue.length > 0; })).catch(() => [])
+    : [];
 
   return (
     <>
@@ -111,6 +119,16 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                 {slug === "gia-nha-dat" ? (
                   <div>
                     <TraCuuGiaDat />
+                  </div>
+                ) : slug === "bao-cao-thi-truong-bds" ? (
+                  // Báo cáo thị trường theo tỉnh (anh 12/11/2026) — mỗi tỉnh một báo cáo tháng: /bao-cao-thi-truong/<tỉnh>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {baoCaoCo.map((t) => (
+                      <Link key={t} href={`/bao-cao-thi-truong/${slugKhuVuc(t)}`} className="press rounded-2xl border border-cvr-line p-4 transition hover:border-cvr-ink">
+                        <span className="block text-[15px] font-semibold text-cvr-ink">Báo cáo thị trường bất động sản {t}</span>
+                        <span className="mt-1 block text-[13px] text-cvr-muted">{thangHienTai()}</span>
+                      </Link>
+                    ))}
                   </div>
                 ) : slug === "tinh-lai-suat-vay" ? (
                   <div>
