@@ -206,9 +206,10 @@ export const rentCategories: Category[] = [
     types: ["Mặt bằng / Cửa hàng bán lẻ"],
   },
   {
-    slug: "kho-nha-xuong", label: "Kho, nhà xưởng, đất",
-    h1: "Cho thuê kho, nhà xưởng, đất", tuKhoa: "Cho thuê kho xưởng", title: `Cho thuê kho bãi, nhà xưởng`,
-    desc: `Cho thuê kho bãi, nhà xưởng và đất.`,
+    // Bỏ chữ "đất" (12/11/2026): Cho thuê đã có mục Đất riêng — hai mục cùng chữ "đất" làm khách chọn nhầm
+    slug: "kho-nha-xuong", label: "Kho, nhà xưởng",
+    h1: "Cho thuê kho, nhà xưởng", tuKhoa: "Cho thuê kho xưởng", title: `Cho thuê kho bãi, nhà xưởng`,
+    desc: `Cho thuê kho bãi, nhà xưởng.`,
     types: ["Thuê đất / Nhà xưởng / Kho bãi"],
   },
   {

@@ -22,7 +22,7 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, tienIchCho, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, O_LOAI_CON, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, fieldsFor, amenityGroups, tienIchCho, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, O_LOAI_CON, type Field } from "@/lib/listingSpec";
 import { lapCha } from "@/lib/filters";
 import { tenLoaiHinhDayDu, loaiConDaTrongTen } from "@/lib/categories";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
@@ -662,8 +662,10 @@ function rowToDetail(r: Row): ListingFull {
   const tienSau = doc(theoKhoa(TIEN_SAU)).map((s) => ({ ...s, value: dvt(s.value) }));
   const boRa = new Set([...TIEN_DAU, ...TIEN_SAU, ...DIEU_KIEN]);
   // Loại con một chỗ: ngay dưới "Loại hình" (như form đăng tin), không rải ở Thông tin chính / Đặc điểm (12/11/2026)
-  const laLoaiCon = (f: Field) => O_LOAI_CON.includes(f.key);
-  const loaiCon = doc(tatCa.filter(laLoaiCon))[0] ?? null;
+  // Ô loại con = ô O_LOAI_CON đầu tiên theo thứ tự của loại hình (cùng luật form); "Đất nền dự án" ở landType là tên mục → lấy loaiDatDuAn
+  const oCon = fieldsFor(r.type, r.purpose).find((f) => O_LOAI_CON.includes(f.key) && !loaiConDaTrongTen(r.type, f.key, gon(d.specs?.[f.key])));
+  const laLoaiCon = (f: Field) => f.key === oCon?.key;
+  const loaiCon = oCon ? doc([oCon])[0] ?? null : null;
   const specsChinh = doc([...chinh.filter((f) => !boRa.has(f.key) && !laLoaiCon(f)), ...theoKhoa(DIEU_KIEN)]);
   const specs = doc(dacDiem.filter((f) => !boRa.has(f.key) && !laLoaiCon(f)));
   // Mục khách tự ghi trùng nghĩa mục chuẩn ("Máy lạnh", "hồ bơi ") → đúng tên chuẩn, đúng nhóm.

@@ -192,7 +192,7 @@ export default function ListingBrowser({
   // rồi bấm Back là văng về trang 1, phải bấm lại 3 lần. Ghi vào địa chỉ thì bấm
   // Back trình duyệt trả đúng ?trang=3, mà gửi link cho nhau cũng ra đúng trang.
   const [page, setPage] = useState(() => trangDau ?? trangTu(params));
-  // PC 15 tin · điện thoại 10 tin mỗi trang (22/10/2026) — đọc lúc mở trang, cùng lúc đọc địa chỉ (lần gọi lọc đầu đã mang số này)
+  // PC 20 tin · điện thoại 10 tin mỗi trang (22/10/2026) — đọc lúc mở trang, cùng lúc đọc địa chỉ (lần gọi lọc đầu đã mang số này)
   const [moiTrang, setMoiTrang] = useState(PER_PAGE);
   // Địa chỉ có ?q, ?trang, ?sapxep… → áp ngay khi trang mở (máy chủ đã dựng sẵn bản không tham số)
   useEffect(() => {

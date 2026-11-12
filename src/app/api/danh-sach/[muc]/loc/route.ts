@@ -19,7 +19,7 @@ type YeuCau = {
   boLoc?: Partial<Filters>;
   sapXep?: SortKey;
   trang?: number;
-  /** Số tin mỗi trang: PC 15 · điện thoại 10 (chỉ nhận hai số này) */
+  /** Số tin mỗi trang: PC 20 · điện thoại 10 (chỉ nhận hai số này) */
   moiTrang?: number;
   /** Khối "Tin tương tự": chỉ giữ đúng các tin này, đúng thứ tự máy chủ trang tin đã xếp */
   chiId?: string[];

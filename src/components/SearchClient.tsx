@@ -50,7 +50,7 @@ export default function SearchClient({
   const [filters, setFilters] = useState<Filters>(() => filtersFromParams(params));
   const [sort] = useState<SortKey>("moi"); // không còn ô xếp (07/11/2026): có câu tìm thì xếp theo mức độ khớp
   const [page, setPage] = useState(1);
-  const moiTrang = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026)
+  const moiTrang = useSoMoiTrang(); // PC 20 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026)
   // Đổi bộ lọc / sắp xếp → luôn quay về trang 1
   const changeFilters = (f: Filters) => { setFilters(f); setPage(1); };
   // Bấm sang trang khác → hiện NGAY từ tin đầu tiên của trang đó
@@ -100,7 +100,7 @@ export default function SearchClient({
   const hitById = useMemo(() => new Map(search.hits.map((h) => [h.item.id, h])), [search]);
   const active = hasActiveFilters(filters);
 
-  // Phân trang: PC 15 · điện thoại 10 tin/trang, kẹp trang hiện tại trong [1, totalPages]
+  // Phân trang: PC 20 · điện thoại 10 tin/trang, kẹp trang hiện tại trong [1, totalPages]
   const totalPages = Math.max(1, Math.ceil(results.length / moiTrang));
   const current = Math.min(page, totalPages);
   const pageItems = results.slice((current - 1) * moiTrang, current * moiTrang);

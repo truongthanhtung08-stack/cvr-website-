@@ -107,7 +107,7 @@ export function ProjectRow({ p }: { p: Project }) {
   );
 }
 
-// ── DANH SÁCH DỰ ÁN DẠNG LIST, PHÂN TRANG PC 15 · ĐIỆN THOẠI 10 (quy định chung, 22/10/2026; trước 8) ──
+// ── DANH SÁCH DỰ ÁN DẠNG LIST, PHÂN TRANG PC 20 · ĐIỆN THOẠI 10 (quy định chung, 22/10/2026; trước 8) ──
 // Dùng chung cho nút "Xem thêm" ở trang chủ và ở "Dự án liên quan".
 export function ProjectListPaged({ projects }: { projects: Project[] }) {
   const PER_PAGE = useSoMoiTrang();

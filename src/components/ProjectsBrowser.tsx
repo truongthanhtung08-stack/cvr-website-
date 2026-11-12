@@ -89,13 +89,14 @@ function DongNhan({ nhan, gt }: { nhan: string; gt: string }) {
 //  · điện thoại (31/10/2026 — thẻ tra cứu xếp như nổi bật, chưa có ảnh thì bỏ khung): nổi bật 331 = 6 · tra cứu có ảnh 299 = 5 ·
 //    tra cứu chưa ảnh 163 = 3 → các trang dài xấp xỉ nhau dù trộn loại nào
 const SUAT_TRANG = 60;
-function chiaTrangDuAn<T extends object>(ds: T[], dt = false): T[][] {
+// suatTrang = số tin mỗi trang (quy định chung soMoiTrang: PC 20 · điện thoại 10) × 6 suất — 12/11/2026
+function chiaTrangDuAn<T extends object>(ds: T[], dt = false, suatTrang = SUAT_TRANG): T[][] {
   const trang: T[][] = [[]];
   let dung = 0;
   for (const x of ds) {
     const coAnh = "traCuu" in x && !!(x as { traCuu: { anh?: string } }).traCuu.anh;
     const suat = "noiBat" in x ? 6 : !dt ? 4 : coAnh ? 5 : 3;
-    if (dung + suat > SUAT_TRANG && trang[trang.length - 1].length) { trang.push([]); dung = 0; }
+    if (dung + suat > suatTrang && trang[trang.length - 1].length) { trang.push([]); dung = 0; }
     trang[trang.length - 1].push(x);
     dung += suat;
   }
@@ -271,7 +272,7 @@ export default function ProjectsBrowser({
   };
 
   // Phân trang danh sách dự án: 9 dự án/trang (khớp yêu cầu "8–10/trang").
-  useSoMoiTrang();
+  const soMoiTrang = useSoMoiTrang(); // PC 20 · điện thoại 10 — quy định chung (12/11/2026)
   const [page, setPage] = useState(1);
   // CHẾ ĐỘ BẢN ĐỒ cho tab Dự án — giống Mua bán / Cho thuê, marker là TÊN DỰ ÁN.
   const [mapMode, setMapMode] = useState(false);
@@ -298,7 +299,7 @@ export default function ProjectsBrowser({
     // hết dự án khớp mới gợi ý, để trang không trống)
     ...(soDuAnKhop > 0 ? [] : visible.filter(laGoiY).map((p) => ({ noiBat: p }))),
   ];
-  const cacTrang = chiaTrangDuAn(dsTrang, dienThoai);
+  const cacTrang = chiaTrangDuAn(dsTrang, dienThoai, soMoiTrang * 6);
   const totalPages = cacTrang.length;
   const current = Math.min(page, totalPages);
   const pageItems = cacTrang[current - 1];
@@ -476,7 +477,7 @@ export default function ProjectsBrowser({
       ...visible.map((p) => ({ noiBat: p })),
       ...(traCuu ? traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).map((d) => ({ traCuu: d })) : []),
     ];
-    const trangChung = chiaTrangDuAn(dsChung, dienThoai);
+    const trangChung = chiaTrangDuAn(dsChung, dienThoai, soMoiTrang * 6);
     const tongNB = trangChung.length;
     const trangNB = Math.min(trangNoiBat, tongNB);
     danhSachXemThem = (

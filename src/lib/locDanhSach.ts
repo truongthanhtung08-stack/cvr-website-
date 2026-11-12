@@ -15,7 +15,7 @@ import { tierRank } from "@/lib/packages";
 // chính hàm này — hai nơi một cách xếp, không lệch nhau.
 // ============================================================================
 
-// Số tin mỗi trang: PC 15 · điện thoại 10 — MỘT quy định chung ở lib/soMoiTrang (PC gửi moiTrang 15 trong chính lần gọi lọc
+// Số tin mỗi trang: PC 20 · điện thoại 10 — MỘT quy định chung ở lib/soMoiTrang (PC gửi moiTrang 15 trong chính lần gọi lọc
 // lúc mở trang; máy chủ chỉ nhận 10 hoặc 15).
 import { PER_PAGE, MOI_TRANG_PC, soTinMoiTrang } from "@/lib/soMoiTrang";
 export { PER_PAGE, MOI_TRANG_PC, soTinMoiTrang };

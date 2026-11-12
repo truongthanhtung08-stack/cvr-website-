@@ -12,7 +12,7 @@ import { nhomChonLoaiHinh, tenLoaiHinhMenu, tachChonLoaiHinh, giaTriChonLoaiHinh
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
 import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, phuongCuTheoGhim, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
-import { fieldsFor, interiorItems, amenityGroups, coNoiThat, tienIchCho, phapLyCho, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
+import { fieldsFor, noiThatCho, tatCaTienIch, coNoiThat, tienIchCho, phapLyCho, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
 import ImagePicker from "@/components/admin/ImagePicker";
 import OTieuDe from "@/components/OTieuDe";
@@ -198,7 +198,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     setSpecValues((v) => Object.fromEntries(Object.entries(v).filter(([k]) => coO.has(k))));
     if (!coNoiThat(type)) { setInterior([]); setFurnish(""); }
     const tienIchDuoc = new Set(tienIchCho(type).flatMap((g) => g.items));
-    const tienIchChuan = new Set(amenityGroups.flatMap((g) => g.items));
+    const tienIchChuan = tatCaTienIch;
     setAmenities((ds) => ds.filter((x) => tienIchDuoc.has(x) || !tienIchChuan.has(x)));
     setLegal((l: string) => (l && legalOptions.includes(l) && !phapLyCho(type).includes(l) ? "" : l));
   }, [khoaLoai, type, purpose]);
@@ -252,8 +252,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // Danh mục pháp lý theo ĐÚNG loại hình: đất chỉ sổ đỏ, căn hộ chỉ sổ hồng.
   const chonPhapLy = themNeuThieu(phapLyCho(type), legal);
   const chonNoiThat = themNeuThieu(furnishLevels, furnish);
-  const tienIchKhac = amenities.filter((a) => !amenityGroups.some((g) => g.items.includes(a)));
-  const noiThatKhac = interior.filter((a) => !interiorItems.includes(a));
+  // Tiện ích, nội thất theo ĐÚNG loại hình — cùng nguồn với form khách (12/11/2026)
+  const tienIchKhac = amenities.filter((a) => !tienIchCho(type).some((g) => g.items.includes(a)));
+  const noiThatKhac = interior.filter((a) => !noiThatCho(type).includes(a));
 
   // ── ĐƠN GIÁ THUÊ THEO M² — KHO XƯỞNG · KHO BÃI · VĂN PHÒNG · MẶT BẰNG ─────
   // Thị trường báo "35.000đ/m²/tháng". Ô giá vẫn nhập TRIỆU/tháng (một thước đo
@@ -811,7 +812,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       {coNoiThat(type) && (
       <Panel title="Nội thất bàn giao (tick mục có)">
         <div className="flex flex-wrap gap-2">
-          {interiorItems.map((it) => (
+          {noiThatCho(type).map((it) => (
             <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
           ))}
           {/* Mục người đăng ghi mà danh mục chuẩn không có — giữ nguyên, bấm để bỏ */}

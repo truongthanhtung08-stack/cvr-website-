@@ -86,7 +86,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
   const chuNang = chuNangGoi(billing);
   const [tuKhoa, setTuKhoa] = useState("");
   const [trang, setTrang] = useState(1);
-  const MOI_TRANG = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026; trước 10)
+  const MOI_TRANG = useSoMoiTrang(); // PC 20 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026; trước 10)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- bản demo: nạp tin mẫu một lần khi mở

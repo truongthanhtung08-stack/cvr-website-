@@ -124,6 +124,7 @@ export default function PostListingForm() {
   // Tài khoản đã có số điện thoại XÁC MINH chưa (bắt buộc trước khi đăng — chốt 27/09/2026).
   // null = chưa biết; admin không phải qua bước này.
   const [soDaXacMinh, setSoDaXacMinh] = useState<boolean | null>(null);
+  const [maVuaLuu, setMaVuaLuu] = useState<string | null>(null); // mã tin vừa lưu nháp → nút "Soạn tiếp"
   const [moXacMinh, setMoXacMinh] = useState(false); // hộp "Số điện thoại của bạn" bật lên khi bấm Đăng tin
   useKhoaCuon(moXacMinh, () => setMoXacMinh(false));
   const [soTaiKhoan, setSoTaiKhoan] = useState(""); // số của TÀI KHOẢN (khác số liên hệ trong tin)
@@ -592,7 +593,8 @@ export default function PostListingForm() {
     // loại hình con"); không bắt buộc — để trống thì tin hiện tên loại cha. Bỏ khỏi Thông tin chính / Đặc điểm để không lặp.
     const chinh = oTheoMucChon(s.chinh, loaiHinh, specValues.landType);
     const dacDiem = oTheoMucChon(s.dacDiem, loaiHinh, specValues.landType);
-    const loaiCon = [...chinh, ...dacDiem].find((f) => O_LOAI_CON.includes(f.key));
+    // Ô loại con = ô O_LOAI_CON ĐẦU TIÊN theo thứ tự của loại hình (Homestay: Loại BĐS nghỉ dưỡng, không phải Loại đất)
+    const loaiCon = loaiHinh ? oTheoMucChon(fieldsFor(loaiHinh, purposeOfDemand(demand)), loaiHinh, specValues.landType).find((f) => O_LOAI_CON.includes(f.key)) : undefined;
     return { chinh: chinh.filter((f) => f !== loaiCon), dacDiem: dacDiem.filter((f) => f !== loaiCon), loaiCon };
   }, [loaiHinh, demand, specValues.landType]);
 
@@ -1267,6 +1269,7 @@ export default function PostListingForm() {
       return;
     }
     try { if (userId) localStorage.removeItem(khoaNhap(userId)); } catch {}
+    setMaVuaLuu(maTinNhap);
     setDone(daDang ? "capNhat" : luuNhap ? "draft" : "pending");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1357,6 +1360,10 @@ export default function PostListingForm() {
         </h3>
         <div className="mx-auto mt-6 grid max-w-sm gap-2.5">
           <Link href={`/tai-khoan/tin-dang?muc=${done === "draft" ? "draft" : done === "capNhat" ? "approved" : "pending"}`} replace className="flex h-12 w-full items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
+          {/* Lưu nháp xong → soạn tiếp đúng tin vừa lưu (anh 12/11/2026: "chưa đăng thì vào sửa tiếp") */}
+          {done === "draft" && maVuaLuu && (
+            <button type="button" onClick={() => { window.location.href = `/dang-tin?id=${maVuaLuu}`; }} className="h-12 w-full rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">Soạn tiếp</button>
+          )}
           {!editId && (
             <button type="button" onClick={() => { window.location.href = "/dang-tin"; }} className="h-12 w-full rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">Đăng tin khác</button>
           )}
@@ -2222,12 +2229,13 @@ export default function PostListingForm() {
 
       {/* 2 nút TÁCH BIỆT RÕ (pill Apple): ĐĂNG TIN = đen đặc nổi bật (gửi duyệt) ·
           LƯU NHÁP = xám nhạt kín đáo (cất tạm, làm tiếp sau) */}
+      {/* THỨ TỰ = TRÌNH TỰ (12/11/2026): Xem trước → Lưu nháp → Đăng tin, điện thoại và máy tính như nhau */}
       {/* Máy tính: nút cỡ vừa, nằm GIỮA (chủ dự án 23/10/2026: "vừa to, vừa lệch phải") — điện thoại: mỗi nút một hàng, rộng hết */}
       <div className="flex flex-col gap-3 border-t border-cvr-line pt-5 sm:flex-row sm:items-center sm:justify-center">
         <button
           type="submit"
           disabled={!!saving}
-          className="btn-dangtin flex h-12 w-full items-center justify-center gap-2 rounded-full px-8 text-base font-bold text-white disabled:opacity-50 sm:h-10 sm:w-auto sm:px-6 sm:text-[14px]"
+          className="btn-dangtin order-3 flex h-12 w-full items-center justify-center gap-2 rounded-full px-8 text-base font-bold text-white disabled:opacity-50 sm:h-10 sm:w-auto sm:px-6 sm:text-[14px]"
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
@@ -2239,7 +2247,7 @@ export default function PostListingForm() {
           type="button"
           onClick={() => save(true)}
           disabled={!!saving}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cvr-surface px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-line/40 hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:h-10 sm:w-auto sm:px-5 sm:text-[14px]"
+          className="order-2 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cvr-surface px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-line/40 hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:h-10 sm:w-auto sm:px-5 sm:text-[14px]"
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-8H7v8M7 3v5h8M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
@@ -2250,7 +2258,7 @@ export default function PostListingForm() {
           type="button"
           onClick={() => setXemTruoc(true)}
           disabled={!!saving}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:order-first sm:h-10 sm:w-auto sm:px-5 sm:text-[14px]"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 order-1 sm:h-10 sm:w-auto sm:px-5 sm:text-[14px]"
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />

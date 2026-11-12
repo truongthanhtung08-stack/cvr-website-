@@ -10,7 +10,7 @@ import type { Article } from "@/lib/data";
 // Danh sách bài viết PHÂN TRANG cho trang /tin-tuc — mỗi bài: ảnh trái · nội dung phải.
 // Dùng chung markup với khối tin tức để đồng bộ giao diện.
 export default function PagedArticleList({ articles }: { articles: Article[] }) {
-  const PER_PAGE = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026; trước 10)
+  const PER_PAGE = useSoMoiTrang(); // PC 20 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026; trước 10)
   // TIN MỚI Ở TRÊN, "Xem thêm" nối thêm bài xuống dưới, cuộn tiếp — không chia số trang (anh 08/11/2026, kiểu Batdongsan)
   const [soLuot, setSoLuot] = useState(1);
   const items = articles.slice(0, soLuot * PER_PAGE);

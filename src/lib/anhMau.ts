@@ -6,17 +6,15 @@
 
 const KHO = "https://miyugmacyerqvzhgmbyd.supabase.co/storage/v1/object/public/listings/";
 
+// Chọn lại 12/11/2026 (anh: "chọn hình đẹp thay vào cho cả 2 bản, nhiều loại hình, ảnh đẹp") — mỗi hạng một loại hình:
+// Diamond biệt thự (mặt tiền + nội thất) · Gold căn hộ view sông · Silver nhà phố (phòng khách) · Basic đất nền dự án (ảnh trên cao)
 export const ANH_MAU = {
-  // Biệt thự sân vườn — ảnh chính là nội thất
-  bietThu: ["cfd50d885c07c23ec69ee0db-pt03-8.webp", "30979708f70da8cb6d9ffc1e-pt03-1.webp", "aba4393fdba99a79065ffe34-pt03-9.webp",
-    "a72145548b8d84d9d80f4b5c-pt03-7.webp"].map((a) => KHO + a),
-  // Nhà phố liền kề
-  nhaPho: ["1788251822682-40179-pt03-7.webp", "1788251818846-50412-pt03-1.webp", "1788251819450-33583-pt03-2.webp",
-    "1788251822113-184487-pt03-6.webp"].map((a) => KHO + a),
-  // Căn hộ view biển
-  canHo: [KHO + "1788789958242-233504-qnhon10-1.webp"],
-  // Nhà mặt phố
-  nhaMatPho: [KHO + "721b01b977d3c2b1d4811cdc-dn03-1210-1.webp"],
+  bietThu: ["791bb4fced6511a531aaf8f8-BTQTT__9_.webp", "55a84def9e25a1f67640b8a2-BTQTT__4_.webp", "6eb77903dba7b34f2346a0f1-BTQTT__5_.webp",
+    "bd9cc4d1b1f62efcfe45c120-1789715708645_5829999480055530350_5829999480055530350_65a51589f83e2785da78f8b6fddd422b.webp"].map((a) => KHO + a),
+  canHo: ["a7a12ec59f7d0dca8f22726d-dn07-0611-01.webp", "9725016a01b819d8fde4a0e8-dn07-0611-03.webp", "e57319bf76839b98bdb439a0-dn07-0611-05.webp",
+    "6f9cad70c4c3e6b55a5bcbd1-dn07-0611-06.webp"].map((a) => KHO + a),
+  nhaPho: [KHO + "203ee62dd469967fef647073-qngai01-0611-02.webp"],
+  datNen: [KHO + "da1bde6290a39ad7ae6c553d-dn15-2010-05.webp"],
 };
 
 

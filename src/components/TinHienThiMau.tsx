@@ -10,7 +10,6 @@ import { ANH_MAU } from "@/lib/anhMau";
 // TIN HIỂN THỊ — thẻ tin mẫu từng cấp, vuốt qua lại. MỘT chỗ cho trang Báo giá (mục "Tin hiển thị") và bước chọn gói khi đăng tin
 // (nút "Tin hiển thị", chủ dự án 23/10/2026). Chuyển nguyên từ trang Báo giá, không đổi gì.
 
-const KHO = "https://miyugmacyerqvzhgmbyd.supabase.co/storage/v1/object/public/listings/";
 // Mô tả ví dụ ĐỦ DÀI để thẻ hiện đúng số dòng của từng hạng (Kim cương 3 · Vàng 2 · Bạc 1 ·
 // Thường 0) — tiêu đề viết hoa, dải nhấn, huy hiệu do PropertyCard tự áp theo hạng.
 const viDu = (id: string, title: string, image: string, location: string, desc: string): Listing =>
@@ -29,25 +28,25 @@ const MO_TA_CHUNG =
 // mà, xấu thì ai đăng"): Diamond biệt thự sân vườn · Gold shophouse phố thương mại · Silver căn hộ view biển · Basic nhà phố.
 const MAU_CHUNG = { agentName: "Coastal Land", soDau: "0377 985", postedAt: new Date(Date.now() - 2 * 3600_000).toISOString() };
 const VI_DU_MINH_HOA: Record<TierId, Listing> = {
-  // Ảnh chính là NỘI THẤT (chủ dự án 22/10/2026 tối: "các hình đẹp thường là nội thất — lấy một hình có nội thất")
-  diamond: { ...viDu("vi-du-diamond", "Bán biệt thự sân vườn 3 tầng, nội thất cao cấp, sổ hồng riêng, phường Ngũ Hành Sơn, Đà Nẵng",
-    KHO + "cfd50d885c07c23ec69ee0db-pt03-8.webp", "Phường Ngũ Hành Sơn, Đà Nẵng",
+  // 12/11/2026: ảnh + loại hình chọn lại (ANH_MAU) — biệt thự · căn hộ · nhà phố · đất nền dự án
+  diamond: { ...viDu("vi-du-diamond", "Bán biệt thự 3 tầng thiết kế hiện đại, nội thất cao cấp, sổ hồng riêng, phường Hòa Xuân, Đà Nẵng",
+    ANH_MAU.bietThu[0], "Phường Hòa Xuân, Đà Nẵng",
     "Biệt thự hoàn thiện đầy đủ nội thất, 4 phòng ngủ, phòng khách rộng, sân vườn trước sau, an ninh 24/7." + MO_TA_CHUNG), badge: "VIP",
-    ...MAU_CHUNG, type: "Biệt thự / Villa", price: "18,5 tỷ", area: "200 m²", beds: 4, baths: 5, pricePerM2: "41 tr/m² sàn", imageCount: 16,
+    ...MAU_CHUNG, type: "Nhà biệt thự / Liền kề", price: "17,5 tỷ", area: "200 m²", beds: 4, baths: 5, pricePerM2: "35 tr/m² sàn", imageCount: 16,
     images: ANH_MAU.bietThu },
-  gold: { ...viDu("vi-du-gold", "Bán nhà phố liền kề 3 tầng, nội thất hiện đại, sổ hồng riêng, phường Thuận Hóa, Huế",
-    KHO + "1788251822682-40179-pt03-7.webp", "Phường Thuận Hóa, Huế",
-    "Thiết kế hiện đại đồng bộ cả dãy, 4 phòng ngủ, phòng khách liền phòng ăn rộng thoáng, an ninh 24/7." + MO_TA_CHUNG), badge: "Nổi bật",
-    ...MAU_CHUNG, type: "Nhà phố liền kề", price: "7,5 tỷ", area: "120 m²", beds: 4, baths: 4, imageCount: 9,
-    images: ANH_MAU.nhaPho },
-  silver: { ...viDu("vi-du-silver", "Bán căn hộ 2 phòng ngủ view biển, đủ nội thất, phường Sơn Trà, Đà Nẵng",
-    KHO + "1788789958242-233504-qnhon10-1.webp", "Phường Sơn Trà, Đà Nẵng",
-    "Căn hộ tầng cao, cửa kính lớn nhìn ra biển, hoàn thiện nội thất, toà nhà có hồ bơi và phòng gym." + MO_TA_CHUNG), badge: "Mới",
-    ...MAU_CHUNG, type: "Căn hộ", price: "4,3 tỷ", area: "75 m²", beds: 2, baths: 2, imageCount: 15 },
-  basic: { ...viDu("vi-du-basic", "Bán nhà 3 tầng mới xây, mặt tiền đường 7,5m, phường Hòa Xuân, Đà Nẵng",
-    KHO + "721b01b977d3c2b1d4811cdc-dn03-1210-1.webp", "Phường Hòa Xuân, Đà Nẵng",
-    "Nhà 3 phòng ngủ, 3 phòng tắm, hoàn thiện mới, khu dân cư đông đúc." + MO_TA_CHUNG),
-    ...MAU_CHUNG, type: "Nhà mặt phố", price: "5,2 tỷ", area: "100 m²", beds: 3, baths: 3, imageCount: 11 },
+  gold: { ...viDu("vi-du-gold", "Bán căn hộ 2 phòng ngủ view sông Hàn, đủ nội thất, sổ hồng lâu dài, phường Sơn Trà, Đà Nẵng",
+    ANH_MAU.canHo[0], "Phường Sơn Trà, Đà Nẵng",
+    "Căn hộ tầng cao, phòng khách nhìn thẳng ra sông, nội thất gỗ đồng bộ, toà nhà có hồ bơi và phòng gym." + MO_TA_CHUNG), badge: "Nổi bật",
+    ...MAU_CHUNG, type: "Căn hộ", price: "3,9 tỷ", area: "62 m²", beds: 2, baths: 2, imageCount: 10,
+    images: ANH_MAU.canHo },
+  silver: { ...viDu("vi-du-silver", "Bán nhà phố 3 tầng tặng toàn bộ nội thất, khu đô thị mới, phường Cẩm Thành, Quảng Ngãi",
+    ANH_MAU.nhaPho[0], "Phường Cẩm Thành, Quảng Ngãi",
+    "Nhà 3 phòng ngủ, 3 phòng tắm, phòng khách rộng, khu đô thị có công viên và trường học." + MO_TA_CHUNG), badge: "Mới",
+    ...MAU_CHUNG, type: "Nhà mặt phố", price: "3,8 tỷ", area: "90 m²", beds: 3, baths: 3, imageCount: 12 },
+  basic: { ...viDu("vi-du-basic", "Bán đất nền dự án view công viên, ngang 8m, phường Ngũ Hành Sơn, Đà Nẵng",
+    ANH_MAU.datNen[0], "Phường Ngũ Hành Sơn, Đà Nẵng",
+    "Lô đất trong khu đô thị, hạ tầng hoàn thiện, đường nội bộ rộng, gần biển và các trường đại học." + MO_TA_CHUNG),
+    ...MAU_CHUNG, type: "Đất nền / Đất nền dự án", price: "7,2 tỷ", area: "152 m²", imageCount: 6 },
 };
 
 // chon = gói khách đang chọn ở bước chọn gói khi đăng tin (chủ dự án 23/10/2026: "tin hiển thị tốt nhất — bật xuống thì hiển thị
@@ -68,12 +67,23 @@ export default function TinHienThiMau({ chon, gon }: { chon?: TierId | ""; gon?:
   }, [chon]);
   return (
     <div ref={dai}>
-      {/* Thẻ các cấp CAO BẰNG NHAU (chủ dự án 23/10/2026: "khung mỗi cấp to nhỏ khác nhau") — khung giãn theo thẻ cao nhất. */}
-      <KhungCuonNgang khung="flex items-stretch snap-x snap-mandatory gap-3 pb-1">
-        {(["basic", "silver", "gold", "diamond"] as const).map((id) => (
-          <DacDiemGoi key={id} id={id} dangChon={chon === id} gon={gon} mau={<TheMau listing={VI_DU_MINH_HOA[id]} gon={gon} />} />
+      {/* ĐIỆN THOẠI: dải vuốt thẻ điện thoại. Thẻ các cấp CAO BẰNG NHAU (chủ dự án 23/10/2026) — khung giãn theo thẻ cao nhất. */}
+      <div className="sm:hidden">
+        <KhungCuonNgang khung="flex items-stretch snap-x snap-mandatory gap-3 pb-1">
+          {(["basic", "silver", "gold", "diamond"] as const).map((id) => (
+            <DacDiemGoi key={id} id={id} dangChon={chon === id} gon={gon} mau={<TheMau listing={VI_DU_MINH_HOA[id]} gon={gon} />} />
+          ))}
+        </KhungCuonNgang>
+      </div>
+      {/* MÁY TÍNH: đúng thẻ tin máy tính của trang Mua bán / Cho thuê — mỗi tin một hàng, cao xuống thấp (anh 12/11/2026: "mẫu
+          tin hiển thị trên PC sai mẫu") */}
+      <div className="hidden sm:flex sm:flex-col sm:gap-5">
+        {(["diamond", "gold", "silver", "basic"] as const).map((id) => (
+          <div key={id} className={`pointer-events-none select-none overflow-hidden rounded-xl bg-white shadow-lux ${chon === id ? "ring-2 ring-cvr-ink" : ""}`} aria-hidden>
+            <TheTinMobile item={VI_DU_MINH_HOA[id]} pc uuTien />
+          </div>
         ))}
-      </KhungCuonNgang>
+      </div>
     </div>
   );
 }
@@ -100,7 +110,7 @@ function DacDiemGoi({ id, mau, dangChon, gon }: { id: TierId; mau: React.ReactNo
 function TheMau({ listing, gon }: { listing: Listing; gon?: boolean }) {
   return (
     <div className={`pointer-events-none w-[343px] select-none ${gon ? "[zoom:0.723] lg:[zoom:0.831]" : "[zoom:0.8455] sm:[zoom:0.8746]"}`} aria-hidden>
-      <TheTinMobile item={listing} />
+      <TheTinMobile item={listing} uuTien />
     </div>
   );
 }
