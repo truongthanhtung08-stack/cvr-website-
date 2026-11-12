@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ghepBillingLuu, bangUp, goiDuAn, goiPr, ghiChuPr, bangBanner, soLuotTuNhan, type BillingData } from "@/lib/billing";
 import { KHOA_GIA_CHUAN, NHAP_TRONG, kiemNhap, type GiaChuanNhap } from "@/lib/giaChuan";
-import { congBoTin, congBoHoiVien, congBoMuc, duyetChuongTrinh } from "@/lib/congBoGia";
+import { congBoTin, congBoHoiVien, congBoMuc, duyetChuongTrinh, thuHoiMuc, thuHoiChuongTrinh } from "@/lib/congBoGia";
 import { ghepQuyDinh, KHOA_QUY_DINH_GIA, type QuyDinhGia } from "@/lib/quyDinhGia";
 
 // ============================================================================
@@ -56,6 +56,10 @@ export async function GET() {
     nhap,
     congBo: luu.congBo ?? null,
     hoiVienLuc: luu.hoiVienLuc ?? null,
+    // Trạng thái hiện trên web từng phần — nút Thu hồi (12/11/2026)
+    thuHoi: luu.thuHoi ?? [],
+    mucDaDuyet: luu.mucDaDuyet ?? [],
+    coHoiVien: (luu.hoiVien?.length ?? 0) > 0,
     plansHienTai: bang.plans,
     upHienTai: bangUp(bang),
     // Bản nháp chưa có dự án / PR / banner → trang admin lấy giá đang chạy làm giá chuẩn.
@@ -103,6 +107,18 @@ export async function POST(request: Request) {
   // DUYỆT RIÊNG từng bảng Dự án · PR · Banner (chủ dự án 10/10/2026)
   if (hanhDong === "duyet-muc") {
     const kq = await congBoMuc(admin, String(id ?? ""));
+    if ("loi" in kq) return loi(kq.loi, 400);
+    return NextResponse.json({ ok: true });
+  }
+
+  // THU HỒI (12/11/2026): một bảng / một chương trình đã duyệt → gỡ khỏi web, giữ qua 0h01, Duyệt lại mới hiện
+  if (hanhDong === "thu-hoi") {
+    const kq = await thuHoiMuc(admin, String(id ?? ""));
+    if ("loi" in kq) return loi(kq.loi, 400);
+    return NextResponse.json({ ok: true });
+  }
+  if (hanhDong === "thu-hoi-chuong-trinh") {
+    const kq = await thuHoiChuongTrinh(admin, String(id ?? ""));
     if ("loi" in kq) return loi(kq.loi, 400);
     return NextResponse.json({ ok: true });
   }

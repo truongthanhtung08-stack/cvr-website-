@@ -130,6 +130,8 @@ type BangDuyetRieng = "hoi-vien" | "du-an" | "pr" | "banner";
 export default function BangGiaPage() {
   const [nhap, setNhap] = useState<GiaChuanNhap>(NHAP_TRONG);
   const [congBo, setCongBo] = useState<CongBo | null>(null);
+  // Phần nào đang hiện trên web (để bật nút Thu hồi) — 12/11/2026
+  const [tt, setTt] = useState<{ mucDaDuyet: string[]; coHoiVien: boolean }>({ mucDaDuyet: [], coHoiVien: false });
   const [plansHienTai, setPlansHienTai] = useState<Plan[]>([]);
   const [upHienTai, setUpHienTai] = useState<UpRow[]>([]);
   const [tab, setTab] = useState<Tab>("gia");
@@ -169,6 +171,7 @@ export default function BangGiaPage() {
         quyDinhTin: n.quyDinhTin ?? kq.quyDinhTinHienTai,
       });
       setCongBo(kq.congBo);
+      setTt({ mucDaDuyet: kq.mucDaDuyet ?? [], coHoiVien: !!kq.coHoiVien });
       setPlansHienTai(kq.plansHienTai ?? []);
       setUpHienTai(kq.upHienTai ?? []);
       setDaSua(false);
@@ -269,11 +272,41 @@ export default function BangGiaPage() {
     setMsg({ ok: true, text: `Đã duyệt bảng giá ${ten} — hiện ngay trên web.` });
   }
   const nutDuyetBang = (bang: BangDuyetRieng, ten: string) => (
-    <div className="flex justify-end">
+    <div className="flex flex-wrap items-center justify-end gap-3">
+      {dongThuHoi(bang, ten)}
       <button type="button" onClick={() => duyetBang(bang, ten)} disabled={!!dangLam}
         className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
         Duyệt bảng {ten}
       </button>
+    </div>
+  );
+
+  // ── THU HỒI (anh 12/11/2026: "duyệt thì hiển thị và ngược lại, thu hồi") — gỡ khỏi web tới khi Duyệt lại ──
+  const dangHien = (m: string): boolean => {
+    const [md, loai] = m.split("-") as ["ban" | "thue", string];
+    if (loai === "tin") return (congBo?.[md]?.plans?.length ?? 0) > 0;
+    if (loai === "day") return (congBo?.[md]?.up?.length ?? 0) > 0;
+    if (loai === "nang") return (congBo?.[md]?.nangGoi?.length ?? 0) > 0;
+    if (m === "hoi-vien") return tt.coHoiVien;
+    return tt.mucDaDuyet.includes(m);
+  };
+  async function thuHoi(hanhDong: "thu-hoi" | "thu-hoi-chuong-trinh", id: string, ten: string, them = "") {
+    if (!window.confirm(`Thu hồi ${ten}? Gỡ khỏi web ngay${them}. Muốn hiện lại thì Duyệt lại.`)) return;
+    setDangLam("thu-hoi");
+    const res = await fetch("/api/admin/gia-chuan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hanhDong, id }) });
+    const kq = await res.json().catch(() => ({}));
+    setDangLam("");
+    if (!res.ok || !kq.ok) return setMsg({ ok: false, text: kq.message || "Thu hồi không thành công." });
+    await tai();
+    setMsg({ ok: true, text: `Đã thu hồi ${ten} — không còn trên web.` });
+  }
+  const dongThuHoi = (m: string, ten: string, them = "") => (
+    <div className="flex items-center justify-end gap-3 text-xs">
+      <span className={dangHien(m) ? "font-semibold text-green-700" : "text-cvr-muted"}>{ten}: {dangHien(m) ? "đang hiện trên web" : "chưa hiện trên web"}</span>
+      {dangHien(m) && (
+        <button type="button" onClick={() => thuHoi("thu-hoi", m, ten, them)} disabled={!!dangLam}
+          className="rounded-lg border border-red-300 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50">Thu hồi</button>
+      )}
     </div>
   );
 
@@ -378,6 +411,7 @@ export default function BangGiaPage() {
                 onChange={(b) => sua({ ...nhap, [muc]: b })}
                 onPt={(p) => suaDc({ [muc]: { ...dc[muc], tin: p } } as Partial<DieuChinh>)}
               />
+              {dongThuHoi(`${muc}-tin`, muc === "ban" ? "Giá đăng tin Bán" : "Giá đăng tin Cho thuê", " — khách KHÔNG đăng tin " + (muc === "ban" ? "Bán" : "Cho thuê") + " được")}
               <BangDayTin
                 ten={muc === "ban" ? "Đẩy tin Bán" : "Đẩy tin Cho thuê"}
                 bang={nhap[muc]}
@@ -385,6 +419,7 @@ export default function BangGiaPage() {
                 onChange={(b) => sua({ ...nhap, [muc]: b })}
                 onPt={(p) => suaDc({ [muc]: { ...dc[muc], day: p } } as Partial<DieuChinh>)}
               />
+              {dongThuHoi(`${muc}-day`, muc === "ban" ? "Đẩy tin Bán" : "Đẩy tin Cho thuê")}
               <CanhBao ds={canhBaoGia} />
             </>
           )}
@@ -403,6 +438,8 @@ export default function BangGiaPage() {
                   onPt={(p) => suaDc({ [md]: { ...dc[md], nangGoi: p } } as Partial<DieuChinh>)}
                 />
               ))}
+              {dongThuHoi("ban-nang", "Up tin – Nâng gói Bán")}
+              {dongThuHoi("thue-nang", "Up tin – Nâng gói Cho thuê")}
               <CaiDatNangGoi
                 v={nhap.nangGoi ?? NANG_GOI_TRONG}
                 onChange={(v) => sua({ ...nhap, nangGoi: v })}
@@ -440,7 +477,8 @@ export default function BangGiaPage() {
 
       {tab === "khuyen-mai" && (
         <>
-          <DanhSachChuongTrinh ds={nhap.chuongTrinh} onChange={(ds) => sua({ ...nhap, chuongTrinh: ds })} onDuyet={duyetCT} homNay={homNay} />
+          <DanhSachChuongTrinh ds={nhap.chuongTrinh} onChange={(ds) => sua({ ...nhap, chuongTrinh: ds })} onDuyet={duyetCT} homNay={homNay}
+            onThuHoi={(c) => thuHoi("thu-hoi-chuong-trinh", c.id, `“${c.ten || "chương trình"}”`, " — giá về như chưa có chương trình")} />
         </>
       )}
 
@@ -723,7 +761,7 @@ function BangDayTin({ ten, bang, pt, onChange, onPt }: {
 }
 
 // ── Chương trình khuyến mãi (có thời hạn, áp SAU % điều chỉnh) ──────────────
-function DanhSachChuongTrinh({ ds, onChange, onDuyet, homNay }: { ds: ChuongTrinh[]; onChange: (ds: ChuongTrinh[]) => void; onDuyet: (c: ChuongTrinh) => void; homNay: string }) {
+function DanhSachChuongTrinh({ ds, onChange, onDuyet, onThuHoi, homNay }: { ds: ChuongTrinh[]; onChange: (ds: ChuongTrinh[]) => void; onDuyet: (c: ChuongTrinh) => void; onThuHoi: (c: ChuongTrinh) => void; homNay: string }) {
   const sua = (id: string, p: Partial<ChuongTrinh>) => onChange(ds.map((c) => (c.id === id ? { ...c, ...p } : c)));
   const them = () => onChange([...ds, {
     id: `ct-${Date.now()}`, ten: "", phanTram: 0, tu: homNay, den: "", mucDich: "all", sanPham: "all", tiers: [], bat: true,
@@ -809,7 +847,10 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, homNay }: { ds: ChuongTrin
           </fieldset>
             <div className="flex items-center justify-end gap-4 sm:col-span-6">
               {c.daCongBo ? (
-                <span className="mr-auto text-xs text-cvr-muted">Đã duyệt {new Date(c.daCongBo).toLocaleString("vi-VN")}</span>
+                <>
+                  <span className="mr-auto text-xs text-cvr-muted">Đã duyệt {new Date(c.daCongBo).toLocaleString("vi-VN")}</span>
+                  <button type="button" onClick={() => onThuHoi(c)} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">Thu hồi</button>
+                </>
               ) : (
                 <>
                   {thieuThongTin(c).length > 0 && <span className="mr-auto text-xs text-amber-700">Thiếu: {thieuThongTin(c).join(" · ")}</span>}

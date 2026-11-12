@@ -68,6 +68,60 @@ async function nhapCongBo(admin: SupabaseClient, tuBanDuyet: boolean): Promise<G
   return nhap;
 }
 
+// ── THU HỒI (anh 12/11/2026: "duyệt thì hiển thị và ngược lại, thu hồi") ─────────────────────────────────────────────
+export const MUC_THU_HOI = ["ban-tin", "thue-tin", "ban-day", "thue-day", "ban-nang", "thue-nang", "hoi-vien", "du-an", "pr", "banner"];
+// Gỡ khỏi bản công bố mọi phần đang nằm trong danh sách thu hồi — mọi đường ghi "billing" đi qua đây nên phần đã gỡ không tự lên lại.
+export function apThuHoi(d: Partial<BillingData>): Partial<BillingData> {
+  const th = new Set(d.thuHoi ?? []);
+  if (!th.size) return d;
+  const kq: Partial<BillingData> = { ...d };
+  if (kq.congBo) {
+    const cb = { ...kq.congBo };
+    for (const md of ["ban", "thue"] as const) {
+      const g = cb[md];
+      if (!g) continue;
+      cb[md] = { ...g, ...(th.has(`${md}-tin`) ? { plans: [] } : {}), ...(th.has(`${md}-day`) ? { up: [] } : {}), ...(th.has(`${md}-nang`) ? { nangGoi: [] } : {}) };
+    }
+    kq.congBo = cb;
+    kq.up = cb.ban.up;
+  }
+  if (th.has("hoi-vien")) { delete kq.hoiVien; delete kq.hoiVienLuc; }
+  if (th.has("du-an")) delete kq.projectPlans;
+  if (th.has("pr")) { delete kq.pr; delete kq.prNotes; }
+  if (th.has("banner")) delete kq.banners;
+  kq.mucDaDuyet = (kq.mucDaDuyet ?? []).filter((m) => !th.has(m));
+  return kq;
+}
+
+/** Thu hồi một phần đã duyệt — khách không thấy, không mua được, tới khi anh Duyệt lại phần đó. */
+export async function thuHoiMuc(admin: SupabaseClient, muc: string): Promise<{ loi: string } | { ok: true }> {
+  if (!MUC_THU_HOI.includes(muc)) return { loi: "Mục không hợp lệ." };
+  const luu = await docBillingLuu(admin);
+  const data = apThuHoi({ ...luu, thuHoi: [...new Set([...(luu.thuHoi ?? []), muc])] });
+  const { error } = await admin.from("site_content").upsert({ key: "billing", data });
+  if (error) return { loi: `Lỗi: ${error.message}` };
+  revalidateTag("noi-dung", "max");
+  return { ok: true };
+}
+
+/** Thu hồi một chương trình đã duyệt: bỏ khỏi bản đã duyệt, về lại bản nháp (tắt, chưa duyệt) để sửa / duyệt lại; tính lại giá. */
+export async function thuHoiChuongTrinh(admin: SupabaseClient, id: string): Promise<{ loi: string } | { ok: true }> {
+  const [nhap, daDuyet] = await Promise.all([docNhapGia(admin), docNhapGia(admin, KHOA_DA_DUYET)]);
+  if (!nhap || !daDuyet) return { loi: "Chưa có bảng giá đã duyệt." };
+  if (!daDuyet.chuongTrinh.some((x) => x.id === id)) return { loi: "Chương trình chưa duyệt hoặc đã thu hồi." };
+  const luc = new Date().toISOString();
+  await admin.from("bi_mat").upsert({
+    key: KHOA_GIA_CHUAN,
+    data: { ...nhap, chuongTrinh: nhap.chuongTrinh.map((x) => (x.id === id ? { ...x, daDuyet: undefined, daCongBo: undefined, bat: false } : x)) },
+    updated_at: luc,
+  });
+  await admin.from("bi_mat").upsert({ key: KHOA_DA_DUYET, data: { ...daDuyet, chuongTrinh: daDuyet.chuongTrinh.filter((x) => x.id !== id) }, updated_at: luc });
+  const kq = await congBoTin(admin, true);
+  if ("loi" in kq) return kq;
+  if (daDuyet.hoiVien?.length) await congBoHoiVien(admin, true);
+  return { ok: true };
+}
+
 export async function docBillingLuu(admin: SupabaseClient): Promise<Partial<BillingData>> {
   const { data } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   return (data?.[0]?.data as Partial<BillingData> | undefined) ?? {};
@@ -133,7 +187,9 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
     ...(luu.hoiVien ? { hoiVien: luu.hoiVien, hoiVienLuc: luu.hoiVienLuc } : {}),
     ...(luu.topupAmounts ? { topupAmounts: luu.topupAmounts } : {}),
   };
-  const { error } = await admin.from("site_content").upsert({ key: "billing", data: { ...giu, plans, free: BILLING_DEFAULT.free, ...them, congBo } });
+  // Nút Duyệt chính = duyệt lại giá Đăng tin · Đẩy tin · Nâng gói → bỏ các phần này khỏi danh sách thu hồi; 0h01 / duyệt chương trình giữ nguyên
+  const thuHoi = (luu.thuHoi ?? []).filter((x) => tuBanDuyet || !/-(tin|day|nang)$/.test(x));
+  const { error } = await admin.from("site_content").upsert({ key: "billing", data: apThuHoi({ ...giu, plans, free: BILLING_DEFAULT.free, ...them, congBo, thuHoi }) });
   if (error) return { loi: `Lỗi công bố: ${error.message}` };
   if (nhap.quyDinh) await admin.from("site_content").upsert({ key: KHOA_QUY_DINH_GIA, data: nhap.quyDinh });
   if (!tuBanDuyet) {
@@ -148,10 +204,12 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
 export async function congBoHoiVien(admin: SupabaseClient, tuBanDuyet = false): Promise<{ loi: string } | { hoiVien: BillingData["hoiVien"]; hoiVienLuc: string }> {
   const [nhap, luu] = await Promise.all([tuBanDuyet ? docNhapGia(admin, KHOA_DA_DUYET) : docNhapGia(admin).then((n) => n && chiDaDuyet(n)), docBillingLuu(admin)]);
   if (!nhap) return { loi: "Chưa có bản giá đã duyệt." };
+  // Đã thu hồi Hội viên → tự công bố (0h01, duyệt chương trình) không đưa lên lại; chỉ "Duyệt bảng Hội viên" mới hiện lại
+  if (tuBanDuyet && luu.thuHoi?.includes("hoi-vien")) return { hoiVien: [], hoiVienLuc: "" };
   const hoiVien = tinhHoiVien(nhap.hoiVien ?? [], nhap.chuongTrinh, homNayVn(), nhap.dieuChinh?.hoiVien);
   if (!hoiVien.length) return { loi: "Bản nháp chưa có gói hội viên nào có giá — lưu nháp trước rồi mới công bố." };
   const hoiVienLuc = new Date().toISOString();
-  const { error } = await admin.from("site_content").upsert({ key: "billing", data: { ...luu, hoiVien, hoiVienLuc } });
+  const { error } = await admin.from("site_content").upsert({ key: "billing", data: { ...luu, hoiVien, hoiVienLuc, thuHoi: (luu.thuHoi ?? []).filter((x) => x !== "hoi-vien") } });
   if (error) return { loi: `Lỗi công bố: ${error.message}` };
   // "Duyệt bảng Hội viên" = ghi Hội viên vào BẢN ĐÃ DUYỆT — 0h01 / duyệt chương trình tính lại từ đúng bản này (12/11/2026)
   if (!tuBanDuyet) {
@@ -177,6 +235,7 @@ export async function congBoMuc(admin: SupabaseClient, muc: string): Promise<{ l
   if (muc === "pr") { if (!nhap.pr?.length) return { loi: "Bảng PR chưa có giá." }; moi.pr = tinhPr(nhap.pr, dc.pr); if (nhap.prNotes) moi.prNotes = nhap.prNotes; }
   if (muc === "banner") { if (!nhap.banners?.length) return { loi: "Bảng Banner chưa có giá." }; moi.banners = tinhBanner(nhap.banners, dc.banner); }
   moi.mucDaDuyet = [...new Set([...(luu.mucDaDuyet ?? []), muc])];
+  moi.thuHoi = (luu.thuHoi ?? []).filter((x) => x !== muc); // Duyệt lại = hiện lại
   const { error } = await admin.from("site_content").upsert({ key: "billing", data: moi });
   if (error) return { loi: `Lỗi: ${error.message}` };
   revalidateTag("noi-dung", "max");

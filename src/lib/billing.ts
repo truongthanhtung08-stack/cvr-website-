@@ -193,6 +193,9 @@ export type BillingData = {
   /** Bảng giá ĐÃ DUYỆT ngoài Đăng tin/Đẩy tin: "du-an" · "pr" · "banner" (mỗi bảng một nút Duyệt riêng).
    *  Bảng chưa có trong đây thì web KHÔNG hiện (chủ dự án 10/10/2026). */
   mucDaDuyet?: string[];
+  // THU HỒI (12/11/2026): phần anh đã gỡ khỏi web — "ban-tin" · "thue-tin" · "ban-day" · "thue-day" · "ban-nang" · "thue-nang" ·
+  // "hoi-vien" · "du-an" · "pr" · "banner". Công bố lại (0h01, duyệt chương trình) giữ nguyên phần đã gỡ; Duyệt lại phần đó mới hiện.
+  thuHoi?: string[];
   /** UP TIN – NÂNG GÓI (chủ dự án 01/11/2026) — cài đặt (bật/tắt, khấu trừ, quy định) ghi ở nút Duyệt chính. Giá: congBo.*.nangGoi. */
   nangGoi?: NangGoi;
 };
