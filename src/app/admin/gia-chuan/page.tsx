@@ -40,6 +40,8 @@ import {
   type QuyDinhTin as QuyDinhTinT,
   laMienPhiTvMoi,
   thieuThongTin,
+  trangThaiChuongTrinh,
+  cacChuongTrinhTrung,
 } from "@/lib/giaChuan";
 
 // ============================================================================
@@ -124,7 +126,7 @@ const MAU_QUY_DINH_UP_TIN = [
 ];
 
 type Tab = "gia" | "khuyen-mai" | "quyen-loi" | "quy-dinh";
-type Muc = "ban" | "thue" | "hoi-vien" | "du-an" | "pr" | "banner" | "nang-goi";
+type Muc = "dang-tin" | "day-tin" | "hoi-vien" | "du-an" | "pr" | "banner" | "nang-goi";
 type BangDuyetRieng = "hoi-vien" | "du-an" | "pr" | "banner";
 
 export default function BangGiaPage() {
@@ -135,7 +137,7 @@ export default function BangGiaPage() {
   const [plansHienTai, setPlansHienTai] = useState<Plan[]>([]);
   const [upHienTai, setUpHienTai] = useState<UpRow[]>([]);
   const [tab, setTab] = useState<Tab>("gia");
-  const [muc, setMuc] = useState<Muc>("ban");
+  const [muc, setMuc] = useState<Muc>("dang-tin");
   const [loading, setLoading] = useState(true);
   const [dangLam, setDangLam] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -312,7 +314,9 @@ export default function BangGiaPage() {
 
   // DUYỆT một chương trình = hiệu lực ngay trên web (lưu nháp trước để máy chủ đọc đúng chương trình).
   async function duyetCT(c: ChuongTrinh) {
-    if (!window.confirm(`Duyệt “${c.ten || "chương trình"}”? Duyệt xong chương trình có hiệu lực và không sửa được nữa.`)) return;
+    const thay = cacChuongTrinhTrung(c, nhap.chuongTrinh, homNay);
+    if (!window.confirm(`Duyệt “${c.ten || "chương trình"}”? Duyệt xong có hiệu lực ngay và không sửa được nữa.${thay.length ? `
+Thay thế: ${thay.map((x) => `“${x.ten}”`).join(", ")} (kết thúc ngay lúc này).` : ""}`)) return;
     setDangLam("duyet");
     const luu = await fetch("/api/admin/gia-chuan", {
       method: "PUT",
@@ -394,7 +398,9 @@ export default function BangGiaPage() {
       {tab === "gia" && (
         <>
           <div className="flex flex-wrap gap-2">
-            {([["ban", "Tin Bán"], ["thue", "Tin Cho thuê"], ["nang-goi", "Up tin – Nâng gói"], ["hoi-vien", "Hội viên"], ["du-an", "Dự án"], ["pr", "Bài PR"], ["banner", "Banner"]] as const).map(([id, ten]) => (
+            {/* CÙNG THỨ TỰ trang Báo giá (anh 12/11/2026: "từ menu trong Admin đến Báo giá hiển thị trên web sắp xếp cho logic"): mỗi gói một mục,
+                trong mục có bảng Bán rồi Cho thuê. Up tin – Nâng gói chỉ khách thấy trong Tin của tôi — Admin vẫn đặt giá ở đây. */}
+            {([["dang-tin", "Gói đăng tin"], ["day-tin", "Gói đẩy tin"], ["nang-goi", "Up tin – Nâng gói"], ["hoi-vien", "Gói hội viên"], ["du-an", "Gói dự án"], ["pr", "Bài PR"], ["banner", "Banner"]] as const).map(([id, ten]) => (
               <button key={id} type="button" onClick={() => setMuc(id)}
                 className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${muc === id ? "bg-cvr-blue text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink"}`}>
                 {ten}
@@ -402,26 +408,39 @@ export default function BangGiaPage() {
             ))}
           </div>
 
-          {(muc === "ban" || muc === "thue") && (
+          {muc === "dang-tin" && (
             <>
-              <BangGoiTin
-                key={muc} // Bán ↔ Thuê là hai bảng riêng — không mang hàng thời hạn của bảng này sang bảng kia
-                ten={muc === "ban" ? "Đăng tin Bán" : "Đăng tin Cho thuê"}
-                bang={nhap[muc]}
-                pt={dc[muc].tin}
-                onChange={(b) => sua({ ...nhap, [muc]: b })}
-                onPt={(p) => suaDc({ [muc]: { ...dc[muc], tin: p } } as Partial<DieuChinh>)}
-              />
-              {dongThuHoi(`${muc}-tin`, muc === "ban" ? "Giá đăng tin Bán" : "Giá đăng tin Cho thuê", " — khách KHÔNG đăng tin " + (muc === "ban" ? "Bán" : "Cho thuê") + " được")}
-              <BangDayTin
-                ten={muc === "ban" ? "Đẩy tin Bán" : "Đẩy tin Cho thuê"}
-                bang={nhap[muc]}
-                pt={dc[muc].day}
-                onChange={(b) => sua({ ...nhap, [muc]: b })}
-                onPt={(p) => suaDc({ [muc]: { ...dc[muc], day: p } } as Partial<DieuChinh>)}
-              />
-              {dongThuHoi(`${muc}-day`, muc === "ban" ? "Đẩy tin Bán" : "Đẩy tin Cho thuê")}
+              {(["ban", "thue"] as const).map((md) => (
+                <div key={md} className="space-y-2">
+                  <BangGoiTin
+                    key={md} // Bán ↔ Thuê là hai bảng riêng — không mang hàng thời hạn của bảng này sang bảng kia
+                    ten={md === "ban" ? "Đăng tin Bán" : "Đăng tin Cho thuê"}
+                    bang={nhap[md]}
+                    pt={dc[md].tin}
+                    onChange={(b) => sua({ ...nhap, [md]: b })}
+                    onPt={(p) => suaDc({ [md]: { ...dc[md], tin: p } } as Partial<DieuChinh>)}
+                  />
+                  {dongThuHoi(`${md}-tin`, md === "ban" ? "Giá đăng tin Bán" : "Giá đăng tin Cho thuê", " — khách KHÔNG đăng tin " + (md === "ban" ? "Bán" : "Cho thuê") + " được")}
+                </div>
+              ))}
               <CanhBao ds={canhBaoGia} />
+            </>
+          )}
+
+          {muc === "day-tin" && (
+            <>
+              {(["ban", "thue"] as const).map((md) => (
+                <div key={md} className="space-y-2">
+                  <BangDayTin
+                    ten={md === "ban" ? "Đẩy tin Bán" : "Đẩy tin Cho thuê"}
+                    bang={nhap[md]}
+                    pt={dc[md].day}
+                    onChange={(b) => sua({ ...nhap, [md]: b })}
+                    onPt={(p) => suaDc({ [md]: { ...dc[md], day: p } } as Partial<DieuChinh>)}
+                  />
+                  {dongThuHoi(`${md}-day`, md === "ban" ? "Đẩy tin Bán" : "Đẩy tin Cho thuê")}
+                </div>
+              ))}
             </>
           )}
 
@@ -685,12 +704,12 @@ function CanhBao({ ds }: { ds: string[] }) {
 // hiển thị"): cột = hạng theo đúng thứ tự trang Báo giá (Basic · Silver · Gold · Diamond), hàng đầu = % điều chỉnh, các hàng dưới = thời hạn
 // (đăng tin) hoặc số lượt (đẩy tin). Mỗi ô: giá chuẩn + giá công bố sau %. Tin Bán · Tin Cho thuê dùng chung.
 const COT_HIEN: TierId[] = ["basic", "silver", "gold", "diamond"];
-function DauBang({ nhan }: { nhan: string }) {
+function DauBang({ nhan, tenHang = tenCap }: { nhan: string; tenHang?: (t: TierId) => string }) {
   return (
     <thead>
       <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
         <th className="py-2 pr-3">{nhan}</th>
-        {COT_HIEN.map((t) => <th key={t} className="py-2 pr-3 normal-case"><span className="font-semibold text-cvr-ink">{tenCap(t)}</span> X{getTier(t).heSo}</th>)}
+        {COT_HIEN.map((t) => <th key={t} className="py-2 pr-3 normal-case"><span className="font-semibold text-cvr-ink">{tenHang(t)}</span> X{getTier(t).heSo}</th>)}
       </tr>
     </thead>
   );
@@ -704,9 +723,9 @@ function HangPhanTram({ pt, onPt }: { pt: PhanTramCot; onPt: (p: PhanTramCot) =>
   );
 }
 
-function BangGoiTin({ ten, bang, pt, onChange, onPt }: {
+function BangGoiTin({ ten, bang, pt, onChange, onPt, tenHang }: {
   ten: string; bang: BangChuan; pt: PhanTramCot;
-  onChange: (b: BangChuan) => void; onPt: (p: PhanTramCot) => void;
+  onChange: (b: BangChuan) => void; onPt: (p: PhanTramCot) => void; tenHang?: (t: TierId) => string;
 }) {
   const [ngayMoi, setNgayMoi] = useState("");
   // Hàng thời hạn GIỮ NGUYÊN khi xoá trắng ô để gõ lại — chỉ mất khi bấm × (12/11/2026: xoá ô cuối cùng của hàng làm hàng biến mất)
@@ -739,7 +758,7 @@ function BangGoiTin({ ten, bang, pt, onChange, onPt }: {
     <Panel title={ten}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
-          <DauBang nhan="Thời gian" />
+          <DauBang nhan="Thời gian" tenHang={tenHang} />
           <tbody>
             <HangPhanTram pt={pt} onPt={onPt} />
             {hang.map((d) => (
@@ -763,7 +782,7 @@ function BangGoiTin({ ten, bang, pt, onChange, onPt }: {
             <tr>
               <td colSpan={5} className="pt-3">
                 <span className="flex items-center gap-2">
-                  <input inputMode="numeric" value={ngayMoi} onChange={(e) => setNgayMoi(e.target.value)} placeholder="Số ngày" className={`${inputCls} w-24`} />
+                  <span className="w-28"><input inputMode="numeric" value={ngayMoi} onChange={(e) => setNgayMoi(e.target.value)} placeholder="Số ngày" className={inputCls} /></span>
                   <button type="button" onClick={themHang} className="text-xs font-semibold text-cvr-blue">+ Thời hạn</button>
                 </span>
               </td>
@@ -824,44 +843,45 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, onThuHoi, homNay }: { ds: 
       <div className="space-y-3">
         {ds.map((c) => (
           <div key={c.id}
-            className={`grid gap-2 rounded-xl border p-3 sm:grid-cols-6 ${c.daDuyet ? "border-cvr-line bg-cvr-surface/60" : "border-cvr-line"}`}>
+            className={`grid gap-2 rounded-xl border p-3 sm:grid-cols-6 ${c.daDuyet ? "border-cvr-line bg-cvr-surface/60" : "border-cvr-line"} ${c.daDuyet && trangThaiChuongTrinh(c, homNay) === "ket-thuc" ? "opacity-60" : ""}`}>
           <fieldset disabled={!!c.daDuyet} className="contents">
             <label className="text-xs text-cvr-muted sm:col-span-2">Tên chương trình
               <input value={c.ten} onChange={(e) => sua(c.id, { ten: e.target.value })} className={inputCls} />
             </label>
-            {laMienPhiTvMoi(c) ? (
-              <label className="text-xs text-cvr-muted">Số ngày ưu đãi từ khi đăng ký
-                <OSoBatBuoc value={c.soNgayTuDangKy} onChange={(n) => sua(c.id, { soNgayTuDangKy: n })} />
-              </label>
-            ) : (
+            {!laMienPhiTvMoi(c) && (
               <label className="text-xs text-cvr-muted">% giảm
                 <input inputMode="numeric" value={c.phanTram || ""} onChange={(e) => sua(c.id, { phanTram: Math.min(100, Number(e.target.value.replace(/\D/g, "")) || 0) })} className={inputCls} />
               </label>
             )}
+            {/* Miễn phí thành viên mới KHÔNG có ngày bắt đầu – kết thúc (anh 12/11/2026: "30 ngày tính theo từng người thì cần gì để thời hạn") —
+                chạy liên tục, dừng bằng Thu hồi. Chương trình giảm giá vẫn có ngày. */}
+            {!laMienPhiTvMoi(c) && (<>
             <label className="text-xs text-cvr-muted">Từ ngày
               <input type="date" value={c.tu} onChange={(e) => sua(c.id, { tu: e.target.value })} className={inputCls} />
             </label>
             <label className="text-xs text-cvr-muted">Đến hết ngày
               <input type="date" value={c.den} onChange={(e) => sua(c.id, { den: e.target.value })} className={inputCls} />
             </label>
+            </>)}
+            {!laMienPhiTvMoi(c) && (
             <label className="flex items-center gap-2 self-end pb-2 text-sm text-cvr-ink">
               <input type="checkbox" checked={c.bat} onChange={(e) => sua(c.id, { bat: e.target.checked })} /> Bật
             </label>
+            )}
             {laMienPhiTvMoi(c) ? (
               <>
-                <label className="text-xs text-cvr-muted">Gói tin
+                {/* GỌN ĐÚNG Ý ANH (12/11/2026): Tên · Loại tin · Miễn phí trong (ngày, từ ngày đăng nhập lần đầu) · Thời gian hiển thị · Số ảnh · Số video.
+                    Không "Bật" (Duyệt / Thu hồi là bật / tắt), không giới hạn số tin. */}
+                <label className="text-xs text-cvr-muted">Loại tin
                   <select value={c.tiers.length === 1 ? c.tiers[0] : ""} onChange={(e) => sua(c.id, { tiers: e.target.value ? [e.target.value as TierId] : [] })} className={inputCls}>
                     <option value="">—</option>
                     {THU_TU_CAP.map((t) => <option key={t} value={t}>{tenCap(t)}</option>)}
                   </select>
                 </label>
-                <div className="text-xs text-cvr-muted">Số tin
-                  {c.soTin !== 0 && <OSoBatBuoc value={c.soTin} onChange={(n) => sua(c.id, { soTin: n || undefined })} />}
-                  <label className="mt-1 flex items-center gap-1 text-cvr-ink">
-                    <input type="checkbox" checked={c.soTin === 0} onChange={(e) => sua(c.id, { soTin: e.target.checked ? 0 : undefined })} /> Không giới hạn
-                  </label>
-                </div>
-                <label className="text-xs text-cvr-muted">Số ngày hiển thị mỗi tin
+                <label className="text-xs text-cvr-muted">Miễn phí trong (ngày)
+                  <OSoBatBuoc value={c.soNgayTuDangKy} onChange={(n) => sua(c.id, { soNgayTuDangKy: n })} />
+                </label>
+                <label className="text-xs text-cvr-muted">Thời gian hiển thị (ngày)
                   <OSoBatBuoc value={c.soNgayHienThi} onChange={(n) => sua(c.id, { soNgayHienThi: n })} />
                 </label>
                 <label className="text-xs text-cvr-muted">Số ảnh
@@ -870,7 +890,7 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, onThuHoi, homNay }: { ds: 
                 <label className="text-xs text-cvr-muted">Số video
                   <OSoBatBuoc value={c.soVideo} onChange={(n) => sua(c.id, { soVideo: n })} />
                 </label>
-                <p className="self-end pb-2 text-sm font-medium text-cvr-ink">Thành viên mới</p>
+                <p className="self-end pb-2 text-xs text-cvr-muted sm:col-span-2">Thời gian chương trình: <b className="text-cvr-ink">Không giới hạn</b> · mỗi thành viên mới: <b className="text-cvr-ink">{c.soNgayTuDangKy ?? "—"} ngày</b> từ lần đăng nhập đầu</p>
               </>
             ) : (
               <>
@@ -901,12 +921,20 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, onThuHoi, homNay }: { ds: 
             <div className="flex items-center justify-end gap-4 sm:col-span-6">
               {c.daCongBo ? (
                 <>
+                  {/* Tình trạng theo ngày (12/11/2026) */}
+                  {(() => { const tt = trangThaiChuongTrinh(c, homNay); return (
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${tt === "dang" ? "bg-green-50 text-green-700" : tt === "sap" ? "bg-amber-50 text-amber-800" : "bg-cvr-surface text-cvr-muted"}`}>
+                      {tt === "dang" ? "Đang chạy" : tt === "sap" ? "Sắp chạy" : "Đã kết thúc"}
+                    </span>); })()}
                   <span className="mr-auto text-xs text-cvr-muted">Đã duyệt {new Date(c.daCongBo).toLocaleString("vi-VN")}</span>
                   <button type="button" onClick={() => onThuHoi(c)} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">Thu hồi</button>
                 </>
               ) : (
                 <>
                   {thieuThongTin(c).length > 0 && <span className="mr-auto text-xs text-amber-700">Thiếu: {thieuThongTin(c).join(" · ")}</span>}
+                  {thieuThongTin(c).length === 0 && cacChuongTrinhTrung(c, ds, homNay).length > 0 && (
+                    <span className="mr-auto text-xs text-amber-800">Duyệt sẽ thay thế {cacChuongTrinhTrung(c, ds, homNay).map((x) => `“${x.ten}”`).join(", ")} — kết thúc ngay lúc duyệt, không gián đoạn</span>
+                  )}
                   <button type="button" onClick={() => onChange(ds.filter((x) => x.id !== c.id))} className="text-xs text-cvr-muted hover:text-red-600">Xoá</button>
                   <button type="button" onClick={() => onDuyet(c)} disabled={thieuThongTin(c).length > 0}
                     className="rounded-lg bg-cvr-ink px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40">Duyệt</button>
@@ -918,7 +946,20 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, onThuHoi, homNay }: { ds: 
         {/* Nút "Tạo mới" nằm NGOÀI fieldset khoá để bấm được */}
         {ds.some((c) => c.daCongBo) && (
           <div className="flex flex-wrap gap-2">
-            {ds.filter((c) => c.daCongBo).map((c) => (
+            {/* Miễn phí thành viên mới chạy liên tục (12/11/2026) → không "nối tiếp" theo ngày; tạo mới = chép điều kiện chương trình gần nhất, không ngày */}
+            {ds.some(laMienPhiTvMoi) && (
+              <button type="button"
+                onClick={() => {
+                  const goc = [...ds].reverse().find(laMienPhiTvMoi)!;
+                  const { daCongBo: _bo, daDuyet: _dd, ...ban } = goc;
+                  void _bo; void _dd;
+                  onChange([...ds, { ...ban, id: `ct-${Date.now()}`, tu: "", den: "", bat: true }]);
+                }}
+                className="rounded-lg border border-cvr-line px-3 py-1.5 text-xs font-semibold text-cvr-ink hover:border-cvr-ink">
+                + Miễn phí thành viên mới
+              </button>
+            )}
+            {ds.filter((c) => c.daCongBo && !laMienPhiTvMoi(c)).map((c) => (
               <button key={c.id} type="button"
                 onClick={() => {
                   const { daCongBo: _bo, daDuyet: _dd, ...ban } = c;
@@ -1058,30 +1099,17 @@ function XemTruocHoiVien({ congBo }: { congBo: { id: string; ten: string; thoiHa
 }
 
 // ── Dự án (CVR-PJ): mỗi hạng một cột; % áp cho cả cột ───────────────────────
+// Gói dự án — CÙNG BẢNG Gói đăng tin (12/11/2026: "đồng nhất"): giữ tên gói dự án (CVR-PJ …) và mọi trường khác của gói, chỉ thay thời hạn + giá
 function BangDuAn({ ds, pt, onPt, onChange }: { ds: Plan[]; pt: PhanTramCot; onPt: (p: PhanTramCot) => void; onChange: (ds: Plan[]) => void }) {
-  const suaGia = (tierId: TierId, iTerm: number, price: number) =>
-    onChange(ds.map((p) => (p.tierId === tierId ? { ...p, terms: p.terms.map((t, j) => (j === iTerm ? { ...t, price } : t)) } : p)));
   return (
-    <Panel title="Gói dự án">
-      <div className="grid gap-3 lg:grid-cols-2">
-        {ds.map((p) => (
-          <div key={p.tierId} className="rounded-xl border border-cvr-line p-3">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <p className="font-semibold text-cvr-ink">{p.name}</p>
-              <OPhanTram value={pt[p.tierId]} onChange={(n) => onPt({ ...pt, [p.tierId]: n })} />
-            </div>
-            <div className="space-y-2">
-              {p.terms.map((t, i) => (
-                <label key={i} className="block text-xs text-cvr-muted">{t.days} ngày — giá chuẩn
-                  <OSo value={t.price} onChange={(n) => suaGia(p.tierId, i, n)} />
-                  <GiaCongBo pt={pt[p.tierId]} gia={tronNghin(apDung(t.price, pt[p.tierId]))} />
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </Panel>
+    <BangGoiTin
+      ten="Gói dự án"
+      bang={{ plans: ds.map((p) => ({ tierId: p.tierId, terms: p.terms })), day: [] }}
+      pt={pt}
+      onPt={onPt}
+      tenHang={(t) => ds.find((p) => p.tierId === t)?.name ?? tenCap(t)}
+      onChange={(b) => onChange(ds.map((p) => ({ ...p, terms: b.plans.find((x) => x.tierId === p.tierId)?.terms ?? p.terms })))}
+    />
   );
 }
 

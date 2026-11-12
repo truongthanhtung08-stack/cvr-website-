@@ -35,7 +35,8 @@ export default function NangGoiTin({ r, billing, demoVi, chonDau, onDong, onDaGu
   const hang = hangDangChay(tin);
   const goiCu = goiHienTai(tin);
   const [chon, setChon] = useState<{ tier: TierId | ""; days: number }>(chonDau ?? { tier: "", days: 0 });
-  const [apKhauTru, setApKhauTru] = useState(true);
+  // KHẤU TRỪ GÓI ĐANG CHẠY LUÔN ÁP (anh 12/11/2026: "nâng gói / up tin thì phải khấu trừ vào giá gói hiện tại + chiết khấu, hội viên") — bỏ ô tích
+  const apKhauTru = true;
   const vi = useViKhaDung(demoVi);
   const [hoiVien, setHoiVien] = useState<string | null>(null);
   const [voucherGiam, setVoucherGiam] = useState(0);
@@ -69,7 +70,6 @@ export default function NangGoiTin({ r, billing, demoVi, chonDau, onDong, onDaGu
     giaNangGoi({ data: billing, purpose: r.purpose, tierMoi: tier, soNgay: days, goiHienTai: goiCu, hoiVienId: hoiVien, apKhauTru: ap, voucher });
   const truocVoucher = chon.tier ? tinh(chon.tier, chon.days) : null; // số tạm giữ lúc gửi
   const gia = chon.tier ? tinh(chon.tier, chon.days, apKhauTru, billing.hoiVien?.length ? voucherGiam : 0) : null;
-  const khauTruCo = chon.tier ? (tinh(chon.tier, chon.days, true)?.khauTru ?? 0) : 0;
   const thue = gia ? tachThue(gia.truocThue) : null;
   const thieu = truocVoucher && vi ? Math.max(0, truocVoucher.tongTra - vi.khaDung) : 0;
 
@@ -135,12 +135,6 @@ export default function NangGoiTin({ r, billing, demoVi, chonDau, onDong, onDaGu
               { nhan: `VAT ${(THUE_SUAT_GTGT * 100).toFixed(0)}%`, giaTri: vnd(thue.tienThue) },
             ]}
           >
-            {khauTruCo > 0 && (
-              <label className="mt-3 flex items-start gap-2.5 text-[13.5px] text-cvr-ink">
-                <input type="checkbox" checked={apKhauTru} onChange={(e) => setApKhauTru(e.target.checked)} className="mt-0.5 h-4 w-4 accent-cvr-ink" />
-                <span>{chu.oKhauTru.replace("{tien}", vnd(khauTruCo))}</span>
-              </label>
-            )}
           </KhoiTongTien>
         )}
         {loi && <p className="mt-3 text-sm text-red-600">{loi}</p>}

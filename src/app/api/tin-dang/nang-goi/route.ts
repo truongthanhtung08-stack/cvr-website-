@@ -69,7 +69,7 @@ async function xuLy(request: Request) {
     const lucX = Date.now();
     const o = bangTheoMucDich(bang, tin.purpose).plans.flatMap((p) => p.terms.map((t) => {
       const duoc = oNangDuoc(tin, bang, p.tierId, t.days);
-      const g = duoc ? giaNangGoi({ data: bang, purpose: tin.purpose, tierMoi: p.tierId, soNgay: t.days, goiHienTai: goiHienTai(tin), hoiVienId: (hvX?.[0]?.goi as string | undefined) ?? null, apKhauTru: body.apKhauTru !== false, luc: lucX }) : null;
+      const g = duoc ? giaNangGoi({ data: bang, purpose: tin.purpose, tierMoi: p.tierId, soNgay: t.days, goiHienTai: goiHienTai(tin), hoiVienId: (hvX?.[0]?.goi as string | undefined) ?? null, apKhauTru: true, luc: lucX }) : null;
       return { tier: p.tierId, ten: p.name, days: t.days, gia: giaOUpTin(bang, tin.purpose, p.tierId, t.days)?.price ?? null, duoc: duoc && !!g, phaiTra: g?.tongTra ?? null, khauTruCo: g?.khauTruCo ?? 0, khauTru: g?.khauTru ?? 0 };
     }));
     return NextResponse.json({ ok: true, o, chuKhauTru: chuNangGoi(bang).oKhauTru });
@@ -83,7 +83,7 @@ async function xuLy(request: Request) {
   const luc = Date.now();
   const gia = giaNangGoi({
     data: bang, purpose: tin.purpose, tierMoi: body.tier, soNgay: days, goiHienTai: goiHienTai(tin),
-    hoiVienId: (hv?.[0]?.goi as string | undefined) ?? null, apKhauTru: !!body.apKhauTru, luc,
+    hoiVienId: (hv?.[0]?.goi as string | undefined) ?? null, apKhauTru: true /* luôn khấu trừ gói đang chạy (12/11/2026) */, luc,
   });
   if (!gia) return loi("Gói hoặc thời hạn không có trong bảng giá.");
 
@@ -94,7 +94,7 @@ async function xuLy(request: Request) {
   }
 
   const yeuCau: YeuCauNang = {
-    tier: body.tier, days, apKhauTru: !!body.apKhauTru, khauTru: gia.khauTru,
+    tier: body.tier, days, apKhauTru: true, khauTru: gia.khauTru,
     truocThue: gia.truocThue, tongTra: gia.tongTra, gui_luc: new Date(luc).toISOString(),
   };
   // Chỉ ghi khi tin vẫn chưa có yêu cầu (bấm hai lần / hai tab không tạo hai yêu cầu).

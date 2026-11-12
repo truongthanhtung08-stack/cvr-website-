@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidateTag } from "next/cache";
 import { BILLING_DEFAULT, type BillingData, type UpRow } from "@/lib/billing";
 import { KHOA_QUY_DINH_GIA } from "@/lib/quyDinhGia";
-import { KHOA_GIA_CHUAN, NHAP_TRONG, DIEU_CHINH_TRONG, chonMienPhi, thieuThongTin, kiemNhap, tinhCongBo, tinhHoiVien, tinhDuAn, tinhPr, tinhBanner, type GiaChuanNhap } from "@/lib/giaChuan";
+import { KHOA_GIA_CHUAN, NHAP_TRONG, DIEU_CHINH_TRONG, chonMienPhi, thieuThongTin, cacChuongTrinhTrung, kiemNhap, tinhCongBo, tinhHoiVien, tinhDuAn, tinhPr, tinhBanner, type GiaChuanNhap } from "@/lib/giaChuan";
 
 // ============================================================================
 // CÔNG BỐ GIÁ — MỘT ĐƯỜNG DUY NHẤT (chủ dự án chốt 01/10/2026)
@@ -45,8 +45,13 @@ export async function duyetChuongTrinh(admin: SupabaseClient, id: string): Promi
   if (thieu.length) return { loi: `Chưa đủ thông tin: ${thieu.join(", ")}.` };
   const luc = new Date().toISOString();
   const moi = { ...c, daDuyet: luc, daCongBo: luc };
-  await admin.from("bi_mat").upsert({ key: KHOA_GIA_CHUAN, data: { ...nhap, chuongTrinh: nhap.chuongTrinh.map((x) => (x.id === id ? moi : x)) }, updated_at: luc });
-  await admin.from("bi_mat").upsert({ key: KHOA_DA_DUYET, data: { ...daDuyet, chuongTrinh: [...daDuyet.chuongTrinh.filter((x) => x.id !== id), moi] }, updated_at: luc });
+  // THAY THẾ trong cùng một lần ghi: chương trình cùng loại đang chạy kết thúc đúng lúc này (giữ làm lịch sử, "Đã kết thúc"), bỏ khỏi bản
+  // đã duyệt — không có lúc nào web thiếu chương trình. Tin khách đã đăng giữ nguyên hạn.
+  const thay = new Set(cacChuongTrinhTrung(c, daDuyet.chuongTrinh, homNayVn()).map((x) => x.id));
+  const homQua = new Date(Date.now() + 7 * 3_600_000 - 86_400_000).toISOString().slice(0, 10);
+  const ketThuc = (x: typeof c) => (thay.has(x.id) ? { ...x, den: homQua < (x.tu || homQua) ? x.tu : homQua, bat: false } : x);
+  await admin.from("bi_mat").upsert({ key: KHOA_GIA_CHUAN, data: { ...nhap, chuongTrinh: nhap.chuongTrinh.map((x) => (x.id === id ? moi : ketThuc(x))) }, updated_at: luc });
+  await admin.from("bi_mat").upsert({ key: KHOA_DA_DUYET, data: { ...daDuyet, chuongTrinh: [...daDuyet.chuongTrinh.filter((x) => x.id !== id && !thay.has(x.id)), moi] }, updated_at: luc });
   const kq = await congBoTin(admin, true);
   if ("loi" in kq) return kq;
   if (daDuyet.hoiVien?.length) await congBoHoiVien(admin, true);

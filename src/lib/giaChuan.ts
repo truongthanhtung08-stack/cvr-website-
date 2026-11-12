@@ -58,19 +58,41 @@ export type ChuongTrinh = {
 };
 export const laMienPhiTvMoi = (c: ChuongTrinh) => c.loai === "mien-phi-tv-moi";
 
+// TÌNH TRẠNG theo ngày (12/11/2026: chương trình đã kết thúc bày y như đang chạy, không biết cái nào còn hiệu lực)
+export const trangThaiChuongTrinh = (c: ChuongTrinh, homNay: string): "dang" | "sap" | "ket-thuc" =>
+  c.den && c.den < homNay ? "ket-thuc" : c.tu && c.tu > homNay ? "sap" : "dang";
+
+// TRÙNG CHƯƠNG TRÌNH (12/11/2026: hai "miễn phí thành viên mới" cùng chạy 12/11 – 11/12, web chỉ dùng một): chương trình ĐÃ DUYỆT cùng loại,
+// cùng sản phẩm / mục đích / hạng và giao nhau về thời gian → không duyệt thêm; thu hồi cái cũ trước.
+// DUYỆT CÁI MỚI = THAY THẾ cái đang chạy trong MỘT lần bấm (anh 12/11/2026: "mỗi lần thu hồi và quyết định phải CHUẨN, không ảnh hưởng
+// chương trình đang chạy") — không có khoảng trống giữa thu hồi cũ và duyệt mới. cacChuongTrinhTrung: mọi chương trình sẽ bị thay.
+export function cacChuongTrinhTrung(c: ChuongTrinh, ds: ChuongTrinh[], homNay: string): ChuongTrinh[] {
+  // Chương trình ĐÃ KẾT THÚC không bị thay (giữ nguyên ngày trong lịch sử)
+  return ds.filter((x) => !(x.den && x.den < homNay) && trungChuongTrinh(c, [x]) === x);
+}
+export function trungChuongTrinh(c: ChuongTrinh, ds: ChuongTrinh[]): ChuongTrinh | undefined {
+  const giao = <T,>(a: T[], b: T[]) => !a.length || !b.length || a.some((x) => b.includes(x));
+  return ds.find((x) => x.id !== c.id && !!x.daDuyet && x.bat &&
+    laMienPhiTvMoi(x) === laMienPhiTvMoi(c) &&
+    (x.sanPham === "all" || c.sanPham === "all" || x.sanPham === c.sanPham) &&
+    (x.mucDich === "all" || c.mucDich === "all" || x.mucDich === c.mucDich) &&
+    giao(x.tiers, c.tiers) &&
+    (x.tu || "0000") <= (c.den || "9999") && (c.tu || "0000") <= (x.den || "9999"));
+}
+
 // CHƯƠNG TRÌNH PHẢI ĐỦ THÔNG SỐ MỚI DUYỆT ĐƯỢC (chủ dự án 09/10/2026: "thiếu là không duyệt được").
 // Trả về danh sách ô còn thiếu — rỗng mới được Duyệt (kiểm cả ở trình duyệt lẫn máy chủ).
 export function thieuThongTin(c: ChuongTrinh): string[] {
   const thieu: string[] = [];
   const co = (n: number | undefined) => typeof n === "number" && n > 0;
   if (!c.ten.trim()) thieu.push("Tên chương trình");
-  if (!c.tu) thieu.push("Từ ngày");
-  if (!c.den) thieu.push("Đến hết ngày");
+  // Miễn phí thành viên mới chạy liên tục (không ngày) — 12/11/2026; chương trình giảm giá bắt buộc có ngày
+  if (!laMienPhiTvMoi(c) && !c.tu) thieu.push("Từ ngày");
+  if (!laMienPhiTvMoi(c) && !c.den) thieu.push("Đến hết ngày");
   if (c.tu && c.den && c.den < c.tu) thieu.push("Đến hết ngày phải sau Từ ngày");
   if (laMienPhiTvMoi(c)) {
     if (c.tiers.length !== 1) thieu.push("Gói tin");
     if (!co(c.soNgayTuDangKy)) thieu.push("Số ngày ưu đãi từ khi đăng ký");
-    if (c.soTin === undefined) thieu.push("Số tin");
     if (!co(c.soNgayHienThi)) thieu.push("Số ngày hiển thị mỗi tin");
     if (!co(c.soAnh)) thieu.push("Số ảnh");
     if (c.soVideo === undefined) thieu.push("Số video");

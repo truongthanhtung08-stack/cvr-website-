@@ -82,11 +82,11 @@ export default function BangGiaDayTin({
                             aria-pressed={dangChon}
                             title={khoa ? "Vượt số ngày tin còn hiển thị" : undefined}
                             // Y NHƯ Ô GIÁ của bảng gói tin (BangGiaGoiTin, bản đang chạy): ô đang chọn nền xám viền đen · nút Chọn xanh · Bỏ chọn viền đen (06/11/2026)
-                            className={`w-full rounded-xl px-2 py-2.5 transition disabled:cursor-not-allowed disabled:opacity-40 ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
+                            className={`w-full rounded-xl px-1.5 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40 ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
                           >
                             <span className="flex flex-col items-center">{noiDung}</span>
                             {!khoa && (
-                              <span className={`mt-1.5 inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
+                              <span className={`mt-1 inline-flex h-6 items-center rounded-md px-2.5 text-[11.5px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
                                 {dangChon ? "Bỏ chọn" : "Chọn"}
                               </span>
                             )}

@@ -75,7 +75,8 @@ export default function TinHienThiMau({ chon, gon }: { chon?: TierId | ""; gon?:
     <div ref={dai}>
       {/* ĐIỆN THOẠI: dải vuốt thẻ điện thoại. Thẻ các cấp CAO BẰNG NHAU (chủ dự án 23/10/2026) — khung giãn theo thẻ cao nhất. */}
       <div className="sm:hidden">
-        <KhungCuonNgang khung="flex items-stretch snap-x snap-mandatory gap-3 pb-1">
+        {/* Mỗi thẻ CAO THEO NỘI DUNG của nó (anh 12/11/2026: "phần này cũng có thể tự co giãn được") — trước kéo bằng thẻ cao nhất, thẻ Basic trống một khoảng */}
+        <KhungCuonNgang khung="flex items-start snap-x snap-mandatory gap-3 pb-1">
           {(["basic", "silver", "gold", "diamond"] as const).map((id) => (
             <DacDiemGoi key={id} id={id} dangChon={chon === id} gon={gon} mau={<TheMau listing={VI_DU_MINH_HOA[id]} gon={gon} />} />
           ))}
@@ -108,7 +109,7 @@ function DacDiemGoi({ id, mau, dangChon, gon }: { id: TierId; mau: React.ReactNo
   return (
     // GỌN (chủ dự án 22/10/2026 tối: "tin minh hoạ — có thể giảm đồng đều khung hình các cấp cho gọn"): khung ảnh theo bề
     // rộng thẻ nên thẻ thu nhỏ đều (TheMau). Điện thoại 290px (thấy mép thẻ sau), máy tính 300px.
-    <article data-cap={id} className={`${gon ? "w-[248px] lg:w-[285px]" : "w-[290px] sm:w-[300px]"} shrink-0 snap-start overflow-hidden rounded-2xl border bg-white ${dangChon ? "border-cvr-ink ring-1 ring-cvr-ink" : "border-cvr-line"}`}>
+    <article data-cap={id} className={`${gon ? "w-[190px]" : "w-[210px]"} shrink-0 snap-start overflow-hidden rounded-2xl border bg-white ${dangChon ? "border-cvr-ink ring-1 ring-cvr-ink" : "border-cvr-line"}`}>
       {mau}
     </article>
   );
@@ -120,9 +121,11 @@ function DacDiemGoi({ id, mau, dangChon, gon }: { id: TierId; mau: React.ReactNo
 // THU NHỎ ĐỀU (chủ dự án 22/10/2026 tối: "chỉ là minh hoạ — giảm đồng đều khung hình; hạn chế xuống dòng giá, diện tích, vị
 // trí"): thẻ dựng đúng bề ngang thẻ thật trên điện thoại (343px) rồi thu cả thẻ bằng zoom cho vừa khung (290px điện thoại,
 // 300px máy tính) → khung ảnh, chữ, nút nhỏ đều nhau, các dòng giữ nguyên như thẻ thật, không xuống dòng thêm.
+// MÔ PHỎNG ĐÚNG TỶ LỆ, THU NHỎ (anh 12/11/2026: "không cần y chang hiển thị trên web, mô phỏng đúng tỷ lệ"): thẻ dựng đúng 343px rồi thu đều
+// 0,61 (trang Báo giá) · 0,55 (bảng chọn gói) → thấy ~2 thẻ khi vuốt
 function TheMau({ listing, gon }: { listing: Listing; gon?: boolean }) {
   return (
-    <div className={`pointer-events-none w-[343px] select-none ${gon ? "[zoom:0.723] lg:[zoom:0.831]" : "[zoom:0.8455] sm:[zoom:0.8746]"}`} aria-hidden>
+    <div className={`pointer-events-none w-[343px] select-none ${gon ? "[zoom:0.554]" : "[zoom:0.612]"}`} aria-hidden>
       <TheTinMobile item={listing} uuTien />
     </div>
   );

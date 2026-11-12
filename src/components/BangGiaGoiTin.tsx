@@ -181,7 +181,7 @@ export default function BangGiaGoiTin({
           <tbody>
             {hang.map((ngay) => (
               <tr key={ngay} className="border-b border-cvr-line/70 last:border-0">
-                <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-3 font-semibold text-cvr-body sm:px-4">{ngay} ngày</td>
+                <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-2 font-semibold text-cvr-body sm:px-4">{ngay} ngày</td>
                 {cot.map((p) => {
                   const term = p.terms.find((x) => x.days === ngay);
                   if (!term) {
@@ -203,16 +203,17 @@ export default function BangGiaGoiTin({
                           onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, ngay))}
                           aria-pressed={dangChon}
                           // MỘT LỚP KHUNG (chủ dự án 23/10/2026: "phần giá có 2 cái khung"): ô giá không viền riêng — chỉ ô đang chọn có viền đậm.
-                          className={`w-full rounded-xl px-2 py-2.5 transition ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
+                          className={`w-full rounded-xl px-1.5 py-1.5 transition ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
                         >
                           {noiDung}
                           {/* Nút chọn rõ ràng (chủ dự án 09/10/2026) */}
-                          <span className={`mt-1.5 inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
+                          {/* GỌN (anh 12/11/2026: "có thể sắp xếp thu gọn lại được mà") — nút thấp, sát số tiền */}
+                          <span className={`mt-1 inline-flex h-6 items-center rounded-md px-2.5 text-[11.5px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
                             {dangChon ? "Bỏ chọn" : "Chọn"}
                           </span>
                         </button>
                       ) : (
-                        <div className={`px-2 py-2.5 ${khoa(p.tierId) || khoaO?.(p.tierId, ngay) ? "opacity-40" : ""}`}>{noiDung}</div>
+                        <div className={`px-1.5 py-1.5 ${khoa(p.tierId) || khoaO?.(p.tierId, ngay) ? "opacity-40" : ""}`}>{noiDung}</div>
                       )}
                     </td>
                   );

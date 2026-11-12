@@ -41,7 +41,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, mucDichGia, chuNangGoi, chuongTrinhTvMoi, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, quotePrice, soAnhToiDa, soVideoToiDa, vnd, loaiVoucherTin } from "@/lib/billing";
+import { bangTheoMucDich, mucDichGia, chuNangGoi, chuongTrinhTvMoi, hanMienPhiRieng, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, quotePrice, soAnhToiDa, soVideoToiDa, vnd, loaiVoucherTin } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -1903,7 +1903,8 @@ export default function PostListingForm() {
                 disabled={!duocChonKm}
                 aria-pressed={chonKm}
                 onClick={() => {
-                  if (chonKm) return; // chạm lại ô đang chọn: giữ nguyên (12/11/2026)
+                  // Bấm lại chương trình đang chọn = bỏ chọn (cùng luật Chọn / Bỏ chọn của bảng giá — 12/11/2026)
+                  if (chonKm) { setChonKm(false); setPlanTier(""); setPlanDays(0); return; }
                   setChonKm(true); setPlanTier(goiMp); setPlanDays(ngayMp);
                 }}
                 className={`flex w-full items-start justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
@@ -1912,7 +1913,8 @@ export default function PostListingForm() {
               >
                 {/* LÀ CHƯƠNG TRÌNH, KHÔNG PHẢI MỘT GÓI (chủ dự án 22/10/2026): Tên đúng như admin đặt + Nội dung — một hàm
                     chuongTrinhTvMoi dùng chung toàn web. */}
-                <NoiDungChuongTrinh ct={chuongTrinhTvMoi(billing)} />
+                {/* Thành viên cũ: thẻ mờ, không bấm được (không xoá — anh 12/11/2026); hạn riêng chỉ ghi cho người đang được hưởng */}
+                <NoiDungChuongTrinh ct={chuongTrinhTvMoi(billing, duocChonKm ? hanMienPhiRieng(billing.free, hoSoVi?.created_at) : null)} />
                 <span className="mt-1 shrink-0 text-[16px] font-semibold tabular-nums text-cvr-blue-ink">0 ₫</span>
               </button>
             )}
@@ -1939,7 +1941,9 @@ export default function PostListingForm() {
               plans={plansChon}
               chon={{ tier: chonKm ? "" : planTier, days: planDays }}
               onChon={(t, d) => { setChonKm(false); setPlanTier(t); setPlanDays(d); }}
-              onBoChon={() => { /* chạm lại ô đang chọn: giữ nguyên — muốn đổi thì chọn ô khác (12/11/2026) */ }}
+              // CHỌN / BỎ CHỌN (anh 12/11/2026: "chọn / bỏ chọn gói hãy làm cho logic, cả khi khách lưu nháp"): ô đang chọn có nút Bỏ chọn →
+              // về chưa chọn gói; Lưu nháp ghi đúng trạng thái đó (plan.tier rỗng), mở lại nháp hiện y như lúc lưu
+              onBoChon={() => { setPlanTier(""); setPlanDays(0); setChonKm(false); }}
               kieuBaoGia
               canhVat={
                 <button type="button" aria-haspopup="dialog" onClick={() => setXemTinMau(true)} className="inline-flex shrink-0 items-center gap-0.5 text-[13.5px] font-semibold text-cvr-blue-ink hover:underline">

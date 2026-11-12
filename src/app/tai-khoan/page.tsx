@@ -7,7 +7,7 @@ import { useProfile } from "@/lib/useProfile";
 import { useAuth, anhDaiDien, emailThat } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
 import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
-import { chuongTrinhTvMoi, freeDangChay, vnd } from "@/lib/billing";
+import { chuongTrinhTvMoi, freeDangChay, hanMienPhiRieng, thanhVienMoi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { ngayVN, tuNgayVN } from "@/lib/ngayVN";
 import { khoaKhach } from "@/lib/khachHang";
@@ -116,6 +116,11 @@ export default function AccountOverviewPage() {
 
   const p = profile as unknown as { balance?: number };
   const freeConChay = freeDangChay(billing.free, homNayVn());
+  // Thành viên mới đang hưởng → ghi hạn miễn phí riêng của khách (12/11/2026, cùng luật form đăng tin)
+  const ngayThamGia = user?.created_at ?? null;
+  // eslint-disable-next-line react-hooks/purity
+  const soNgayTk = ngayThamGia ? (Date.now() - new Date(ngayThamGia).getTime()) / 86_400_000 : -1;
+  const dangHuong = !!ngayThamGia && thanhVienMoi(billing.free, { coChu: true, homNay: homNayVn(), soNgayMoTk: soNgayTk, ngayTaoTk: new Date(new Date(ngayThamGia).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) });
 
   return (
     <div className="space-y-5">
@@ -168,7 +173,7 @@ export default function AccountOverviewPage() {
         {freeConChay && (
           // Chương trình = Tên (đúng admin) + Nội dung — khối chung NoiDungChuongTrinh, ô nền xanh nhạt như form đăng tin (22/10/2026)
           <div className="mt-3 rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.05] px-4 py-3">
-            <NoiDungChuongTrinh ct={chuongTrinhTvMoi(billing)} />
+            <NoiDungChuongTrinh ct={chuongTrinhTvMoi(billing, dangHuong ? hanMienPhiRieng(billing.free, ngayThamGia) : null)} />
             {billing.free.quota > 0 && <p className="mt-1 text-[13px] text-cvr-body">Bạn còn <strong className="font-semibold">{profile.free_quota ?? 0} tin</strong> miễn phí.</p>}
           </div>
         )}

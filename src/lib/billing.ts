@@ -232,7 +232,8 @@ export const NANG_GOI_TRONG: NangGoi = { bat: false, khauTru: "theo-ngay" };
 // Chữ đã duyệt (billing.nangGoi.chu); thiếu ô nào thì lấy chữ mẫu
 export const chuNangGoi = (d: Pick<BillingData, "nangGoi">): ChuNangGoi => ({ ...CHU_NANG_GOI_MAU, ...(d.nangGoi?.chu ?? {}) });
 // Gói nâng lên được: các gói VIP (Basic là gói thấp nhất — không nâng lên Basic)
-export const COT_NANG_GOI: TierId[] = ["diamond", "gold", "silver"];
+// Basic có cột riêng (anh 12/11/2026: "Up / nâng gói cả trong cùng một gói giá cao hơn — Basic lên thời hạn dài hơn")
+export const COT_NANG_GOI: TierId[] = ["diamond", "gold", "silver", "basic"];
 
 export type GiaNangGoi = {
   giaGoi: number;        // giá gói mới (bảng Up tin đã công bố, hoặc giá gói tin khi chưa công bố) — chưa VAT
@@ -589,18 +590,26 @@ export function vnd(n: number): string {
 // thời gian chương trình. Dùng ở: form đăng tin, Báo giá, Đăng tin miễn phí, Tài khoản, Đăng ký.
 // quota = 0 → không giới hạn số tin.
 // BA PHẦN (chủ dự án 22/10/2026): Tiêu đề (ten) · Nội dung khuyến mãi (noiDung + the = nhãn điểm chính) · Áp dụng (apDung).
-export function chuongTrinhTvMoi(data: BillingData): { ten: string; the: string[]; noiDung: string[]; apDung: string } {
+// hanRieng (YYYY-MM-DD): hạn miễn phí CỦA CHÍNH KHÁCH (ngày tham gia + số ngày) — chương trình chạy liên tục (12/11/2026) thì dòng
+// "Áp dụng" ghi hạn riêng của khách, không ghi khoảng ngày chương trình.
+export function hanMienPhiRieng(f: FreePolicy, ngayThamGia?: string | null): string | null {
+  if (!ngayThamGia || !f.days) return null;
+  return new Date(new Date(ngayThamGia).getTime() + 7 * 3_600_000 + f.days * 86_400_000).toISOString().slice(0, 10);
+}
+export function chuongTrinhTvMoi(data: BillingData, hanRieng?: string | null): { ten: string; the: string[]; noiDung: string[]; apDung: string } {
   const f = data.free;
   const anh = f.soAnh ?? soAnhToiDa(data, f.tierId);
   const video = f.soVideo ?? soVideoToiDa(data, f.tierId);
   const apDung =
-    f.from && f.to ? `tài khoản đăng ký từ ${ngayVn(f.from)} đến ${ngayVn(f.to)}`
+    hanRieng ? `miễn phí đến hết ${ngayVn(hanRieng)}`
+    : f.from && f.to ? `tài khoản đăng ký từ ${ngayVn(f.from)} đến ${ngayVn(f.to)}`
     : f.to ? `tài khoản đăng ký đến hết ${ngayVn(f.to)}`
     : "";
   return {
     ten: f.ten?.trim() ?? "",
     the: [`Tin ${getTier(f.tierId).name}`, `Hiển thị ${f.hienThi ?? f.days} ngày`, `${anh} ảnh`, ...(video > 0 ? [`${video} video`] : [])],
-    noiDung: [`Miễn phí ${f.quota > 0 ? `${f.quota} tin` : "không giới hạn số tin"} trong ${f.days} ngày đầu kể từ ngày đăng ký.`],
+    // Đúng câu anh chốt 12/11/2026: "Thành viên mới được đăng tin miễn phí trong thời hạn 30 ngày"
+    noiDung: [`Thành viên mới được đăng tin miễn phí trong thời hạn ${f.days} ngày${f.quota > 0 ? ` (tối đa ${f.quota} tin)` : ""}.`],
     apDung,
   };
 }

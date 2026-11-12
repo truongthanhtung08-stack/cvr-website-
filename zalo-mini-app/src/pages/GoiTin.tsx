@@ -51,9 +51,8 @@ export default function GoiTin() {
   const bangGia = useTai(() => layBangGia(), [], null);
 
   const [chon, setChon] = useState<{ tier: string; days: number }>();
-  const [apKhauTru, setApKhauTru] = useState(true);
+  const apKhauTru = true; // khấu trừ gói đang chạy luôn áp (12/11/2026) — cùng luật web
   const [oUp, setOUp] = useState<OUp[]>();
-  const [chuKhauTru, setChuKhauTru] = useState("");
   const [gia, setGia] = useState<{ phaiTra: number; mienPhi?: boolean; dungLuot?: boolean; conLai?: number; hang?: string }>();
   const [loi, setLoi] = useState<string>();
   const [thieu, setThieu] = useState(false);
@@ -69,7 +68,6 @@ export default function GoiTin() {
       goiWeb("/api/tin-dang/nang-goi", { id, xemGia: true, apKhauTru }).then(({ j }) => {
         if (!j.ok) return setLoi(j.loi);
         setOUp(j.o);
-        setChuKhauTru(j.chuKhauTru ?? "");
       });
   }, [viec, id, phien?.access_token, apKhauTru]);
 
@@ -154,12 +152,6 @@ export default function GoiTin() {
             <BangGiaMaTran plans={plansDangLai} chon={chon} onChon={(t, d) => setChon({ tier: t, days: d })} />
           ) : (
             <Spinner />
-          )}
-          {viec === "up" && !!oDangChon?.khauTruCo && chuKhauTru && (
-            <label className="hang-chon">
-              <input type="checkbox" checked={apKhauTru} onChange={(e) => setApKhauTru(e.target.checked)} />
-              <span>{chuKhauTru.replace("{tien}", vnd(oDangChon.khauTruCo))}</span>
-            </label>
           )}
         </Box>
       )}
