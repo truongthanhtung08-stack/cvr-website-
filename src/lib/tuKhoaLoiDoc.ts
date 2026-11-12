@@ -6,6 +6,7 @@
 import zlib from "node:zlib";
 import { saleCategories, rentCategories, nhomPseo, type Category } from "@/lib/categories";
 import { giuSoCu } from "@/lib/pseo";
+import type { ThuongHieu } from "@/lib/thuongHieu";
 
 export type TuKhoaLoiTrang = Record<string, { loi?: string; longtail?: string; uuTien?: true }>;
 export type KetQuaDocBang = { trang: TuKhoaLoiTrang; doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number };
@@ -102,4 +103,31 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
     if (muc.loi || muc.longtail || muc.uuTien) trang[d.trang] = muc;
   }
   return { trang, doi, giu, soDong: chon.length };
+}
+
+// ── SHEET "THƯƠNG HIỆU" (anh 12/11/2026: "sheet riêng, nạp là lên luôn") ─────────────────────────────────────────────
+// Cột: "Mục" · "Nội dung" · "Trả lời" (chỉ dòng Hỏi đáp). Mục: Tên · Câu thương hiệu 1 · Câu thương hiệu 2 · Định nghĩa (Việt) ·
+// Định nghĩa (Anh) · Cách gõ khác (mỗi dòng một cách) · Kênh chính thức (mỗi dòng một link) · Hỏi đáp (mỗi dòng một câu).
+// Không có sheet → null (web giữ bản mặc định src/lib/thuongHieu.ts). Thiếu Tên / Câu 1 / Câu 2 → báo lỗi, không nạp nửa vời.
+export function docThuongHieu(buf: Buffer): { thuongHieu: Partial<ThuongHieu> | null; loi?: string } {
+  let bang: string[][];
+  try { bang = docSheet(buf, "Thương hiệu"); } catch { return { thuongHieu: null }; }
+  const dau = (bang[0] ?? []).map((h) => (h ?? "").trim().toLowerCase());
+  const cMuc = dau.findIndex((h) => h.startsWith("mục")), cNd = dau.findIndex((h) => h.startsWith("nội dung")), cTl = dau.findIndex((h) => h.startsWith("trả lời"));
+  if (cMuc < 0 || cNd < 0) return { thuongHieu: null, loi: 'Sheet "Thương hiệu" thiếu cột "Mục" hoặc "Nội dung"' };
+  const th: Partial<ThuongHieu> & { cachGo: string[]; kenh: string[]; hoiDap: { hoi: string; dap: string }[] } = { cachGo: [], kenh: [], hoiDap: [] };
+  for (const r of bang.slice(1)) {
+    const muc = (r[cMuc] ?? "").trim().toLowerCase(), nd = (r[cNd] ?? "").trim();
+    if (!muc || !nd) continue;
+    if (muc === "tên") th.ten = nd;
+    else if (muc.startsWith("câu thương hiệu 1")) th.cau1 = nd;
+    else if (muc.startsWith("câu thương hiệu 2")) th.cau2 = nd;
+    else if (muc.startsWith("định nghĩa (việt")) th.dinhNghia = nd;
+    else if (muc.startsWith("định nghĩa (anh")) th.dinhNghiaEn = nd;
+    else if (muc.startsWith("cách gõ")) th.cachGo.push(nd);
+    else if (muc.startsWith("kênh")) { if (/^https:\/\//.test(nd)) th.kenh.push(nd); }
+    else if (muc.startsWith("hỏi đáp")) { const tl = cTl >= 0 ? (r[cTl] ?? "").trim() : ""; if (tl) th.hoiDap.push({ hoi: nd, dap: tl }); }
+  }
+  if (!th.ten || !th.cau1 || !th.cau2) return { thuongHieu: null, loi: 'Sheet "Thương hiệu" phải có đủ Tên, Câu thương hiệu 1, Câu thương hiệu 2' };
+  return { thuongHieu: th };
 }

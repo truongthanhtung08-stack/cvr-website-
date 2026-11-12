@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { asset } from "@/lib/asset";
 import { getAbout } from "@/lib/siteContent";
+import { layThuongHieu } from "@/lib/thuongHieu";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/gioi-thieu" },
@@ -82,7 +83,7 @@ function Figure({ src, alt, className = "" }: { src: string; alt: string; classN
 
 export default async function GioiThieuPage() {
   // Nội dung admin sửa được (site_content key 'about') — chưa nhập → mặc định trong code.
-  const about = await getAbout();
+  const [about, th] = await Promise.all([getAbout(), layThuongHieu()]);
   // ẢNH ĐẦU TRANG TẢI TRƯỚC ĐÚNG KHỔ MÁY (cùng cách Hero trang chủ, 27/10/2026): trước đây hai ảnh (điện thoại + máy tính) đều
   // "priority" → điện thoại tải trước CẢ ảnh máy tính đang ẩn, giành đường truyền với ảnh đang hiện (LCP).
   // Cùng một tệp cho cả hai máy → tải trước MỘT lần, không kèm điều kiện (React gộp hai lệnh cùng địa chỉ, giữ lệnh đầu).
@@ -234,6 +235,28 @@ export default async function GioiThieuPage() {
             </div>
           </div>
         </section>
+
+        {/* HỎI ĐÁP VỀ THƯƠNG HIỆU (GEO, anh 12/11/2026) — từ sheet "Thương hiệu" (dòng Hỏi đáp); bảng chưa có câu hỏi thì không hiện.
+            Kèm dữ liệu FAQPage để Google + mọi AI trích đúng "Coastal Land là gì". */}
+        {th.hoiDap.length > 0 && (
+          <section>
+            <div className={SECTION}>
+              <Title>Hỏi đáp về {th.ten}</Title>
+              <dl className="mt-6 divide-y divide-cvr-line">
+                {th.hoiDap.map((h) => (
+                  <div key={h.hoi} className="py-4">
+                    <dt className="text-[16px] font-semibold text-cvr-ink">{h.hoi}</dt>
+                    <dd className="mt-1.5 whitespace-pre-line text-[15px] leading-relaxed text-cvr-body">{h.dap}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", about: { "@id": "https://coastalland.vn/#to-chuc" }, mainEntity: th.hoiDap.map((h) => ({ "@type": "Question", name: h.hoi, acceptedAnswer: { "@type": "Answer", text: h.dap } })) }) }}
+            />
+          </section>
+        )}
 
         {/* (bỏ khối nút cuối trang Đăng tin · Xem Bất động sản — anh 08/11/2026: "dòng cuối bỏ hết") */}
       </main>

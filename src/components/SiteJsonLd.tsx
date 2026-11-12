@@ -1,4 +1,4 @@
-import { ZALO_MINI_APP_URL, ZALO_OA_URL } from "@/lib/lienHe";
+import { layThuongHieu, type ThuongHieu } from "@/lib/thuongHieu";
 // ── DỮ LIỆU CÓ CẤU TRÚC CẤP TOÀN SITE (JSON-LD) ────────────────────────────
 // Đặt ở layout gốc → có mặt trên mọi trang. Ba việc:
 //   1. Organization  → Google dựng "Bảng tri thức" bên phải khi tìm "Coastal Land"
@@ -10,7 +10,8 @@ import { ZALO_MINI_APP_URL, ZALO_OA_URL } from "@/lib/lienHe";
 
 const SITE = "https://coastalland.vn";
 
-const data = {
+// Tên, câu giới thiệu, câu phân biệt, cách gõ khác, kênh: lấy từ sheet "Thương hiệu" (src/lib/thuongHieu.ts, anh 12/11/2026)
+const taoData = (t: ThuongHieu) => ({
   "@context": "https://schema.org",
   "@graph": [
     {
@@ -18,11 +19,11 @@ const data = {
       // tên thương hiệu "Coastal Land" với nghĩa từ điển "đất ven biển" (09/11/2026)
       "@type": ["Organization", "OnlineBusiness"],
       "@id": `${SITE}/#to-chuc`,
-      name: "COASTAL LAND",
+      name: t.ten,
       // Tên gọi khác khách hay gõ — AI tìm kiếm của Google (24/10/2026) đang lẫn "coastalland" với khu nghỉ dưỡng
       // Vinpearl Coastalland; khai đủ tên + lĩnh vực để Google nhận đúng thực thể cổng thông tin bất động sản.
       // 28/10/2026: thêm cách gõ thiếu chữ "a" ("costalland", "costal land") khách hay gõ — nối về cùng thực thể. Hoa/thường Google tự coi như nhau.
-      alternateName: ["Coastal Land", "Coastalland", "coastalland.vn", "Costalland", "Costal Land", "Central Coast Vietnam Real Estate"],
+      alternateName: t.cachGo,
       foundingDate: "2026-08-17", // ngày cấp mã số doanh nghiệp (trang Giới thiệu)
       email: "hotro@coastalland.vn",
       knowsAbout: ["Mua bán nhà đất", "Cho thuê nhà đất", "Căn hộ chung cư", "Đất nền", "Dự án bất động sản"],
@@ -36,13 +37,11 @@ const data = {
       logo: { "@type": "ImageObject", url: `${SITE}/logo/app-icon-1024.png`, width: 1024, height: 1024 },
       image: `${SITE}/logo/logo-horizontal.jpg`,
       // Câu giới thiệu = đúng câu chân trang chủ dự án sửa trong Admin 09/11/2026 (một câu cho web, Google, AI)
-      description:
-        "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản, cung cấp giải pháp toàn diện cho người dùng trong việc tìm kiếm, đăng tin mua bán, cho thuê nhà đất và dự án bất động sản.",
-      slogan: "Cổng thông tin bất động sản trực tuyến",
+      description: t.dinhNghia,
+      slogan: t.cau1,
       // Câu phân biệt (28/10/2026): gõ "coastal land" thì khung AI của Google trả nghĩa từ điển "đất ven biển" — nói rõ đây là TÊN
       // THƯƠNG HIỆU của cổng thông tin bất động sản (schema.org disambiguatingDescription).
-      disambiguatingDescription:
-        "COASTAL LAND – Cổng thông tin bất động sản trực tuyến · Cổng đăng tin mua bán, cho thuê nhà đất", // 05/11/2026 Branding SEO 2 câu (anh chốt); 29/10/2026 chủ dự án: "để Google hiểu Coastal Land là cổng thông tin bất động sản"
+      disambiguatingDescription: `${t.ten} – ${t.cau1} · ${t.cau2}`, // 05/11/2026 Branding SEO 2 câu (anh chốt); 29/10/2026 chủ dự án: "để Google hiểu Coastal Land là cổng thông tin bất động sản"
       areaServed: [
         { "@type": "Country", name: "Việt Nam" },
       ],
@@ -52,7 +51,7 @@ const data = {
       // Lệch một chữ (viết tắt tên đường, thiếu phường) là Google coi như 2 nơi khác nhau.
       // Kênh chính thức của Coastal Land — giúp Google gom các kênh về MỘT thực thể (E-E-A-T, 15/10/2026).
       // 20/10/2026: thêm Fanpage (tạo 16/10, KE-HOACH-MXH.md) + kênh YouTube. Hồ sơ Google Doanh nghiệp (link cid cố định, anh gửi 29/10/2026).
-      sameAs: [ZALO_OA_URL, ZALO_MINI_APP_URL, "https://www.facebook.com/profile.php?id=61595622503937", "https://www.youtube.com/@CoastalLandvn", "https://maps.google.com/?cid=4963426532946079372", "https://www.wikidata.org/wiki/Q142088915", "https://www.linkedin.com/company/coastalland"],
+      sameAs: t.kenh,
       telephone: "+84377985036",
       address: {
         "@type": "PostalAddress",
@@ -83,9 +82,10 @@ const data = {
       },
     },
   ],
-};
+});
 
-export default function SiteJsonLd() {
+export default async function SiteJsonLd() {
+  const data = taoData(await layThuongHieu());
   return (
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
   );

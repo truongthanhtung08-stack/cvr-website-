@@ -13,6 +13,7 @@ import RouteMotion from "@/components/RouteMotion";
 import HieuUngCham from "@/components/HieuUngCham";
 import VachTim from "@/components/VachTim";
 import SiteJsonLd from "@/components/SiteJsonLd";
+import { layThuongHieu, tieuDeThuongHieu } from "@/lib/thuongHieu";
 import Analytics from "@/components/Analytics";
 import PwaRegister from "@/components/PwaRegister";
 import DemHienThi from "@/components/DemHienThi";
@@ -72,7 +73,7 @@ const SITE_TITLE = "COASTAL LAND";
 // CÂU ĐỊNH VỊ CHUẨN — dùng thống nhất ở MỌI nơi: tiêu đề mặc định, thẻ chia sẻ
 // (Zalo/Facebook/Messenger), manifest, và tên trên Google Business Profile.
 // Google đối chiếu các nguồn này với nhau: gọi mỗi nơi một kiểu thì thương hiệu bị loãng.
-const SITE_TAGLINE = "COASTAL LAND – Cổng thông tin bất động sản trực tuyến"; // Branding SEO, anh chốt 05/11/2026 (câu 2: "Cổng đăng tin mua bán, cho thuê nhà đất")
+// Branding SEO: tiêu đề mặc định = "<Tên> – <Câu 1>" lấy từ sheet "Thương hiệu" (src/lib/thuongHieu.ts) trong generateMetadata
 const SITE_DESC =
   "Cổng đăng tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Tin hình thật, liên hệ trực tiếp người bán, người cho thuê.";
 // ── ẢNH XEM TRƯỚC KHI CHIA SẺ LINK (Zalo · Facebook · Messenger) ────────────
@@ -104,7 +105,9 @@ async function anhChiaSe(): Promise<string> {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const OG_IMAGE_URL = await anhChiaSe();
+  // Câu định vị lấy từ sheet "Thương hiệu" (12/11/2026) — mặc định đúng câu cũ
+  const [OG_IMAGE_URL, th] = await Promise.all([anhChiaSe(), layThuongHieu()]);
+  const SITE_TAGLINE = tieuDeThuongHieu(th);
   return {
     metadataBase: new URL(SITE_URL),
     title: {
