@@ -170,6 +170,7 @@ export default function ContentEditor({
   const videoRef = useRef<HTMLInputElement>(null);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [tienDoVideo, setTienDoVideo] = useState(0); // % chuyển + tải video (video HEVC / dài cần vài phút trên điện thoại — 12/11/2026)
   const [link, setLink] = useState("");
   const [showLink, setShowLink] = useState(false);
   const [error, setError] = useState("");
@@ -263,7 +264,8 @@ export default function ContentEditor({
     if (!file) return;
     setError("");
     setUploadingVideo(true);
-    const { url, error: e } = await uploadVideoFile(file);
+    setTienDoVideo(0);
+    const { url, error: e } = await uploadVideoFile(file, setTienDoVideo);
     setUploadingVideo(false);
     if (e) setError(e);
     else if (url) insertVideo(url);
@@ -331,7 +333,7 @@ export default function ContentEditor({
           className="inline-flex items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-1.5 text-xs font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" /></svg>
-          {uploadingVideo ? "Đang tải video…" : "Chèn video"}
+          {uploadingVideo ? `Đang tải video… ${tienDoVideo}%` : "Chèn video"}
         </button>
         <input ref={videoRef} type="file" accept="video/*" onChange={(e) => handleVideo(e.target.files)} className="hidden" />
         <button

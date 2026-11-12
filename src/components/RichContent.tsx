@@ -20,12 +20,28 @@ const ALIGN_CLASS: Record<string, string> = {
 
 // Đậm / nghiêng trong 1 đoạn — đọc bằng bộ dùng chung (src/lib/dinhDangMoTa.ts): dấu * khách
 // gõ ("5*20", "*") hiện đúng là dấu *, chỉ dấu định dạng do bộ soạn tạo mới thành đậm/nghiêng.
+// LINK KHÁCH GHI TRONG BÀI BẤM ĐƯỢC (anh 12/11/2026: "chèn link vào thì phải bấm vào link được chứ") — mở tab mới. Link ra ngoài
+// gắn nofollow ugc (nội dung người dùng — Google không coi là web đặt link); link trong coastalland.vn giữ bình thường.
+const LINK = /(https?:\/\/[^\s<]*[^\s<.,;:!?)\]"'])/g;
+function coLink(t: string, k: number): React.ReactNode {
+  const manh = t.split(LINK);
+  if (manh.length === 1) return t;
+  return manh.map((m, j) => {
+    if (j % 2 === 0) return m;
+    const trong = /^https?:\/\/(www\.)?coastalland\.vn(\/|$)/i.test(m);
+    return (
+      <a key={`${k}-${j}`} href={m} target="_blank" rel={trong ? "noopener" : "nofollow ugc noopener noreferrer"} className="break-all text-cvr-blue underline underline-offset-2">
+        {m}
+      </a>
+    );
+  });
+}
 function renderInline(text: string): React.ReactNode[] {
   return tachDinhDang(text).map((d, k) =>
-    d.b && d.i ? <strong key={k}><em>{d.t}</em></strong>
-    : d.b ? <strong key={k}>{d.t}</strong>
-    : d.i ? <em key={k}>{d.t}</em>
-    : d.t,
+    d.b && d.i ? <strong key={k}><em>{coLink(d.t, k)}</em></strong>
+    : d.b ? <strong key={k}>{coLink(d.t, k)}</strong>
+    : d.i ? <em key={k}>{coLink(d.t, k)}</em>
+    : <span key={k}>{coLink(d.t, k)}</span>,
   );
 }
 

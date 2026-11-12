@@ -50,7 +50,8 @@ export default function Chatbox() {
   //     tiết, hoặc thanh So sánh đang bật. Máy tính KHÔNG đổi (các thanh đó
   //     hoặc ẩn, hoặc nằm giữa màn hình nên không tranh chỗ với nút).
   // (07/11/2026) trang có thanh dưới chế độ người mua: Chat đã là một nút của thanh → điện thoại không vẽ nút nổi nữa (hết đè nội dung)
-  const vuongMobile = TRANG_CO_THANH_DAY.some((p) => pathname.startsWith(p)) || soSanh > 0 || coThanhChat(pathname) || TRANG_DANG_NHAP.some((p) => pathname.startsWith(p));
+  // Trang Đăng tin (12/11/2026, anh: "bỏ nút chat ở phần này — đã đưa xuống thanh menu"): điện thoại không vẽ nút nổi đè lên form
+  const vuongMobile = TRANG_CO_THANH_DAY.some((p) => pathname.startsWith(p)) || soSanh > 0 || coThanhChat(pathname) || pathname.startsWith("/dang-tin") || TRANG_DANG_NHAP.some((p) => pathname.startsWith(p));
 
   // (b) Cuộn XUỐNG (đang đọc nội dung) → thu nút lại; cuộn LÊN → hiện lại.
   //     Chỉ áp cho mobile qua biến thể max-lg: bên dưới.
