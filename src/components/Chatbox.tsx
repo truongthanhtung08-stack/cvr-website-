@@ -142,6 +142,9 @@ export default function Chatbox() {
     }
   };
 
+  // Trang quản trị không có nút chat khách (12/11/2026: nút nổi che nút Thu hồi / Duyệt trong Admin)
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     /* Nút chat — GIỮ + KÉO để dời chỗ, BẤM để nhắn Zalo.
        Là ĐƯỜNG DẪN THẬT (không mở bằng window.open): iPhone và trình duyệt trong app

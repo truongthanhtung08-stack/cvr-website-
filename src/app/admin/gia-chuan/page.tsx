@@ -405,6 +405,7 @@ export default function BangGiaPage() {
           {(muc === "ban" || muc === "thue") && (
             <>
               <BangGoiTin
+                key={muc} // Bán ↔ Thuê là hai bảng riêng — không mang hàng thời hạn của bảng này sang bảng kia
                 ten={muc === "ban" ? "Đăng tin Bán" : "Đăng tin Cho thuê"}
                 bang={nhap[muc]}
                 pt={dc[muc].tin}
@@ -674,50 +675,101 @@ function CanhBao({ ds }: { ds: string[] }) {
 }
 
 // ── Đăng tin: mỗi hạng = một cột của bảng giá khách xem; % áp cho cả cột ─────
+// BẢNG ADMIN = Y NHƯ BẢNG KHÁCH XEM (anh 12/11/2026: "hàng cần đồng nhất và logic để dễ hiểu" · "chỉnh ở đây thì cũng phải chỉnh cả phần
+// hiển thị"): cột = hạng theo đúng thứ tự trang Báo giá (Basic · Silver · Gold · Diamond), hàng đầu = % điều chỉnh, các hàng dưới = thời hạn
+// (đăng tin) hoặc số lượt (đẩy tin). Mỗi ô: giá chuẩn + giá công bố sau %. Tin Bán · Tin Cho thuê dùng chung.
+const COT_HIEN: TierId[] = ["basic", "silver", "gold", "diamond"];
+function DauBang({ nhan }: { nhan: string }) {
+  return (
+    <thead>
+      <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
+        <th className="py-2 pr-3">{nhan}</th>
+        {COT_HIEN.map((t) => <th key={t} className="py-2 pr-3 normal-case"><span className="font-semibold text-cvr-ink">{tenCap(t)}</span> X{getTier(t).heSo}</th>)}
+      </tr>
+    </thead>
+  );
+}
+function HangPhanTram({ pt, onPt }: { pt: PhanTramCot; onPt: (p: PhanTramCot) => void }) {
+  return (
+    <tr className="border-b border-cvr-line bg-cvr-surface/50">
+      <td className="py-2 pr-3 text-xs font-semibold text-cvr-ink">% điều chỉnh</td>
+      {COT_HIEN.map((t) => <td key={t} className="py-2 pr-3"><OPhanTram value={pt[t]} onChange={(n) => onPt({ ...pt, [t]: n })} /></td>)}
+    </tr>
+  );
+}
+
 function BangGoiTin({ ten, bang, pt, onChange, onPt }: {
   ten: string; bang: BangChuan; pt: PhanTramCot;
   onChange: (b: BangChuan) => void; onPt: (p: PhanTramCot) => void;
 }) {
+  const [ngayMoi, setNgayMoi] = useState("");
+  // Hàng thời hạn GIỮ NGUYÊN khi xoá trắng ô để gõ lại — chỉ mất khi bấm × (12/11/2026: xoá ô cuối cùng của hàng làm hàng biến mất)
+  const [hangThem, setHangThem] = useState<number[]>(() => bang.plans.flatMap((p) => p.terms.map((x) => x.days)));
+  const ngayCo = bang.plans.flatMap((p) => p.terms.map((x) => x.days)).join(",");
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- nhớ mọi thời hạn đã có (nạp nháp / đổi Bán–Thuê)
+  useEffect(() => { if (ngayCo) setHangThem((c) => [...new Set([...c, ...ngayCo.split(",").map(Number)])]); }, [ngayCo]);
   const planCua = (t: TierId) => bang.plans.find((p) => p.tierId === t) ?? { tierId: t, terms: [] };
   const datTerms = (t: TierId, terms: { days: number; price: number }[]) =>
-    onChange({ ...bang, plans: [...bang.plans.filter((p) => p.tierId !== t), { tierId: t, terms }] });
+    onChange({ ...bang, plans: [...bang.plans.filter((p) => p.tierId !== t), { tierId: t, terms: [...terms].sort((x, y) => x.days - y.days) }] });
+  // Hàng thời hạn = mọi số ngày đang có ở bất kỳ hạng nào (+ hàng vừa thêm chưa có giá)
+  const hang = [...new Set([...bang.plans.flatMap((p) => p.terms.map((x) => x.days)), ...hangThem])].filter((d) => d > 0).sort((x, y) => x - y);
+  // Ô trống = hạng đó không bán thời hạn này (khách thấy "–"); gõ 0 = miễn phí
+  const datO = (t: TierId, days: number, chu: string) => {
+    const terms = planCua(t).terms.filter((x) => x.days !== days);
+    const so = chu.replace(/D/g, "");
+    datTerms(t, so === "" ? terms : [...terms, { days, price: Number(so) }]);
+  };
+  const boHang = (days: number) => {
+    if (!window.confirm(`Bỏ thời hạn ${days} ngày ở mọi hạng?`)) return;
+    setHangThem((c) => c.filter((d) => d !== days));
+    onChange({ ...bang, plans: bang.plans.map((p) => ({ ...p, terms: p.terms.filter((x) => x.days !== days) })) });
+  };
+  const themHang = () => {
+    const n = Number(ngayMoi.replace(/D/g, ""));
+    if (n > 0 && !hang.includes(n)) setHangThem((c) => [...c, n]);
+    setNgayMoi("");
+  };
   return (
     <Panel title={ten}>
-      <div className="grid gap-3 lg:grid-cols-2">
-        {THU_TU_CAP.map((t) => {
-          const p = planCua(t);
-          return (
-            <div key={t} className="rounded-xl border border-cvr-line p-3">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="font-semibold text-cvr-ink">{tenCap(t)} <span className="text-xs font-normal text-cvr-muted">X{getTier(t).heSo}</span></p>
-                <OPhanTram value={pt[t]} onChange={(n) => onPt({ ...pt, [t]: n })} />
-              </div>
-              <div className="space-y-2">
-                {[...p.terms].map((term, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <label className="w-16 text-xs text-cvr-muted">Ngày
-                      <OSo value={term.days} onChange={(n) => datTerms(t, p.terms.map((x, j) => (j === i ? { ...x, days: n } : x)))} />
-                    </label>
-                    <label className="flex-1 text-xs text-cvr-muted">Giá chuẩn
-                      <OSo value={term.price} onChange={(n) => datTerms(t, p.terms.map((x, j) => (j === i ? { ...x, price: n } : x)))} />
-                      <GiaCongBo pt={pt[t]} gia={tronNghin(apDung(term.price, pt[t]))} />
-                    </label>
-                    <button type="button" aria-label="Xoá thời hạn" onClick={() => datTerms(t, p.terms.filter((_, j) => j !== i))}
-                      className="mt-5 px-1 text-cvr-muted hover:text-red-600">×</button>
-                  </div>
-                ))}
-              </div>
-              <button type="button" onClick={() => datTerms(t, [...p.terms, { days: 0, price: 0 }])}
-                className="mt-2 text-xs font-semibold text-cvr-blue">+ Thời hạn</button>
-            </div>
-          );
-        })}
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
+          <DauBang nhan="Thời gian" />
+          <tbody>
+            <HangPhanTram pt={pt} onPt={onPt} />
+            {hang.map((d) => (
+              <tr key={d} className="border-b border-cvr-line/60 align-top">
+                <td className="whitespace-nowrap py-2 pr-3 font-semibold text-cvr-ink">
+                  {d} ngày
+                  <button type="button" aria-label={`Bỏ thời hạn ${d} ngày`} onClick={() => boHang(d)} className="ml-1 px-1 font-normal text-cvr-muted hover:text-red-600">×</button>
+                </td>
+                {COT_HIEN.map((t) => {
+                  const term = planCua(t).terms.find((x) => x.days === d);
+                  return (
+                    <td key={t} className="py-2 pr-3">
+                      <input inputMode="numeric" value={term ? term.price.toLocaleString("vi-VN") : ""} placeholder="—"
+                        onChange={(e) => datO(t, d, e.target.value)} className={inputCls} />
+                      {term && <GiaCongBo pt={pt[t]} gia={tronNghin(apDung(term.price, pt[t]))} />}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            <tr>
+              <td colSpan={5} className="pt-3">
+                <span className="flex items-center gap-2">
+                  <input inputMode="numeric" value={ngayMoi} onChange={(e) => setNgayMoi(e.target.value)} placeholder="Số ngày" className={`${inputCls} w-24`} />
+                  <button type="button" onClick={themHang} className="text-xs font-semibold text-cvr-blue">+ Thời hạn</button>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </Panel>
   );
 }
 
-// ── Đẩy tin: giá MỖI LƯỢT theo bậc số lượt; % áp cho cả cột hạng ────────────
+// ── Đẩy tin: giá MỖI LƯỢT theo bậc số lượt; % áp cho cả cột hạng — cùng chiều bảng khách xem (hàng = số lượt) ──
 function BangDayTin({ ten, bang, pt, onChange, onPt }: {
   ten: string; bang: BangChuan; pt: PhanTramCot;
   onChange: (b: BangChuan) => void; onPt: (p: PhanTramCot) => void;
@@ -730,29 +782,24 @@ function BangDayTin({ ten, bang, pt, onChange, onPt }: {
     <Panel title={ten}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
-          <thead>
-            <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
-              <th className="py-2">Hạng</th>
-              <th className="py-2">% điều chỉnh</th>
-              {MAC_DINH.map((b, i) => <th key={i} className="py-2">Mua từ {b.tu} lượt · giá/lượt</th>)}
-            </tr>
-          </thead>
+          <DauBang nhan="Gói đẩy · giá/lượt" />
           <tbody>
-            {THU_TU_CAP.map((t) => {
-              const bac = bacCua(t);
-              return (
-                <tr key={t} className="border-b border-cvr-line/60 align-top">
-                  <td className="py-2 pr-3 font-semibold text-cvr-ink">{tenCap(t)}</td>
-                  <td className="py-2 pr-3"><OPhanTram value={pt[t]} onChange={(n) => onPt({ ...pt, [t]: n })} /></td>
-                  {bac.map((b, i) => (
-                    <td key={i} className="py-2 pr-3">
+            <HangPhanTram pt={pt} onPt={onPt} />
+            {MAC_DINH.map((m, i) => (
+              <tr key={i} className="border-b border-cvr-line/60 align-top">
+                <td className="whitespace-nowrap py-2 pr-3 font-semibold text-cvr-ink">Mua từ {m.tu} lượt</td>
+                {COT_HIEN.map((t) => {
+                  const bac = bacCua(t);
+                  const b = bac[i] ?? m;
+                  return (
+                    <td key={t} className="py-2 pr-3">
                       <OSo value={b.gia} onChange={(n) => datBac(t, bac.map((x, j) => (j === i ? { ...x, gia: n } : x)))} />
                       <GiaCongBo pt={pt[t]} gia={tronTram(apDung(b.gia, pt[t]))} />
                     </td>
-                  ))}
-                </tr>
-              );
-            })}
+                  );
+                })}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
