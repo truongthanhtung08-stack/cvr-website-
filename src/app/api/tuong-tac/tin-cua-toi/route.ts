@@ -14,7 +14,14 @@ export async function GET() {
   if (!db) return NextResponse.json({ ok: false }, { status: 500 });
   const { data: tin } = await db.from("listings").select("id, title").eq("owner_id", user.id).limit(1000);
   const ids = (tin ?? []).map((x) => x.id as string);
-  if (!ids.length) return NextResponse.json({ ok: true, ds: [] });
+  if (!ids.length) return NextResponse.json({ ok: true, ds: [], dem: {} });
+  // Đếm cộng dồn theo tin (trang Khách hàng: tổng thích · bình luận) — chỉ đọc 2 cột, không giới hạn như danh sách.
+  const { data: tatCa } = await db.from("tuong_tac_tin").select("listing_id, loai").in("listing_id", ids).neq("user_id", user.id).limit(20000);
+  const dem: Record<string, { thich: number; binhLuan: number }> = {};
+  for (const x of tatCa ?? []) {
+    const d = (dem[x.listing_id as string] ??= { thich: 0, binhLuan: 0 });
+    if (x.loai === "thich") d.thich++; else d.binhLuan++;
+  }
   const { data } = await db.from("tuong_tac_tin").select("listing_id, anh_so, loai, noi_dung, created_at, user_id").in("listing_id", ids).neq("user_id", user.id).order("created_at", { ascending: false }).limit(200);
   const nguoi = [...new Set((data ?? []).map((x) => x.user_id as string))];
   const { data: p } = nguoi.length ? await db.from("profiles").select("id, full_name").in("id", nguoi) : { data: [] };
@@ -22,6 +29,7 @@ export async function GET() {
   const tieuDe = new Map((tin ?? []).map((x) => [x.id as string, x.title as string]));
   return NextResponse.json({
     ok: true,
+    dem,
     ds: (data ?? []).map((x) => ({ listingId: x.listing_id, tin: tieuDe.get(x.listing_id as string) ?? "", anhSo: x.anh_so, loai: x.loai, noiDung: x.noi_dung, luc: x.created_at, ten: ten.get(x.user_id as string) ?? "Thành viên" })),
   });
 }

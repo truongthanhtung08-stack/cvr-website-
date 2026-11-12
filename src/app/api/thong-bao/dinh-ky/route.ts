@@ -18,9 +18,8 @@ import { getTier } from "@/lib/packages";
 //    [còn 2 ngày, còn 3 ngày) tính từ lúc chạy. Cron chạy MỖI NGÀY MỘT LẦN nên
 //    khoảng 24 giờ đó bảo đảm mỗi gói được nhắc đúng một lần — không cần cột
 //    đánh dấu, không cần migration.
-// 2) BÁO CÁO TUẦN (mẫu ZBS 641604): chỉ sáng THỨ HAI (giờ VN), cho khách đang có
-//    tin hiển thị. Số liệu lấy đúng bảng đo thật của 7 ngày trước — không làm
-//    tròn lên, không bịa.
+// 2) TÓM TẮT TƯƠNG TÁC (mẫu ZBS 641604): MỖI TIN MỘT LẦN, một ngày trước tin "sắp hết hạn"
+//    (thay báo cáo tuần — anh 12/11/2026). Số cộng dồn từ khi tin lên web, đúng bảng đo thật.
 // 3) ƯU ĐÃI THÀNH VIÊN MỚI (mẫu ZBS 644528, tag 3 Hậu mãi — chủ dự án duyệt 02/10/2026):
 //    người mở tài khoản trong 24 giờ trước lúc chạy → mỗi người đúng MỘT tin. Chỉ gửi khi
 //    chương trình "free" trong admin Giá & quy định đang chạy, đúng diện thành viên mới,
@@ -215,43 +214,44 @@ export async function GET(request: Request) {
     await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: SU_CO.dinhKy.tinNhap, chiTiet: String(e) });
   }
 
-  // ── 2) Báo cáo tuần — chỉ sáng Thứ Hai giờ VN ──────────────────────────
-  const homNayVN = new Date(Date.now() + 7 * 3_600_000);
-  if (homNayVN.getUTCDay() === 1) {
+  // ── 2) TÓM TẮT TƯƠNG TÁC — MỖI TIN MỘT LẦN (anh 12/11/2026: "1 tin báo 1 lần", "ngày trước khi báo hết hạn",
+  //    bỏ báo cáo tuần). Tin còn hạn trong khoảng (3 ngày, 4 ngày] lúc cron 8h chạy → đúng một ngày trước tin "sắp hết
+  //    hạn" (nhắc khi còn ≤ 3 ngày). Cron mỗi ngày một lần + khoảng 24 giờ → mỗi kỳ hiển thị của tin gửi đúng một lần,
+  //    không cần cột đánh dấu. Số liệu CỘNG DỒN từ khi tin lên web (cùng số trang Tài khoản → Khách hàng).
+  //    Nhiều tin của một khách cùng ngày → gộp một tin nhắn. Mẫu ZBS 641604 (đã duyệt).
+  {
     try {
-      const den = new Date(Date.UTC(homNayVN.getUTCFullYear(), homNayVN.getUTCMonth(), homNayVN.getUTCDate())); // 0h hôm nay (lịch VN)
-      const tu = new Date(den.getTime() - 7 * 86_400_000);
-      const ngayChu = (d: Date) => d.toISOString().slice(0, 10);
-
-      const { data: tin } = await admin.from("listings").select("id,owner_id").eq("status", "approved").not("owner_id", "is", null);
-      const theoChu = new Map<string, string[]>();
-      for (const t of (tin ?? []) as { id: string; owner_id: string }[]) theoChu.set(t.owner_id, [...(theoChu.get(t.owner_id) ?? []), t.id]);
+      const bayGio = Date.now();
+      const { data: tin } = await admin
+        .from("listings")
+        .select("id,owner_id,title,view_count,published_at,tier_expires_at")
+        .eq("status", "approved")
+        .not("owner_id", "is", null)
+        .gt("tier_expires_at", new Date(bayGio + 3 * 86_400_000).toISOString())
+        .lte("tier_expires_at", new Date(bayGio + 4 * 86_400_000).toISOString())
+        .limit(1000);
+      type T = { id: string; owner_id: string; title: string; view_count: number | null; published_at: string | null; tier_expires_at: string };
+      const theoChu = new Map<string, T[]>();
+      for (const t of (tin ?? []) as T[]) theoChu.set(t.owner_id, [...(theoChu.get(t.owner_id) ?? []), t]);
       const nguoi = await layNguoi([...theoChu.keys()]);
 
-      const tong = async (bang: string, ids: string[]) => {
-        const { data } = await admin.from(bang).select("luot").in("listing_id", ids).gte("ngay", ngayChu(tu)).lt("ngay", ngayChu(den));
-        return ((data ?? []) as { luot: number }[]).reduce((s, r) => s + r.luot, 0);
-      };
-
-      for (const [chu, ids] of theoChu) {
+      for (const [chu, ds] of theoChu) {
         const n = nguoi.get(chu);
         if (!n || n.role === "admin") continue; // tin admin tự nhập không phải khách
-        const [hienThi, xem] = await Promise.all([tong("listing_impression_daily", ids), tong("listing_view_daily", ids)]);
-        const { count: xemSo } = await admin
-          .from("listing_leads")
-          .select("id", { count: "exact", head: true })
-          .in("listing_id", ids)
-          .gte("created_at", new Date(tu.getTime() - 7 * 3_600_000).toISOString())
-          .lt("created_at", new Date(den.getTime() - 7 * 3_600_000).toISOString());
-        const tuChu = ngayVN(new Date(tu.getTime() - 7 * 3_600_000 + 12 * 3_600_000));
-        const denChu = ngayVN(new Date(den.getTime() - 7 * 3_600_000 - 12 * 3_600_000));
+        const ids = ds.map((t) => t.id);
+        const { data: ht } = await admin.from("listing_impression_daily").select("luot").in("listing_id", ids);
+        const hienThi = ((ht ?? []) as { luot: number }[]).reduce((s2, r) => s2 + (Number(r.luot) || 0), 0);
+        const xem = ds.reduce((s2, t) => s2 + Number(t.view_count ?? 0), 0);
+        const { count: xemSo } = await admin.from("listing_leads").select("id", { count: "exact", head: true }).in("listing_id", ids);
+        const tuChu = ngayVN(new Date(Math.min(...ds.map((t) => Date.parse(t.published_at ?? "") || bayGio))));
+        const denChu = ngayVN(new Date(bayGio));
         await guiThongBao({
           email: n.email,
           phone: n.phone,
-          tieuDe: "Báo cáo tin đăng tuần qua",
-          loiNhan: `Kết quả tin đăng của bạn trên Coastal Land từ ${tuChu} đến ${denChu}. Xem chi tiết tại coastalland.vn/tai-khoan/tuong-tac.`,
+          tieuDe: ds.length > 1 ? `Kết quả ${ds.length} tin của bạn trên Coastal Land` : "Kết quả tin của bạn trên Coastal Land",
+          loiNhan: `Kết quả tin của bạn từ ${tuChu} đến ${denChu}. Xem chi tiết tại coastalland.vn/tai-khoan/khach-hang.`,
           cacDong: [
-            { nhan: "Tin đang hiển thị", giaTri: String(ids.length) },
+            ...ds.map((t) => ({ nhan: "Tin", giaTri: t.title })),
             { nhan: "Lượt hiển thị", giaTri: hienThi.toLocaleString("vi-VN") },
             { nhan: "Lượt xem tin", giaTri: xem.toLocaleString("vi-VN") },
             { nhan: "Lượt xem số điện thoại", giaTri: String(xemSo ?? 0) },
@@ -262,7 +262,7 @@ export async function GET(request: Request) {
             so_dien_thoai: chuanHoaSdt(n.phone ?? ""), // cặp định danh Zalo bắt buộc (CT_13)
             tu_ngay: tuChu,
             den_ngay: denChu,
-            so_tin: String(ids.length),
+            so_tin: String(ds.length),
             luot_hien_thi: hienThi.toLocaleString("vi-VN"),
             luot_xem: xem.toLocaleString("vi-VN"),
             luot_xem_so: String(xemSo ?? 0),

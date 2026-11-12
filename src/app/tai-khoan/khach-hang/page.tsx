@@ -30,7 +30,8 @@ type Lead = { id: string; listing_id: string; viewer_id: string | null; viewer_n
 type Viewer = { listing_id: string; viewer_id: string; ngay: string; lan_xem: number; viewer_name: string | null; viewer_phone: string | null; lan_cuoi: string };
 type DanhGia = { id: string; listing_id: string; sao: number; sai_thong_tin: boolean; khong_lien_lac: boolean; da_ban: boolean; created_at: string };
 type SuKien = { id: number; listing_id: string; luc: string; thiet_bi: string | null; nguon: string | null; la_thanh_vien: boolean };
-type DongTin = { id: string; title: string; hienThi: number; nguoiXem: number; xem7: number; xem30: number; tong: number; hoiSo: number };
+type DongTin = { id: string; title: string; hienThi: number; nguoiXem: number; xem7: number; xem30: number; tong: number; hoiSo: number; hoiSoTong: number };
+type DemTT = Record<string, { thich: number; binhLuan: number }>;
 
 // Một KHÁCH = một người (gom mọi tin họ xem / hỏi số lại với nhau).
 type Khach = {
@@ -55,6 +56,8 @@ export default function KhachHangPage() {
   const [viewers, setViewers] = useState<Viewer[]>([]);
   const [danhGia, setDanhGia] = useState<DanhGia[]>([]);
   const [suKien, setSuKien] = useState<SuKien[]>([]);
+  const [demTT, setDemTT] = useState<DemTT>({});
+  const [dsTT, setDsTT] = useState<TT[]>([]);
   const [the, setThe] = useState<"khach" | "tin" | "luot">("khach");
   const [loc, setLoc] = useState<"all" | "hoi-so" | "chi-xem">("all");
   const [tim, setTim] = useState("");
@@ -97,7 +100,7 @@ export default function KhachHangPage() {
         supabase.from("listing_viewer").select("listing_id,viewer_id,ngay,lan_xem,viewer_name,viewer_phone,lan_cuoi")
           .in("listing_id", ids).order("lan_cuoi", { ascending: false }).limit(500),
         supabase.from("listing_leads").select("id,listing_id,viewer_id,viewer_name,viewer_phone,created_at,nguon")
-          .in("listing_id", ids).order("created_at", { ascending: false }).limit(500),
+          .in("listing_id", ids).order("created_at", { ascending: false }).limit(5000),
         supabase.from("danh_gia_tin").select("id,listing_id,sao,sai_thong_tin,khong_lien_lac,da_ban,created_at")
           .in("listing_id", ids).order("created_at", { ascending: false }).limit(200),
         // Từng lượt xem có giờ (0036) — ghi từ 24/09/2026, trước đó chưa có.
@@ -133,7 +136,10 @@ export default function KhachHangPage() {
         nguoiTheoTin.get(v.listing_id)!.add(v.viewer_id);
       }
       const demLead = new Map<string, Set<string>>();
+      const demLeadTong = new Map<string, Set<string>>(); // cộng dồn từ khi đăng
       for (const l of dsLead) {
+        if (!demLeadTong.has(l.listing_id)) demLeadTong.set(l.listing_id, new Set());
+        demLeadTong.get(l.listing_id)!.add(khoaKhach(l.viewer_id, l.viewer_phone, l.id));
         if (ngayVN(l.created_at) < moc30) continue;
         if (!demLead.has(l.listing_id)) demLead.set(l.listing_id, new Set());
         demLead.get(l.listing_id)!.add(khoaKhach(l.viewer_id, l.viewer_phone, l.id));
@@ -150,10 +156,14 @@ export default function KhachHangPage() {
             xem30: bamuoi.get(l.id) ?? 0,
             tong: Number(l.view_count ?? 0),
             hoiSo: demLead.get(l.id)?.size ?? 0,
+            hoiSoTong: demLeadTong.get(l.id)?.size ?? 0,
           }))
           .sort((a, b) => b.xem7 - a.xem7 || b.tong - a.tong),
       );
     })();
+    fetch("/api/tuong-tac/tin-cua-toi", { cache: "no-store" }).then((r) => r.json()).then((k) => {
+      if (k?.ok) { setDsTT(k.ds ?? []); setDemTT(k.dem ?? {}); }
+    }).catch(() => {});
   }, []);
 
   // ── GOM THEO TỪNG KHÁCH ───────────────────────────────────────────────────
@@ -210,6 +220,11 @@ export default function KhachHangPage() {
   const moc30 = tuNgayVN(30);
   const tongNguoiXem = new Set(viewers.filter((v) => String(v.ngay).slice(0, 10) >= moc30).map((v) => khoaKhach(v.viewer_id, v.viewer_phone, v.viewer_id))).size;
   const tongHoiSo = new Set(leads.filter((l) => ngayVN(l.created_at) >= moc30).map((l) => khoaKhach(l.viewer_id, l.viewer_phone, l.id))).size;
+  // CỘNG DỒN từ khi đăng (anh 12/11/2026: "cộng hưởng tất cả lượt xem, tương tác, lượt nhập số"):
+  const tongXem = (tin ?? []).reduce((s, t) => s + t.tong, 0);
+  const tongXemSo = new Set(leads.map((l) => khoaKhach(l.viewer_id, l.viewer_phone, l.id))).size;
+  const tongThich = Object.values(demTT).reduce((s, d) => s + d.thich, 0);
+  const tongBinhLuan = Object.values(demTT).reduce((s, d) => s + d.binhLuan, 0);
   const soMoi = mocCu ? khach.filter((k) => k.luc > mocCu).length : 0;
 
   const diemTb = danhGia.length ? danhGia.reduce((s2, d) => s2 + d.sao, 0) / danhGia.length : 0;
@@ -253,6 +268,13 @@ export default function KhachHangPage() {
         <O nhan="Lượt xem tin" so={tongXem30} />
         <O nhan="Thành viên đã xem" so={tongNguoiXem} />
         <O nhan="Khách hỏi số" so={tongHoiSo} accent />
+      </section>
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <O nhan="Lượt xem tin" so={tongXem} ky="Tổng cộng" />
+        <O nhan="Khách xem số" so={tongXemSo} ky="Tổng cộng" accent />
+        <O nhan="Lượt thích" so={tongThich} ky="Tổng cộng" />
+        <O nhan="Bình luận" so={tongBinhLuan} ky="Tổng cộng" />
+        <O nhan="Đánh giá" so={danhGia.length} ky="Tổng cộng" />
       </section>
 
       {/* ── BA CÁCH XEM ───────────────────────────────────────────────────────── */}
@@ -348,7 +370,7 @@ export default function KhachHangPage() {
       {the === "tin" && (
         <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm">
+            <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
                   <th className="py-2.5">Tin đăng</th>
@@ -358,6 +380,9 @@ export default function KhachHangPage() {
                   <th className="py-2.5 text-right">Tổng xem</th>
                   <th className="py-2.5 text-right">Thành viên 30n</th>
                   <th className="py-2.5 text-right">Hỏi số 30n</th>
+                  <th className="py-2.5 text-right">Hỏi số tổng</th>
+                  <th className="py-2.5 text-right">Thích</th>
+                  <th className="py-2.5 text-right">Bình luận</th>
                 </tr>
               </thead>
               <tbody>
@@ -372,6 +397,9 @@ export default function KhachHangPage() {
                     <td className="py-3 text-right tabular-nums text-cvr-body">{t.tong}</td>
                     <td className="py-3 text-right tabular-nums text-cvr-body">{t.nguoiXem || "—"}</td>
                     <td className="py-3 text-right tabular-nums font-semibold text-cvr-blue-ink">{t.hoiSo || "—"}</td>
+                    <td className="py-3 text-right tabular-nums text-cvr-body">{t.hoiSoTong || "—"}</td>
+                    <td className="py-3 text-right tabular-nums text-cvr-body">{demTT[t.id]?.thich || "—"}</td>
+                    <td className="py-3 text-right tabular-nums text-cvr-body">{demTT[t.id]?.binhLuan || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -411,7 +439,7 @@ export default function KhachHangPage() {
         </section>
       )}
 
-      <ThichBinhLuan />
+      <ThichBinhLuan ds={dsTT} />
 
       {/* ── KHÁCH ĐÁNH GIÁ TIN ── giữ như trang Tương tác cũ ─────────────────── */}
       {danhGia.length > 0 && (
@@ -455,11 +483,8 @@ export default function KhachHangPage() {
 }
 
 // THÍCH · BÌNH LUẬN trên tin của tôi (bảng 0061 — chủ dự án 10/10/2026)
-function ThichBinhLuan() {
-  const [ds, setDs] = useState<{ listingId: string; tin: string; anhSo: number; loai: string; noiDung: string | null; luc: string; ten: string }[]>([]);
-  useEffect(() => {
-    fetch("/api/tuong-tac/tin-cua-toi", { cache: "no-store" }).then((r) => r.json()).then((k) => { if (k?.ok) setDs(k.ds ?? []); }).catch(() => {});
-  }, []);
+type TT = { listingId: string; tin: string; anhSo: number; loai: string; noiDung: string | null; luc: string; ten: string };
+function ThichBinhLuan({ ds }: { ds: TT[] }) {
   if (!ds.length) return null;
   return (
     <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
@@ -498,14 +523,14 @@ function NutChep({ so }: { so: string }) {
   );
 }
 
-function O({ nhan, so, accent }: { nhan: string; so: number; accent?: boolean }) {
+function O({ nhan, so, accent, ky = "30 ngày qua" }: { nhan: string; so: number; accent?: boolean; ky?: string }) {
   return (
     <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
       <p className="text-xs text-cvr-muted">{nhan}</p>
       <p className={`mt-0.5 text-2xl font-semibold tracking-tight tabular-nums ${accent && so > 0 ? "text-cvr-blue-ink" : "text-cvr-ink"}`}>
         {so.toLocaleString("vi-VN")}
       </p>
-      <p className="text-[11px] text-cvr-faint">30 ngày qua</p>
+      <p className="text-[11px] text-cvr-faint">{ky}</p>
     </div>
   );
 }

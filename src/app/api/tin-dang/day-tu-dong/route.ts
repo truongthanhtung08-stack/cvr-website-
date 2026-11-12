@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { baoLoi } from "@/lib/baoLoi";
 import { SU_CO } from "@/lib/chuThongBao";
+import { baoThanhToan } from "@/lib/baoThanhToan";
 
 // ============================================================================
 // TỰ ĐỘNG ĐẨY TIN VÀO KHUNG GIỜ VÀNG — chạy mỗi sáng
@@ -69,8 +70,12 @@ export async function GET(request: Request) {
       hong.push(`${tin.id}: ${error.message}`);
       continue;
     }
-    if ((data as unknown[] | null)?.length) daDay++;
-    else boQua++;
+    const d = (data as { con_lai: number }[] | null)?.[0];
+    if (d) {
+      daDay++;
+      // Máy tự đẩy cũng báo khách (anh 12/11/2026: "đẩy cái nào là báo cái đẩy").
+      await baoThanhToan(admin, tin.owner_id as string, { dichVu: `Tự động đẩy tin — ${tin.title} (lượt đã mua, còn ${d.con_lai} lượt)`, soTien: 0, soDu: null, luonBao: true });
+    } else boQua++;
   }
 
   if (daDay > 0) revalidateTag("listings", "max"); // các tin vừa lên đầu → hiện NGAY
@@ -86,7 +91,7 @@ export async function GET(request: Request) {
       chiTiet: hong.slice(0, 10).join(" · "),
       hauQua: SU_CO.tuDay.hauQua,
       canLam: "Kiểm tra hàm day_tin_bang_luot và migration 0035.",
-      khoa: `day-tu-dong:${gioVn.toISOString().slice(0, 10)}`,
+      khoa: "day-tu-dong", // một khoá cố định: hỏng nhiều ngày liền vẫn chỉ một email tới khi xử lý
     });
   }
 

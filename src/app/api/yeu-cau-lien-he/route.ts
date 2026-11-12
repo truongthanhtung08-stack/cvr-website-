@@ -2,9 +2,6 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { guiThongBao, MAU_CO_NGUOI_QUAN_TAM } from "@/lib/thongBao";
-import { baoAdmin } from "@/lib/baoAdmin";
-import { duongDanTin } from "@/lib/duongDanTin";
-import { EMAIL } from "@/lib/chuThongBao";
 
 // ════════════════════════════════════════════════════════════════════════════
 // TIN HẾT HẠN — "GỬI YÊU CẦU LIÊN HỆ" (như Batdongsan, 03/10/2026)
@@ -53,21 +50,13 @@ export async function POST(req: Request) {
   if (error) return loi("Gửi yêu cầu chưa được, vui lòng thử lại.", 500);
 
   const luc = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
-  const maTin = String(tin.id).slice(0, 8).toUpperCase();
   const { data: chu } = tin.owner_id
     ? await admin.from("profiles").select("email,phone,full_name,role").eq("id", tin.owner_id).maybeSingle()
     : { data: null };
 
   if (!chu || chu.role === "admin") {
-    // Tin đăng hộ: người đăng là admin — báo ngay MỌI yêu cầu (email nội bộ, không tốn Zalo).
-    await baoAdmin(EMAIL.khachHoiTin(maTin), [
-      {
-        tieuDe: tin.title,
-        dong: [`Khách: ${ten}`, `Số điện thoại: ${sdt}`, `Lúc: ${luc}`],
-        link: `https://coastalland.vn${duongDanTin(tin)}`,
-        nhanLink: EMAIL.xemTin,
-      },
-    ]);
+    // Tin đăng hộ: KHÔNG email admin (anh 12/11/2026: email admin chỉ duyệt tin + lỗi hệ thống) — yêu cầu đã ghi vào
+    // listing_leads, xem ở Admin.
     return NextResponse.json({ ok: true });
   }
 

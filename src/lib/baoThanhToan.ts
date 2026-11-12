@@ -3,20 +3,21 @@ import { guiThongBao, MAU_THANH_TOAN } from "@/lib/thongBao";
 
 // ════════════════════════════════════════════════════════════════════════════
 // BÁO "THANH TOÁN DỊCH VỤ THÀNH CÔNG" (mẫu ZBS 641606) — gọi SAU KHI đã trừ ví
-// cho Up tin · đẩy tin · gói đẩy · gói hội viên. Không báo khi 0đ (miễn phí,
-// dùng lượt/voucher) — không có giao dịch tiền thì không có gì để xác nhận.
+// cho Up tin · đẩy tin · gói đẩy · gói hội viên. Không báo khi 0đ — TRỪ đẩy bằng lượt đã mua
+// (`luonBao`, anh 12/11/2026: "đẩy cái nào là báo cái đẩy"): khách bấm hay máy tự đẩy 8h đều báo, số tiền 0.
 // Gửi hỏng KHÔNG được làm hỏng giao dịch: tiền đã trừ, dịch vụ đã chạy.
 // Duyệt tin (trừ ví lúc duyệt) KHÔNG gọi hàm này — đã có tin "Tin đã duyệt".
 // ════════════════════════════════════════════════════════════════════════════
 export async function baoThanhToan(
   admin: SupabaseClient,
   userId: string,
-  { dichVu, soTien, soDu }: { dichVu: string; soTien: number; soDu: number | null | undefined },
+  { dichVu, soTien, soDu, luonBao }: { dichVu: string; soTien: number; soDu: number | null | undefined; luonBao?: boolean },
 ): Promise<void> {
-  if (!(soTien > 0)) return;
+  if (!(soTien > 0) && !luonBao) return;
   try {
-    const { data: hs } = await admin.from("profiles").select("email,phone,full_name").eq("id", userId).limit(1);
-    const ho = hs?.[0] as { email: string | null; phone: string | null; full_name: string | null } | undefined;
+    const { data: hs } = await admin.from("profiles").select("email,phone,full_name,balance").eq("id", userId).limit(1);
+    const ho = hs?.[0] as { email: string | null; phone: string | null; full_name: string | null; balance: number | null } | undefined;
+    if (soDu == null && ho?.balance != null) soDu = Number(ho.balance); // đẩy bằng lượt: ví không đổi, báo số dư hiện có
     const vnd = (v: number) => `${v.toLocaleString("vi-VN")} đ`;
     const luc = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
     // Mã giao dịch: thời điểm (giờ VN) + 4 ký tự đầu mã khách — đủ để tra sổ doanh thu.

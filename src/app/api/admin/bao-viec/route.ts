@@ -20,7 +20,7 @@ import { SU_CO, EMAIL, VIEC, kemSo } from "@/lib/chuThongBao";
 export const dynamic = "force-dynamic";
 
 const GIO = 3_600_000;
-const dem = (n: number | null | undefined) => n ?? 0;
+
 
 export async function GET(request: Request) {
   const khoaCron = process.env.CRON_SECRET;
@@ -33,22 +33,33 @@ export async function GET(request: Request) {
   const den = new Date(Math.floor(Date.now() / GIO) * GIO).toISOString(); // đầu giờ này
   const tu = new Date(Date.parse(den) - GIO).toISOString(); // đầu giờ trước
   const khoi: KhoiBao[] = [];
+  let tinMoi: { id: string; title: string | null }[] = [];
+  let idsDaBao: string[] | null = null;
 
   try {
     const [tinCho, duAn, hoSo, yeuCau, tongCho] = await Promise.all([
       admin.from("listings").select("id,title").eq("status", "pending").gte("updated_at", tu).lt("updated_at", den),
+      // Ghi chú: khách sửa tin đang chờ duyệt làm đổi updated_at → lọc bằng danh sách đã báo bên dưới.
       // Dự án nạp hàng loạt (details.dangThe) là việc nội bộ → không email, chỉ hiện ở Admin → Tổng quan
       admin.from("projects").select("id,name").eq("status", "pending").is("details->>dangThe", null).gte("updated_at", tu).lt("updated_at", den),
       admin.from("project_poster_requests").select("id,company_name,project_name").gte("created_at", tu).lt("created_at", den),
       admin.from("customer_requests").select("id,ten,dien_thoai,noi_dung").gte("created_at", tu).lt("created_at", den),
-      admin.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      admin.from("listings").select("id").eq("status", "pending").limit(5000),
     ]);
+    // MỖI TIN CHỜ DUYỆT BÁO MỘT LẦN (anh 12/11/2026: "thông báo 1 lần, không lặp lại"): nhớ id đã báo ở
+    // site_content "bao_viec_da_bao" (chỉ giữ id còn đang chờ). Khách sửa tin đang chờ không báo lại.
+    const dangCho = new Set(((tongCho.data ?? []) as { id: string }[]).map((x) => x.id));
+    const { data: nho } = await admin.from("site_content").select("data").eq("key", "bao_viec_da_bao").maybeSingle();
+    const daBao = new Set<string>(((nho?.data as { ids?: string[] } | null)?.ids ?? []).filter((x) => dangCho.has(x)));
+    tinMoi = ((tinCho.data ?? []) as { id: string; title: string | null }[]).filter((t) => !daBao.has(t.id));
+    for (const t of tinMoi) daBao.add(t.id);
+    idsDaBao = [...daBao];
 
     const ten = (s: string | null | undefined) => (s ?? "").slice(0, 70) || "(không tiêu đề)";
-    const tin = (tinCho.data ?? []) as { id: string; title: string | null }[];
+    const tin = tinMoi;
     if (tin.length)
       khoi.push({
-        tieuDe: EMAIL.tinKhachMoi(tin.length, dem(tongCho.count)),
+        tieuDe: EMAIL.tinKhachMoi(tin.length, dangCho.size),
         dong: tin.map((t) => `${t.id.slice(0, 8).toUpperCase()} · ${ten(t.title)}`),
         link: "/admin/tin-dang",
         nhanLink: EMAIL.moiDeDuyet,
@@ -79,5 +90,6 @@ export async function GET(request: Request) {
   if (!khoi.length) return NextResponse.json({ ok: true, guiEmail: false });
   const chuDe = khoi.length === 1 ? khoi[0].tieuDe : EMAIL.nhieuViec(khoi.length);
   const daGui = await baoAdmin(chuDe, khoi);
+  if (daGui && idsDaBao && tinMoi.length) await admin.from("site_content").upsert({ key: "bao_viec_da_bao", data: { ids: idsDaBao } });
   return NextResponse.json({ ok: true, guiEmail: daGui, viec: khoi.map((k) => k.tieuDe) });
 }

@@ -15,7 +15,9 @@ import { chuDeEmail, NHAN_SU_CO } from "@/lib/chuThongBao";
 // LUẬT SỐNG CÒN: hàm này KHÔNG BAO GIỜ được ném lỗi và KHÔNG BAO GIỜ được làm
 // chậm/hỏng việc đang chạy. Báo lỗi mà làm hỏng luồng tiền thì tệ hơn cả lỗi gốc.
 //
-// CHỐNG BẮN LIÊN TỤC: cùng một `khoa` chỉ gửi email tối đa 1 lần/giờ. Zalo sập
+// MỘT SỰ CỐ — MỘT EMAIL (anh 12/11/2026: "thông báo 1 lần, không lặp lại hằng ngày"): cùng một `khoa` đã email mà
+// Admin chưa bấm "Đã xử lý" → không email lại (vẫn ghi sổ, hiện ở Admin → Tổng quan). Xử lý xong mà hỏng lại → email mới.
+// (Trước: tối đa 1 lần/giờ.) Zalo sập
 // thì trăm tin ZNS cùng hỏng — bắn trăm cái mail chỉ khiến người ta tắt thông báo,
 // rồi lần sau lỗi thật cũng không ai đọc. Mọi lần hỏng vẫn được GHI SỔ đầy đủ.
 //
@@ -98,6 +100,16 @@ async function ghiSo(khoa: string, t: SuCo): Promise<boolean> {
 
   const lanCuoi = data?.[0]?.bao_luc as string | undefined;
   let conMoi = Boolean(lanCuoi && Date.now() - new Date(lanCuoi).getTime() < CACH_NHAU_MS);
+  // Đã email khoá này mà sự cố chưa xử lý xong → không báo lại.
+  if (!conMoi && lanCuoi) {
+    const { count: chuaXong } = await admin
+      .from("su_co")
+      .select("id", { count: "exact", head: true })
+      .eq("khoa", khoa)
+      .eq("da_xu_ly", false)
+      .not("bao_luc", "is", null);
+    if ((chuaXong ?? 0) > 0) conMoi = true;
+  }
 
   // Đã chạm trần thư trong ngày → thôi gửi, chỉ ghi sổ.
   if (!conMoi) {

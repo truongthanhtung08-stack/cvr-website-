@@ -81,6 +81,7 @@ async function xuLy(request: Request) {
       const d = (kqLuot as { con_lai: number; moc_day: string }[] | null)?.[0];
       if (!d) return loi("Hôm nay tin này đã đẩy đủ 2 lần — mỗi tin đẩy tối đa 2 lần mỗi ngày.");
       revalidateTag("listings", "max"); // tin vừa lên đầu → hiện NGAY
+      await baoThanhToan(admin, user.id, { dichVu: `Đẩy tin — ${tin.title} (lượt đã mua, còn ${d.con_lai} lượt)`, soTien: 0, soDu: null, luonBao: true });
       return NextResponse.json({ ok: true, daTru: 0, dungLuot: true, conLai: d.con_lai, bumpedAt: d.moc_day });
     }
     // Chưa chạy migration 0035 → rơi xuống đường mua lẻ bên dưới.
