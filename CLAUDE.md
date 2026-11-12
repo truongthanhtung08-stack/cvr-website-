@@ -51,7 +51,11 @@ lọc Mua bán / Cho thuê) — `api/admin/tu-khoa-loi` GET trả `theoDoi` · 3
 chỉ chữ (`BaMucChinh.tsx`, đã xem khổ 375).
 **Zalo Mini App:** bản 61 gửi Zalo xét duyệt 17:32 12/11 (phiên local_76b49610), 9 commit trong `zalo-mini-app` chưa push.
 **PHIÊN SAU LÀM TIẾP (theo thứ tự):**
-1. Anh nhắn "Push" → push → Vercel "Production Deployment" đúng commit → mở Admin → Từ khoá lõi trên web thật kiểm bảng theo dõi.
+1. Anh nhắn "Push" → push → Vercel "Production Deployment" đúng commit → Admin → Xin index → "Cập nhật từ Search Console": dán nội dung
+   `D:\Coastal Land\SEO\Plan SEO - pSEO\TRANG-DA-INDEX-GSC.txt` (459 trang Google đã index, cập nhật 09/11; tin ghi `ma:`), ngày 2026-11-09 → Lưu
+   → kiểm Xin index + Từ khoá lõi cùng số. **Trạng thái index thống nhất (c9e2a5cb):** một luật `src/lib/xinIndex.ts` — Đã index · Chưa index
+   (ghi chú "đã xin dd/mm") · Chưa đủ tin; sheet "Từ khoá lõi" cột X "Index (Search Console)" cùng chữ (78 đã index · 8 chưa · 299 chưa đủ tin).
+   Mỗi tuần: GSC → Trang → Xem dữ liệu trang đã lập chỉ mục → 500 dòng → chép URL → dán lại vào Admin.
 2. Xin index tiếp các trang "Chưa index" đủ chuẩn, ~10 trang/ngày (Search Console, Chrome anh: Overview → ô "Inspect any URL" → Request
    indexing); xin xong ghi "đã xin" (POST `/api/admin/xin-index` {duong, kq:"da-xin"}); Google đã nhận → kq "da-co".
    **12/11 tối đã xin 8 trang lõi** (đã ghi da-xin): /cho-thue/khanh-hoa/nha-trang · /cho-thue/nha-mat-pho/da-nang · /mua-ban/lam-dong/phan-thiet ·
