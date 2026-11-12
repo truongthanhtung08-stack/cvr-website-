@@ -920,3 +920,8 @@ html.xem-thu .hang-app { padding-right: 0; }
 .nut-mo-ban-do { margin-top: 8px; width: 100%; height: 40px; border: 1px solid #d2d2d7; border-radius: 10px; background: #fff; color: var(--cl-ink); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 /* Nút Đăng xuất: chữ cuối hàng không bị luật mũi tên xám (.tk-muc > :last-child) làm mờ như nút tắt — chữ đỏ rõ (12/11/2026) */
 .tk-muc.tk-dang-xuat, .tk-muc.tk-dang-xuat > :last-child { color: #d70018; font-weight: 600; }
+/* Liên kết ở đầu Hồ sơ: nút Zalo · câu giải thích · lối số điện thoại (12/11/2026) */
+.tk-lien-ket { width: 100%; display: grid; gap: 8px; }
+.tk-lien-ket p { margin: 0; font-size: 12px; line-height: 16px; color: #6e6e73; text-align: center; }
+.tk-lien-ket p.loi { color: #d70018; }
+.tk-lk-so { border: 0; background: none; color: #0068ff; font-size: 14px; font-weight: 600; padding: 4px 0; }

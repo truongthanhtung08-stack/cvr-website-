@@ -4,6 +4,7 @@ import TieuDe from "../components/TieuDe";
 import { goiHotline, nhanCoastalLand, quanTamOA } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
 import { soVN, supabase, usePhien } from "../lib/supabase";
+import { lienKetZalo } from "../lib/lienKet";
 
 // ============================================================================
 // CÁ NHÂN — GỌN NHƯNG ĐỦ (chủ dự án 06/11/2026). Mục = ĐÚNG menu Tài khoản của web (src/app/tai-khoan/layout.tsx MUC_CHINH +
@@ -24,6 +25,8 @@ export default function TaiKhoan() {
     null as { full_name?: string; avatar_url?: string; phone?: string; email?: string; balance?: number } | null,
   );
   const h = hoSo.data;
+  const [dangLk, setDangLk] = React.useState(false);
+  const [loiLk, setLoiLk] = React.useState(false);
 
   const NHOM: { ten: string; muc: Muc[] }[] = [
     { ten: "Quản lý", muc: [
@@ -71,7 +74,13 @@ export default function TaiKhoan() {
             </div>
           </>
         ) : (
-          <Button fullWidth onClick={() => dieuHuong("/dang-nhap")}>Liên kết tài khoản</Button>
+          // Bấm là Zalo hỏi quyền ngay (12/11/2026). Câu giải thích anh duyệt 09/11 đặt ngay dưới nút — Zalo 6.1: nói rõ lấy gì, để làm gì trước khi xin quyền.
+          <div className="tk-lien-ket">
+            <Button fullWidth loading={dangLk} onClick={async () => { setDangLk(true); setLoiLk(false); const ok = await lienKetZalo(); setDangLk(false); setLoiLk(!ok); }}>Liên kết tài khoản</Button>
+            <p>Dùng tên và ảnh đại diện Zalo để tạo tài khoản Coastal Land: đăng tin, lưu tin, nạp tiền và nhận thông báo.</p>
+            {loiLk && <p className="loi">Chưa liên kết được. Vui lòng thử lại.</p>}
+            <button className="tk-lk-so" onClick={() => dieuHuong("/dang-nhap?so=1")}>Liên kết bằng số điện thoại</button>
+          </div>
         )}
       </div>
       {NHOM.map((n) => (

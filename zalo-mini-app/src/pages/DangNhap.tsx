@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Box, Button, Input, Page, Text, useNavigate } from "zmp-ui";
-import { authorize, getAccessToken } from "zmp-sdk";
 import TieuDe from "../components/TieuDe";
 import logoTron from "../assets/logo-tron.svg";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { lienKetZalo } from "../lib/lienKet";
 
 // ĐĂNG NHẬP — chung tài khoản với coastalland.vn (chủ dự án 06/11/2026: Mini App tận dụng nền tảng Zalo, đăng nhập bằng Zalo).
 //   1) CHÍNH: "Đăng nhập bằng Zalo" — Zalo hỏi khách cho phép chia sẻ TÊN + ẢNH (scope.userInfo, quyền mặc định của Mini App),
@@ -18,7 +18,7 @@ export default function DangNhap() {
   const dieuHuong = useNavigate();
   const [thamSo] = useSearchParams();
   const tiep = thamSo.get("tiep") || "/tai-khoan";
-  const [buoc, setBuoc] = useState<"chon" | "so" | "ma">("chon");
+  const [buoc, setBuoc] = useState<"chon" | "so" | "ma">(thamSo.get("so") ? "so" : "chon"); // ?so=1: vào thẳng bước nhập số (nút ở Hồ sơ)
   const [so, setSo] = useState("");
   const [ma, setMa] = useState("");
   const [dang, setDang] = useState(false);
@@ -27,26 +27,10 @@ export default function DangNhap() {
   const nhanhBangZalo = async () => {
     setDang(true);
     setLoi(undefined);
-    try {
-      await authorize({ scopes: ["scope.userInfo"] }); // Zalo hiện hộp hỏi khách cho phép chia sẻ tên + ảnh
-      // Máy chủ tự hỏi Zalo id + tên + ảnh bằng mã này — không nhận tên / ảnh do máy khách gửi lên.
-      const accessToken = await getAccessToken();
-      if (!accessToken) throw new Error("khong_co_token");
-      const r = await fetch(`${WEB}/api/auth/zalo-mini-app`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken }),
-      });
-      const j = await r.json();
-      if (!j.ok) throw new Error(j.loi);
-      const { error } = await supabase.auth.setSession({ access_token: j.access_token, refresh_token: j.refresh_token });
-      if (error) throw error;
-      dieuHuong(tiep, { replace: true });
-    } catch {
-      setLoi("Chưa liên kết được. Vui lòng thử lại.");
-    } finally {
-      setDang(false);
-    }
+    const xong = await lienKetZalo();
+    setDang(false);
+    if (xong) dieuHuong(tiep, { replace: true });
+    else setLoi("Chưa liên kết được. Vui lòng thử lại.");
   };
 
   // Mã do máy chủ web gửi qua Zalo (/api/xac-thuc/dang-nhap-sdt) — CHUNG quy tắc với web
