@@ -5,7 +5,7 @@ import { normalizeVi, type Filters } from "@/lib/filters";
 import { choCuCua, newProvinceOf, oldNamesOf, phuongMoiCuaQuan } from "@/lib/locations";
 import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
 import { tenPhuongChuan } from "@/lib/tenPhuongChuan";
-import { loiCuaTrang, laLoiUuTien, phienBanTuKhoa } from "@/lib/tuKhoaLoiStore";
+import { loiCuaTrang, loiChoCon, laLoiUuTien, phienBanTuKhoa } from "@/lib/tuKhoaLoiStore";
 
 // ============================================================================
 // PROGRAMMATIC SEO — Template 1 "Dynamic Listing" (docs/PHAN-TICH-PSEO-2-FILE.md)
@@ -191,14 +191,17 @@ const danhMuc = (muc: Muc) => [...(muc === "thue" ? rentCategories : saleCategor
 // Chữ lõi giữ ở tuKhoaLoiStore.ts (bản mặc định trong mã, Admin tải tệp thì thay bằng bản Admin).
 const tuKhoa = (c: Category, dk?: DieuKien) => {
   if (dk) {
-    const loi = loiCuaTrang(duongDan({ muc: dk.muc, tinh: dk.tinh, cat: c }));
-    if (loi && !giuSoCu(duongDan(dk))) return loi;
+    const goc = duongDan({ muc: dk.muc, tinh: dk.tinh, cat: c }), day = duongDan(dk);
+    const loi = day === goc ? loiCuaTrang(goc) : loiChoCon(goc);
+    if (loi && !giuSoCu(day)) return loi;
   }
   return c.tuKhoa ?? c.h1;
 };
 const goc = (muc: Muc) => (muc === "thue" ? "/cho-thue" : "/mua-ban");
 // Chữ lõi tầng tỉnh ("Bán nhà đất" / "Cho thuê nhà đất" hoặc chữ anh đặt trong bảng cho /mua-ban/<tỉnh>) — trang tỉnh đang top giữ chữ cũ
-const nhaDat = (muc: Muc, tinh: KhuVuc) => { const p = `${goc(muc)}/${tinh.slug}`; return (!giuSoCu(p) && loiCuaTrang(p)) || (muc === "thue" ? "Cho thuê nhà đất" : "Bán nhà đất"); };
+// Trang con (phường, thành phố…) lấy chữ lõi của bảng dù trang tỉnh cha đang giữ chữ cũ vì đang top (12/11/2026: trước đây con dính
+// "Bán nhà đất Phường Sơn Trà…" theo cha) — chỉ CHÍNH trang đang top / giữ bản cũ mới vẽ chữ cũ.
+const nhaDat = (muc: Muc, tinh: KhuVuc, trang = `${goc(muc)}/${tinh.slug}`) => { const p = `${goc(muc)}/${tinh.slug}`; return (!giuSoCu(trang) && (trang === p ? loiCuaTrang(p) : loiChoCon(p))) || (muc === "thue" ? "Cho thuê nhà đất" : "Bán nhà đất"); };
 
 export function khop(l: Listing, dk: DieuKien): boolean {
   if (mucCuaTin(l) !== dk.muc) return false;
@@ -249,7 +252,7 @@ export function tieuDe(dk: DieuKien): string {
     ].filter(Boolean).join(" ");
   }
   if (dk.kiet) return `Bán nhà kiệt, hẻm ${noi}`;
-  return `${nhaDat(dk.muc, dk.tinh)} ${noi}`;
+  return `${nhaDat(dk.muc, dk.tinh, duongDan(dk))} ${noi}`;
 }
 
 // Mô tả cho Google — câu chủ dự án duyệt 24/10/2026 (mỗi trang một đoạn riêng từ chính các tin của trang, Google/AI
