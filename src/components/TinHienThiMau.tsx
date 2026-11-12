@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { getTier } from "@/lib/packages";
 import type { Listing } from "@/lib/data";
 import type { TierId } from "@/lib/packages";
 import TheTinMobile from "@/components/TheTinMobile";
@@ -55,6 +56,11 @@ const VI_DU_MINH_HOA: Record<TierId, Listing> = {
 // gon = trong bảng nổi (bước chọn gói khi đăng tin): thẻ thu nhỏ đều hơn để bảng gọn, nổi rõ là bảng riêng chứ không chiếm cả màn hình.
 export default function TinHienThiMau({ chon, gon }: { chon?: TierId | ""; gon?: boolean }) {
   const dai = useRef<HTMLDivElement>(null);
+  const [pcCap, setPcCap] = useState<TierId>("basic"); // cùng thứ tự bảng giá + dải vuốt điện thoại (Basic → Diamond)
+  const capPc = pcCap;
+  // Bước chọn gói khi đăng tin: thẻ máy tính theo đúng gói khách vừa chọn
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- đồng bộ với gói khách đang chọn
+  useEffect(() => { if (chon) setPcCap(chon); }, [chon]);
   useEffect(() => {
     if (!chon) return;
     const r = requestAnimationFrame(() => {
@@ -75,14 +81,21 @@ export default function TinHienThiMau({ chon, gon }: { chon?: TierId | ""; gon?:
           ))}
         </KhungCuonNgang>
       </div>
-      {/* MÁY TÍNH: đúng thẻ tin máy tính của trang Mua bán / Cho thuê — mỗi tin một hàng, cao xuống thấp (anh 12/11/2026: "mẫu
-          tin hiển thị trên PC sai mẫu") */}
-      <div className="hidden sm:flex sm:flex-col sm:gap-5">
-        {(["diamond", "gold", "silver", "basic"] as const).map((id) => (
-          <div key={id} className={`pointer-events-none select-none overflow-hidden rounded-xl bg-white shadow-lux ${chon === id ? "ring-2 ring-cvr-ink" : ""}`} aria-hidden>
-            <TheTinMobile item={VI_DU_MINH_HOA[id]} pc uuTien />
-          </div>
-        ))}
+      {/* MÁY TÍNH: đúng thẻ tin máy tính của trang Mua bán / Cho thuê (anh 12/11/2026: "mẫu tin hiển thị trên PC sai mẫu"), MỘT thẻ mỗi lần
+          + nút chọn hạng — 4 thẻ chồng nhau cao gấp 4 bảng giá (anh: "khoảng cách, tỷ lệ các phần") */}
+      <div className="hidden sm:block">
+        <div className="mb-3 flex gap-2">
+          {(["basic", "silver", "gold", "diamond"] as const).map((id) => (
+            <button key={id} type="button" onClick={() => setPcCap(id)} aria-pressed={capPc === id}
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${capPc === id ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-body hover:bg-cvr-line"}`}>
+              {getTier(id).name}
+            </button>
+          ))}
+        </div>
+        {/* GỌN, CÂN ĐỐI (anh 12/11/2026: "mô phỏng đúng tỷ lệ" · "gọn gàng và cân đối"): một thẻ, rộng bằng bảng giá phía trên */}
+        <div className="pointer-events-none select-none overflow-hidden rounded-xl bg-white shadow-lux" aria-hidden>
+          <TheTinMobile key={capPc} item={VI_DU_MINH_HOA[capPc]} pc uuTien />
+        </div>
       </div>
     </div>
   );

@@ -79,7 +79,7 @@ async function xuLy(request: Request) {
     }
     if (!loiLuot) {
       const d = (kqLuot as { con_lai: number; moc_day: string }[] | null)?.[0];
-      if (!d) return loi("Hôm nay tin này đã được đẩy rồi — mỗi tin đẩy 1 lần mỗi ngày.");
+      if (!d) return loi("Hôm nay tin này đã đẩy đủ 2 lần — mỗi tin đẩy tối đa 2 lần mỗi ngày.");
       revalidateTag("listings", "max"); // tin vừa lên đầu → hiện NGAY
       return NextResponse.json({ ok: true, daTru: 0, dungLuot: true, conLai: d.con_lai, bumpedAt: d.moc_day });
     }
@@ -137,7 +137,7 @@ async function xuLy(request: Request) {
   const dong = (kq as { so_du: number; moc_day: string }[] | null)?.[0];
   if (!dong) {
     await hoanVoucher();
-    return loi("Hôm nay tin này đã được đẩy rồi — mỗi tin đẩy 1 lần mỗi ngày.");
+    return loi("Hôm nay tin này đã đẩy đủ 2 lần — mỗi tin đẩy tối đa 2 lần mỗi ngày.");
   }
 
   // ── 4. Ghi sổ doanh thu (căn cứ lập tờ khai thuế) ─────────────────────────

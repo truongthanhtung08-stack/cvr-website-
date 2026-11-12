@@ -66,8 +66,8 @@ export async function POST(request: Request) {
 
   // LƯỢT GẮN VỚI KỲ HIỂN THỊ (luotUp.ts): không bán quá số ngày tin còn đẩy được.
   const homNay = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
-  const { data: daDay } = await admin.from("listing_bumps").select("listing_id").eq("listing_id", id).eq("ngay", homNay).limit(1);
-  const conDay = soNgayConDay(tin.tier_expires_at, tin.bump_lich, Boolean(daDay?.length));
+  const { data: daDay } = await admin.from("listing_bumps").select("listing_id").eq("listing_id", id).eq("ngay", homNay).limit(2); // đếm lần đã đẩy hôm nay (tối đa 2)
+  const conDay = soNgayConDay(tin.tier_expires_at, tin.bump_lich, daDay?.length ?? 0);
   if (goi.soLuot > conDay) {
     return loi(conDay > 0
       ? `Tin còn đẩy được tối đa ${conDay} lượt trong thời hạn hiển thị — chọn gói nhỏ hơn.`

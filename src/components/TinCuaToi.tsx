@@ -117,7 +117,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
       if (tinDay) {
         // CHỈ tự đẩy khi NẠP THÀNH CÔNG (?nap=thanh-cong). Huỷ / quay lại → chỉ mở lại bảng Đẩy tin đúng gói đã chọn (06/11/2026)
         tuDay.current = q.get("nap") === "thanh-cong";
-        setMuaCho({ r: tinDay, conDay: soNgayConDay(tinDay.tier_expires_at, tinDay.bump_lich, false), cap: thongTinGoi(tinDay).cap, coLe: true });
+        setMuaCho({ r: tinDay, conDay: soNgayConDay(tinDay.tier_expires_at, tinDay.bump_lich, 0), cap: thongTinGoi(tinDay).cap, coLe: true });
         setLuotChon(Math.max(1, Number(q.get("luot")) || 1));
       }
       if (maDay || maNang) { q.delete("day"); q.delete("luot"); q.delete("nang"); q.delete("tier"); q.delete("days"); window.history.replaceState(window.history.state, "", `${window.location.pathname}${q.toString() ? `?${q}` : ""}`); }
@@ -147,7 +147,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
 
   // ── ĐẨY TIN (UP) ──────────────────────────────────────────────────────────
   // Hỏi xác nhận kèm SỐ TIỀN trước khi trừ: đây là tiền thật, không được trừ
-  // chỉ vì một cú bấm nhầm. Máy chủ mới là nơi tính giá và chặn quá 1 lượt/ngày;
+  // chỉ vì một cú bấm nhầm. Máy chủ mới là nơi tính giá và chặn quá 2 lượt/ngày;
   // ở đây chỉ hiển thị và khoá nút trong lúc gọi.
   const [dangDay, setDangDay] = useState<string | null>(null);
   async function handleDay(r: ListingRow, daChon = false) {
@@ -155,7 +155,7 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
     const kho = Number(r.bump_credits ?? 0);
     // Không còn lượt trong kho → mở bảng đẩy (cùng mẫu Nâng gói: bảng giá · Tổng tiền · ví · Nạp thêm); còn lượt → hỏi như cũ.
     if (kho === 0 && !daChon) {
-      setMuaCho({ r, conDay: soNgayConDay(r.tier_expires_at, r.bump_lich, false), cap: goi.cap, coLe: true });
+      setMuaCho({ r, conDay: soNgayConDay(r.tier_expires_at, r.bump_lich, 0), cap: goi.cap, coLe: true });
       setLuotChon(1);
       return;
     }

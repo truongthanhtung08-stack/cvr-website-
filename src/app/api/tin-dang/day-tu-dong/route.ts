@@ -18,7 +18,7 @@ import { SU_CO } from "@/lib/chuThongBao";
 //     ngày đông người xem thay vì rải đều rồi hết lượt đúng lúc cần nhất.
 //
 // KHÔNG THU THÊM ĐỒNG NÀO: tiền đã thu lúc khách mua gói. Ở đây chỉ tiêu lượt
-// trong kho. Hàm CSDL vẫn chặn 1 lượt/ngày nên khách bấm tay buổi tối rồi sáng
+// trong kho. Hàm CSDL chặn tối đa 2 lượt/ngày (0073) nên khách bấm tay buổi tối rồi sáng
 // sau cron chạy cũng không tiêu hai lượt trong cùng một ngày.
 //
 // Bảo mật: Vercel Cron tự gắn "Authorization: Bearer $CRON_SECRET".
