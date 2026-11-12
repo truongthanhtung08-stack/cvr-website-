@@ -147,6 +147,7 @@ export default function ContentEditor({
   // trượt xuống dưới thanh. Rời ô là khung trở lại như cũ (tự cao / thanh kéo). Máy tính không đổi.
   const thanhRef = useRef<HTMLDivElement>(null);
   const [caoGo, setCaoGo] = useState<number | null>(null);
+  const theoConTroRef = useRef<() => void>(() => {});
   // CỠ CHUẨN ĐIỆN THOẠI (anh 12/11/2026: "cần chuẩn thôi, vốn đã có kéo giãn, không cần làm quá to"): mặc định 6 dòng, cần thì kéo giãn.
   const [laDt, setLaDt] = useState(false);
   useEffect(() => { setLaDt(window.matchMedia("(max-width: 639px)").matches); }, []);
@@ -163,7 +164,6 @@ export default function ContentEditor({
       if (Math.abs(lech) > 2) window.scrollBy({ top: lech, behavior: "instant" });
       const day = (vv ? vv.offsetTop + vv.height : window.innerHeight) - choDinh - tb.getBoundingClientRect().height - 8;
       setCaoGo(Math.max(120, Math.floor(day)));
-      requestAnimationFrame(theoConTro);
     };
     // DÒNG ĐANG GÕ LUÔN NHÌN THẤY TRONG KHUNG: khung đã thu vừa phần trên bàn phím → con trỏ xuống dưới đáy khung thì khung tự cuộn
     // theo (dòng trống không có toạ độ → lấy toạ độ của chính dòng chứa con trỏ).
@@ -183,17 +183,22 @@ export default function ContentEditor({
       if (r.bottom > k.bottom - 8) el.scrollTop += r.bottom - k.bottom + 16;
       else if (r.top < k.top + 4) el.scrollTop -= k.top - r.top + 16;
     };
+    theoConTroRef.current = theoConTro;
     el.addEventListener("input", theoConTro);
     el.addEventListener("keyup", theoConTro);
     const roi = () => setCaoGo(null);
     el.addEventListener("focus", tinh);
     el.addEventListener("blur", roi);
     vv?.addEventListener("resize", tinh);
+    window.addEventListener("resize", tinh); // WebView Android (Zalo, Facebook) co cả cửa sổ khi bàn phím bật
     return () => {
-      el.removeEventListener("focus", tinh); el.removeEventListener("blur", roi); vv?.removeEventListener("resize", tinh);
+      el.removeEventListener("focus", tinh); el.removeEventListener("blur", roi); vv?.removeEventListener("resize", tinh); window.removeEventListener("resize", tinh);
       el.removeEventListener("input", theoConTro); el.removeEventListener("keyup", theoConTro);
     };
   }, []);
+  // Khung vừa thu theo bàn phím (caoGo đổi) → SAU khi khung đổi cỡ mới đưa dòng con trỏ vào phần nhìn thấy (quay lại sửa giữa bài:
+  // chạm dòng 15 mà khung thu còn 6 dòng — trước cuộn trước khi khung đổi cỡ nên dòng đang sửa bị che, anh 12/11/2026).
+  useLayoutEffect(() => { if (caoGo) theoConTroRef.current(); }, [caoGo]);
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
