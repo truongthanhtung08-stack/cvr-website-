@@ -424,6 +424,7 @@ export default function ContentEditor({
       <div className="relative">
         <div
           ref={khungRef}
+          data-tu-cuon=""
           contentEditable
           suppressContentEditableWarning
           role="textbox"

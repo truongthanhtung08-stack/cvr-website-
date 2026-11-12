@@ -143,6 +143,8 @@ export default function BanPhimAo() {
         if (!getComputedStyle(phu).flexDirection.startsWith("column")) phu.style.alignItems = "flex-start";
       } else if (phu) traLopPhu();
 
+      // Ô tự lo vị trí khi gõ (khung soạn Mô tả — data-tu-cuon): KHÔNG cuộn thêm, hai bên cùng kéo trang là màn hình giật (anh 12/11/2026)
+      if (el.closest("[data-tu-cuon]") && window.matchMedia("(max-width: 639px)").matches) canCuon = false;
       if (canCuon && !dangNhin(el, giaDinh)) {
         const r = el.getBoundingClientRect();
         // ô nằm trong khung cuộn riêng (không phải cả trang) → để trình duyệt cuộn khung đó
