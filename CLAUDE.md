@@ -39,6 +39,23 @@ báo anh MỘT dòng trước khi sửa, không bắt anh tự mò. Không dùng
 ③ báo về Điều phối: đã sửa gì (commit) · đã kiểm gì, ở đâu · chưa kiểm gì · ④ đụng quy trình khách (bảng trên) → thử lại ①→⑥ khổ 375 + máy
 tính trước khi báo · ⑤ ghi chú dài để ở thư mục ghi chú chung của nhóm phiên, không dán vào tin nhắn · ⑥ phiên bị cấm (đầu tệp) không được giao.
 
+## ⏳ BÀN GIAO 13/11/2026 TỐI (phiên 18419c5a, anh: "lưu trên file, nghỉ mai làm tiếp") — TỪ KHOÁ LONGTAIL + ĐẶC ĐIỂM
+**Luật anh chốt 13/11:** từ khoá KHÔNG có mục đích (mua/bán/thuê nằm ở đường dẫn web) · lõi = Loại hình + Địa điểm (gồm mọi ý định) ·
+longtail = lõi + ĐẶC ĐIỂM = chi tiết khớp đúng ý định người tìm, theo gợi ý Google + trang top · mỗi loại hình, mỗi địa điểm một mức giá
+riêng · khoảng giá lấy cho CHẮC (căn hộ ĐN không có căn bình thường dưới 2 tỷ, đất không có dưới 300 triệu — "lấy lố là hỏng hết") ·
+**giá rẻ = giá/m² DƯỚI mức trung bình** (lịch sử giá) · cao cấp = trên trung bình + tiện ích · "tháng 11" = web cập nhật thời gian thực
+(đủ cho "mới nhất") · index: dồn nhiều longtail vào MỘT trang đích, chi tiết → trang chính xác nhất, chung → trang lõi.
+**Đã lưu `D:\Coastal Land\SEO\Plan SEO - pSEO\HE-THONG-TU-KHOA.xlsx`** (bản cũ `SEO\_cu\HE-THONG-TU-KHOA-truoc-longtail-13-11.xlsx`):
+sheet **"Longtail"** 2.013 câu → 92 trang đích (67 đã index; 10 đã xin/đã có 12/11 — cột Ngày xin CHƯA ghi; 15 trang con chưa xin) ·
+sheet **"Đặc điểm"** 392 dòng (lõi × đặc điểm × mục đích, nhóm ý định, số gợi ý Google, trang top, số tin khớp, cách tính, trang web,
+cột Xin index: 4 x · 82 Cần mở trang · 248 Chưa đủ tin · 35 đã index). Đã giao Cowork mục **0E** `RA\VIEC.md` + `RA\tin-can-loc-theo-longtail.csv`.
+Công cụ scratchpad phiên 18419c5a: `ghep.mjs` → `lt-ghi2.mjs` (Longtail) · `dd-loai.json` (gợi ý Google 17 loại × 6 thành phố) ·
+`tin-web.json` (302 tin đang hiện) · `csg.json` (128 dãy lịch sử giá) · `dd-bang.mjs` → `dd-ghi.mjs` (Đặc điểm).
+**MAI LÀM TIẾP:** ① anh xem sheet Đặc điểm, lọc lại cho chuẩn (đặc điểm nào giữ) ② ghi Ngày xin 12/11 cho 10 trang trong Longtail ·
+xin index 15 trang con (10/ngày) ③ lịch sử giá THUÊ không có mẫu số (số giống tiền cả căn/tháng) + không có dãy "cả tỉnh" + Huế căn hộ
+67,7 vs chung cư 29,7 triệu/m² → giao Cowork soát; tin đất ghi tỉnh "Lâm Đông" (sai chính tả) ④ sau khi anh duyệt bộ đặc điểm: sửa mã
+mở trang đặc điểm mới (giá rẻ theo TB giá/m², gần biển, khoảng giá…) + liên kết nội bộ — chưa sửa mã gì, chờ anh duyệt.
+
 ## ⏳ BÀN GIAO 12/11/2026 TỐI (phiên 18419c5a, anh: "ghi lại, phiên sau làm tiếp") — SEO GIAO TRỌN CHO CLAUDE
 **Đã lên web (push 815615f1 + 937e441d):** trình soạn Mô tả điện thoại không bị che (ContentEditor khung + BanPhimAo chỉ tính thanh dính
 thật) · thông báo khách/Admin gọn (báo 1 lần, đẩy/nâng/up đều báo) · Quản lý tương tác khách có Tổng cộng · thương hiệu một nguồn
