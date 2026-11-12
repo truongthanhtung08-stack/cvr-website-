@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, thanhVienMoi, chonKhuyenMai, laChuThat, lucGuiTin, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
-import { guiThongBao, MAU_DUYET_TIN, maTin } from "@/lib/thongBao";
+import { guiThongBao, MAU_DUYET_TIN, MAU_THANH_TOAN, maTin } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import { SU_CO } from "@/lib/chuThongBao";
 import type { TierId } from "@/lib/packages";
@@ -479,7 +479,9 @@ export async function POST(request: Request) {
 
   // ── 9. BÁO KHÁCH (bắt buộc) ───────────────────────────────────────────────
   const kq = await baoKhach(admin, tin.owner_id, {
-    tieuDe: "Tin của bạn đã được duyệt và lên sóng",
+    // MỘT MẪU cho mọi lần khách trả tiền (anh 12/11/2026: "đăng tin / up / đẩy / thành viên / dự án… cùng một mẫu, thay tên gói") —
+    // mẫu Zalo "Thanh toán dịch vụ thành công" (641606), tên dịch vụ = gói đã mua. Tin miễn phí vẫn báo "Tin đã duyệt".
+    tieuDe: "Thanh toán dịch vụ thành công — tin đã lên sóng",
     loiNhan: `Cảm ơn ${hs.full_name || "quý khách"} đã sử dụng dịch vụ của Coastal Land.`,
     cacDong: [
       { nhan: "Tin đăng", giaTri: tin.title },
@@ -491,12 +493,13 @@ export async function POST(request: Request) {
       { nhan: "Số dư còn lại", giaTri: vnd(soDuConLai) },
       { nhan: "Hiển thị đến", giaTri: new Date(hetHan).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) },
     ],
-    znsTemplateId: MAU_DUYET_TIN,
+    znsTemplateId: MAU_THANH_TOAN,
     znsData: {
-      ma_giao_dich: maTin(String(tin.id)), // mã tin NGẮN như trên web — mã đầy đủ 36 ký tự vượt giới hạn 30 của Zalo, bị cắt kèm "…" (06/11/2026: duyệt xong không có tin Zalo)
-      ten_tin: tin.title,
+      ma_giao_dich: maTin(String(tin.id)), // mã tin NGẮN như trên web — mã đầy đủ 36 ký tự vượt giới hạn 30 của Zalo
+      ten_dich_vu: `Đăng tin ${tenGoi(bang, goi)} ${soNgay} ngày — ${tin.title}`,
       so_tien: vnd(tien.tongTra),
       so_du: vnd(soDuConLai),
+      thoi_gian: new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }),
     },
   }, { id: String(tin.id), title: tin.title, daTru: true }, hs);
 

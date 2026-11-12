@@ -24,8 +24,9 @@ export const TEN_VOUCHER: Record<string, string> = {
 };
 const QD_DAY = [
   "Chỉ áp dụng cho tin đang hiển thị; ngày đăng và thời hạn giữ nguyên.",
-  "Lượt đầu đẩy ngay khi mua, sau đó mỗi ngày 1 lượt lúc 8h sáng.",
-  "Số lượt tối đa bằng số ngày tin còn hiển thị; tin hết hạn thì lượt còn lại hết theo.",
+  // 12/11/2026: đẩy tối đa 2 lần/ngày (SQL 0073) — cùng câu với Admin → Quyền lợi gói → Quy định đẩy tin
+  "Lượt đầu đẩy ngay khi mua. Các lượt còn lại bạn tự đẩy lúc nào cũng được, mỗi tin tối đa 2 lần mỗi ngày.",
+  "Số lượt mua tối đa bằng 2 lượt cho mỗi ngày tin còn hiển thị; tin hết hạn thì lượt còn lại hết theo.",
   "Mỗi tin dùng một gói một lúc.",
 ];
 const soLuot = (nhan: string) => Number((nhan.match(/(\d+)\s*(lượt|lần)/i) ?? [])[1]) || 1;

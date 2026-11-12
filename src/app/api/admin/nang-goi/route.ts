@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ghepBillingLuu, bangTheoMucDich, giaNangGoi, loaiVoucherTin, vnd, type BillingData } from "@/lib/billing";
 import { goiHienTai, type YeuCauNang } from "@/lib/nangGoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
-import { guiThongBao, maTin, MAU_DUYET_TIN, MAU_TU_CHOI } from "@/lib/thongBao";
+import { guiThongBao, maTin, MAU_THANH_TOAN, MAU_TU_CHOI } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import { SU_CO } from "@/lib/chuThongBao";
 
@@ -182,7 +182,8 @@ export async function POST(request: Request) {
 
   await guiThongBao({
     email: hs?.email, phone: hs?.phone,
-    tieuDe: "Gói tin của bạn đã được nâng",
+    // Cùng mẫu "Thanh toán dịch vụ thành công" như mọi dịch vụ trả tiền — chỉ thay tên gói (12/11/2026)
+    tieuDe: "Thanh toán dịch vụ thành công — gói tin đã được nâng",
     cacDong: [
       { nhan: "Tin đăng", giaTri: tin.title },
       { nhan: "Gói mới", giaTri: `${bangTheoMucDich(bang, tin.purpose).plans.find((p) => p.tierId === yc.tier)?.name ?? "Gói tin"} · ${yc.days} ngày` },
@@ -194,8 +195,12 @@ export async function POST(request: Request) {
       { nhan: "Số dư còn lại", giaTri: vnd(soDuConLai) },
       { nhan: "Hiển thị đến", giaTri: new Date(hetHan).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) },
     ],
-    znsTemplateId: MAU_DUYET_TIN,
-    znsData: { ten_khach_hang: hs?.full_name || "Quý khách", ma_giao_dich: maTin(String(tin.id)), ten_tin: tin.title, so_tien: vnd(tien.tongTra), so_du: vnd(soDuConLai) },
+    znsTemplateId: MAU_THANH_TOAN,
+    znsData: {
+      ten_khach_hang: hs?.full_name || "Quý khách", ma_giao_dich: maTin(String(tin.id)),
+      ten_dich_vu: `Up tin ${bangTheoMucDich(bang, tin.purpose).plans.find((p) => p.tierId === yc.tier)?.name ?? "Gói tin"} ${yc.days} ngày — ${tin.title}`,
+      so_tien: vnd(tien.tongTra), so_du: vnd(soDuConLai), thoi_gian: new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }),
+    },
   });
   return NextResponse.json({ ok: true, daTru: tien.tongTra, hetHan });
 }
