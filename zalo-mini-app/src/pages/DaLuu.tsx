@@ -11,7 +11,7 @@ export default function DaLuu() {
   const { data, dangTai, loi } = useTai(() => layNhieuTin(ids), [ids.join(",")], []);
   return (
     <Page style={{ paddingBottom: 72 }}>
-      <TieuDe title="Tin đã lưu" />
+      <TieuDe title="Tin đã lưu" showBackIcon={false} />
       <DanhSachTin ds={data} dangTai={dangTai} loi={loi} trong="Chưa có tin đã lưu." />
     </Page>
   );
