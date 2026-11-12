@@ -55,7 +55,7 @@ chỉ chữ (`BaMucChinh.tsx`, đã xem khổ 375).
 · 816dabe8 mô tả trang tỉnh / thành phố kèm tỉnh cũ ("Khánh Hòa (Ninh Thuận cũ)") · 2dedbfcb Báo cáo thị trường `/bao-cao-thi-truong/<tỉnh>`
 — **anh: "không hiểu ý, để đó"**: báo cáo thật = form chuẩn DKRA có BIỂU ĐỒ, số web làm nền + Cowork lọc phần thiếu (kinh tế, hạ tầng, chính sách,
 dự án mở bán); bản 2dedbfcb chỉ có số tin rao → TRƯỚC KHI PUSH hỏi anh giữ hay gỡ (đang mở index + sitemap). Form: `D:\Coastal Land\SEO\MAU\bao-cao-thi-truong\`.
-Đã lên web không cần push: 3 hỏi đáp thương hiệu + câu tiếng Anh (sheet Thương hiệu, nạp Admin). GBP: đổi danh mục → "Dịch vụ quảng cáo" đang chờ Google duyệt.
+Sau Push: Admin → Từ khoá lõi tải lại HE-THONG-TU-KHOA-12-11.xlsx (bảng mới lưu loiCon cho trang top → trang con phường hết chữ "Bán"; commit lõi trang con). Đã lên web không cần push: 3 hỏi đáp thương hiệu + câu tiếng Anh (sheet Thương hiệu, nạp Admin). GBP: đổi danh mục → "Dịch vụ quảng cáo" đang chờ Google duyệt.
 Còn treo: mục E Wikidata (anh cho làm, chưa làm) · thiết kế banner MXH anh chê, để sau · sheet "Nghiên cứu từ khoá" + "Đối thủ top 10" + "Địa điểm mới – cũ" đã có trong bảng.
 **PHIÊN SAU LÀM TIẾP (theo thứ tự):**
 1. Anh nhắn "Push" → push → Vercel "Production Deployment" đúng commit → Admin → Xin index → "Cập nhật từ Search Console": dán nội dung
