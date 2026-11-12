@@ -7,8 +7,9 @@ import { useState } from "react";
 // dòng dưới ghi sẵn bên trong có gì (lấy từ chính danh sách — khách nhìn là biết khối dùng để làm gì, không lẫn
 // với nút chọn nhỏ), mũi tên trong vòng tròn. Mặc định thu gọn; đã chọn gì vẫn giữ khi ẩn. Mục bắt buộc KHÔNG
 // đặt trong khối này — luôn hiện.
-export default function MucAnHien({ ten, goiY, soChon, children }: { ten: string; goiY?: string; soChon?: number; children: React.ReactNode }) {
-  const [mo, setMo] = useState(false);
+// moSan: mở sẵn — Đặc điểm luôn mở (anh 12/11/2026); Tiện ích (danh sách dài) vẫn thu gọn
+export default function MucAnHien({ ten, goiY, soChon, moSan = false, children }: { ten: string; goiY?: string; soChon?: number; moSan?: boolean; children: React.ReactNode }) {
+  const [mo, setMo] = useState(moSan);
   return (
     <div className="rounded-2xl bg-cvr-surface">
       <button type="button" onClick={() => setMo(!mo)} aria-expanded={mo} className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left">

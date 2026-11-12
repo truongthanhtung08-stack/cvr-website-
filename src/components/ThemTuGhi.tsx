@@ -12,11 +12,13 @@ import { useState } from "react";
 export default function ThemTuGhi({ onThem, className, boc = "mt-3" }: { onThem: (v: string) => void; className: string; boc?: string }) {
   const [chu, setChu] = useState("");
   const [mo, setMo] = useState(false);
+  // Ghi NHIỀU MỤC một lần, cách nhau dấu phẩy (anh 12/11/2026: "khách muốn ghi ra những cái có"); thêm xong ô vẫn mở
+  // để ghi tiếp — ô trống bấm Thêm mới đóng.
   const them = () => {
-    const v = chu.trim();
-    if (v) onThem(v);
+    const ds = chu.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean);
+    ds.forEach(onThem);
     setChu("");
-    setMo(false);
+    if (!ds.length) setMo(false);
   };
   if (!mo)
     return (
@@ -41,7 +43,7 @@ export default function ThemTuGhi({ onThem, className, boc = "mt-3" }: { onThem:
           }
         }}
         autoFocus
-        placeholder="Khác — tự ghi"
+        placeholder="VD: Máy lọc nước, Két sắt"
         className={className + " min-w-0 flex-1"}
       />
       <button type="button" onClick={them} className="shrink-0 rounded-lg border border-cvr-line px-4 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">

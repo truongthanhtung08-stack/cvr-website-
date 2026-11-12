@@ -24,8 +24,9 @@ import { doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoH
 import {
   demandTypes, DEMAND_DU_AN,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
-  phapLyCho, legalOptions, fieldsFor, furnishLevels, amenityGroups, tienIchCho, interiorItems, directions,
+  phapLyCho, legalOptions, fieldsFor, furnishLevels, tienIchCho, directions, noiThatCho, tatCaTienIch,
   purposeOfDemand, demandOfPurpose,
+  O_LOAI_CON,
 } from "@/lib/listingSpec";
 import { typeGroupsFor, normalizeVi } from "@/lib/filters";
 import { nhomChonLoaiHinh, tenLoaiHinhMenu, tenLoaiHinhDayDu, tachChonLoaiHinh, giaTriChonLoaiHinh, oTheoMucChon } from "@/lib/categories";
@@ -559,7 +560,7 @@ export default function PostListingForm() {
     setSpecValues((v) => Object.fromEntries(Object.entries(v).filter(([k]) => coO.has(k))));
     if (!coNoiThat(loaiHinh)) { setInterior([]); setFurnish(""); }
     const tienIchDuoc = new Set(tienIchCho(loaiHinh).flatMap((g) => g.items));
-    const tienIchChuan = new Set(amenityGroups.flatMap((g) => g.items));
+    const tienIchChuan = tatCaTienIch;
     setAmenities((ds) => ds.filter((x) => tienIchDuoc.has(x) || !tienIchChuan.has(x)));
     setLegal((l) => (l && legalOptions.includes(l) && !phapLyCho(loaiHinh).includes(l) ? "" : l));
   }, [khoaLoai, loaiHinh, demand]);
@@ -585,9 +586,14 @@ export default function PostListingForm() {
   //   · dacDiem  → xuống khối "Đặc điểm", để trống thì web không hiện
   // Tin CHO THUÊ có thêm 3 mục: thời gian vào ở · giá điện · giá nước.
   // Nhóm Đất: ô theo đúng loại đã chọn (Đất nền / Đất nền dự án) — oTheoMucChon
-  const { chinh: specChinh, dacDiem: specDacDiem } = useMemo(() => {
+  const { chinh: specChinh, dacDiem: specDacDiem, loaiCon: oLoaiConHien } = useMemo(() => {
     const s = fieldsSplit(loaiHinh, purposeOfDemand(demand));
-    return { chinh: oTheoMucChon(s.chinh, loaiHinh, specValues.landType), dacDiem: oTheoMucChon(s.dacDiem, loaiHinh, specValues.landType) };
+    // LOẠI CON (Loại đất · Loại căn hộ · Loại nhà…) hiện NGAY DƯỚI ô Loại hình, mọi loại một chỗ (anh 12/11/2026: "chọn loại hình chính —
+    // loại hình con"); không bắt buộc — để trống thì tin hiện tên loại cha. Bỏ khỏi Thông tin chính / Đặc điểm để không lặp.
+    const chinh = oTheoMucChon(s.chinh, loaiHinh, specValues.landType);
+    const dacDiem = oTheoMucChon(s.dacDiem, loaiHinh, specValues.landType);
+    const loaiCon = [...chinh, ...dacDiem].find((f) => O_LOAI_CON.includes(f.key));
+    return { chinh: chinh.filter((f) => f !== loaiCon), dacDiem: dacDiem.filter((f) => f !== loaiCon), loaiCon };
   }, [loaiHinh, demand, specValues.landType]);
 
   // SỐ THỨ TỰ BƯỚC TỰ CHẠY — ẩn một khối (vd Nội thất với đất nền) thì các bước
@@ -1499,6 +1505,7 @@ export default function PostListingForm() {
               className={inputCls}
             />
           </div>
+          {oLoaiConHien && <div className="sm:col-start-2">{oNhapSpec(oLoaiConHien)}</div>}
         </div>
         <TieuDeCon>Địa chỉ bất động sản</TieuDeCon>
         {/* Chọn hệ đơn vị hành chính: MỚI (sau sáp nhập) hay CŨ */}
@@ -1745,6 +1752,7 @@ export default function PostListingForm() {
         )}
         <div className="space-y-3">
         <MucAnHien
+          moSan
           ten={`Đặc điểm — ${tenLoaiHinhMenu(giaTriChonLoaiHinh(loaiHinh, specValues.landType), laThue ? "thue" : "ban")}`}
           goiY={goiYDanhSach([...specDacDiem.filter((f) => !f.batBuoc).map((f) => f.label), "Hướng nhà / đất", "Tình trạng pháp lý"])}
           soChon={specDacDiem.filter((f) => !f.batBuoc && String(specValues[f.key] ?? "").trim()).length + [direction, legal].filter((x) => String(x ?? "").trim()).length}
@@ -1774,13 +1782,14 @@ export default function PostListingForm() {
             <Label>Tình trạng nội thất</Label>
             <ChonHoacGhi value={furnish} onChange={setFurnish} options={furnishLevels} className={inputCls} />
           </div>
-          {(/^Nội thất/.test(furnish) || interior.length > 0) && (
+          {/* Có nội thất (mọi mức trừ Không nội thất / Bàn giao thô — kể cả khách tự ghi mức) → bày danh sách món theo loại hình (12/11/2026) */}
+          {((!!furnish.trim() && !/^(Không nội thất|Bàn giao thô)$/.test(furnish)) || interior.length > 0) && (
           <div className="flex flex-wrap gap-2">
-            {interiorItems.map((it) => (
+            {noiThatCho(loaiHinh).map((it) => (
               <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
             ))}
             {/* Mục khách tự ghi — bấm để bỏ */}
-            {interior.filter((it) => !interiorItems.includes(it)).map((it) => (
+            {interior.filter((it) => !noiThatCho(loaiHinh).includes(it)).map((it) => (
               <Chip key={it} active onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
             ))}
             <ThemTuGhi boc="" onThem={(v) => setInterior((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
@@ -1802,7 +1811,7 @@ export default function PostListingForm() {
           ))}
           {/* Tiện ích khách tự ghi — bấm để bỏ */}
           {(() => {
-            const chuan = new Set(amenityGroups.flatMap((g) => g.items));
+            const chuan = new Set(tienIchCho(loaiHinh).flatMap((g) => g.items));
             const khac = amenities.filter((it) => !chuan.has(it));
             return (
               <div className="flex flex-wrap gap-2">
@@ -1833,6 +1842,7 @@ export default function PostListingForm() {
           value={description}
           onChange={setDescription}
           rows={5}
+          chiAnh // mô tả tin chỉ chèn ảnh; video ở mục Hình ảnh & video (anh 12/11/2026)
           placeholder={loaiHinh ? goiYMoTa(loaiHinh, laThue) : "Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)"}
         />
         </div>
@@ -2018,13 +2028,14 @@ export default function PostListingForm() {
               <div className="mt-5 rounded-2xl border-2 px-4 py-3.5 text-sm text-cvr-body" style={{ borderColor: t.accent, background: `${t.accent}12` }}>
                 <div className="flex items-start justify-between gap-3">
                   <span className="min-w-0">
-                    <span className="flex items-center gap-2">
+                    {/* Điện thoại: huy hiệu gói trên, "Tổng tiền" dưới — không gãy chữ, không chồng lên số tiền (anh 12/11/2026) */}
+                    <span className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
                       <span className="rounded-md px-2 py-0.5 text-[12px] font-bold uppercase tracking-wide" style={{ background: t.accent, color: t.badgeText }}>{t.short}</span>
-                      <span className="text-[15px] font-semibold text-cvr-ink">Tổng tiền</span>
+                      <span className="whitespace-nowrap text-[15px] font-semibold text-cvr-ink">Tổng tiền</span>
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
-                    <span className="block text-xl font-bold tabular-nums tracking-tight text-cvr-ink">{thanhTien > 0 ? vnd(tienThue.tongTra) : "0 ₫"}</span>
+                    <span className="block whitespace-nowrap text-xl font-bold tabular-nums tracking-tight text-cvr-ink">{thanhTien > 0 ? vnd(tienThue.tongTra) : "0 ₫"}</span>
                     {/* GỌN (chủ dự án 06/11/2026: "quá rườm rà"): 0 đ thì không có Chi tiết — không có gì để chi tiết */}
                     {(thanhTien > 0 || duocMienPhi) && (
                     <button type="button" onClick={() => setXemChiTietTien(!xemChiTietTien)} aria-expanded={xemChiTietTien} className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-cvr-blue-ink">

@@ -718,6 +718,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                   {/* Loại hình đủ CHA · CON, đúng chữ ô chọn trong form (05/11/2026) — vd "Đất · Đất nền"; loại con cụ thể ở dòng riêng */}
                   <Row label="Loại hình" value={d.loaiHinh} />
+                  {d.loaiCon && <Row label={d.loaiCon.label} value={d.loaiCon.value} />}
                   {/* Dòng "Dự án" đã chuyển lên ngay dưới địa chỉ đầu tin (22/10/2026 — dự án là vị trí, không phải đặc điểm). */}
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   {/* Trống thì ẩn — không phơi "Chưa cập nhật" lên trang công khai (20/10/2026); thiếu thì VIỆC Cowork bổ sung */}

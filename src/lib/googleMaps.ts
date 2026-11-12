@@ -74,9 +74,11 @@ declare global {
 export function parseLatLng(q: string): LatLng | null {
   const m =
     q.match(/^\s*(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$/) ||
-    q.match(/@(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/) ||
-    // link máy tính kiểu …/data=!3d16.04!4d108.24 · link api=1 (query=) · ll=
+    // !3d…!4d… = TOẠ ĐỘ ĐÚNG ĐIỂM khách chọn — xét TRƯỚC @… (tâm khung bản đồ đang xem, lệch nếu khách đã kéo bản đồ
+    // trước khi chia sẻ) — anh 12/11/2026: "khách copy link dán vào thì phải ra chính xác"
     q.match(/!3d(-?\d{1,3}(?:\.\d+)?)!4d(-?\d{1,3}(?:\.\d+)?)/) ||
+    q.match(/@(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/) ||
+    // link api=1 (query=) · ll=
     q.match(/[?&](?:q|query|ll)=(-?\d{1,3}(?:\.\d+)?)(?:,|%2C)(-?\d{1,3}(?:\.\d+)?)/i);
   if (!m) return null;
   const lat = Number(m[1]);

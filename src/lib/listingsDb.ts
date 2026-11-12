@@ -22,7 +22,7 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, O_LOAI_CON, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, tienIchCho, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, O_LOAI_CON, type Field } from "@/lib/listingSpec";
 import { lapCha } from "@/lib/filters";
 import { tenLoaiHinhDayDu, loaiConDaTrongTen } from "@/lib/categories";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
@@ -573,6 +573,7 @@ export type ListingFull = {
   builtArea: string | null;    // diện tích xây dựng
   descriptionParas: string[];  // mô tả (tách theo dòng)
   loaiHinh: string;            // tên loại hình đủ cha · con, đúng chữ ô chọn trong form (tenLoaiHinhDayDu, 05/11/2026)
+  loaiCon: ListingSpecRow | null; // LOẠI CON khách chọn (Loại đất · Loại căn hộ…) — hiện ngay dưới dòng Loại hình (12/11/2026)
   specsChinh: ListingSpecRow[]; // THÔNG TIN CHÍNH của loại hình (bỏ mục trống)
   // TIỀN VÀ THANH TOÁN của tin thuê (chủ dự án 21/10/2026: tiền cọc nằm ở "Đặc điểm" là sai) → hàng giá, đầu trang:
   // tienDau ngay sau giá thuê (đặt cọc, kỳ thanh toán) · tienSau cuối hàng (điện, nước, phí dịch vụ)
@@ -660,14 +661,19 @@ function rowToDetail(r: Row): ListingFull {
     }));
   const tienSau = doc(theoKhoa(TIEN_SAU)).map((s) => ({ ...s, value: dvt(s.value) }));
   const boRa = new Set([...TIEN_DAU, ...TIEN_SAU, ...DIEU_KIEN]);
-  const specsChinh = doc([...chinh.filter((f) => !boRa.has(f.key)), ...theoKhoa(DIEU_KIEN)]);
-  const specs = doc(dacDiem.filter((f) => !boRa.has(f.key)));
+  // Loại con một chỗ: ngay dưới "Loại hình" (như form đăng tin), không rải ở Thông tin chính / Đặc điểm (12/11/2026)
+  const laLoaiCon = (f: Field) => O_LOAI_CON.includes(f.key);
+  const loaiCon = doc(tatCa.filter(laLoaiCon))[0] ?? null;
+  const specsChinh = doc([...chinh.filter((f) => !boRa.has(f.key) && !laLoaiCon(f)), ...theoKhoa(DIEU_KIEN)]);
+  const specs = doc(dacDiem.filter((f) => !boRa.has(f.key) && !laLoaiCon(f)));
   // Mục khách tự ghi trùng nghĩa mục chuẩn ("Máy lạnh", "hồ bơi ") → đúng tên chuẩn, đúng nhóm.
   const dsTienIch = chuanHoaTienIch((d.amenities ?? []).map(gon));
   const amenSet = new Set(dsTienIch);
   // Tiện ích người đăng ghi mà danh mục chuẩn không có ("Kiệt ô tô", "Gần KCN"…).
   // Trước đây những mục này BIẾN MẤT im lặng vì trang tin chỉ duyệt danh mục chuẩn.
-  const tenChuan = new Set(amenityGroups.flatMap((g) => g.items));
+  // Nhóm tiện ích theo ĐÚNG loại hình của tin (12/11/2026) — mục ngoài danh sách của loại vẫn hiện ở "Tiện ích khác"
+  const nhomTienIch = tienIchCho(r.type ?? "");
+  const tenChuan = new Set(nhomTienIch.flatMap((g) => g.items));
   const tienIchKhac = dsTienIch.filter((a) => a && !tenChuan.has(a));
   const c = d.contact;
   return {
@@ -680,13 +686,14 @@ function rowToDetail(r: Row): ListingFull {
       : coDienTichXayDung(r.type) && d.specs?.usableArea ? `${String(d.specs.usableArea).trim()} m²` : null,
     descriptionParas: dongMoTa(r.description),
     loaiHinh: tenLoaiHinhDayDu(r.type, r.purpose, d.specs?.landType),
+    loaiCon,
     specsChinh,
     tienDau,
     tienSau,
     specs,
     interior: chuanHoaNoiThat((d.interior ?? []).map(gon)),
     amenityGroups: [
-      ...amenityGroups.map((g) => ({
+      ...nhomTienIch.map((g) => ({
         group: g.group,
         items: g.items.map((name) => ({ name, active: amenSet.has(name) })),
       })),
@@ -733,6 +740,7 @@ function mockToDetail(m: Listing): ListingFull {
     builtArea: null,
     descriptionParas: [],
     loaiHinh: tenLoaiHinhDayDu(m.type, m.purpose),
+    loaiCon: null,
     specsChinh: [],
     tienDau: [],
     tienSau: [],

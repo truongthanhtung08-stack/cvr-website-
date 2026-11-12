@@ -34,6 +34,8 @@ export const saleTypeGroups: TypeGroup[] = [
 export const rentTypeGroups: TypeGroup[] = [
   { label: "Căn hộ, chung cư", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"] },
   { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề"] },
+  // Cho thuê ĐẤT (anh 12/11/2026: "Việt Nam vẫn cho thuê đất") — cùng loại hình với Mua bán: Đất · Đất nền · Đất nền dự án
+  { label: "Đất", items: ["Đất khác", "Đất nền / Đất nền dự án"] },
   { label: "Phòng trọ", items: ["Nhà trọ / Phòng trọ"] },
   { label: "Văn phòng, mặt bằng", items: ["Văn phòng", "Mặt bằng / Cửa hàng bán lẻ"] },
   { label: "BĐS nghỉ dưỡng", items: ["Homestay / Farmstay"] },

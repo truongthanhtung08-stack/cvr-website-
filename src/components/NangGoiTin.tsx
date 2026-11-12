@@ -218,11 +218,11 @@ export function KhoiTongTien({ moTa, tongTra, canGiu, dong, vi, children }: {
     <div className="mt-4 rounded-2xl border border-cvr-line bg-cvr-surface px-4 py-3.5 text-sm text-cvr-body">
       <div className="flex items-start justify-between gap-3">
         <span className="min-w-0">
-          <span className="block text-[15px] font-semibold text-cvr-ink">Tổng tiền</span>
+          <span className="block whitespace-nowrap text-[15px] font-semibold text-cvr-ink">Tổng tiền</span>
           <span className="mt-0.5 block text-[12.5px] text-cvr-muted">{moTa}</span>
         </span>
         <span className="shrink-0 text-right">
-          <span className="block text-xl font-bold tabular-nums tracking-tight text-cvr-ink">{tongTra > 0 ? vnd(tongTra) : "0 ₫"}</span>
+          <span className="block whitespace-nowrap text-xl font-bold tabular-nums tracking-tight text-cvr-ink">{tongTra > 0 ? vnd(tongTra) : "0 ₫"}</span>
           <button type="button" onClick={() => setChiTiet(!chiTiet)} aria-expanded={chiTiet} className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-cvr-blue-ink">
             Chi tiết
             <svg className={`h-3.5 w-3.5 transition ${chiTiet ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>

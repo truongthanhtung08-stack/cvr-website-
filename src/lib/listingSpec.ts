@@ -98,6 +98,29 @@ export const interiorItems = [
   "Tivi", "Lò vi sóng", "Bàn làm việc", "Đèn trang trí",
 ];
 
+// ── TIỆN ÍCH + NỘI THẤT THEO LOẠI HÌNH (anh 12/11/2026: "mỗi loại có Thông tin chính - Đặc điểm và tiện ích khác nhau") ──
+// Phòng trọ, văn phòng không hỏi hồ bơi, gym; kho xưởng hỏi đường container, cảng. `amenityGroups` / `interiorItems` ở trên giữ
+// nguyên làm danh mục gốc (chuẩn hoá chữ, tin cũ); form và trang tin lấy danh sách của đúng loại qua tienIchCho / noiThatCho.
+const TI_TOA_NHA = {
+  group: "Tiện ích toà nhà",
+  items: ["Thang máy", "Lễ tân", "An ninh 24/7", "Camera giám sát", "Hầm / bãi đỗ xe", "Điều hoà trung tâm", "Máy phát điện dự phòng", "Phòng họp chung", "Internet cáp quang"],
+};
+const TI_PHONG_TRO = {
+  group: "Tiện ích phòng trọ",
+  items: ["Wifi", "Máy giặt chung", "Camera giám sát", "Khoá vân tay / thẻ từ", "Chỗ để xe có mái che", "Không chung chủ", "Sân phơi đồ", "Thang máy", "Gần trường đại học"],
+};
+const TI_KHU_NGHI = {
+  group: "Tiện ích khu nghỉ",
+  items: ["Hồ bơi", "Sân vườn", "Khu BBQ", "Nhà hàng / quán cà phê", "Bãi đỗ xe", "Ao / hồ / suối", "Khu cắm trại", "Đưa đón sân bay"],
+};
+const TI_CONG_NGHIEP = {
+  group: "Giao thông & hạ tầng",
+  items: ["Trong khu công nghiệp", "Gần quốc lộ / cao tốc", "Gần cảng biển", "Gần sân bay", "Gần ga đường sắt", "Gần khu dân cư (nguồn lao động)", "Có trạm biến áp", "Có hệ thống xử lý nước thải"],
+};
+const NT_VAN_PHONG = ["Bàn ghế làm việc", "Điều hoà", "Vách ngăn", "Phòng họp", "Quầy lễ tân", "Tủ hồ sơ", "Rèm cửa", "Đèn chiếu sáng", "Thảm trải sàn", "Pantry / bếp chung"];
+const NT_MAT_BANG = ["Điều hoà", "Quầy thu ngân", "Kệ trưng bày", "Biển hiệu", "Đèn chiếu sáng", "Camera giám sát", "Rèm cửa", "Kho chứa hàng"];
+const NT_PHONG_TRO = ["Giường ngủ", "Tủ quần áo", "Điều hoà", "Bình nóng lạnh", "Kệ bếp", "Bếp từ / gas", "Tủ lạnh", "Máy giặt", "Bàn làm việc", "Quạt trần"];
+
 // Bộ trường riêng theo từng loại hình.
 // ⚠️ KHÔNG để "Hướng" và "Tình trạng nội thất" ở đây — chúng là trường DÙNG CHUNG,
 //    form tự thêm 1 lần cho mọi loại (tránh lặp). Ở đây chỉ đặc điểm ĐẶC THÙ theo loại.
@@ -136,6 +159,13 @@ const balconyField: Field = { key: "balcony", label: "Hướng ban công", type:
 const loaiNha = (options: string[]): Field => ({ key: "loaiNha", label: "Loại nhà", type: "select", options });
 const loaiNghiDuong = (options: string[]): Field => ({ key: "loaiNghiDuong", label: "Loại BĐS nghỉ dưỡng", type: "select", options });
 
+// MỘT DANH SÁCH LOẠI ĐẤT cho cả ba mục cha Đất · Đất nền · Đất nền dự án (anh 12/11/2026: "các loại con phải đưa vào trong đó: đất ở
+// đô thị, đất ở nông thôn, đất thổ cư… Khác — tự ghi"). Dòng "Khác — tự ghi" do ô chọn tự thêm.
+const LOAI_DAT = [
+  "Đất ở đô thị", "Đất ở nông thôn", "Đất thổ cư", "Đất tái định cư", "Đất thương mại, dịch vụ",
+  "Đất nông nghiệp", "Đất trồng cây lâu năm", "Đất trồng lúa", "Đất vườn", "Đất trang trại", "Đất rừng sản xuất", "Đất nuôi trồng thuỷ sản",
+];
+
 // Mỗi LOẠI HÌNH có bộ đặc điểm ĐẶC THÙ riêng. Thứ tự = ĐỘ ƯU TIÊN khớp
 // (loại đặc thù đứng trước loại chung: Biệt thự/Shophouse trước "nhà", Kho xưởng trước "đất").
 // KHÔNG mục đặc điểm nào bắt buộc (chủ dự án 09/10/2026, như Batdongsan): chỉ bắt buộc loại hình,
@@ -149,7 +179,7 @@ export const categorySpecs: CategorySpec[] = [
   {
     label: "Homestay / Farmstay / Khu nghỉ dưỡng",
     match: ["khu nghỉ dưỡng"],
-    fields: [loaiNghiDuong(["Resort", "Khu sinh thái"]), ...datNghiDuongFields()],
+    fields: [loaiNghiDuong(["Resort", "Khu sinh thái", "Khách sạn nghỉ dưỡng"]), ...datNghiDuongFields()],
   },
   {
     label: "Homestay / Farmstay / Khu nghỉ dưỡng",
@@ -160,7 +190,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Condotel / Nghỉ dưỡng",
     match: ["condotel", "nghỉ dưỡng"],
     fields: [
-      loaiNghiDuong(["Condotel", "Căn hộ khách sạn"]),
+      loaiNghiDuong(["Condotel", "Căn hộ khách sạn", "Căn hộ nghỉ dưỡng"]),
       { key: "roomType", label: "Loại phòng", type: "select", options: ["Studio", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ", "4 phòng ngủ trở lên", "Villa nghỉ dưỡng"], main: true },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Sông", "Hồ", "Núi", "Thành phố", "Hồ bơi", "Sân golf", "Nội khu"] },
       { key: "profit", label: "Cam kết lợi nhuận", type: "text", placeholder: "VD: 8%/năm" },
@@ -185,7 +215,7 @@ export const categorySpecs: CategorySpec[] = [
       // LOẠI CON — MỘT Ô CHUNG cho Căn hộ và Chung cư (khoá loaiCanho, cột loai_can_ho, lịch sử giá so theo ô này), mỗi loại một
       // danh sách: căn hộ cao cấp hơn chung cư (chủ dự án duyệt 29/10/2026). Trước đây Chung cư không có ô này → loại con Cowork
       // ghi cho tin chung cư bị bỏ khi nạp.
-      { key: "loaiCanho", label: "Loại chung cư", type: "select", options: ["Chung cư thương mại", "Căn hộ tập thể", "Nhà ở xã hội"] },
+      { key: "loaiCanho", label: "Loại chung cư", type: "select", options: ["Chung cư thương mại", "Căn hộ tập thể", "Nhà ở xã hội", "Chung cư tái định cư"] },
       { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
@@ -201,12 +231,12 @@ export const categorySpecs: CategorySpec[] = [
     // Căn hộ dịch vụ — loại hình riêng (30/10/2026), cùng bộ ô Căn hộ; nhãn bộ ô "Căn hộ" để các danh sách theo nhãn giữ nguyên
     label: "Căn hộ",
     match: ["căn hộ dịch vụ"],
-    fields: [{ key: "loaiCanho", label: "Loại căn hộ", type: "select", options: ["Căn hộ dịch vụ", "Chung cư mini"] }, ...canHoFields()],
+    fields: [{ key: "loaiCanho", label: "Loại căn hộ", type: "select", options: ["Chung cư mini", "Căn hộ dịch vụ cao cấp", "Căn hộ dịch vụ"] }, ...canHoFields()],
   },
   {
     label: "Căn hộ",
     match: ["căn hộ", "officetel", "duplex", "penthouse", "studio"],
-    fields: [{ key: "loaiCanho", label: "Loại căn hộ", type: "select", options: ["Căn hộ cao cấp", "Studio", "Officetel", "Duplex", "Penthouse", "Sky villa", "Shophouse khối đế"] }, ...canHoFields()],
+    fields: [{ key: "loaiCanho", label: "Loại căn hộ", type: "select", options: ["Căn hộ cao cấp", "Căn hộ trung cấp", "Studio", "Officetel", "Duplex", "Penthouse", "Sky villa", "Shophouse khối đế"] }, ...canHoFields()],
   },
   {
     // ĐẤT CÔNG NGHIỆP là ĐẤT, bộ ô riêng (05/11/2026) — trước dùng chung bộ ô Kho xưởng (loại kho, chiều cao thông thuỷ…) là sai.
@@ -248,30 +278,30 @@ export const categorySpecs: CategorySpec[] = [
     // Văn phòng và Mặt bằng mỗi loại hình một danh sách (chủ dự án 30/10/2026: "phải chuẩn và logic"); cùng bộ ô, cùng nhãn bộ ô
     label: "Văn phòng / Mặt bằng kinh doanh",
     match: ["văn phòng"],
-    fields: [{ key: "loaiVanPhong", label: "Loại văn phòng", type: "select", options: ["Văn phòng trọn gói", "Sàn văn phòng", "Văn phòng chia sẻ", "Văn phòng ảo"] }, ...vanPhongFields()],
+    fields: [{ key: "loaiVanPhong", label: "Loại văn phòng", type: "select", options: ["Văn phòng trọn gói", "Sàn văn phòng", "Văn phòng chia sẻ", "Văn phòng ảo", "Văn phòng tại nhà phố"] }, ...vanPhongFields()],
   },
   {
     label: "Văn phòng / Mặt bằng kinh doanh",
     match: ["mặt bằng", "cửa hàng", "kinh doanh"],
-    fields: [{ key: "loaiVanPhong", label: "Loại mặt bằng", type: "select", options: ["Mặt bằng kinh doanh", "Cửa hàng", "Ki ốt"] }, ...vanPhongFields(false)],
+    fields: [{ key: "loaiVanPhong", label: "Loại mặt bằng", type: "select", options: ["Mặt bằng kinh doanh", "Cửa hàng", "Ki ốt", "Gian hàng trung tâm thương mại", "Sạp chợ"] }, ...vanPhongFields(false)],
   },
   {
     // Villa, biệt thự biển thuộc nhóm BĐS nghỉ dưỡng (cây cha – con 29/10/2026): cùng bộ ô của Biệt thự, loại con là "Loại BĐS
     // nghỉ dưỡng". Đứng TRƯỚC "Biệt thự / Villa" (khoá "villa", "biệt thự" bắt cả loại này).
     label: "Villa / Biệt thự biển",
     match: ["biệt thự biển"],
-    fields: [loaiNghiDuong(["Villa nghỉ dưỡng", "Biệt thự biển", "Bungalow"]), ...bietThuFields()],
+    fields: [loaiNghiDuong(["Villa nghỉ dưỡng", "Biệt thự biển", "Biệt thự đồi", "Bungalow"]), ...bietThuFields()],
   },
   {
     label: "Biệt thự / Villa",
     match: ["biệt thự", "villa", "liền kề"],
-    fields: [loaiNha(["Biệt thự", "Biệt thự song lập", "Nhà liền kề"]), ...bietThuFields()],
+    fields: [loaiNha(["Biệt thự đơn lập", "Biệt thự song lập", "Biệt thự", "Nhà liền kề"]), ...bietThuFields()],
   },
   {
     label: "Shophouse / Nhà phố thương mại",
     match: ["shophouse", "nhà phố thương mại", "thương mại"],
     fields: [
-      loaiNha(["Shophouse", "Nhà phố thương mại"]),
+      loaiNha(["Shophouse", "Nhà phố thương mại", "Nhà phố thương mại liền kề"]),
       floorsField,
       frontageField,
       depthField,
@@ -288,7 +318,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Nhà mặt phố",
     match: ["nhà mặt phố", "mặt phố", "mặt tiền"],
     fields: [
-      loaiNha(["Nhà mặt tiền", "Nhà phố"]),
+      loaiNha(["Nhà mặt tiền", "Nhà phố", "Nhà mặt tiền kinh doanh"]),
       floorsField,
       frontageField,
       depthField,
@@ -319,7 +349,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Nhà riêng",
     match: ["nhà riêng", "nhà ngõ", "nhà hẻm", "nhà"],
     fields: [
-      loaiNha(["Nhà phố", "Nhà trong kiệt, hẻm", "Nhà cấp 4", "Nhà vườn"]),
+      loaiNha(["Nhà phố", "Nhà trong kiệt, hẻm", "Nhà cấp 4", "Nhà vườn", "Nhà trong khu dân cư"]),
       floorsField,
       frontageField,
       depthField,
@@ -336,7 +366,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Đất nông nghiệp",
     // Loại hình "Đất khác" (chủ dự án 30/10/2026) — nhãn bộ ô giữ "Đất nông nghiệp" (các danh sách KHONG_* dùng nhãn này)
     match: ["đất khác", "đất nông nghiệp"],
-    fields: datFields(["Đất nông nghiệp", "Đất trồng cây lâu năm", "Đất vườn", "Đất trang trại", "Đất trồng lúa", "Đất rừng sản xuất"], false),
+    fields: datFields(LOAI_DAT, false),
   },
   {
     label: "Đất nền / Đất",
@@ -345,7 +375,8 @@ export const categorySpecs: CategorySpec[] = [
     // đất" · "hoặc thay đất ở nông thôn = đất thổ cư"
     // Chủ dự án 29/10/2026 tối (lần 3): "Đất / Đất nền dự án (menu cha) — đặc điểm ghi ĐẦY ĐỦ tương ứng theo đặc điểm đất để khách chọn".
     // Đất vườn, đất nông nghiệp KHÔNG ở đây — đăng loại hình "Đất khác" (menu con "Các loại đất khác"), tránh một loại hai đường.
-    fields: datFields(["Đất thổ cư", "Đất nền dự án", "Đất ở đô thị", "Đất tái định cư", "Đất thương mại, dịch vụ"]),
+    // "Đất nền dự án" trong danh sách = mã của mục chọn "Đất nền dự án" (oTheoMucChon bỏ khỏi ô chọn Loại đất)
+    fields: datFields(["Đất nền dự án", ...LOAI_DAT]),
   },
 ];
 
@@ -353,7 +384,8 @@ export const categorySpecs: CategorySpec[] = [
 // toaNha = false: Cửa hàng, ki ốt, mặt bằng — không có ô của toà nhà văn phòng (Hạng toà nhà, Giờ làm việc toà nhà) — 05/11/2026
 function vanPhongFields(toaNha = true): Field[] {
   return [
-    { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²", main: true },
+    // Diện tích sử dụng KHÔNG là ô chính: ô chính đã có "Diện tích sàn" — hai ô diện tích cạnh nhau là trùng (12/11/2026)
+    { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²" },
     { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 3", main: true },
     frontageField,
     roadField,
@@ -386,6 +418,7 @@ function datNghiDuongFields(): Field[] {
   return [
     { key: "landType", label: "Loại đất", type: "select", options: ["Đất ở đô thị", "Đất thổ cư", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn"], main: true },
     frontageField,
+    depthField, // có chiều ngang thì phải có chiều dài (12/11/2026)
     roadField,
     { key: "resiArea", label: "Diện tích đất ở (thổ cư)", type: "number", unit: "m²", main: true },
     { key: "landTerm", label: "Thời hạn sử dụng", type: "select", options: ["Lâu dài", "Có thời hạn"] },
@@ -418,6 +451,8 @@ function bietThuFields(): Field[] {
 function datFields(loaiDat: string[], laLo = true): Field[] {
   return [
     { key: "landType", label: "Loại đất", type: "select", options: loaiDat, main: true },
+    // Loại đất của mục "Đất nền dự án" (landType đã là "Đất nền dự án") — oTheoMucChon chỉ hiện ô này khi chọn Đất nền dự án
+    ...(laLo ? [{ key: "loaiDatDuAn", label: "Loại đất", type: "select", options: LOAI_DAT } as Field] : []),
     frontageField,
     depthField,
     roadField,
@@ -468,7 +503,15 @@ export function coDonGiaM2(type: string, purpose?: string): boolean {
 // Dùng chung cho form đăng tin và trang chi tiết để hai bên không bao giờ lệch nhau.
 export function fieldsFor(type: string, purpose?: string): Field[] {
   const base = specForType(type).fields;
-  return laTinThue(purpose) ? [...base, ...rentFields] : base;
+  if (!laTinThue(purpose)) return base;
+  // THUÊ ĐẤT / KHO / VĂN PHÒNG không "vào ở" — hỏi thời gian bàn giao; đất trống không có điện, nước, phí dịch vụ (12/11/2026)
+  const l = specForType(type).label;
+  const laDat = ["Đất nền / Đất", "Đất nông nghiệp", "Đất công nghiệp"].includes(l);
+  const khongO = laDat || ["Đất công nghiệp / Nhà xưởng / Kho bãi", "Văn phòng / Mặt bằng kinh doanh"].includes(l);
+  const thue = rentFields
+    .filter((f) => !(laDat && ["elecPrice", "waterPrice", "phiDichVu"].includes(f.key)))
+    .map((f) => (khongO && f.key === "moveIn" ? { ...f, label: "Thời gian bàn giao", placeholder: "VD: Bàn giao ngay" } : f));
+  return [...base, ...thue];
 }
 
 // ── TÁCH "THÔNG TIN CHÍNH" VÀ "ĐẶC ĐIỂM" ───────────────────────────────────
@@ -505,8 +548,9 @@ export function thieuMucBatBuoc(
 // Đất nền không có phòng ngủ/phòng tắm/diện tích xây dựng; kho xưởng và mặt bằng
 // không có phòng ngủ. Hiện ra chỉ làm form dài và rối, người đăng phân vân không
 // biết có phải điền không. Dùng chung cho form đăng tin của khách và của admin.
-const KHONG_PHONG_NGU = ["Đất nền / Đất", "Đất nông nghiệp", "Đất công nghiệp / Nhà xưởng / Kho bãi", "Đất công nghiệp", "Văn phòng / Mặt bằng kinh doanh"];
-const KHONG_PHONG_TAM = ["Đất nền / Đất", "Đất nông nghiệp", "Đất công nghiệp / Nhà xưởng / Kho bãi", "Đất công nghiệp"];
+// Nhà trọ đã có "Số phòng cho thuê" + "Vệ sinh" riêng — phòng ngủ / phòng tắm là trùng (12/11/2026)
+const KHONG_PHONG_NGU = ["Đất nền / Đất", "Đất nông nghiệp", "Đất công nghiệp / Nhà xưởng / Kho bãi", "Đất công nghiệp", "Văn phòng / Mặt bằng kinh doanh", "Nhà trọ / Phòng trọ"];
+const KHONG_PHONG_TAM = ["Đất nền / Đất", "Đất nông nghiệp", "Đất công nghiệp / Nhà xưởng / Kho bãi", "Đất công nghiệp", "Nhà trọ / Phòng trọ"];
 // Diện tích xây dựng CHỈ có nghĩa với nhà gắn liền đất. Căn hộ/chung cư/condotel
 // chỉ có một diện tích; văn phòng, mặt bằng, kho xưởng đã có "diện tích sử dụng"
 // riêng; đất nền thì không có gì để xây sẵn. Hiện thừa chỉ làm rối người đăng.
@@ -521,10 +565,28 @@ export function coNoiThat(type: string): boolean {
 // TIỆN ÍCH THEO LOẠI HÌNH (chủ dự án 22/10/2026: "tiện ích, nội thất, đặc điểm phải đi theo loại hình"). Đất và kho xưởng
 // không có tiện ích NỘI KHU (hồ bơi, gym, thang máy…) — chỉ nhóm "Tiện ích xung quanh". Loại khác đủ hai nhóm.
 export function tienIchCho(type: string): { group: string; items: string[] }[] {
-  return type && KHONG_NOI_THAT.includes(specForType(type).label)
-    ? amenityGroups.filter((g) => g.group !== "Tiện ích nội khu")
-    : amenityGroups;
+  const [noiKhu, xungQuanh] = amenityGroups;
+  const l = type ? specForType(type).label : "";
+  if (["Đất công nghiệp / Nhà xưởng / Kho bãi", "Đất công nghiệp"].includes(l)) return [TI_CONG_NGHIEP];
+  if (["Đất nền / Đất", "Đất nông nghiệp", "Nhà riêng", "Nhà mặt phố"].includes(l)) return [xungQuanh];
+  if (l === "Văn phòng / Mặt bằng kinh doanh") return [TI_TOA_NHA, xungQuanh];
+  if (l === "Nhà trọ / Phòng trọ") return [TI_PHONG_TRO, xungQuanh];
+  if (l === "Homestay / Farmstay / Khu nghỉ dưỡng") return [TI_KHU_NGHI, xungQuanh];
+  return [noiKhu, xungQuanh]; // căn hộ, chung cư, condotel, biệt thự, villa, shophouse, BĐS khác
 }
+
+// Mọi tiện ích có trong danh mục (của mọi loại) — form dùng để biết mục nào là "chuẩn" khi khách đổi loại hình.
+export const tatCaTienIch = new Set([amenityGroups, [TI_TOA_NHA, TI_PHONG_TRO, TI_KHU_NGHI, TI_CONG_NGHIEP]].flat().flatMap((g) => g.items));
+
+// Danh sách nội thất để tick theo loại hình (rỗng = loại không có nội thất).
+export function noiThatCho(type: string): string[] {
+  if (!coNoiThat(type)) return [];
+  const l = specForType(type).label;
+  if (l === "Văn phòng / Mặt bằng kinh doanh") return /mặt bằng|cửa hàng|kinh doanh/i.test(type) ? NT_MAT_BANG : NT_VAN_PHONG;
+  if (l === "Nhà trọ / Phòng trọ") return NT_PHONG_TRO;
+  return interiorItems;
+}
+export const tatCaNoiThat = new Set([...interiorItems, ...NT_VAN_PHONG, ...NT_MAT_BANG, ...NT_PHONG_TRO]);
 
 const KHONG_DT_XAY_DUNG = [
   "Đất nền / Đất",
@@ -664,7 +726,12 @@ export const TEN_MAU_SO: Record<MauSo, string> = {
 };
 
 // Bộ tối giản cho loại không xác định ("Bất động sản khác") — chỉ dùng trường chung.
-const genericSpec: CategorySpec = { label: "Bất động sản khác", match: [], fields: [] };
+// Loại con của "Bất động sản khác" (12/11/2026: "loại hình nào cũng có loại con, tuỳ chọn")
+const genericSpec: CategorySpec = {
+  label: "Bất động sản khác",
+  match: [],
+  fields: [{ key: "loaiKhac", label: "Loại bất động sản", type: "select", options: ["Khách sạn, nhà nghỉ", "Nhà hàng, quán", "Toà nhà", "Trạm xăng", "Bãi đỗ xe", "Trường học", "Bệnh viện, phòng khám"] }],
+};
 
 // Nhận diện bộ đặc điểm theo NHÃN LOẠI HÌNH thật. Khớp theo độ ưu tiên (mảng trên);
 // không khớp gì → bộ tối giản (KHÔNG mặc định về Căn hộ như trước).
@@ -675,7 +742,6 @@ const genericSpec: CategorySpec = { label: "Bất động sản khác", match: [
 const TEN_CU_LOAI_CON: Record<string, string> = {
   "thổ cư": "Đất thổ cư",
   "đất ở (thổ cư)": "Đất thổ cư",
-  "đất ở nông thôn": "Đất thổ cư",
   "đất ở nông thôn (thổ cư)": "Đất thổ cư",
   "đất ở đô thị (thổ cư)": "Đất ở đô thị",
 };
@@ -699,7 +765,7 @@ export function loaiConTheoLoiKhach(khoa: string, dangGhi: string, loiKhach: str
 }
 
 // Các ô LOẠI CON (mục đầu Đặc điểm) — trang tin dựa vào đây để hiện dòng loại cụ thể dưới "Loại hình" (nhóm cha)
-export const O_LOAI_CON = ["loaiCanho", "landType", "loaiNha", "loaiNghiDuong", "loaiPhong", "loaiVanPhong", "khoLoai"];
+export const O_LOAI_CON = ["loaiCanho", "landType", "loaiNha", "loaiNghiDuong", "loaiPhong", "loaiVanPhong", "khoLoai", "loaiKhac", "loaiDatDuAn"];
 
 // Ô loại con CỦA loại hình này (mỗi loại hình đúng một ô — cây cha – con 30/10/2026). Nạp hàng loạt ghi loại con vào ô này, không
 // cứng hai ô căn hộ / đất (lỗi 31/10/2026: loại con Condotel, nhà, villa, homestay, văn phòng, phòng trọ bị bỏ khi nạp).

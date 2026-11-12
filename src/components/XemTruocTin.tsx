@@ -186,6 +186,7 @@ export default function XemTruocTin({
           <Section title="Đặc điểm bất động sản">
             <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
               <Row label="Loại hình" value={d.loaiHinh} />
+              {d.loaiCon && <Row label={d.loaiCon.label} value={d.loaiCon.value} />}
               {d.projectName && <Row label="Dự án" value={d.projectName} />}
               {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
               <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />

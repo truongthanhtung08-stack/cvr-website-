@@ -119,11 +119,14 @@ export default function ContentEditor({
   onChange,
   placeholder,
   rows = 10,
+  chiAnh = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   rows?: number;
+  /** Ô Mô tả tin đăng: CHỈ chèn ảnh — video đăng ở mục Hình ảnh & video, mỗi tin 1 video (anh 12/11/2026). */
+  chiAnh?: boolean;
 }) {
   const khungRef = useRef<HTMLDivElement>(null);
   // THANH KÉO MỞ RỘNG TRÊN ĐIỆN THOẠI (anh 12/11/2026: "có chỗ kéo mở rộng") — góc kéo của trình duyệt quá nhỏ cho ngón tay.
@@ -276,7 +279,8 @@ export default function ContentEditor({
   function addLink() {
     const url = link.trim();
     if (!url) return;
-    if (isVideoUrl(url)) insertVideo(url);
+    // Ô chỉ ảnh: link video không chèn — video đăng ở mục Hình ảnh & video
+    if (isVideoUrl(url)) { if (chiAnh) { setError("Video đăng ở mục Hình ảnh & video."); return; } insertVideo(url); }
     else insertImage(url);
     setLink("");
     setShowLink(false);
@@ -325,6 +329,7 @@ export default function ContentEditor({
           {uploadingImg ? "Đang tải ảnh…" : "Chèn ảnh"}
         </button>
         <input ref={imgRef} type="file" accept="image/*" multiple onChange={(e) => handleImages(e.target.files)} className="hidden" />
+        {!chiAnh && (<>
         <button
           type="button"
           onMouseDown={giuChon}
@@ -336,13 +341,14 @@ export default function ContentEditor({
           {uploadingVideo ? `Đang tải video… ${tienDoVideo}%` : "Chèn video"}
         </button>
         <input ref={videoRef} type="file" accept="video/*" onChange={(e) => handleVideo(e.target.files)} className="hidden" />
+        </>)}
         <button
           type="button"
           onMouseDown={giuChon}
           onClick={() => setShowLink((v) => !v)}
           className="text-xs font-medium text-cvr-muted transition hover:text-cvr-ink"
         >
-          hoặc dán link ảnh / video
+          {chiAnh ? "hoặc dán link ảnh" : "hoặc dán link ảnh / video"}
         </button>
       </div>
       </div>

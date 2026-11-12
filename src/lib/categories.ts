@@ -161,6 +161,25 @@ export const rentCategories: Category[] = [
     desc: `Cho thuê shophouse, nhà phố thương mại.`,
     types: ["Nhà phố thương mại"],
   },
+  // CHO THUÊ ĐẤT (12/11/2026) — cùng cây với Mua bán: cha "Đất" + con Đất · Đất nền. Trang chỉ index khi đủ tin (NGUONG_INDEX_DANH_MUC).
+  {
+    slug: "dat-nong-nghiep", label: "Đất",
+    h1: "Cho thuê đất", title: `Cho thuê đất nông nghiệp, đất vườn, đất trang trại`,
+    desc: `Cho thuê đất nông nghiệp, đất vườn, đất trang trại.`,
+    types: ["Đất khác"],
+  },
+  {
+    slug: "dat-nen-du-an", label: "Đất nền",
+    h1: "Cho thuê đất nền", title: `Cho thuê đất nền`,
+    desc: `Cho thuê đất nền, mặt bằng đất trống.`,
+    types: ["Đất nền / Đất nền dự án"],
+  },
+  {
+    slug: "dat", label: "Đất",
+    h1: "Cho thuê đất", title: `Cho thuê đất`,
+    desc: `Cho thuê đất thổ cư, đất nông nghiệp, đất trống.`,
+    types: ["Đất khác", "Đất nền / Đất nền dự án"],
+  },
   {
     slug: "phong-tro", label: "Nhà trọ, phòng trọ",
     h1: "Cho thuê nhà trọ, phòng trọ", tuKhoa: "Cho thuê phòng trọ", title: `Cho thuê phòng trọ, nhà trọ`,
@@ -293,8 +312,9 @@ export function loaiConDaTrongTen(type: string, key: string, value: string): boo
  *  "Đất nền dự án" — ẩn ô Loại đất (đã xác định khi chọn loại hình) và Diện tích đất ở. Loại khác: giữ nguyên. */
 export function oTheoMucChon<F extends { key: string; options?: string[] }>(fields: F[], type: string, landType: string | undefined): F[] {
   if (type !== DAT_NEN) return fields;
+  // Đất nền dự án: ô Loại đất riêng (loaiDatDuAn — 12/11/2026) thay landType (landType đã là "Đất nền dự án")
   if (landType === "Đất nền dự án") return fields.filter((f) => f.key !== "landType" && f.key !== "resiArea"); // đất nền dự án đã là đất ở
-  return fields.map((f) => (f.key === "landType" ? { ...f, options: (f.options ?? []).filter((o) => o !== "Đất nền dự án") } : f));
+  return fields.filter((f) => f.key !== "loaiDatDuAn").map((f) => (f.key === "landType" ? { ...f, options: (f.options ?? []).filter((o) => o !== "Đất nền dự án") } : f));
 }
 /** Giá trị đang chọn cho ô chọn loại hình (gộp loại đất khi là "Đất nền dự án"). */
 export function giaTriChonLoaiHinh(type: string, loaiCon: string | undefined): string {

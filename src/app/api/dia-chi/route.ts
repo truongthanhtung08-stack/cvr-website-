@@ -40,7 +40,12 @@ export async function GET(req: Request) {
     if (!q.startsWith("http") || !laLinkGoogle)
       return NextResponse.json({ loi: "link khong hop le" }, { status: 400 });
     try {
-      const r = await fetch(q, { redirect: "follow" });
+      // Mở như trình duyệt máy tính: link chia sẻ từ app Google Maps điện thoại (maps.app.goo.gl/…?g_st=…) khi đó trả về đường dẫn
+      // đầy đủ có toạ độ đúng điểm (!3d…!4d…) thay vì trang địa điểm không số (12/11/2026)
+      const r = await fetch(q, {
+        redirect: "follow",
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36", "Accept-Language": "vi,en;q=0.8" },
+      });
       return NextResponse.json({ url: r.url });
     } catch {
       return NextResponse.json({ loi: "khong mo duoc link" }, { status: 502 });
