@@ -52,8 +52,14 @@ chỉ chữ (`BaMucChinh.tsx`, đã xem khổ 375).
 **Zalo Mini App:** bản 61 gửi Zalo xét duyệt 17:32 12/11 (phiên local_76b49610), 9 commit trong `zalo-mini-app` chưa push.
 **PHIÊN SAU LÀM TIẾP (theo thứ tự):**
 1. Anh nhắn "Push" → push → Vercel "Production Deployment" đúng commit → mở Admin → Từ khoá lõi trên web thật kiểm bảng theo dõi.
-2. Xin index `/mua-ban/nha/khanh-hoa` (Search Console, Chrome anh) + các trang "Chưa index" đủ chuẩn trong bảng theo dõi, ~10 trang/ngày;
-   xin xong bấm ghi "đã xin" (POST `/api/admin/xin-index` {duong, kq:"da-xin"}); Google đã nhận → kq "da-co".
+2. Xin index tiếp các trang "Chưa index" đủ chuẩn, ~10 trang/ngày (Search Console, Chrome anh: Overview → ô "Inspect any URL" → Request
+   indexing); xin xong ghi "đã xin" (POST `/api/admin/xin-index` {duong, kq:"da-xin"}); Google đã nhận → kq "da-co".
+   **12/11 tối đã xin 8 trang lõi** (đã ghi da-xin): /cho-thue/khanh-hoa/nha-trang · /cho-thue/nha-mat-pho/da-nang · /mua-ban/lam-dong/phan-thiet ·
+   /cho-thue/nha/khanh-hoa/nha-trang · /cho-thue/gia-lai/quy-nhon · /mua-ban/nha-rieng/khanh-hoa/nha-trang · /mua-ban/dat/lam-dong ·
+   /cho-thue/nha-rieng/da-nang. Đã có trên Google (ghi da-co): /mua-ban/nha-mat-pho/khanh-hoa · /mua-ban/gia-lai/quy-nhon · /mua-ban/nha/khanh-hoa.
+   Trang lõi đủ tin đã xin hết — tiếp theo là trang con đủ tin chưa xin (Admin → Xin index, nhóm "Trang con", vd /mua-ban/nha/da-nang/so-do-so-hong 24 tin).
+   **Tra Google 12/11 tối:** "nhà đất đà nẵng tháng 11" → coastalland #1 (/mua-ban/da-nang, đã trở lại) · "căn hộ đà nẵng tháng 11" → #2 + #7 ·
+   "coastal land" → 4/5 kết quả đầu là của mình · "cho thuê căn hộ đà nẵng" → ngoài top 9 · "nhà đất nha trang tháng 11" → ngoài top 9 (tiêu đề mới chưa được Google đọc lại).
 3. 13–14/11 đo Search Console + tra Google các câu từng top ("nhà đất đà nẵng tháng 11", "căn hộ đà nẵng tháng 11", "cho thuê căn hộ đà nẵng"…)
    — so với 12/11 (mất top), báo anh 3 dòng. Luật: memory `seo-thuong-hieu-truoc-tu-khoa`, `seo-giao-cho-claude`.
 4. Chờ anh duyệt: chữ "Đất" trên menu trỏ 2 trang (/mua-ban/dat + /mua-ban/dat-nong-nghiep) · câu định nghĩa tiếng Anh + 3 hỏi đáp thương
