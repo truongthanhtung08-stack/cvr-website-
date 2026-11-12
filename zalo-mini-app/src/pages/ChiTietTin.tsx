@@ -63,7 +63,7 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
         {videos.map((v, i) => {
           const nhung = nhungVideo(v);
           return nhung ? (
-            <iframe key={`v${i}`} className="anh-tin-video" src={nhung} title={`Video ${i + 1}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
+            <VideoNgoai key={`v${i}`} url={v} lop="anh-tin-video" />
           ) : (
             <video key={`v${i}`} className="anh-tin-video" src={anh(v)} controls playsInline preload="metadata" />
           );
@@ -102,7 +102,7 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
           {tatCa && videos.map((v, i) => {
             const nhung = nhungVideo(v);
             return nhung ? (
-              <iframe key={`v${i}`} src={nhung} title={`Video ${i + 1}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
+              <VideoNgoai key={`v${i}`} url={v} lop="" />
             ) : (
               <video key={`v${i}`} src={anh(v)} controls playsInline preload="metadata" />
             );
@@ -360,3 +360,13 @@ function MoTa({ noiDung }: { noiDung: string }) {
   );
 }
 
+
+// VIDEO YOUTUBE / VIMEO: Zalo CHẶN trang ngoài nhúng trong Mini App (bản đồ Google bị chặn, anh chụp 12/11/2026) → không nhúng,
+// khung đen + nút phát, chạm là mở video ra ngoài (openOutApp → app YouTube của máy). Video tải lên kho (mp4) vẫn phát tại chỗ.
+function VideoNgoai({ url, lop }: { url: string; lop: string }) {
+  return (
+    <button className={`video-ngoai ${lop}`} aria-label="Phát video" onClick={() => openOutApp({ url }).catch(() => { window.location.href = url; })}>
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden><circle cx="28" cy="28" r="28" fill="rgba(255,255,255,.92)" /><path d="M23 18.5v19l15-9.5z" fill="#111" /></svg>
+    </button>
+  );
+}
