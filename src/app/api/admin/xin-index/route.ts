@@ -6,18 +6,17 @@ import { getTinXetTrang } from "@/lib/listingsDb";
 import { tatCaTrang } from "@/lib/pseo";
 import { laLoiUuTien } from "@/lib/tuKhoaLoiStore";
 import { timKhuVuc } from "@/lib/khuVuc";
-import daXinTuSo from "@/data/da-xin-index.json";
+import { docSoXinIndex, ghiSoXinIndex, duongTuUrl, trangThaiIndex } from "@/lib/xinIndex";
 
 // ============================================================================
 // XIN INDEX — API CHỈ DÀNH CHO ADMIN (anh 09/11/2026: "làm sao tôi biết trang nào để index, trang nào đã có")
-//   GET  → mọi link trong sitemap (= trang web cho Google index), xếp theo thứ tự xin, kèm số tin + lần đã xin
-//   POST { duong, kq } → ghi "đã xin" / "đã có trên Google" / bỏ ghi, vào site_content "xin_index"
+//   GET  → mọi link trong sitemap (= trang web cho Google index), xếp theo thứ tự xin, kèm số tin + Đã index / Chưa index
+//          (luật trạng thái: src/lib/xinIndex.ts — một nguồn với Admin → Từ khoá lõi)
 // Lần xin trước 09/11 lấy từ sổ THEO-DOI-INDEX.md (src/data/da-xin-index.json, scripts/nap-da-xin-index.mjs).
 // Chi phí: chỉ chạy khi anh mở trang Admin này — đọc sitemap + tin đang có (đã có bộ nhớ đệm "listings").
 // ============================================================================
 export const dynamic = "force-dynamic";
 
-type Ghi = { ngay: string; kq: "da-xin" | "da-co" };
 const loi = (message: string, status = 400) => NextResponse.json({ ok: false, message }, { status });
 
 async function chiAdmin() {
@@ -47,45 +46,50 @@ function nhomCua(duong: string): { so: number; ten: string } {
   return { so: 9, ten: "Khác" };
 }
 
-async function docDaXin(admin: NonNullable<ReturnType<typeof createAdminClient>>): Promise<Record<string, Ghi>> {
-  const { data } = await admin.from("site_content").select("data").eq("key", "xin_index").limit(1);
-  return (data?.[0]?.data as { trang?: Record<string, Ghi> } | undefined)?.trang ?? {};
-}
-
 export async function GET() {
   const { admin, err } = await chiAdmin();
   if (err) return err;
-  const [ds, tin, ghi] = await Promise.all([sitemap(), getTinXetTrang().catch(() => []), docDaXin(admin)]);
+  const [ds, tin, so] = await Promise.all([sitemap(), getTinXetTrang().catch(() => []), docSoXinIndex(admin)]);
   const pseo = tatCaTrang(tin);
-  const so = daXinTuSo as Record<string, string>;
+  const gSet = new Set(so.google?.ds ?? []);
   const trang = ds.map((e) => {
     const duong = e.url.replace(/^https:\/\/coastalland\.vn/, "") || "/";
     const n = nhomCua(duong);
-    // Tin đăng: sổ cũ ghi theo mã 8 ký tự cuối đường dẫn
-    const ma = duong.startsWith("/bat-dong-san/") ? duong.slice(-8) : "";
-    const cu = so[duong] ?? (ma ? so[`ma:${ma}`] : undefined);
+    const p = pseo.get(duong);
     return {
       duong,
       nhom: n.ten,
       thuTu: n.so,
       uuTien: laLoiUuTien(duong),
-      soTin: pseo.get(duong)?.n ?? null,
-      ghi: ghi[duong] ?? (cu ? { ngay: cu, kq: "da-xin" as const } : null),
+      soTin: p?.n ?? null,
+      // Trang pSEO chưa đủ tin (dưới ngưỡng index) — không xin
+      duTin: p ? p.index : true,
+      ...trangThaiIndex(duong, so, gSet),
     };
   });
   trang.sort((a, b) => a.thuTu - b.thuTu || Number(b.uuTien) - Number(a.uuTien) || (b.soTin ?? 0) - (a.soTin ?? 0) || a.duong.localeCompare(b.duong));
-  return NextResponse.json({ ok: true, trang });
+  return NextResponse.json({ ok: true, trang, google: so.google ? { ngay: so.google.ngay, soTrang: so.google.ds.length } : null });
 }
 
+// POST { duong, kq: "da-xin" | "da-co" | "bo" } → ghi tay một trang
+// POST { google: { ngay: "yyyy-mm-dd", urls: string[] } } → thay danh sách đã index bằng danh sách mới của Search Console
 export async function POST(req: Request) {
   const { admin, err } = await chiAdmin();
   if (err) return err;
-  const b = (await req.json().catch(() => ({}))) as { duong?: string; kq?: string };
-  if (!b.duong?.startsWith("/") || b.duong.length > 300) return loi("Đường dẫn không hợp lệ");
-  const ghi = await docDaXin(admin);
-  if (b.kq === "da-xin" || b.kq === "da-co") ghi[b.duong] = { ngay: new Date().toISOString().slice(0, 10), kq: b.kq };
-  else delete ghi[b.duong];
-  const { error } = await admin.from("site_content").upsert({ key: "xin_index", data: { trang: ghi } });
+  const b = (await req.json().catch(() => ({}))) as { duong?: string; kq?: string; google?: { ngay?: string; urls?: string[] } };
+  const so = await docSoXinIndex(admin);
+  if (b.google) {
+    const ngay = /^\d{4}-\d{2}-\d{2}$/.test(b.google.ngay ?? "") ? b.google.ngay! : new Date().toISOString().slice(0, 10);
+    const ds = [...new Set((b.google.urls ?? []).map(duongTuUrl).filter((x): x is string => !!x))];
+    if (!ds.length) return loi("Không thấy đường dẫn coastalland.vn nào trong danh sách dán vào");
+    so.google = { ngay, ds };
+  } else {
+    if (!b.duong?.startsWith("/") || b.duong.length > 300) return loi("Đường dẫn không hợp lệ");
+    if (b.kq === "da-xin" || b.kq === "da-co") so.trang[b.duong] = { ngay: new Date().toISOString().slice(0, 10), kq: b.kq };
+    else delete so.trang[b.duong];
+  }
+  const { error } = await ghiSoXinIndex(admin, so);
   if (error) return loi(`Không lưu được: ${error.message}`, 500);
-  return NextResponse.json({ ok: true, ghi: ghi[b.duong] ?? null });
+  if (b.google) return NextResponse.json({ ok: true, google: { ngay: so.google!.ngay, soTrang: so.google!.ds.length } });
+  return NextResponse.json({ ok: true, ...trangThaiIndex(b.duong!, so, new Set(so.google?.ds ?? [])) });
 }

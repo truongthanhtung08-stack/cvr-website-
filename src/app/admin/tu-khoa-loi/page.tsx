@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 // → web tự đổi tiêu đề, H1, mô tả trang lõi + trang con, không cần Push. Luật đọc + luật an toàn: src/lib/tuKhoaLoiDoc.ts.
 type KetQua = { doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number };
 type HienTai = KetQua & { tenTep?: string; capNhat?: string };
-type DongTheoDoi = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean; xin: { ngay: string; kq: "da-xin" | "da-co" } | null };
+type DongTheoDoi = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean; daIndex: boolean; xin: string | null };
 type TheoDoi = { nguong: number; dong: DongTheoDoi[] };
 const LOC = [
-  ["tat-ca", "Tất cả"], ["da-index", "Đã index"], ["chua-index", "Chưa index"], ["thieu", "Chưa đủ tin"],
+  ["chua-index", "Chưa index"], ["da-index", "Đã index"], ["thieu", "Chưa đủ tin"], ["tat-ca", "Tất cả"],
 ] as const;
 type Loc = (typeof LOC)[number][0];
 const ngayVn = (s: string) => s.split("-").reverse().slice(0, 2).join("/");
@@ -17,7 +17,7 @@ const ngayVn = (s: string) => s.split("-").reverse().slice(0, 2).join("/");
 export default function TuKhoaLoiPage() {
   const [hienTai, setHienTai] = useState<HienTai | null>(null);
   const [td, setTd] = useState<TheoDoi | null>(null);
-  const [loc, setLoc] = useState<Loc>("tat-ca");
+  const [loc, setLoc] = useState<Loc>("chua-index");
   const [muc, setMuc] = useState<"ban" | "thue">("ban");
   const [tep, setTep] = useState<File | null>(null);
   const [xem, setXem] = useState<KetQua | null>(null);
@@ -97,10 +97,11 @@ export default function TuKhoaLoiPage() {
 
       {td && (() => {
         const ds = td.dong.filter((d) => d.muc === muc);
-        const hop = (d: DongTheoDoi) =>
-          loc === "da-index" ? d.xin?.kq === "da-co" : loc === "chua-index" ? d.duChuan && d.xin?.kq !== "da-co" : loc === "thieu" ? !d.duChuan : true;
-        const dem = (l: Loc) => ds.filter((d) => (l === "tat-ca" ? true : l === "da-index" ? d.xin?.kq === "da-co" : l === "chua-index" ? d.duChuan && d.xin?.kq !== "da-co" : !d.duChuan)).length;
-        const hien = ds.filter(hop);
+        // Một luật với Admin → Xin index: Đã index · Chưa index (đủ tin, chờ xin / đã xin) · Chưa đủ tin (chưa index, chưa xin được)
+        const thuoc = (d: DongTheoDoi, l: Loc) =>
+          l === "da-index" ? d.daIndex : l === "chua-index" ? !d.daIndex && d.duChuan : l === "thieu" ? !d.daIndex && !d.duChuan : true;
+        const dem = (l: Loc) => ds.filter((d) => thuoc(d, l)).length;
+        const hien = ds.filter((d) => thuoc(d, loc));
         return (
           <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -139,9 +140,8 @@ export default function TuKhoaLoiPage() {
                       <td className="py-2 pr-2 text-right tabular-nums">{d.soTin}</td>
                       <td className="py-2 pr-2">{d.duChuan ? <span className="text-emerald-700">✓ Đủ</span> : <span className="text-amber-700">Thiếu {Math.max(1, td.nguong - d.soTin)} tin</span>}</td>
                       <td className="py-2">
-                        {d.xin?.kq === "da-co" ? <span className="font-medium text-emerald-700">✓ Đã index</span>
-                          : d.duChuan ? <span className="font-medium text-amber-700">Chưa index{d.xin ? <span className="font-normal text-cvr-muted"> · đã xin {ngayVn(d.xin.ngay)}</span> : null}</span>
-                          : <span className="text-cvr-faint">—</span>}
+                        {d.daIndex ? <span className="font-medium text-emerald-700">✓ Đã index</span>
+                          : <span className="font-medium text-amber-700">Chưa index{d.xin ? <span className="font-normal text-cvr-muted"> · đã xin {ngayVn(d.xin)}</span> : null}</span>}
                       </td>
                     </tr>
                   ))}
