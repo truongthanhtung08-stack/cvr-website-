@@ -19,6 +19,21 @@ Web làm ra để **khách / thành viên tự đăng tin**. Mọi lần cập n
 Đụng mã dùng chung của các bước này (`PostListingForm`, `ImagePicker`, `uploadImage`, `nenVideo`, `ChonCoTim`, gói / ví / thanh toán, đăng nhập) → thử lại trọn ①→⑥ trên điện thoại (khổ 375 + máy thật) và máy tính. Không thử được bước nào → nói rõ bước đó chưa kiểm.
 Bài học 10/11: tin khách 1e3be917 lên web với video chỉ có tiếng (nén bỏ mất phần hình) — không ai kiểm bước ⑤.
 
+## ⛔⛔⛔ PHÂN QUYỀN + QUY TRÌNH LÀM VIỆC GIỮA CÁC PHIÊN (anh giao 12/11/2026)
+**Anh** quyết việc, duyệt chữ/giao diện, nhắn "Push". **Điều phối** = phiên anh đang làm việc trực tiếp (12/11: phiên 18419c5a): nhận việc
+từ anh → chia cho phiên con → nhận kết quả → KIỂM lại (web thật + điện thoại) → gom → push MỘT lần khi anh nói. Chỉ Điều phối push.
+| Phiên con | Phụ trách | Tệp / nơi chính |
+|---|---|---|
+| **KHÁCH HÀNG** (ưu tiên số 1) | Quy trình ①→⑥: đăng nhập, soạn tin, gói, ví, nạp tiền, ảnh/video, Tin của tôi, sửa/up/đẩy, Admin duyệt | `PostListingForm`, `ContentEditor`, `ImagePicker`, `TinCuaToi`, `BackBar`, `BanPhimAo`, `api/tin-dang/*`, `tai-khoan/*` |
+| **TÌM KIẾM** | Ô tìm, bộ lọc, gợi ý, danh sách Mua bán · Cho thuê · Dự án | `FilterBar`, `TimTrangChu`, `smartSearch`, `ListingBrowser` |
+| **SEO** | Search Console, xin index, từ khoá, pSEO, Cowork (theo 🌳 cây quy trình) | `pseo.ts`, `categories.ts`, ổ `D:\Coastal Land\SEO` |
+| **ZALO MINI APP** | Mini App + OA + ZBS | `zalo-mini-app/`, `thongBao.ts` |
+| **THIẾT KẾ** | Ảnh, banner, video, mẫu giao diện (đưa anh duyệt trước khi vào mã) | `public/`, tệp mẫu |
+| **MẠNG XÃ HỘI** | Bài Tin tức, Facebook, Zalo OA — soạn, anh đăng | ổ D: `SEO\MAU\mxh` |
+**Luật chung:** ① mỗi tệp chỉ MỘT phiên sửa tại một lúc (phiên khác cần → nhắn Điều phối) · ② phiên con commit đúng tệp của mình, KHÔNG push ·
+③ báo về Điều phối: đã sửa gì (commit) · đã kiểm gì, ở đâu · chưa kiểm gì · ④ đụng quy trình khách (bảng trên) → thử lại ①→⑥ khổ 375 + máy
+tính trước khi báo · ⑤ ghi chú dài để ở thư mục ghi chú chung của nhóm phiên, không dán vào tin nhắn · ⑥ phiên bị cấm (đầu tệp) không được giao.
+
 ## ✅ 10/11/2026 (phiên 18419c5a) — ĐÃ PUSH HẾT, web chạy 7ee2b24e
 - **Video khách đăng — sửa gốc** (c6e93345): `src/lib/nenVideo.ts` ① MP4 H.264 ≤ 44MB giữ nguyên ② mediabunny chỉ khi giữ được track hình ③ không thì ffmpeg.wasm (mã `public/ffmpeg/`, lõi jsDelivr @ffmpeg/core 0.12.10). Nút ghi "Đang tải video… X%" (chữ mới, anh chưa duyệt nguyên văn). Đã thử trên web thật: HEVC kiểu iPhone → MP4 H.264 720×1280 có hình + tiếng.
 - **Tin khách 1e3be917** (biệt thự Hòa Xuân, khách đã mua gói): video cũ chỉ có tiếng, không cứu được → ghép 13 ảnh của tin + tiếng gốc thành MP4 (`.claude/video-tin-1e3be917.mp4`), Claude thay trong Admin trên Chrome của anh, trang tin chạy có hình. Gói, hạn giữ nguyên.
