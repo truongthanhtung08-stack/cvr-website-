@@ -142,6 +142,55 @@ export default function ContentEditor({
     window.addEventListener("pointerup", tha);
     window.addEventListener("pointercancel", tha);
   };
+  // ĐIỆN THOẠI ĐANG GÕ: THANH B / I KHÔNG ĐÈ CHỮ (anh 14:17 12/11/2026, ảnh khoanh: thanh dính cắt ngang dòng đầu). Khi khách gõ,
+  // khung soạn đứng NGAY DƯỚI thanh công cụ và cao vừa phần nhìn thấy phía trên bàn phím — chữ dài thì cuộn TRONG khung, không
+  // trượt xuống dưới thanh. Rời ô là khung trở lại như cũ (tự cao / thanh kéo). Máy tính không đổi.
+  const thanhRef = useRef<HTMLDivElement>(null);
+  const [caoGo, setCaoGo] = useState<number | null>(null);
+  useEffect(() => {
+    const el = khungRef.current;
+    if (!el) return;
+    const vv = window.visualViewport;
+    const tinh = () => {
+      const tb = thanhRef.current;
+      if (!tb || document.activeElement !== el || !window.matchMedia("(max-width: 639px)").matches) { setCaoGo(null); return; }
+      // Cuộn trang để thanh công cụ đứng đúng chỗ dính (dưới "‹ Đăng tin") và đầu khung nằm sát dưới thanh — không dòng nào dưới thanh
+      const choDinh = parseFloat(getComputedStyle(tb).top) || 0;
+      const lech = el.getBoundingClientRect().top - tb.getBoundingClientRect().height - choDinh;
+      if (Math.abs(lech) > 2) window.scrollBy({ top: lech, behavior: "instant" });
+      const day = (vv ? vv.offsetTop + vv.height : window.innerHeight) - choDinh - tb.getBoundingClientRect().height - 8;
+      setCaoGo(Math.max(120, Math.floor(day)));
+      requestAnimationFrame(theoConTro);
+    };
+    // DÒNG ĐANG GÕ LUÔN NHÌN THẤY TRONG KHUNG: khung đã thu vừa phần trên bàn phím → con trỏ xuống dưới đáy khung thì khung tự cuộn
+    // theo (dòng trống không có toạ độ → lấy toạ độ của chính dòng chứa con trỏ).
+    const theoConTro = () => {
+      if (document.activeElement !== el) return;
+      const sel = window.getSelection();
+      if (!sel?.rangeCount) return;
+      const rg = sel.getRangeAt(0);
+      if (!el.contains(rg.startContainer)) return;
+      let r = rg.getBoundingClientRect();
+      if (!r.height) {
+        const n = rg.startContainer.nodeType === 1 ? (rg.startContainer as Element) : rg.startContainer.parentElement;
+        if (n && n !== el) r = n.getBoundingClientRect();
+      }
+      if (!r.height) return;
+      const k = el.getBoundingClientRect();
+      if (r.bottom > k.bottom - 8) el.scrollTop += r.bottom - k.bottom + 16;
+      else if (r.top < k.top + 4) el.scrollTop -= k.top - r.top + 16;
+    };
+    el.addEventListener("input", theoConTro);
+    el.addEventListener("keyup", theoConTro);
+    const roi = () => setCaoGo(null);
+    el.addEventListener("focus", tinh);
+    el.addEventListener("blur", roi);
+    vv?.addEventListener("resize", tinh);
+    return () => {
+      el.removeEventListener("focus", tinh); el.removeEventListener("blur", roi); vv?.removeEventListener("resize", tinh);
+      el.removeEventListener("input", theoConTro); el.removeEventListener("keyup", theoConTro);
+    };
+  }, []);
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
@@ -292,7 +341,7 @@ export default function ContentEditor({
     <div className="space-y-2">
       {/* THANH CÔNG CỤ DÍNH TRÊN ĐẦU KHUNG khi cuộn trong lúc soạn (anh 12/11/2026, ảnh 8:54: bôi chữ để định dạng thì thanh B / I đã trôi
           khỏi màn hình, cuộn lên là mất vùng bôi) — điện thoại dính dưới thanh "‹ Đăng tin"; máy tính đứng yên như cũ. */}
-      <div className="sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-10 -mx-1 space-y-2 bg-white px-1 py-1.5 lg:static lg:mx-0 lg:px-0 lg:py-0">
+      <div ref={thanhRef} className="sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-10 -mx-1 space-y-2 bg-white px-1 py-1.5 lg:static lg:mx-0 lg:px-0 lg:py-0">
       {/* Thanh định dạng: đậm · nghiêng · canh lề — hiện kết quả NGAY trong khung soạn */}
       <div className="flex flex-wrap items-center gap-1.5">
         <ToolBtn label="In đậm" onMouseDown={giuChon} onClick={() => lenh("bold")}>
@@ -399,7 +448,7 @@ export default function ContentEditor({
             phat();
           }}
           // Khung tự cao theo nội dung. Điện thoại: thanh kéo to bên dưới, chữ 16px (iPhone không tự phóng); máy tính KÉO GÓC DƯỚI (12/11/2026).
-          style={{ minHeight: caoKeo ? `${caoKeo}px` : `${Math.max(rows, 7) * 1.6}rem` }}
+          style={caoGo ? { minHeight: `min(${caoGo}px, ${caoKeo ? `${caoKeo}px` : `${Math.max(rows, 7) * 1.6}rem`})`, maxHeight: `${caoGo}px`, overflowY: "auto" } : { minHeight: caoKeo ? `${caoKeo}px` : `${Math.max(rows, 7) * 1.6}rem` }}
           className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
