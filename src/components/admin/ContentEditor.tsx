@@ -284,6 +284,9 @@ export default function ContentEditor({
 
   return (
     <div className="space-y-2">
+      {/* THANH CÔNG CỤ DÍNH TRÊN ĐẦU KHUNG khi cuộn trong lúc soạn (anh 12/11/2026, ảnh 8:54: bôi chữ để định dạng thì thanh B / I đã trôi
+          khỏi màn hình, cuộn lên là mất vùng bôi) — điện thoại dính dưới thanh "‹ Đăng tin"; máy tính đứng yên như cũ. */}
+      <div className="sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-10 -mx-1 space-y-2 bg-white px-1 py-1.5 lg:static lg:mx-0 lg:px-0 lg:py-0">
       {/* Thanh định dạng: đậm · nghiêng · canh lề — hiện kết quả NGAY trong khung soạn */}
       <div className="flex flex-wrap items-center gap-1.5">
         <ToolBtn label="In đậm" onMouseDown={giuChon} onClick={() => lenh("bold")}>
@@ -339,6 +342,7 @@ export default function ContentEditor({
         >
           hoặc dán link ảnh / video
         </button>
+      </div>
       </div>
       {showLink && (
         <div className="flex items-center gap-2">
