@@ -55,8 +55,15 @@ export async function duyetChuongTrinh(admin: SupabaseClient, id: string): Promi
 
 async function nhapCongBo(admin: SupabaseClient, tuBanDuyet: boolean): Promise<GiaChuanNhap | null> {
   if (tuBanDuyet) return docNhapGia(admin, KHOA_DA_DUYET);
-  const goc = (await docNhapGia(admin)) ?? NHAP_TRONG;
-  const nhap = chiDaDuyet(goc);
+  const [goc0, cu] = await Promise.all([docNhapGia(admin), docNhapGia(admin, KHOA_DA_DUYET)]);
+  const goc = chiDaDuyet(goc0 ?? NHAP_TRONG);
+  // HỘI VIÊN KHÔNG đi theo nút Duyệt chính (anh 12/11/2026: "chưa duyệt không cho hiện") — giữ đúng bản đã "Duyệt bảng Hội viên";
+  // trước đây bản nháp Hội viên bị chép theo rồi tự lên web lúc 0h01 / lúc duyệt chương trình
+  const nhap: GiaChuanNhap = {
+    ...goc,
+    hoiVien: cu?.hoiVien,
+    dieuChinh: { ...(goc.dieuChinh ?? DIEU_CHINH_TRONG), hoiVien: cu?.dieuChinh?.hoiVien ?? {} },
+  };
   await admin.from("bi_mat").upsert({ key: KHOA_DA_DUYET, data: nhap, updated_at: new Date().toISOString() });
   return nhap;
 }
@@ -146,6 +153,15 @@ export async function congBoHoiVien(admin: SupabaseClient, tuBanDuyet = false): 
   const hoiVienLuc = new Date().toISOString();
   const { error } = await admin.from("site_content").upsert({ key: "billing", data: { ...luu, hoiVien, hoiVienLuc } });
   if (error) return { loi: `Lỗi công bố: ${error.message}` };
+  // "Duyệt bảng Hội viên" = ghi Hội viên vào BẢN ĐÃ DUYỆT — 0h01 / duyệt chương trình tính lại từ đúng bản này (12/11/2026)
+  if (!tuBanDuyet) {
+    const cu = (await docNhapGia(admin, KHOA_DA_DUYET)) ?? NHAP_TRONG;
+    await admin.from("bi_mat").upsert({
+      key: KHOA_DA_DUYET,
+      data: { ...cu, hoiVien: nhap.hoiVien, dieuChinh: { ...(cu.dieuChinh ?? DIEU_CHINH_TRONG), hoiVien: nhap.dieuChinh?.hoiVien ?? {} } },
+      updated_at: hoiVienLuc,
+    });
+  }
   revalidateTag("noi-dung", "max");
   return { hoiVien, hoiVienLuc };
 }

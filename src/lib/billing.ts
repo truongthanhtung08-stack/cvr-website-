@@ -245,8 +245,11 @@ export type GiaNangGoi = {
 export const bangNangGoi = (d: BillingData, purpose?: string | null): Plan[] => d.congBo?.[mucDichGia(purpose)]?.nangGoi ?? [];
 // ĐÃ DUYỆT = CÓ GIÁ ĐÃ DUYỆT (chủ dự án 06/11/2026: "tao đã duyệt gói đẩy và nâng tin rồi" — duyệt giá trong Admin LÀ duyệt, không bắt
 // tích thêm ô nào). Up tin (nâng gói) hiện khi bảng giá Nâng gói đã duyệt; Đẩy tin hiện khi bảng giá Đẩy tin đã duyệt. Một đường: Admin.
-export const daDuyetNangGoi = (d: BillingData): boolean => bangNangGoi(d, "ban").length > 0 || bangNangGoi(d, "thue").length > 0;
-export const daDuyetDayTin = (d: BillingData): boolean => (d.congBo?.ban?.up?.length ?? 0) > 0 || (d.congBo?.thue?.up?.length ?? 0) > 0;
+// purpose: xét ĐÚNG bảng của tin (Bán / Thuê) — Cho thuê chưa duyệt thì tin cho thuê không có nút (12/11/2026)
+export const daDuyetNangGoi = (d: BillingData, purpose?: string | null): boolean =>
+  purpose !== undefined ? bangNangGoi(d, purpose).length > 0 : bangNangGoi(d, "ban").length > 0 || bangNangGoi(d, "thue").length > 0;
+export const daDuyetDayTin = (d: BillingData, purpose?: string | null): boolean =>
+  purpose !== undefined ? (d.congBo?.[mucDichGia(purpose)]?.up?.length ?? 0) > 0 : (d.congBo?.ban?.up?.length ?? 0) > 0 || (d.congBo?.thue?.up?.length ?? 0) > 0;
 
 // MỘT HÀM TÍNH TIỀN NÂNG GÓI — thứ tự cố định, CỘNG DỒN, không âm (đổi sang "lấy mức cao hơn" chỉ sửa ở đây):
 //   giá gói mới (đã gồm chương trình + chiết khấu ưu đãi gói) − khấu trừ gói đang chạy − chiết khấu ưu đãi hội viên − voucher + VAT.
@@ -344,11 +347,13 @@ export function mucDichGia(purpose?: string | null): MucDichGia {
 // giá và trừ tiền luôn cùng một bảng.
 export function bangTheoMucDich(d: BillingData, purpose?: string | null): BillingData {
   const cb = d.congBo?.[mucDichGia(purpose)];
-  if (!cb) return d;
+  // CHƯA DUYỆT THÌ KHÔNG HIỆN, KHÔNG BÁN (anh 12/11/2026): bảng Đẩy tin của mục đích này chưa Duyệt → rỗng — trước đây Cho thuê
+  // chưa duyệt thì mượn giá Đẩy tin của Mua bán (hiện + thu tiền theo giá Bán)
+  if (!cb) return { ...d, up: [] };
   return {
     ...d,
     plans: cb.plans.length ? cb.plans : d.plans,
-    up: cb.up.length ? cb.up : d.up,
+    up: cb.up,
     // MỘT ĐƯỜNG khuyến mãi: giá công bố ĐÃ trừ % chương trình (Giá chuẩn) — không trừ
     // thêm khuyến mãi cũ của "Giá & quy định" (tránh giảm hai lần).
     promos: [],

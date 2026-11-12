@@ -81,8 +81,9 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
     return () => clearTimeout(t);
   }, [bao]);
   const [nangCho, setNangCho] = useState<{ r: ListingRow; chon: { tier: TierId; days: number } | null } | null>(null);
-  const moNangGoi = daDuyetNangGoi(billing); // Up tin: giá Nâng gói đã Duyệt trong Admin (06/11/2026)
-  const moDay = daDuyetDayTin(billing); // Đẩy tin: giá Đẩy tin đã Duyệt trong Admin
+  // Up tin / Đẩy tin: giá đã Duyệt trong Admin ĐÚNG bảng của tin (Bán / Thuê) — 12/11/2026
+  const moNangGoi = (p: string | null | undefined) => daDuyetNangGoi(billing, p ?? null);
+  const moDay = (p: string | null | undefined) => daDuyetDayTin(billing, p ?? null);
   const chuNang = chuNangGoi(billing);
   const [tuKhoa, setTuKhoa] = useState("");
   const [trang, setTrang] = useState(1);
@@ -532,22 +533,22 @@ export default function TinCuaToi({ demo }: { demo?: DemoTinCuaToi } = {}) {
                 </button>
               )}
               {/* Yêu cầu nâng gói đang chờ duyệt → hiện yêu cầu + huỷ, thay cho nút Up tin */}
-              {moNangGoi && laChu && yeuCauNangCuaTin(r) && (
+              {moNangGoi(r.purpose) && laChu && yeuCauNangCuaTin(r) && (
                 <span className="flex h-9 items-center gap-1 rounded-lg border border-cvr-line bg-cvr-surface pl-3 pr-1 text-[13.5px] text-cvr-body sm:ml-auto">
                   Chờ duyệt nâng lên {getTier(yeuCauNangCuaTin(r)!.tier).name}
                   <button type="button" onClick={() => huyNang(r)} className="h-7 rounded-md px-2.5 text-[13px] font-semibold text-cvr-ink hover:bg-white">Huỷ yêu cầu</button>
                 </span>
               )}
               {/* Up tin + Đẩy tin CHỈ hiện khi anh đã Duyệt "Cài đặt Up tin – Nâng gói" trong Admin (moNangGoi — 06/11/2026) */}
-              {(moNangGoi || moDay) && r.status === "approved" && !(r.published_at && Date.parse(r.published_at) > Date.now()) && (
-                <div className={`grid w-full gap-2 sm:flex sm:w-auto ${yeuCauNangCuaTin(r) ? "" : "sm:ml-auto"} ${moNangGoi && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) ? "grid-cols-2" : "grid-cols-1"}`}>
-                  {moNangGoi && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) && (
+              {(moNangGoi(r.purpose) || moDay(r.purpose)) && r.status === "approved" && !(r.published_at && Date.parse(r.published_at) > Date.now()) && (
+                <div className={`grid w-full gap-2 sm:flex sm:w-auto ${yeuCauNangCuaTin(r) ? "" : "sm:ml-auto"} ${moNangGoi(r.purpose) && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) ? "grid-cols-2" : "grid-cols-1"}`}>
+                  {moNangGoi(r.purpose) && laChu && tinNangDuoc(r as Parameters<typeof tinNangDuoc>[0]) && (
                     <button type="button" onClick={() => setNangCho({ r, chon: null })} className={`bg-cvr-blue hover:bg-cvr-blue/90 ${NUT_CHINH_TIN}`}>
                       <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M7 11l5-5 5 5M7 17l5-5 5 5" /></svg>
                       {chuNang.nutNang}
                     </button>
                   )}
-                  {moDay && <button type="button" disabled={dangDay === r.id} onClick={() => handleDay(r)} className={`bg-cvr-blue hover:bg-cvr-blue/90 ${NUT_CHINH_TIN}`}>
+                  {moDay(r.purpose) && <button type="button" disabled={dangDay === r.id} onClick={() => handleDay(r)} className={`bg-cvr-blue hover:bg-cvr-blue/90 ${NUT_CHINH_TIN}`}>
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
                     {dangDay === r.id ? "Đang đẩy…" : Number(r.bump_credits ?? 0) > 0 ? `${chuNang.nutDay} · còn ${r.bump_credits} lượt` : chuNang.nutDay}
                   </button>}
