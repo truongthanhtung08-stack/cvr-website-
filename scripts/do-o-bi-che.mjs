@@ -33,7 +33,8 @@ for (let i = 0; i < oGo.length; i++) {
   await ev(`document.activeElement?.blur()`); await ngu(250);
   // đặt ô sát đáy màn hình (chỗ bàn phím sẽ che) rồi chạm vào
   await ev(`(()=>{const e=document.querySelector('[data-do="${i}"]');const r=e.getBoundingClientRect();scrollBy(0,r.top-innerHeight+60)})()`); await ngu(300);
-  await ev(`document.querySelector('[data-do="${i}"]').focus()`);
+  // Trình duyệt ẩn (headless) không có cửa sổ đang chọn → focus() KHÔNG phát focus/focusin; phát tay như ngón chạm thật (12/11/2026)
+  await ev(`(()=>{const e=document.querySelector('[data-do="${i}"]');e.focus();e.dispatchEvent(new FocusEvent("focus"));e.dispatchEvent(new FocusEvent("focusin",{bubbles:true}))})()`);
   if (caoPhim) { await ngu(100); await send('Emulation.setDeviceMetricsOverride', { width: 390, height: Number(caoPhim), deviceScaleFactor: 2, mobile: true }); }
   await ngu(1200);
   const kq = await ev(`(()=>{const e=document.querySelector('[data-do="${i}"]');const r=e.getBoundingClientRect();const tren=${DO};const duoi=${caoPhim ? 'innerHeight' : 'innerHeight*0.5'};return {top:Math.round(r.top),bot:Math.round(r.bottom),tren:Math.round(tren),duoi:Math.round(duoi),focus:document.activeElement===e}})()`);
