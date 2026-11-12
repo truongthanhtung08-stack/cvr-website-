@@ -69,7 +69,19 @@ export default function BanPhimAo() {
       if (timLopPhu(el)) return 0;
       let day = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
       const ds = Array.from(document.querySelectorAll<HTMLElement>("header, .sticky, .fixed"))
-        .filter((n) => !n.contains(el) && /^(sticky|fixed)$/.test(getComputedStyle(n).position) && getComputedStyle(n).visibility !== "hidden")
+        .filter((n) => {
+          if (n.contains(el)) return false;
+          const cs = getComputedStyle(n);
+          if (!/^(sticky|fixed)$/.test(cs.position) || cs.visibility === "hidden") return false;
+          // THANH DÍNH CHỈ CHE KHI ĐANG DÍNH THẬT (anh 14:59 12/11/2026: chạm ô Tiêu đề → ô bị đẩy khuất dưới "‹ Đăng tin"): thanh
+          // B / I của ô Mô tả là "sticky" nhưng đang nằm giữa trang (chưa dính) — trước bị tính là thanh che trên đầu → máy cuộn
+          // sai. Sticky chỉ tính khi mép trên đang đúng chỗ dính (top của nó).
+          if (cs.position === "sticky") {
+            const dinh = parseFloat(cs.top);
+            if (Number.isFinite(dinh) && Math.abs(n.getBoundingClientRect().top - dinh) > 2) return false;
+          }
+          return true;
+        })
         .map((n) => n.getBoundingClientRect())
         .filter((r) => r.height > 0 && r.width >= window.innerWidth * 0.5 && r.height <= window.innerHeight * 0.4)
         .sort((a, b) => a.top - b.top);
