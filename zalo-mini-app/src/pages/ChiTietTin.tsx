@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { openOutApp } from "zmp-sdk";
+import BanDoTin from "../components/BanDoTin";
 import { Box, Icon, ImageViewer, Page, Sheet, Spinner, Text, useNavigate } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
 import ThuGonTin from "../components/ThuGonTin";
@@ -257,6 +258,7 @@ export default function ChiTietTin() {
         <h2 className="muc-tin">Vị trí trên bản đồ</h2>
         {/* Zalo CHẶN trang google.com nhúng trong Mini App (anh chụp bản 58, 12/11/2026: "Trang web hiện không khả dụng") → bỏ khung nhúng,
             hiện địa chỉ + nút mở app bản đồ của máy (openOutApp). */}
+        <BanDoTin ghim={tin.ghim} soNhaDuong={tin.dia_chi_ct} khuVuc={[tin.ward, tin.district, tin.province].filter(Boolean).join(", ")} />
         <div className="dia-chi-ban-do"><Icon icon="zi-location" size={20} /><span>{[tin.dia_chi_ct?.trim(), tin.ward, tin.district, tin.province].filter(Boolean).join(", ")}</span></div>
         {/* Như web (MapPaneGoogle): nút mở thẳng Google Maps — trong Zalo mở ra ngoài (openOutApp) để máy tự chuyển vào app bản đồ */}
         <button
