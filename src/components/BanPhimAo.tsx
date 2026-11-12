@@ -78,10 +78,22 @@ export default function BanPhimAo() {
       for (const r of ds) if (r.top - vvTop() < vvCao() * 0.4) day = Math.max(day, r.bottom - vvTop());
       return day;
     };
+    // DÒNG CON TRỎ trong khung soạn (contenteditable): ô Mô tả cao hơn màn hình — nhìn thấy MỘT PHẦN ô chưa đủ, dòng đang gõ phải
+    // nằm dưới mọi thanh dính (anh 12/11/2026, ảnh 8:38: dòng đầu ô Mô tả bị thanh "‹ Đăng tin" che khi bàn phím bật).
+    const conTro = (el: HTMLElement): DOMRect | null => {
+      if (!el.isContentEditable) return null;
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount || !el.contains(sel.getRangeAt(0).startContainer)) return null;
+      const rg = sel.getRangeAt(0);
+      const c = rg.getClientRects()[0] ?? (rg.startContainer instanceof Element ? rg.startContainer.getBoundingClientRect() : rg.startContainer.parentElement?.getBoundingClientRect());
+      return c && c.height > 0 ? c : null;
+    };
     const dangNhin = (el: HTMLElement, giaDinh: boolean) => {
       const r = el.getBoundingClientRect();
       const tren = vvTop() + cheTren(el) + 8;
       const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
+      const c = conTro(el);
+      if (c) return c.top >= tren && c.bottom <= duoi;
       if (r.height > vvCao() * 0.6) return r.top < duoi - 40 && r.bottom > tren + 40; // ô cao (mô tả): thấy một phần là đủ
       return r.top >= tren && r.bottom <= duoi;
     };
@@ -142,7 +154,8 @@ export default function BanPhimAo() {
           // duyệt chỉ biết scroll-padding nên đặt ô xuống dưới thanh bước
           const tren = vvTop() + cheTren(el) + 8;
           const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
-          const dich = giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
+          const c = conTro(el);
+          const dich = c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
           window.scrollBy({ top: dich, behavior: "smooth" });
         }
       }
