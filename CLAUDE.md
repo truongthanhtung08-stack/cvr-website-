@@ -39,6 +39,20 @@ báo anh MỘT dòng trước khi sửa, không bắt anh tự mò. Không dùng
 ③ báo về Điều phối: đã sửa gì (commit) · đã kiểm gì, ở đâu · chưa kiểm gì · ④ đụng quy trình khách (bảng trên) → thử lại ①→⑥ khổ 375 + máy
 tính trước khi báo · ⑤ ghi chú dài để ở thư mục ghi chú chung của nhóm phiên, không dán vào tin nhắn · ⑥ phiên bị cấm (đầu tệp) không được giao.
 
+## ⏳ 12/11/2026 CHIỀU (phiên 18419c5a) — ĐÃ COMMIT, CHƯA PUSH (552f9992 → d7e546ea, build qua)
+**Đã làm:** form đăng tin (loại hình CHA bắt buộc + ô loại CON tuỳ chọn ngay dưới, mọi loại có danh sách + "Khác — tự ghi"; Đất · Đất nền ·
+Đất nền dự án chung 12 loại đất; cho thuê có Đất; tiện ích + nội thất theo loại; Chọn / Bỏ chọn gói đúng cả khi lưu nháp; Xem trước · Lưu nháp ·
+Đăng tin cùng thứ tự, Lưu nháp có Soạn tiếp) · Admin Bảng giá (menu theo thứ tự trang Báo giá; Gói đăng tin / Gói đẩy tin / Up tin / Gói dự án
+cùng kiểu bảng: cột hạng Basic→Diamond, hàng %, hàng thời hạn; nút Thu hồi mọi bảng + chương trình; Hội viên chỉ lên web qua "Duyệt bảng Hội
+viên"; Đẩy tin Thuê chưa duyệt thì không bán) · Up tin có Basic, luôn khấu trừ, bỏ khỏi trang Báo giá (chỉ ở Tin của tôi) · đẩy tin tối đa
+2 lần/ngày (SQL 0073 — anh ĐÃ chạy, đã kiểm cột `lan`) · mọi lần trả tiền báo chung mẫu Zalo "Thanh toán dịch vụ thành công" · chương trình
+miễn phí thành viên mới KHÔNG giới hạn thời gian (30 ngày mỗi thành viên từ lần đăng nhập đầu), Duyệt mới = thay thế cái đang chạy trong một
+lần · Mẫu tin hiển thị thu nhỏ đúng tỷ lệ · máy tính 20 tin/trang (mốc 900px) · **TẠM THỜI KHÔNG GỘP TÀI KHOẢN** (đăng nhập tài khoản nào làm
+tài khoản ấy; tài khoản đã gộp trước giữ nguyên; bật lại: `WEB_TU_GOP` xac-minh-sdt + `TU_GAN` gopTaiKhoan.ts).
+**Chờ:** anh nhắn "Push" → anh Duyệt bản nháp "Miễn phí đăng tin cho thành viên mới" (Admin → Khuyến mãi, đã Lưu nháp) · anh dán 2 dòng
+quy định đẩy tin mới vào Admin → Quyền lợi gói → "Quy định đẩy tin" · bấm thử Up tin / Đẩy tin bằng tài khoản CÓ tin đang hiện (luật đã thử
+bằng bảng giá thật, đúng) · điện thoại thật + Zalo chưa kiểm. Máy 3000 dùng CHUNG CSDL web thật — bấm Lưu/Duyệt ở đó là đổi giá thật.
+
 ## ✅ 10/11/2026 (phiên 18419c5a) — ĐÃ PUSH HẾT, web chạy 7ee2b24e
 - **Video khách đăng — sửa gốc** (c6e93345): `src/lib/nenVideo.ts` ① MP4 H.264 ≤ 44MB giữ nguyên ② mediabunny chỉ khi giữ được track hình ③ không thì ffmpeg.wasm (mã `public/ffmpeg/`, lõi jsDelivr @ffmpeg/core 0.12.10). Nút ghi "Đang tải video… X%" (chữ mới, anh chưa duyệt nguyên văn). Đã thử trên web thật: HEVC kiểu iPhone → MP4 H.264 720×1280 có hình + tiếng.
 - **Tin khách 1e3be917** (biệt thự Hòa Xuân, khách đã mua gói): video cũ chỉ có tiếng, không cứu được → ghép 13 ảnh của tin + tiếng gốc thành MP4 (`.claude/video-tin-1e3be917.mp4`), Claude thay trong Admin trên Chrome của anh, trang tin chạy có hình. Gói, hạn giữ nguyên.
