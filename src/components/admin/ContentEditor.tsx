@@ -6,7 +6,6 @@ import { isVideoUrl } from "@/lib/media";
 import { imageMarkerUrl, videoMarkerUrl } from "@/lib/dauNoiDung";
 import { asset } from "@/lib/asset";
 import { tachDinhDang, thoatChu } from "@/lib/dinhDangMoTa";
-import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // Ô nhập NỘI DUNG có chèn ẢNH & VIDEO giữa bài (Tin đăng · Dự án · Tin tức).
 // Mỗi đoạn xuống 1 dòng. Chèn ảnh → dòng ![](url) · chèn video → dòng @[video](url)
@@ -130,35 +129,19 @@ export default function ContentEditor({
   chiAnh?: boolean;
 }) {
   const khungRef = useRef<HTMLDivElement>(null);
-  // ── ĐIỆN THOẠI: MÀN SOẠN TOÀN MÀN HÌNH (anh 12/11/2026: "cách nào để mở rộng ô và thu ô chuẩn nhất khi nhập liệu trên đt";
-  // thanh B / I dính trên đầu khung đè dòng đang gõ). Cách chuẩn của app soạn thảo điện thoại: trong form ô chỉ hiện vài dòng
-  // đầu (thu) → chạm là MỞ màn soạn riêng (‹ · Xong), thanh công cụ nằm NGOÀI vùng chữ nên không bao giờ đè, vùng chữ cao
-  // đúng phần màn hình còn lại phía trên bàn phím (visualViewport). Xong / ‹ / nút Quay lại của máy → thu về form.
-  // Máy tính (≥ 640px) giữ nguyên khung soạn trong form như cũ. Thay thanh kéo mở rộng (12/11 sáng).
-  const [laDt, setLaDt] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
-    const doi = () => setLaDt(mq.matches);
-    doi();
-    mq.addEventListener("change", doi);
-    return () => mq.removeEventListener("change", doi);
-  }, []);
-  const [toanMan, setToanMan] = useState(false);
-  const moSoan = laDt && toanMan;
-  const [manHinh, setManHinh] = useState<{ cao: number; tren: number } | null>(null);
-  useEffect(() => {
-    if (!moSoan) return;
-    const vv = window.visualViewport;
-    const do_ = () => setManHinh(vv ? { cao: vv.height, tren: vv.offsetTop } : { cao: window.innerHeight, tren: 0 });
-    do_();
-    vv?.addEventListener("resize", do_);
-    vv?.addEventListener("scroll", do_);
-    return () => { vv?.removeEventListener("resize", do_); vv?.removeEventListener("scroll", do_); };
-  }, [moSoan]);
-  const dongSoan = () => { khungRef.current?.blur(); setToanMan(false); };
-  useKhoaCuon(moSoan, dongSoan);
-  // Chạm vào ô trong form = khung soạn nhận con trỏ ĐÚNG chỗ chạm (bàn phím bật như ô thường) → mở màn soạn quanh nó.
-  const moManSoan = () => { if (laDt && !toanMan) setToanMan(true); };
+  // THANH KÉO MỞ RỘNG TRÊN ĐIỆN THOẠI (anh 12/11/2026: "có chỗ kéo mở rộng") — góc kéo của trình duyệt quá nhỏ cho ngón tay.
+  const [caoKeo, setCaoKeo] = useState<number | null>(null);
+  const batDauKeo = (e: React.PointerEvent) => {
+    const el = khungRef.current;
+    if (!el) return;
+    const y0 = e.clientY;
+    const h0 = el.getBoundingClientRect().height;
+    const keo = (ev: PointerEvent) => setCaoKeo(Math.max(120, h0 + ev.clientY - y0));
+    const tha = () => { window.removeEventListener("pointermove", keo); window.removeEventListener("pointerup", tha); window.removeEventListener("pointercancel", tha); };
+    window.addEventListener("pointermove", keo);
+    window.addEventListener("pointerup", tha);
+    window.addEventListener("pointercancel", tha);
+  };
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
@@ -306,21 +289,10 @@ export default function ContentEditor({
   const giuChon = (e: React.MouseEvent) => e.preventDefault(); // bấm nút không làm mất vùng bôi đen
 
   return (
-    <div
-      className={moSoan ? "fixed inset-x-0 top-0 z-[120] flex flex-col bg-white" : "space-y-2"}
-      style={moSoan ? { height: manHinh?.cao ?? "100dvh", top: manHinh?.tren ?? 0 } : undefined}
-    >
-      {moSoan && (
-        <div className="flex h-12 shrink-0 items-center justify-between border-b border-cvr-line px-2">
-          <button type="button" onClick={dongSoan} aria-label="Quay lại" className="flex h-10 w-10 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-          </button>
-          <button type="button" onClick={dongSoan} className="h-10 rounded-full px-4 text-[15px] font-semibold text-cvr-blue-ink active:bg-cvr-surface">Xong</button>
-        </div>
-      )}
+    <div className="space-y-2">
       {/* THANH CÔNG CỤ DÍNH TRÊN ĐẦU KHUNG khi cuộn trong lúc soạn (anh 12/11/2026, ảnh 8:54: bôi chữ để định dạng thì thanh B / I đã trôi
           khỏi màn hình, cuộn lên là mất vùng bôi) — điện thoại dính dưới thanh "‹ Đăng tin"; máy tính đứng yên như cũ. */}
-      <div className={moSoan ? "shrink-0 space-y-2 border-b border-cvr-line px-3 py-2" : laDt ? "hidden" : "sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-10 -mx-1 space-y-2 bg-white px-1 py-1.5 lg:static lg:mx-0 lg:px-0 lg:py-0"}>
+      <div className="sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-10 -mx-1 space-y-2 bg-white px-1 py-1.5 lg:static lg:mx-0 lg:px-0 lg:py-0">
       {/* Thanh định dạng: đậm · nghiêng · canh lề — hiện kết quả NGAY trong khung soạn */}
       <div className="flex flex-wrap items-center gap-1.5">
         <ToolBtn label="In đậm" onMouseDown={giuChon} onClick={() => lenh("bold")}>
@@ -381,7 +353,7 @@ export default function ContentEditor({
       </div>
       </div>
       {showLink && (
-        <div className={`flex items-center gap-2${moSoan ? " shrink-0 px-3 pt-2" : ""}`}>
+        <div className="flex items-center gap-2">
           <input
             value={link}
             onChange={(e) => setLink(e.target.value)}
@@ -400,10 +372,9 @@ export default function ContentEditor({
       )}
 
       {/* KHUNG SOẠN — chữ hiện đúng định dạng ngay khi gõ, như trên trang tin */}
-      <div className={moSoan ? "relative min-h-0 flex-1 overflow-y-auto px-3 py-2" : "relative"}>
+      <div className="relative">
         <div
           ref={khungRef}
-          onFocus={moManSoan}
           contentEditable
           suppressContentEditableWarning
           role="textbox"
@@ -427,20 +398,21 @@ export default function ContentEditor({
             nut.closest("[data-anh],[data-video]")?.remove();
             phat();
           }}
-          // Máy tính: khung tự cao theo nội dung, kéo góc dưới. Điện thoại: trong form chỉ hiện vài dòng đầu (thu) — chạm là mở
-          // màn soạn; trong màn soạn khung không viền, cao hết vùng chữ.
-          style={moSoan ? { minHeight: "100%", borderWidth: 0, boxShadow: "none" } : laDt ? { minHeight: "7rem", maxHeight: `${Math.max(rows, 7) * 1.6}rem` } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
-          className={`soan-thao w-full resize-none whitespace-pre-wrap break-words bg-white text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition ${moSoan ? "overflow-visible px-0 py-0" : laDt ? "overflow-hidden rounded-lg border border-cvr-line px-3 py-2.5" : "overflow-visible rounded-lg border border-cvr-line px-3 py-2.5 focus:border-cvr-ink"}`}
+          // Khung tự cao theo nội dung. Điện thoại: thanh kéo to bên dưới, chữ 16px (iPhone không tự phóng); máy tính KÉO GÓC DƯỚI (12/11/2026).
+          style={{ minHeight: caoKeo ? `${caoKeo}px` : `${Math.max(rows, 7) * 1.6}rem` }}
+          className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
           <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-[16px] leading-relaxed text-cvr-faint sm:text-sm">{placeholder}</p>
         )}
-        {/* Điện thoại, ô đang thu: vệt mờ cuối ô báo còn chữ phía dưới (chạm để mở màn soạn) */}
-        {laDt && !moSoan && <div className="pointer-events-none absolute inset-x-px bottom-px h-10 rounded-b-lg bg-gradient-to-t from-white to-transparent" aria-hidden />}
+        {/* Thanh kéo TÁCH khỏi khung (mt-2) + vùng chạm cao 40px; chạm vào KHÔNG bật bàn phím (preventDefault, không đổi ô đang chọn) — anh 12/11/2026 */}
+        <div onPointerDown={(e) => { e.preventDefault(); batDauKeo(e); }} role="separator" aria-label="Kéo để mở rộng khung soạn" className="mt-2 flex h-10 touch-none cursor-ns-resize select-none items-center justify-center sm:hidden">
+          <span className="h-1.5 w-14 rounded-full bg-cvr-muted/50" />
+        </div>
       </div>
 
       {error && (
-        <p className="shrink-0 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
     </div>
   );
