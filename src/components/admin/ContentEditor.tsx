@@ -397,8 +397,9 @@ export default function ContentEditor({
         {!value.trim() && placeholder && (
           <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-[16px] leading-relaxed text-cvr-faint sm:text-sm">{placeholder}</p>
         )}
-        <div onPointerDown={batDauKeo} role="separator" aria-label="Kéo để mở rộng khung soạn" className="flex h-7 touch-none cursor-ns-resize items-center justify-center sm:hidden">
-          <span className="h-1.5 w-12 rounded-full bg-cvr-line" />
+        {/* Thanh kéo TÁCH khỏi khung (mt-2) + vùng chạm cao 40px; chạm vào KHÔNG bật bàn phím (preventDefault, không đổi ô đang chọn) — anh 12/11/2026 */}
+        <div onPointerDown={(e) => { e.preventDefault(); batDauKeo(e); }} role="separator" aria-label="Kéo để mở rộng khung soạn" className="mt-2 flex h-10 touch-none cursor-ns-resize select-none items-center justify-center sm:hidden">
+          <span className="h-1.5 w-14 rounded-full bg-cvr-muted/50" />
         </div>
       </div>
 
