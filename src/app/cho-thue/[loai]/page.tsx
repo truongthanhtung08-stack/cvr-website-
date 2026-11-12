@@ -16,7 +16,7 @@ const DANH_MUC = [...rentCategories, ...nhomPseo("thue")];
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
-import { TRANG_DONG_BANG, giuSoCu, lienKetChoDu, lienKetLoaiHinh, moTaSoLieu } from "@/lib/pseo";
+import { TRANG_DONG_BANG, giuSoCu, lienKetChoDu, lienKetLoaiHinh, moTaSoLieu, moTaTinh } from "@/lib/pseo";
 import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
 
 // ============================================================================
@@ -79,7 +79,7 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
   const soTinXet = demTinTheoKhuVuc((await getTinXetTrang().catch(() => listings)).filter((l) => (l.purpose ?? "ban") === "thue"), kv.name);
   const title = tieuDeKhuVuc("thue", kv.name);
   const tinTinh = listings.filter((l) => (l.purpose ?? "ban") === "thue" && normalizeVi(tinhCua(l.location)) === normalizeVi(kv.name));
-  const description = moTaSoLieu(title, tinTinh, "thue", !giuSoCu(`/cho-thue/${loai}`)) ?? moTaKhuVuc("thue", kv.name, soTin); // câu duyệt 24/10/2026
+  const description = moTaTinh(title, tinTinh, "thue", kv.name, !giuSoCu(`/cho-thue/${loai}`)) ?? moTaKhuVuc("thue", kv.name, soTin); // câu duyệt 24/10/2026
   return {
     title,
     description,

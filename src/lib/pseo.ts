@@ -2,7 +2,7 @@ import type { Listing } from "@/lib/data";
 import { findCategory, nhomPseo, rentCategories, saleCategories, type Category } from "@/lib/categories";
 import { khuVucList, slugKhuVuc, timKhuVuc, type KhuVuc } from "@/lib/khuVuc";
 import { normalizeVi, type Filters } from "@/lib/filters";
-import { choCuCua, newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
+import { choCuCua, newProvinceOf, oldNamesOf, phuongMoiCuaQuan } from "@/lib/locations";
 import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
 import { tenPhuongChuan } from "@/lib/tenPhuongChuan";
 import { loiCuaTrang, laLoiUuTien, phienBanTuKhoa } from "@/lib/tuKhoaLoiStore";
@@ -128,7 +128,7 @@ export const KIET_SLUG = "nha-kiet-hem";
 // thành phố đó, theo BẢNG SÁP NHẬP CHÍNH THỨC (phuongMoiCuaQuan) — không dò theo tên, không đoán.
 // Thêm thành phố: thêm một dòng { name, tinhCu }. Tên thành phố trùng tên tỉnh (Quảng Ngãi, Kon Tum…)
 // không thêm — trang tỉnh đã mang đúng tên đó.
-export type ThanhPho = { slug: string; name: string; tinh: string; phuong: string[] };
+export type ThanhPho = { slug: string; name: string; tinh: string; tinhCu: string; phuong: string[] };
 // Trình duyệt: dựng khi địa danh nạp xong (cùng một mảng, nơi dùng thấy ngay) — dựng lúc nạp mã thì phuongMoiCuaQuan
 // chưa có dữ liệu, bảng rỗng mãi (20/10/2026). Máy chủ: dựng ngay như cũ.
 export const THANH_PHO: ThanhPho[] = [];
@@ -161,7 +161,7 @@ const NGUON_THANH_PHO = [
 function dungThanhPho() {
   if (THANH_PHO.length || !daCoDiaDanh()) return;
   THANH_PHO.push(...NGUON_THANH_PHO
-    .map(({ name, tinhCu }) => ({ name, slug: slugKhuVuc(name), tinh: newProvinceOf(tinhCu), phuong: phuongMoiCuaQuan(tinhCu, name) }))
+    .map(({ name, tinhCu }) => ({ name, slug: slugKhuVuc(name), tinh: newProvinceOf(tinhCu), tinhCu, phuong: phuongMoiCuaQuan(tinhCu, name) }))
     .filter((t) => t.phuong.length > 0));
 }
 dungThanhPho();
@@ -278,6 +278,12 @@ export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc, phoBien = fals
   while ([...cau()].length > 160 && so.length > 1) so.pop();
   return cau();
 }
+/** Mô tả trang tỉnh kèm tỉnh cũ đã gộp ("Nhà đất Khánh Hòa (Ninh Thuận cũ) giá …") khi câu ≤ 160 ký tự; không được thì câu thường. */
+export function moTaTinh(dau: string, tin: Listing[], muc: Muc, tinh: string, phoBien = false): string | null {
+  const cu = oldNamesOf(tinh).filter((t) => t !== tinh);
+  const coCu = phoBien && cu.length ? moTaSoLieu(`${dau.replace(/\s*tháng \d{1,2}\/\d{4}$/, "")} (${cu.join(", ")} cũ)`, tin, muc, phoBien) : null;
+  return coCu && [...coCu].length <= 160 ? coCu : moTaSoLieu(dau, tin, muc, phoBien);
+}
 export function moTa(dk: DieuKien, tin: Listing[] = []): string {
   // Trang phường: kèm tên quận cũ ngay sau tên phường ("Phường Hải Châu (quận Hải Châu cũ), Đà Nẵng") — 27/10/2026
   const cu = dk.phuong ? tenCu(tin, dk.tinh.name, dk.phuong) : "";
@@ -287,6 +293,14 @@ export function moTa(dk: DieuKien, tin: Listing[] = []): string {
   if (coCu && [...coCu].length <= 160) return coCu;
   // Trang thành phố: tiêu đề không có tỉnh → mô tả nói rõ thuộc tỉnh nào
   const dau = dk.thanhPho && !tieuDe(dk).includes(dk.tinh.name) ? `${tieuDe(dk)}, ${dk.tinh.name}` : tieuDe(dk);
+  // TÊN TỈNH CŨ (anh 12/11/2026: "địa điểm mới và cũ — Google đọc được hết"): trang tỉnh / thành phố kèm tỉnh cũ đã gộp vào
+  // ("Nhà đất Khánh Hòa (Ninh Thuận cũ)", "Nhà đất Quy Nhơn, Gia Lai (Bình Định cũ)") — cùng cách trang phường kèm quận cũ;
+  // chỉ khi cả câu ≤ 160 ký tự; trang đang top (giuSoCu) giữ nguyên.
+  if (pb && !dk.phuong) {
+    const cuTinh = dk.thanhPho ? (dk.thanhPho.tinhCu !== dk.tinh.name ? [dk.thanhPho.tinhCu] : []) : oldNamesOf(dk.tinh.name).filter((t) => t !== dk.tinh.name);
+    const coTinhCu = cuTinh.length ? moTaSoLieu(`${dau} (${cuTinh.join(", ")} cũ)`, tin, dk.muc, pb) : null;
+    if (coTinhCu && [...coTinhCu].length <= 160) return coTinhCu;
+  }
   return moTaSoLieu(dau, tin, dk.muc, pb)
     ?? `${dau} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp ${dk.muc === "thue" ? "người cho thuê" : "người bán"}.`;
 }
