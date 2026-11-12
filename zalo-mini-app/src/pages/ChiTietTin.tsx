@@ -255,12 +255,9 @@ export default function ChiTietTin() {
           không khoá, không tính tiền. Ghim toạ độ nếu có, không thì số nhà + tên đường + phường/tỉnh. */}
       <section className="khoi-ct">
         <h2 className="muc-tin">Vị trí trên bản đồ</h2>
-        <iframe
-          className="ban-do"
-          title="Vị trí trên bản đồ"
-          loading="lazy"
-          src={`https://www.google.com/maps?q=${encodeURIComponent(tin.ghim?.trim() || [tin.dia_chi_ct?.trim(), tin.ward, tin.district, tin.province].filter(Boolean).join(", "))}&z=${tin.ghim?.trim() || tin.dia_chi_ct?.trim() ? 17 : 15}&hl=vi&output=embed`}
-        />
+        {/* Zalo CHẶN trang google.com nhúng trong Mini App (anh chụp bản 58, 12/11/2026: "Trang web hiện không khả dụng") → bỏ khung nhúng,
+            hiện địa chỉ + nút mở app bản đồ của máy (openOutApp). */}
+        <div className="dia-chi-ban-do"><Icon icon="zi-location" size={20} /><span>{[tin.dia_chi_ct?.trim(), tin.ward, tin.district, tin.province].filter(Boolean).join(", ")}</span></div>
         {/* Như web (MapPaneGoogle): nút mở thẳng Google Maps — trong Zalo mở ra ngoài (openOutApp) để máy tự chuyển vào app bản đồ */}
         <button
           className="nut-mo-ban-do"
