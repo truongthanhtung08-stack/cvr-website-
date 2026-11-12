@@ -387,7 +387,7 @@ export default function ContentEditor({
             phat();
           }}
           // Khung tự cao theo nội dung. Điện thoại: thanh kéo to bên dưới, chữ 16px (iPhone không tự phóng); máy tính KÉO GÓC DƯỚI (12/11/2026).
-          style={{ minHeight: caoKeo ? `${caoKeo}px` : `${Math.max(rows, 3) * 1.6}rem` }}
+          style={{ minHeight: caoKeo ? `${caoKeo}px` : `${Math.max(rows, 7) * 1.6}rem` }}
           className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
