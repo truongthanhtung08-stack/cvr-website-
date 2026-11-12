@@ -46,7 +46,7 @@ export default function TinCuaToi() {
       {!san || dangTai ? (
         <Box flex justifyContent="center" p={6}><Spinner /></Box>
       ) : !nguoiDung ? (
-        <Box p={4}><Button fullWidth onClick={() => dieuHuong("/dang-nhap?tiep=/tin-cua-toi")}>Đăng nhập bằng Zalo</Button></Box>
+        <Box p={4}><Button fullWidth onClick={() => dieuHuong("/dang-nhap?tiep=/tin-cua-toi")}>Liên kết tài khoản</Button></Box>
       ) : (
         <>
           <div className="tab-noi-bat" style={{ paddingTop: 12 }}>

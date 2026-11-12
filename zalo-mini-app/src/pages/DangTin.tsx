@@ -12,6 +12,7 @@ import { layNguoiZalo } from "../lib/zalo";
 import { getAccessToken, getLocation } from "zmp-sdk";
 import XacMinhSo from "../components/XacMinhSo";
 import BangGiaMaTran, { TEN_HANG } from "../components/BangGiaMaTran";
+import { DS_LOAI, O_LOAI_CON } from "../lib/loaiHinh";
 
 const { Option } = Select;
 
@@ -19,10 +20,7 @@ const { Option } = Select;
 // status "pending" chờ admin duyệt, details.plan = gói + số tiền đã báo (giaBao, chưa VAT).
 // Mini App chỉ mở GÓI TIN THƯỜNG (Basic); gói VIP / thanh toán cần Checkout SDK của Zalo (chưa bật).
 
-// Loại hình — ĐÚNG ô Loại hình của form web (06/11/2026, sinh từ src/lib/categories.ts nhomChonLoaiHinh + tenLoaiHinhMenu).
-// ma = giá trị lưu ("<loại hình>::<loại đất>" khi là Đất nền dự án) · ten = chữ khách thấy. Web đổi cây thì sinh lại hai dòng này.
-const LOAI_BAN = [{"ma":"Căn hộ","ten":"Căn hộ"},{"ma":"Chung cư","ten":"Chung cư"},{"ma":"Căn hộ dịch vụ","ten":"Căn hộ dịch vụ"},{"ma":"Nhà riêng","ten":"Nhà riêng"},{"ma":"Nhà mặt phố","ten":"Nhà mặt phố"},{"ma":"Nhà biệt thự / Liền kề","ten":"Nhà biệt thự, liền kề"},{"ma":"Shophouse / Nhà phố thương mại","ten":"Shophouse, nhà phố thương mại"},{"ma":"Đất khác","ten":"Đất"},{"ma":"Đất nền / Đất nền dự án","ten":"Đất nền"},{"ma":"Đất nền / Đất nền dự án::Đất nền dự án","ten":"Đất nền dự án"},{"ma":"Villa / Biệt thự biển","ten":"Villa, biệt thự biển"},{"ma":"Condotel","ten":"Condotel"},{"ma":"Homestay / Farmstay","ten":"Homestay, Farmstay"},{"ma":"Khu nghỉ dưỡng","ten":"Khu nghỉ dưỡng"},{"ma":"Đất công nghiệp","ten":"Đất công nghiệp"},{"ma":"Kho / Nhà xưởng","ten":"Kho, nhà xưởng"},{"ma":"Bất động sản khác","ten":"Bất động sản khác"}];
-const LOAI_THUE = [{"ma":"Căn hộ","ten":"Căn hộ"},{"ma":"Chung cư","ten":"Chung cư"},{"ma":"Căn hộ dịch vụ","ten":"Căn hộ dịch vụ"},{"ma":"Nhà riêng","ten":"Nhà riêng"},{"ma":"Nhà mặt phố","ten":"Nhà mặt phố"},{"ma":"Nhà phố thương mại","ten":"Shophouse, nhà phố thương mại"},{"ma":"Biệt thự / Liền kề","ten":"Nhà biệt thự, liền kề"},{"ma":"Nhà trọ / Phòng trọ","ten":"Nhà trọ, phòng trọ"},{"ma":"Văn phòng","ten":"Văn phòng"},{"ma":"Mặt bằng / Cửa hàng bán lẻ","ten":"Cửa hàng, ki ốt"},{"ma":"Homestay / Farmstay","ten":"Homestay, Farmstay"},{"ma":"Thuê đất / Nhà xưởng / Kho bãi","ten":"Kho, nhà xưởng, đất"},{"ma":"Bất động sản khác","ten":"Bất động sản khác"}];
+const KHAC = "__khac"; // dòng "Khác — tự ghi" của ô chọn (như web ChonHoacGhi)
 const PHAP_LY = ["Sổ đỏ / Sổ hồng", "Hợp đồng mua bán", "Đang chờ sổ"];
 const HUONG = ["Đông", "Đông Nam", "Nam", "Tây Nam", "Tây", "Tây Bắc", "Bắc", "Đông Bắc"];
 const TOI_DA_ANH = 15; // web: mọi tin 15 ảnh (mức chung hiện hành)
@@ -47,6 +45,8 @@ export default function DangTin() {
 
   const [md, setMd] = useState<"ban" | "thue">(thamSo.get("md") === "thue" ? "thue" : "ban");
   const [loai, setLoai] = useState("");
+  const [loaiCon, setLoaiCon] = useState(""); // loại con tuỳ chọn (Loại căn hộ, Loại đất…) — lưu details.specs[ô loại con] như web 12/11/2026
+  const [conTuGhi, setConTuGhi] = useState(false); // đang ở dòng "Khác — tự ghi"
   const [tinh, setTinh] = useState("");
   const [phuong, setPhuong] = useState("");
   const [diaChi, setDiaChi] = useState("");
@@ -90,7 +90,12 @@ export default function DangTin() {
       const sp = (d.specs ?? {}) as Record<string, any>;
       setTinSua({ status: r.status, details: d });
       setMd(r.purpose === "thue" ? "thue" : "ban");
-      setLoai(sp.landType === "Đất nền dự án" ? `${r.type}::Đất nền dự án` : r.type ?? "");
+      const maLoai = sp.landType === "Đất nền dự án" ? `${r.type}::Đất nền dự án` : r.type ?? "";
+      setLoai(maLoai);
+      const oConCu = DS_LOAI[r.purpose === "thue" ? "thue" : "ban"].find((l) => l.ma === maLoai)?.con;
+      const vCon = oConCu ? String(sp[oConCu.key] ?? "") : "";
+      setLoaiCon(vCon);
+      setConTuGhi(!!vCon && !oConCu!.options.includes(vCon));
       setTinh(r.province ?? "");
       setPhuong(r.ward ?? "");
       setDiaChi(d.addressDetail ?? "");
@@ -147,14 +152,18 @@ export default function DangTin() {
   const tien = useMemo(() => {
     const giaGoi = goi?.terms.find((t) => t.days === soNgay)?.price ?? 0;
     const f = bangGia.data?.free;
-    const homNay = new Date().toISOString().slice(0, 10);
-    const dangChay = !!f?.active && (!f.from || homNay >= f.from) && (!f.to || homNay <= f.to);
-    const laMoi = !!hoSo.data?.created_at && (Date.now() - new Date(hoSo.data.created_at).getTime()) / 86_400_000 <= (f?.days ?? 0);
-    // CÙNG MỘT điều kiện khuyến mãi với web (huongKhuyenMai, src/lib/billing.ts): chương trình
-    // đang chạy · đúng hạng của chương trình · đúng đối tượng · còn lượt — lấy từ admin.
-    const hopDoiTuong = f?.audience === "all" || (f?.audience === "new" && laMoi) || f?.audience === (hoSo.data?.role ?? "buyer");
+    const gioVn = (t: number) => new Date(t + 7 * 3_600_000).toISOString().slice(0, 10);
+    const trongKy = (ngay: string) => !!f && (!f.from || ngay >= f.from) && (!f.to || ngay <= f.to);
+    // CÙNG MỘT điều kiện khuyến mãi với web (huongKhuyenMai + thanhVienMoi, src/lib/billing.ts — 12/11/2026):
+    // thành viên mới = ngày thành viên (profiles.ngay_thanh_vien, lần đăng nhập đầu) trong from–to + tin gửi trong f.days ngày
+    // kể từ ngày đó, KỂ CẢ khi chương trình đã qua ngày kết thúc; đối tượng khác: chương trình đang chạy hôm nay.
+    const ngayTv = hoSo.data?.ngay_thanh_vien ?? hoSo.data?.created_at;
+    const soNgayMoTk = ngayTv ? (Date.now() - new Date(ngayTv).getTime()) / 86_400_000 : -1;
     const conLuot = f?.quota === 0 || (hoSo.data?.free_quota ?? 0) > 0;
-    const mienPhi = !!hoSo.data && dangChay && !!goi && goi.tierId === f?.tierId && hopDoiTuong && conLuot;
+    const huong = f?.audience === "new"
+      ? !!f.active && !!ngayTv && trongKy(gioVn(new Date(ngayTv).getTime())) && soNgayMoTk >= 0 && soNgayMoTk <= f.days && conLuot
+      : !!f?.active && trongKy(gioVn(Date.now())) && (f.audience === "all" || f.audience === (hoSo.data?.role ?? "buyer")) && conLuot;
+    const mienPhi = !!hoSo.data && !!goi && goi.tierId === f?.tierId && huong;
     const thanhTien = mienPhi ? 0 : giaGoi;
     // Số ngày tin THẬT SỰ hiển thị: hưởng khuyến mãi → đúng số ngày của chương trình (như web).
     const soNgayThat = mienPhi ? (f?.days ?? soNgay ?? 0) : (soNgay ?? 0);
@@ -217,6 +226,16 @@ export default function DangTin() {
     }
   };
 
+  // Ô loại con của loại hình đang chọn (như web oLoaiCon). Đất nền dự án: landType = "Đất nền dự án" + ô Loại đất riêng (loaiDatDuAn).
+  const oCon = DS_LOAI[md].find((l) => l.ma === loai)?.con;
+  const specLoai = () => {
+    const sp: Record<string, string> = {};
+    const ld = loai.split("::")[1];
+    if (ld) sp.landType = ld;
+    if (oCon && loaiCon.trim()) sp[oCon.key] = loaiCon.trim();
+    return sp;
+  };
+
   const gui = async () => {
     setLoi(undefined);
     if (!nguoiDung) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`);
@@ -231,8 +250,8 @@ export default function DangTin() {
 
     const specsSua = (goc: Record<string, any>) => {
       const s: Record<string, any> = { ...goc };
-      const [, ld] = loai.split("::");
-      if (ld) s.landType = ld; else if (s.landType === "Đất nền dự án") delete s.landType;
+      for (const k of O_LOAI_CON) delete s[k]; // đổi loại hình → bỏ loại con cũ, ghi lại theo ô đang chọn
+      Object.assign(s, specLoai());
       if (matTien.trim()) s.frontage = matTien.trim(); else delete s.frontage;
       if (soTang.trim()) s.floors = soTang.trim(); else delete s.floors;
       return s;
@@ -290,8 +309,8 @@ export default function DangTin() {
     if (maSua && viThieu) return setLoi(`Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn.`);
     setDangGui(true);
     const specs: Record<string, string> = {};
-    const [loaiLuu, loaiDat] = loai.split("::"); // Đất nền dự án = loại hình Đất nền / Đất nền dự án + loại đất (như web)
-    if (loaiDat) specs.landType = loaiDat;
+    const loaiLuu = loai.split("::")[0];
+    Object.assign(specs, specLoai());
     if (matTien.trim()) specs.frontage = matTien.trim();
     if (soTang.trim()) specs.floors = soTang.trim();
     const { error } = await supabase.from("listings").insert({
@@ -346,8 +365,8 @@ export default function DangTin() {
       <Page style={{ background: "#fff" }}>
         <TieuDe title={maSua ? "Sửa tin" : "Đăng tin"} ve="/" />
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
-          <Text.Title size="large">Đăng nhập để đăng tin</Text.Title>
-          <Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`)}>Đăng nhập bằng Zalo</Button>
+          <Text.Title size="large">Liên kết tài khoản để đăng tin</Text.Title>
+          <Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`)}>Liên kết tài khoản</Button>
         </Box>
       </Page>
     );
@@ -379,12 +398,19 @@ export default function DangTin() {
 
       <Nhom tieuDe={daDang ? "Loại hình" : "Nhu cầu & loại hình"}>
         {!daDang && <div className="tab-md">
-          <button className={md === "ban" ? "bat" : ""} onClick={() => { setMd("ban"); setLoai(""); }}>Cần bán</button>
-          <button className={md === "thue" ? "bat" : ""} onClick={() => { setMd("thue"); setLoai(""); }}>Cho thuê</button>
+          <button className={md === "ban" ? "bat" : ""} onClick={() => { setMd("ban"); setLoai(""); setLoaiCon(""); setConTuGhi(false); }}>Cần bán</button>
+          <button className={md === "thue" ? "bat" : ""} onClick={() => { setMd("thue"); setLoai(""); setLoaiCon(""); setConTuGhi(false); }}>Cho thuê</button>
         </div>}
-        <Select label="Loại hình" placeholder="Chọn loại hình" value={loai} onChange={(v) => setLoai(String(v))} closeOnSelect>
-          {(md === "thue" ? LOAI_THUE : LOAI_BAN).map((l) => <Option key={l.ma} value={l.ma} title={l.ten} />)}
+        <Select label="Loại hình *" placeholder="Chọn loại hình" value={loai} onChange={(v) => { if (String(v) === loai) return; setLoai(String(v)); setLoaiCon(""); setConTuGhi(false); }} closeOnSelect>
+          {DS_LOAI[md].map((l) => <Option key={l.ma} value={l.ma} title={l.ten} />)}
         </Select>
+        {oCon && (
+          <Select label={oCon.label} placeholder={`Chọn ${oCon.label.toLowerCase()}`} value={conTuGhi ? KHAC : loaiCon} onChange={(v) => { const k = String(v) === KHAC; setConTuGhi(k); setLoaiCon(k ? "" : String(v)); }} closeOnSelect>
+            {oCon.options.map((o) => <Option key={o} value={o} title={o} />)}
+            <Option value={KHAC} title="Khác — tự ghi" />
+          </Select>
+        )}
+        {oCon && conTuGhi && <Input placeholder={oCon.label} value={loaiCon} onChange={(e) => setLoaiCon(e.target.value)} maxLength={60} />}
       </Nhom>
 
       <Nhom tieuDe="Vị trí">

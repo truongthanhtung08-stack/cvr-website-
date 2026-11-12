@@ -24,11 +24,11 @@ export function goiHotline() {
 }
 
 // Tên + ảnh đại diện Zalo của khách — lấy ngay trên máy (không cần máy chủ VN).
-// Chỉ gọi khi khách vào trang cần tới (không xin quyền lúc mở app — luật Mini App).
+// Không tự bật hộp xin quyền (Chính sách kiểm duyệt 6.1): chỉ đọc khi khách đã cho phép lúc bấm "Liên kết tài khoản".
 export type NguoiZalo = { id: string; name: string; avatar: string };
 export async function layNguoiZalo(): Promise<NguoiZalo | null> {
   try {
-    const { userInfo } = await getUserInfo({ autoRequestPermission: true, avatarType: "normal" });
+    const { userInfo } = await getUserInfo({ autoRequestPermission: false, avatarType: "normal" });
     return userInfo?.name ? { id: userInfo.id, name: userInfo.name, avatar: userInfo.avatar } : null;
   } catch {
     return null;

@@ -10,7 +10,7 @@ export default function CanDangNhap({ tieuDe }: { tieuDe: string }) {
   return (
     <Page style={{ background: "#fff" }}>
       <TieuDe title={tieuDe} />
-      <Box p={4}><Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(pathname + search)}`)}>Đăng nhập bằng Zalo</Button></Box>
+      <Box p={4}><Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(pathname + search)}`)}>Liên kết tài khoản</Button></Box>
     </Page>
   );
 }

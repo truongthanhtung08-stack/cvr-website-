@@ -584,7 +584,7 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* KHỚP MÁY THẬT (đo ảnh bản 47 trên máy chủ dự án, chữ phóng 129%, khổ 338): tiêu đề khối + "Xem thêm" chỉ cách 8px thì "Bất động sản
    nổi bật" mới đủ một dòng không bị cắt; dòng thương hiệu dưới logo giữ 11px như bản 47 (12px tràn mép phải). */
 .khoi-dau { gap: 8px !important; }
-.hang-app span { font-size: 11px !important; }
+.hang-app span { font-size: 10px !important; } /* thang chữ Zalo 20/18/16/15/14/12/10 (12/11/2026) */
 /* Thẻ dự án: tên 1 dòng thì không chừa dòng trống — loại hình, địa chỉ nằm ngay dưới tên (06/11/2026). */
 .the-du-an .tieu-de { min-height: 0 !important; }
 /* Tên trang con: không chui dưới cụm ⋯ ✕ của Zalo (rộng ~84px + lề 6px) — dài quá thì "…" (06/11/2026). */
@@ -849,7 +849,7 @@ html.xem-thu .hang-app { padding-right: 0; }
 .anh-luoi iframe, .anh-luoi video { grid-column: 1 / -1; width: 100%; aspect-ratio: 16 / 9; border: 0; display: block; background: #000; }
 .anh-luoi img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: #f5f5f7; }
 /* Hàng dưới khung ảnh khi tin có video (không đè lên trình phát): số video · số ảnh · nút Xem ảnh & video. */
-.anh-tin-duoi { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #f0f0f3; font-size: 13px; color: var(--cl-body); }
+.anh-tin-duoi { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #f0f0f3; font-size: 12px; color: var(--cl-body); }
 .anh-tin-duoi span { display: flex; align-items: center; gap: 4px; }
 .anh-tin-duoi button { border: 0; background: none; padding: 4px 0; font-size: 14px; font-weight: 600; color: var(--cl-blue, #0071e3); }
 
@@ -860,3 +860,7 @@ html.xem-thu .hang-app { padding-right: 0; }
 .zaui-page { overflow-x: hidden; }
 .zaui-box-flex > .zaui-btn-full-width { flex: 1 1 0; min-width: 0; width: auto !important; }
 .zaui-box-flex > .zaui-btn-full-width span { white-space: normal; line-height: 1.2; }
+
+/* BẢNG TRƯỢT (ô chọn, bảng xác nhận) KHÔNG LÊN TỚI HÀNG CỤM ⋯ ✕ CỦA ZALO (12/11/2026): danh sách dài làm bảng cao kín màn,
+   tiêu đề + nút đóng của bảng nằm dưới cụm nút Zalo. Chừa đúng chiều cao đầu trang (vùng trạng thái + 44px). */
+.zaui-sheet-content { max-height: calc(100% - var(--zaui-safe-area-inset-top, 0px) - 52px) !important; }

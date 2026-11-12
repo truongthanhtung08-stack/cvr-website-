@@ -86,7 +86,7 @@ export default function NapTien() {
       <Page style={{ background: "#fff" }}>
         <TieuDe title="Nạp tiền" />
         <Box p={4} style={{ display: "grid", gap: 12 }}>
-          <Button fullWidth onClick={() => dieuHuong("/dang-nhap?tiep=/nap-tien")}>Đăng nhập bằng Zalo</Button>
+          <Button fullWidth onClick={() => dieuHuong("/dang-nhap?tiep=/nap-tien")}>Liên kết tài khoản</Button>
         </Box>
       </Page>
     );

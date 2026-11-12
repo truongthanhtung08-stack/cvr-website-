@@ -43,7 +43,7 @@ export default function DangNhap() {
       if (error) throw error;
       dieuHuong(tiep, { replace: true });
     } catch {
-      setLoi("Chưa đăng nhập được. Vui lòng thử lại.");
+      setLoi("Chưa liên kết được. Vui lòng thử lại.");
     } finally {
       setDang(false);
     }
@@ -90,7 +90,7 @@ export default function DangNhap() {
 
   return (
     <Page style={{ background: "#fff" }}>
-      <TieuDe title="Đăng nhập" />
+      <TieuDe title="Liên kết tài khoản" />
       <Box p={4} style={{ display: "grid", gap: 12 }}>
         {buoc === "chon" && (
           <>
@@ -103,8 +103,8 @@ export default function DangNhap() {
             <Text size="small" className="chu-phu" style={{ textAlign: "center" }}>
               Dùng tên và ảnh đại diện Zalo để tạo tài khoản Coastal Land: đăng tin, lưu tin, nạp tiền và nhận thông báo.
             </Text>
-            <Button fullWidth size="large" loading={dang} onClick={nhanhBangZalo}>Đăng nhập bằng Zalo</Button>
-            <Button fullWidth variant="tertiary" onClick={() => setBuoc("so")}>Nhận mã qua số điện thoại</Button>
+            <Button fullWidth size="large" loading={dang} onClick={nhanhBangZalo}>Liên kết tài khoản</Button>
+            <Button fullWidth variant="tertiary" onClick={() => setBuoc("so")}>Liên kết bằng số điện thoại</Button>
           </>
         )}
         {buoc === "so" && (
@@ -119,7 +119,7 @@ export default function DangNhap() {
             <Text.Title size="large">Nhập mã xác thực</Text.Title>
             <Text size="small" className="chu-phu">Mã đã gửi về Zalo của số {so}</Text>
             <Input placeholder="Mã 6 số" inputMode="numeric" value={ma} onChange={(e) => setMa(e.target.value.replace(/\D/g, "").slice(0, 6))} />
-            <Button fullWidth loading={dang} disabled={ma.length < 6} onClick={xacThuc}>Đăng nhập</Button>
+            <Button fullWidth loading={dang} disabled={ma.length < 6} onClick={xacThuc}>Liên kết tài khoản</Button>
             <Button fullWidth variant="tertiary" onClick={() => { setBuoc("so"); setMa(""); }}>Đổi số khác</Button>
           </>
         )}

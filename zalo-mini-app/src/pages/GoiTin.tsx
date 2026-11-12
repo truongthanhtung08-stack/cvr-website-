@@ -114,7 +114,7 @@ export default function GoiTin() {
     return (
       <Page style={{ background: "#fff" }}>
         <TieuDe title={TEN[viec]} />
-        <Box p={4}><Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(`/goi-tin/${id}?viec=${viec}`)}`)}>Đăng nhập bằng Zalo</Button></Box>
+        <Box p={4}><Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(`/goi-tin/${id}?viec=${viec}`)}`)}>Liên kết tài khoản</Button></Box>
       </Page>
     );
 

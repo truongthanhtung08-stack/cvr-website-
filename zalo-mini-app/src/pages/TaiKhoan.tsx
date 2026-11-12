@@ -71,7 +71,7 @@ export default function TaiKhoan() {
             </div>
           </>
         ) : (
-          <Button fullWidth onClick={() => dieuHuong("/dang-nhap")}>Đăng nhập bằng Zalo</Button>
+          <Button fullWidth onClick={() => dieuHuong("/dang-nhap")}>Liên kết tài khoản</Button>
         )}
       </div>
       {NHOM.map((n) => (
@@ -91,7 +91,7 @@ export default function TaiKhoan() {
         <section className="tk-nhom">
           <button className="tk-muc" onClick={() => supabase.auth.signOut()}>
             <Icon icon="zi-leave" />
-            <span className="tk-muc-ten">Đăng xuất</span>
+            <span className="tk-muc-ten">Hủy liên kết tài khoản</span>
           </button>
         </section>
       )}
