@@ -39,6 +39,28 @@ báo anh MỘT dòng trước khi sửa, không bắt anh tự mò. Không dùng
 ③ báo về Điều phối: đã sửa gì (commit) · đã kiểm gì, ở đâu · chưa kiểm gì · ④ đụng quy trình khách (bảng trên) → thử lại ①→⑥ khổ 375 + máy
 tính trước khi báo · ⑤ ghi chú dài để ở thư mục ghi chú chung của nhóm phiên, không dán vào tin nhắn · ⑥ phiên bị cấm (đầu tệp) không được giao.
 
+## ⏳ BÀN GIAO 12/11/2026 TỐI (phiên 18419c5a, anh: "ghi lại, phiên sau làm tiếp") — SEO GIAO TRỌN CHO CLAUDE
+**Đã lên web (push 815615f1 + 937e441d):** trình soạn Mô tả điện thoại không bị che (ContentEditor khung + BanPhimAo chỉ tính thanh dính
+thật) · thông báo khách/Admin gọn (báo 1 lần, đẩy/nâng/up đều báo) · Quản lý tương tác khách có Tổng cộng · thương hiệu một nguồn
+(`src/lib/thuongHieu.ts`, sheet "Thương hiệu" nạp qua Admin → Từ khoá lõi, `/llms.txt` động, hỏi đáp /gioi-thieu) · lõi = Loại hình + Địa
+điểm không chữ "Bán" (bảng `D:\Coastal Land\SEO\Plan SEO - pSEO\HE-THONG-TU-KHOA-12-11.xlsx`, đã nạp 16:59) · trang thành phố tiêu đề theo
+tên thành phố ("Nhà đất Nha Trang tháng 11/2026") · liên kết nội bộ dùng đúng chữ lõi (chân trang "Nhà đất <tỉnh>").
+**Đã ghi CSDL web thật:** 60 trang lõi đánh dấu "Đã index" (site_content `xin_index`, theo danh sách đã index của Search Console 10/11).
+**Commit tối 12/11 (CHƯA PUSH):** Admin → Từ khoá lõi bảng theo dõi (Tỉnh · Từ khoá lõi · Tầng · Tin · Đủ chuẩn · Đã index / Chưa index,
+lọc Mua bán / Cho thuê) — `api/admin/tu-khoa-loi` GET trả `theoDoi` · 3 nút Mua bán · Cho thuê · Dự án trang chủ điện thoại bỏ biểu tượng,
+chỉ chữ (`BaMucChinh.tsx`, đã xem khổ 375).
+**Zalo Mini App:** bản 61 gửi Zalo xét duyệt 17:32 12/11 (phiên local_76b49610), 9 commit trong `zalo-mini-app` chưa push.
+**PHIÊN SAU LÀM TIẾP (theo thứ tự):**
+1. Anh nhắn "Push" → push → Vercel "Production Deployment" đúng commit → mở Admin → Từ khoá lõi trên web thật kiểm bảng theo dõi.
+2. Xin index `/mua-ban/nha/khanh-hoa` (Search Console, Chrome anh) + các trang "Chưa index" đủ chuẩn trong bảng theo dõi, ~10 trang/ngày;
+   xin xong bấm ghi "đã xin" (POST `/api/admin/xin-index` {duong, kq:"da-xin"}); Google đã nhận → kq "da-co".
+3. 13–14/11 đo Search Console + tra Google các câu từng top ("nhà đất đà nẵng tháng 11", "căn hộ đà nẵng tháng 11", "cho thuê căn hộ đà nẵng"…)
+   — so với 12/11 (mất top), báo anh 3 dòng. Luật: memory `seo-thuong-hieu-truoc-tu-khoa`, `seo-giao-cho-claude`.
+4. Chờ anh duyệt: chữ "Đất" trên menu trỏ 2 trang (/mua-ban/dat + /mua-ban/dat-nong-nghiep) · câu định nghĩa tiếng Anh + 3 hỏi đáp thương
+   hiệu (cột Ghi chú sheet Thương hiệu) · Wikidata Q142088915 chưa có thuộc tính.
+5. Giật ô tìm trang chủ điện thoại (đo dev ~0,27 s bận) — chưa tìm gốc.
+6. Zalo trả kết quả bản 61 → phiên Mini App làm 4 việc khối "ZALO MINI APP + VERCEL — 07/11".
+
 ## ⏳ 12/11/2026 CHIỀU (phiên 18419c5a) — ĐÃ COMMIT, CHƯA PUSH (552f9992 → d7e546ea, build qua)
 **Đã làm:** form đăng tin (loại hình CHA bắt buộc + ô loại CON tuỳ chọn ngay dưới, mọi loại có danh sách + "Khác — tự ghi"; Đất · Đất nền ·
 Đất nền dự án chung 12 loại đất; cho thuê có Đất; tiện ích + nội thất theo loại; Chọn / Bỏ chọn gói đúng cả khi lưu nháp; Xem trước · Lưu nháp ·

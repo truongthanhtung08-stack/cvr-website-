@@ -6,16 +6,26 @@ import { useEffect, useState } from "react";
 // → web tự đổi tiêu đề, H1, mô tả trang lõi + trang con, không cần Push. Luật đọc + luật an toàn: src/lib/tuKhoaLoiDoc.ts.
 type KetQua = { doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number };
 type HienTai = KetQua & { tenTep?: string; capNhat?: string };
+type DongTheoDoi = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean; xin: { ngay: string; kq: "da-xin" | "da-co" } | null };
+type TheoDoi = { nguong: number; dong: DongTheoDoi[] };
+const LOC = [
+  ["tat-ca", "Tất cả"], ["da-index", "Đã index"], ["chua-index", "Chưa index"], ["thieu", "Chưa đủ tin"],
+] as const;
+type Loc = (typeof LOC)[number][0];
+const ngayVn = (s: string) => s.split("-").reverse().slice(0, 2).join("/");
 
 export default function TuKhoaLoiPage() {
   const [hienTai, setHienTai] = useState<HienTai | null>(null);
+  const [td, setTd] = useState<TheoDoi | null>(null);
+  const [loc, setLoc] = useState<Loc>("tat-ca");
+  const [muc, setMuc] = useState<"ban" | "thue">("ban");
   const [tep, setTep] = useState<File | null>(null);
   const [xem, setXem] = useState<KetQua | null>(null);
   const [dangGui, setDangGui] = useState(false);
   const [bao, setBao] = useState<{ loi?: string; xong?: string } | null>(null);
 
   const napHienTai = () =>
-    fetch("/api/admin/tu-khoa-loi").then((r) => r.json()).then((j) => j.ok && setHienTai(j.hienTai)).catch(() => {});
+    fetch("/api/admin/tu-khoa-loi").then((r) => r.json()).then((j) => { if (j.ok) { setHienTai(j.hienTai); setTd(j.theoDoi ?? null); } }).catch(() => {});
   useEffect(() => { napHienTai(); }, []);
 
   const gui = async (xemTruoc: boolean) => {
@@ -85,13 +95,71 @@ export default function TuKhoaLoiPage() {
         {xem && <div className="mt-4 border-t border-cvr-line pt-4"><Bang kq={xem} /></div>}
       </div>
 
-      {hienTai && (
-        <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-3 text-sm text-cvr-muted">
-            Đang chạy trên web · {hienTai.tenTep ?? ""} · {hienTai.capNhat ? new Date(hienTai.capNhat).toLocaleString("vi-VN") : ""} · {hienTai.soDong} dòng
+      {td && (() => {
+        const ds = td.dong.filter((d) => d.muc === muc);
+        const hop = (d: DongTheoDoi) =>
+          loc === "da-index" ? d.xin?.kq === "da-co" : loc === "chua-index" ? d.duChuan && d.xin?.kq !== "da-co" : loc === "thieu" ? !d.duChuan : true;
+        const dem = (l: Loc) => ds.filter((d) => (l === "tat-ca" ? true : l === "da-index" ? d.xin?.kq === "da-co" : l === "chua-index" ? d.duChuan && d.xin?.kq !== "da-co" : !d.duChuan)).length;
+        const hien = ds.filter(hop);
+        return (
+          <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-cvr-ink">Theo dõi trang lõi</h2>
+              <div className="flex rounded-full bg-cvr-surface p-1 text-sm">
+                {([["ban", "Mua bán"], ["thue", "Cho thuê"]] as const).map(([k, t]) => (
+                  <button key={k} type="button" onClick={() => setMuc(k)} className={`rounded-full px-4 py-1.5 font-medium ${muc === k ? "bg-cvr-ink text-white" : "text-cvr-muted"}`}>{t}</button>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {LOC.map(([k, t]) => (
+                <button key={k} type="button" onClick={() => setLoc(k)}
+                  className={`rounded-full px-3 py-1.5 text-[13px] font-medium ${loc === k ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink"}`}>
+                  {t} <span className={loc === k ? "text-white/70" : "text-cvr-faint"}>{dem(k)}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full min-w-[720px] text-sm">
+                <thead>
+                  <tr className="border-b border-cvr-line text-left text-xs text-cvr-muted">
+                    <th className="py-2 pr-2">Tỉnh</th><th className="py-2 pr-2">Từ khoá lõi (tiêu đề trang)</th><th className="py-2 pr-2">Tầng</th>
+                    <th className="py-2 pr-2 text-right">Tin</th><th className="py-2 pr-2">Đủ chuẩn</th><th className="py-2">Index</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hien.map((d) => (
+                    <tr key={d.trang} className="border-b border-cvr-line/60 align-top">
+                      <td className="py-2 pr-2 text-cvr-body">{d.tinh}</td>
+                      <td className="py-2 pr-2">
+                        <a href={d.trang} target="_blank" rel="noreferrer" className="font-medium text-cvr-ink hover:underline">{d.tuKhoa || d.trang}</a>
+                        <div className="text-xs text-cvr-faint">{d.trang}{d.trongBang ? " · trong bảng" : ""}</div>
+                      </td>
+                      <td className="py-2 pr-2 text-cvr-muted">{d.tang}</td>
+                      <td className="py-2 pr-2 text-right tabular-nums">{d.soTin}</td>
+                      <td className="py-2 pr-2">{d.duChuan ? <span className="text-emerald-700">✓ Đủ</span> : <span className="text-amber-700">Thiếu {Math.max(1, td.nguong - d.soTin)} tin</span>}</td>
+                      <td className="py-2">
+                        {d.xin?.kq === "da-co" ? <span className="font-medium text-emerald-700">✓ Đã index</span>
+                          : d.duChuan ? <span className="font-medium text-amber-700">Chưa index{d.xin ? <span className="font-normal text-cvr-muted"> · đã xin {ngayVn(d.xin.ngay)}</span> : null}</span>
+                          : <span className="text-cvr-faint">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!hien.length && <p className="py-4 text-center text-sm text-cvr-muted">Không có trang nào.</p>}
+            </div>
           </div>
-          <Bang kq={hienTai} />
-        </div>
+        );
+      })()}
+
+      {hienTai && (
+        <details className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm sm:p-5">
+          <summary className="cursor-pointer text-sm text-cvr-muted">
+            Bảng đang chạy trên web · {hienTai.tenTep ?? ""} · {hienTai.capNhat ? new Date(hienTai.capNhat).toLocaleString("vi-VN") : ""} · {hienTai.soDong} dòng (bấm xem trang đổi / giữ)
+          </summary>
+          <div className="mt-3"><Bang kq={hienTai} /></div>
+        </details>
       )}
     </div>
   );
