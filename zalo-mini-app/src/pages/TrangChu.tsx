@@ -5,7 +5,8 @@ import KhoiNoiBat from "../components/KhoiNoiBat";
 import TheDuAn from "../components/TheDuAn";
 import TruotNgang from "../components/TruotNgang";
 import IconCL, { type TenIcon } from "../components/IconCL";
-import { layBaiViet, layDuAnNoiBat } from "../lib/tin";
+import { layAnhDauTrang, layBaiViet, layDuAnNoiBat, layKhuVucTrangChu } from "../lib/tin";
+import AnhDauTrang from "../components/AnhDauTrang";
 
 // Khu vực của web — chép đúng src/lib/khuVuc.ts khuVucTrongDiem (web đổi thì đổi ở đây).
 const KHU_VUC_WEB = ["Đà Nẵng", "Huế", "Quảng Trị", "Quảng Ngãi", "Gia Lai", "Khánh Hòa", "Đắk Lắk", "Lâm Đồng"];
@@ -20,6 +21,13 @@ import ChanTrang from "../components/ChanTrang";
 // Menu dịch vụ 2 hàng (hàng 1 = mua bán/cho thuê/dự án/đăng tin · hàng 2 = tiện ích) ·
 // Nhà đất bán · Nhà đất cho thuê (mỗi khối: VIP trước, tin mới sau, slide tự trôi như web) · Dự án · Khu vực.
 // Phần lớn trang là TIN (80/20). Không banner (chủ dự án bỏ 27/09).
+
+// BA MẢNG CHÍNH — đúng web (src/components/BaMucChinh.tsx 12/11/2026): ô nền xám Apple, biểu tượng nét mảnh trên chữ
+const BA_MUC = [
+  { duong: "/ds/ban", nhan: "Mua bán", icon: "M3 10.5 12 3l9 7.5M5 9v11h14V9M10 20v-6h4v6" },
+  { duong: "/ds/thue", nhan: "Cho thuê", icon: "M15.5 8.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0ZM12 12v9m0-4h3m-3 2.5h2" },
+  { duong: "/du-an", nhan: "Dự án", icon: "M4 21V7l6-3v17M10 21V9l10 3v9M3 21h18M7 9v.01M7 12v.01M7 15v.01M14 14v.01M17 14v.01M14 17v.01M17 17v.01" },
+];
 
 type DichVu = { nhan: string; icon: TenIcon; nen: string; mau: string } & ({ duong: string } | { bam: () => void });
 // Hai hàng, mỗi hàng một việc (06/11/2026 "sắp lại cho logic"): hàng 1 = XEM (3 mảng + Tin tức) · hàng 2 = ĐĂNG (Đăng tin,
@@ -40,6 +48,8 @@ export default function TrangChu() {
   const dieuHuong = useNavigate();
   const duAn = useTai(() => layDuAnNoiBat(8), [], []); // như web: chỉ dự án nổi bật, theo cấp, 8 dự án — còn lại ở Xem thêm
   const baiViet = useTai(() => layBaiViet(6), [], []); // như web: khối Tin tức trên trang chủ, Xem thêm → danh sách bài
+  const anhDau = useTai(() => layAnhDauTrang(), [], []);
+  const kv = useTai(() => layKhuVucTrangChu(), [], []);
 
   return (
     <Page className="trang-chu" style={{ paddingBottom: 0, paddingTop: 0 }}>
@@ -54,7 +64,16 @@ export default function TrangChu() {
         </div>
       </div>
 
-      {/* Ô công cụ đã BỎ (chủ dự án 06/11/2026: "đã có menu phía dưới thì bỏ dòng menu bên trên") — thanh menu dưới là lối vào chính. */}
+      {/* GIAO DIỆN WEB ĐIỆN THOẠI 12/11/2026: ảnh đầu trang (Admin → Nội dung) · 3 ô Mua bán · Cho thuê · Dự án (BaMucChinh) · thẻ tin to xếp dọc */}
+      {anhDau.data.length > 0 && <AnhDauTrang ds={anhDau.data} />}
+      <nav className="ba-muc">
+        {BA_MUC.map((m) => (
+          <button key={m.duong} className="press" onClick={() => dieuHuong(m.duong)}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={m.icon} /></svg>
+            {m.nhan}
+          </button>
+        ))}
+      </nav>
 
       {/* Như web: Bất động sản nổi bật (2 slide × 8 tin theo cấp, có tab + Xem thêm) — thay 2 khối trượt Bán / Cho thuê (06/11/2026) */}
       <KhoiNoiBat />
@@ -69,11 +88,23 @@ export default function TrangChu() {
 
       {/* KHU VỰC = đủ 8 khu vực của web (src/lib/khuVuc.ts khuVucTrongDiem), chỉ tên (chủ dự án 06/11/2026: "bỏ đi, để tên các khu vực"). */}
       <Khoi tieuDe="Bất động sản theo khu vực">
-        <div className="luoi-kv">
-          {KHU_VUC_WEB.map((t) => (
-            <button key={t} onClick={() => dieuHuong(`/ds/ban?kv=${encodeURIComponent(t)}`)}>{t}</button>
-          ))}
-        </div>
+        {kv.data.length > 0 ? (
+          // Như web LocationGrid: ô đầu to cả hàng, 4 ô nhỏ 2×2, ảnh + tên
+          <div className="luoi-kv-anh">
+            {kv.data.map((k, i) => (
+              <button key={k.ten} className={i === 0 ? "to" : ""} onClick={() => dieuHuong(`/ds/ban?kv=${encodeURIComponent(k.tinh)}`)}>
+                <img src={k.anh} alt={k.ten} loading="lazy" />
+                <span>{k.ten}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="luoi-kv">
+            {KHU_VUC_WEB.map((t) => (
+              <button key={t} onClick={() => dieuHuong(`/ds/ban?kv=${encodeURIComponent(t)}`)}>{t}</button>
+            ))}
+          </div>
+        )}
       </Khoi>
 
       {baiViet.data.length > 0 && (

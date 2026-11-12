@@ -40,11 +40,13 @@ const NapTien = cham(() => import("./pages/NapTien"));
 // THANH DƯỚI 4 NÚT (Zalo Mini App Design Guidelines: "số lượng tab ở bottom bar không nên vượt quá 4", 06/11/2026) — Dự án vào từ
 // khối "Dự án nổi bật · Xem thêm" ở Trang chủ. Trước đó: THANH DƯỚI = ĐÚNG web điện thoại (06/11/2026 "lấy giao diện web trên mobile làm chuẩn"): Trang chủ · Mua bán · Cho thuê · Dự án ·
 // Tài khoản. Đăng tin vào từ ô công cụ trang chủ và trang Tài khoản; mở toàn màn hình, không hiện thanh tab.
+// 12/11/2026 — CÙNG thanh dưới web điện thoại (MobileTabBar: Home · Lưu · Đăng tin · Tin nhắn · Hồ sơ), giữ 4 nút theo Zalo:
+// Tin nhắn (chat Zalo OA) nằm ở Hồ sơ; Mua bán · Cho thuê · Dự án vào từ 3 ô dưới ảnh đầu Trang chủ (như web).
 const TAB = [
-  { duong: "/", nhan: "Trang chủ", icon: "home" },
-  { duong: "/ds/ban", nhan: "Mua bán", icon: "muaBan" },
-  { duong: "/ds/thue", nhan: "Cho thuê", icon: "choThue" },
-  { duong: "/tai-khoan", nhan: "Tài khoản", icon: "taiKhoan" },
+  { duong: "/", nhan: "Home", icon: "home" },
+  { duong: "/da-luu", nhan: "Lưu", icon: "daLuu" },
+  { duong: "/dang-tin", nhan: "Đăng tin", icon: "cong" },
+  { duong: "/tai-khoan", nhan: "Hồ sơ", icon: "taiKhoan" },
 ] as const;
 const tabCua = (p: string) => p;
 
@@ -53,20 +55,20 @@ function ThanhDuoi() {
   const dieuHuong = useNavigate();
   const tab = tabCua(pathname);
   // Đăng tin mở toàn màn hình (có thanh nút gửi ở đáy) — không hiện thanh tab.
-  if (!TAB.some((t) => t.duong === tab)) return null;
+  if (tab === "/dang-tin" || !TAB.some((t) => t.duong === tab)) return null;
   return (
-    <>
-    {/* NÚT "+ Đăng tin" nổi trên thanh dưới (06/11/2026) — thanh dưới giữ 4 tab theo Zalo Design Guidelines, Đăng tin là nút nổi. */}
-    <button className="nut-dang-tin" onClick={() => dieuHuong("/dang-tin")}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
-      Đăng tin
-    </button>
     <BottomNavigation fixed activeKey={tab}>
       {TAB.map((t) => (
-        <BottomNavigation.Item key={t.duong} itemKey={t.duong} label={t.nhan} icon={<IconCL ten={t.icon} />} linkTo={t.duong} />
+        <BottomNavigation.Item
+          key={t.duong}
+          itemKey={t.duong}
+          label={t.nhan}
+          // Đăng tin = vòng xanh dấu + như web (MobileTabBar)
+          icon={t.duong === "/dang-tin" ? <span className="tab-dang-tin"><IconCL ten="cong" co={20} net={2.4} /></span> : <IconCL ten={t.icon} />}
+          onClick={() => dieuHuong(t.duong)}
+        />
       ))}
     </BottomNavigation>
-    </>
   );
 }
 

@@ -864,3 +864,56 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* BẢNG TRƯỢT (ô chọn, bảng xác nhận) KHÔNG LÊN TỚI HÀNG CỤM ⋯ ✕ CỦA ZALO (12/11/2026): danh sách dài làm bảng cao kín màn,
    tiêu đề + nút đóng của bảng nằm dưới cụm nút Zalo. Chừa đúng chiều cao đầu trang (vùng trạng thái + 44px). */
 .zaui-sheet-content { max-height: calc(100% - var(--zaui-safe-area-inset-top, 0px) - 52px) !important; }
+
+/* ══ GIAO DIỆN WEB ĐIỆN THOẠI 12/11/2026 (Trang chủ · thẻ tin to · thanh dưới) ══ */
+/* Ảnh đầu trang — tràn bề ngang như web Hero điện thoại (2,5:1 ảnh điện thoại) */
+.anh-dau { position: relative; background: #f5f5f7; }
+.anh-dau-ray { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.anh-dau-ray::-webkit-scrollbar { display: none; }
+.anh-dau-ray img { flex: 0 0 100%; width: 100%; aspect-ratio: 1.75; object-fit: cover; scroll-snap-align: start; display: block; }
+.anh-dau-vach { position: absolute; left: 0; right: 0; bottom: 10px; display: flex; justify-content: center; gap: 6px; }
+.anh-dau-vach span { width: 16px; height: 3px; border-radius: 2px; background: rgba(255,255,255,.5); }
+.anh-dau-vach span.bat { background: #fff; width: 24px; }
+/* Ba mảng chính — ô xám Apple, biểu tượng trên chữ (web BaMucChinh) */
+.ba-muc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 16px 4px; background: #fff; }
+.ba-muc button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px 0; border: 0; border-radius: 16px; background: #f5f5f7; color: var(--cl-ink); font-size: 14px; font-weight: 600; }
+.ba-muc button:active { opacity: .6; transform: scale(.97); }
+.trang-chu .ba-muc + .khoi { margin-top: 0; }
+/* Thẻ tin to — web TheTinMobile: ảnh tràn, 3 ảnh nhỏ, chữ dưới, liên hệ cuối */
+.ds-the-to { display: flex; flex-direction: column; gap: 8px; background: #f5f5f7; }
+.the-to { background: #fff; border-top: 2px solid transparent; }
+.the-to-anh { position: relative; }
+.the-to-anh > img, .the-to-anh .anh-trong { width: 100%; aspect-ratio: 1.6; object-fit: cover; display: block; background: #f5f5f7; }
+.the-to-anh .anh-trong { display: grid; place-items: center; }
+.the-to-anh .anh-trong img { width: 56px; opacity: .25; }
+.the-to-hang { position: absolute; left: 12px; top: 12px; padding: 3px 10px; border-radius: 999px; color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+.the-to-so { position: absolute; left: 12px; bottom: 10px; display: inline-flex; align-items: center; gap: 4px; color: #fff; font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+.the-to-nho { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 2px; }
+.the-to-nho img { width: 100%; aspect-ratio: 1.5; object-fit: cover; display: block; background: #f5f5f7; }
+.the-to-than { padding: 12px 16px 14px; }
+.the-to-than h3 { margin: 0; font-size: 16px; line-height: 22px; font-weight: 700; color: var(--cl-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.the-to-than h3.hoa { text-transform: uppercase; }
+.the-to-gia { margin-top: 6px; display: flex; gap: 6px; align-items: baseline; color: #e11d48; font-size: 16px; font-weight: 700; }
+.the-to-gia i { font-style: normal; }
+.the-to-dc { margin-top: 6px; display: flex; align-items: center; gap: 4px; color: #6e6e73; font-size: 14px; }
+.the-to-mota { margin: 8px 0 0; color: #6e6e73; font-size: 14px; line-height: 20px; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+.the-to-nguoi { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
+.the-to-avt { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #f5f5f7; border: 1px solid #e5e5ea; font-size: 12px; font-weight: 600; color: #6e6e73; }
+.the-to-nguoi > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.the-to-nguoi b { font-size: 14px; color: var(--cl-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.the-to-nguoi small { font-size: 12px; color: #86868b; }
+.the-to-nguoi button { flex: none; width: 36px; height: 36px; border: 0; background: none; color: var(--cl-ink); display: grid; place-items: center; }
+.the-to-lienhe { margin-top: 10px; display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+.the-to-lienhe button { height: 40px; border-radius: 10px; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.the-to-zalo { border: 1px solid #d2d2d7; background: #fff; color: #0068ff; }
+.the-to-goi { border: 0; background: #0068ff; color: #fff; }
+.khoi-noi-bat { padding-bottom: 0; }
+.khoi-noi-bat .khoi-dau { padding-bottom: 8px; }
+/* Khu vực có ảnh — web LocationGrid: ô đầu to cả hàng, 4 ô nhỏ 2×2, khe 1px */
+.luoi-kv-anh { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
+.luoi-kv-anh button { position: relative; border: 0; padding: 0; aspect-ratio: 1.618; overflow: hidden; background: #f5f5f7; }
+.luoi-kv-anh button.to { grid-column: span 2; aspect-ratio: 3.236; }
+.luoi-kv-anh img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.luoi-kv-anh span { position: absolute; left: 12px; bottom: 10px; color: #fff; font-size: 16px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.55); }
+/* Thanh dưới: Đăng tin = vòng xanh dấu + (web MobileTabBar) */
+.tab-dang-tin { width: 26px !important; min-width: 0 !important; height: 26px !important; margin: 0 auto !important; border: 0 !important; box-shadow: none !important; border-radius: 50%; background: #0071e3; color: #fff; display: grid; place-items: center; }

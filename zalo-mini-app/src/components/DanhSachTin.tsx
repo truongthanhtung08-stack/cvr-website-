@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box, Spinner, Text } from "zmp-ui";
-import TheTin from "./TheTin";
+import TheTinDoc from "./TheTinDoc";
 import type { Tin } from "../lib/tin";
 
-// Danh sách tin CHIA TRANG như web (không kéo dài vô tận): 10 tin/trang, số trang ở cuối.
+// Danh sách tin CHIA TRANG như web (không kéo dài vô tận): 10 tin/trang, số trang ở cuối. Thẻ to xếp dọc = thẻ web điện thoại (12/11/2026).
 const MOI_TRANG = 10;
 
 // Số trang hiện gọn: trang đầu · quanh trang đang xem · trang cuối (-1 = dấu …).
@@ -32,7 +32,7 @@ export default function DanhSachTin({ ds, dangTai, loi, trong }: { ds: Tin[]; da
   };
   return (
     <>
-      <div ref={dau} className="ds-doc" style={{ scrollMarginTop: 120 }}>{ds.slice(trang * MOI_TRANG, (trang + 1) * MOI_TRANG).map((t) => <TheTin key={t.banSao ? `${t.id}-kem` : t.id} tin={t} />)}</div>
+      <div ref={dau} className="ds-the-to" style={{ scrollMarginTop: 120 }}>{ds.slice(trang * MOI_TRANG, (trang + 1) * MOI_TRANG).map((t) => <TheTinDoc key={t.banSao ? `${t.id}-kem` : t.id} tin={t} />)}</div>
       {soTrang > 1 && (
         <div className="phan-trang">
           <button disabled={trang === 0} onClick={() => den(trang - 1)}>‹</button>

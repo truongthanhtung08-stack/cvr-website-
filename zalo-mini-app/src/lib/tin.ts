@@ -28,12 +28,13 @@ export type Tin = {
   published_at: string | null;
   bumped_at: string | null;
   nguoi_dang: string | null; // tên người đăng — hiện ở đáy thẻ như web
+  sdt?: string | null; // số liên hệ của tin — nút gọi trên thẻ to trang chủ (như web TheTinMobile, số ẩn đuôi tới khi bấm)
 };
 
 // Không lấy cả cột details (nặng) — chỉ lấy đúng tên người đăng.
 const COT =
   "id,purpose,type,title,description,price_vnd,area_m2,beds,baths,ward,district,province,images,tier,tier_expires_at,published_at," +
-  "bumped_at,nguoi_dang:details->contact->>name";
+  "bumped_at,nguoi_dang:details->contact->>name,sdt:details->contact->>phone";
 
 async function rest(query: string): Promise<Tin[]> {
   // Y HỆT WEB (listingsDb conHan, 02/10/2026): tin đã duyệt mà QUA giờ hết hạn là ngừng
@@ -291,3 +292,20 @@ export async function layDuAnTrang() {
   return { noiBat, traCuu };
 }
 
+
+// ẢNH ĐẦU TRANG CHỦ — đúng ảnh web (site_content hero_home, Admin → Nội dung): ảnh điện thoại (imageMobile), thiếu thì ảnh PC.
+export type AnhDau = { anh: string; tieuDe: string };
+export async function layAnhDauTrang(): Promise<AnhDau[]> {
+  const r = await doc<{ data: { slides?: { image?: string; imageMobile?: string; title?: string }[] } }>("site_content", "select=data&key=eq.hero_home&limit=1").catch(() => []);
+  return (r[0]?.data?.slides ?? []).filter((x) => x?.image).map((x) => ({ anh: anh(x.imageMobile || x.image), tieuDe: x.title ?? "" }));
+}
+
+// Ô KHU VỰC TRANG CHỦ — đúng ô web (site_content home_areas): tên + ảnh chính, ô đầu to (LocationGrid).
+export type OKhuVuc = { ten: string; anh: string; tinh: string };
+export async function layKhuVucTrangChu(): Promise<OKhuVuc[]> {
+  const r = await doc<{ data: { items?: { name?: string; image?: string; href?: string }[] } }>("site_content", "select=data&key=eq.home_areas&limit=1").catch(() => []);
+  return (r[0]?.data?.items ?? []).filter((x) => x?.name && x.image).map((x) => {
+    const tinh = decodeURIComponent(x.href?.match(/[?&]tinh=([^&]+)/)?.[1] ?? x.name!);
+    return { ten: x.name!, anh: anh(x.image), tinh };
+  });
+}

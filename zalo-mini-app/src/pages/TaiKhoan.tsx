@@ -60,7 +60,7 @@ export default function TaiKhoan() {
 
   return (
     <Page style={{ paddingBottom: 72 }}>
-      <TieuDe title="Tài khoản" showBackIcon={false} />
+      <TieuDe title="Hồ sơ" showBackIcon={false} />
       <div className="tk-dau">
         {nguoiDung ? (
           <>

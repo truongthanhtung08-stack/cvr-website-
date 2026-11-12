@@ -1,0 +1,89 @@
+import React, { useEffect, useRef, useState } from "react";
+import { Icon, useNavigate } from "zmp-ui";
+import { openPhone, openWebview } from "zmp-sdk";
+import { anh, hangHieuLuc, type Tin } from "../lib/tin";
+import { gia, dienTich, diaChi, luc, tomTatTin } from "../lib/dinhDang";
+import { daLuu, doiLuu } from "../lib/daLuu";
+import { tachAnh } from "../lib/media";
+import { theoDoiThe } from "../lib/hienThi";
+import { chiaSeTin } from "../lib/zalo";
+import { supabase, usePhien } from "../lib/supabase";
+import logoTron from "../assets/logo-tron.svg";
+
+// THẺ TIN TO — trang chủ, ĐÚNG thẻ web điện thoại (src/components/TheTinMobile.tsx, 12/11/2026): ảnh lớn tràn bề ngang · hàng 3 ảnh nhỏ
+// (Diamond, Gold) · tiêu đề · giá · diện tích đỏ · địa chỉ · mô tả theo cấp · người đăng + Làm mới · tim · chia sẻ · [Zalo] [số ẩn đuôi + mắt].
+// Luật cấp giống thẻ nhỏ (TheTin): Diamond 3 dòng mô tả, viết hoa · Gold 2 dòng, viết hoa · Silver 1 dòng · Basic không mô tả.
+const HANG: Record<string, { ten: string; mau: string; hoa: boolean; dong: number; anhNho: boolean }> = {
+  diamond: { ten: "DIAMOND", mau: "#c1121f", hoa: true, dong: 3, anhNho: true },
+  gold: { ten: "GOLD", mau: "#b8860b", hoa: true, dong: 2, anhNho: true },
+  silver: { ten: "SILVER", mau: "#2f5d84", hoa: false, dong: 1, anhNho: false },
+};
+const anDuoi = (s: string) => { const d = s.replace(/\D/g, ""); return `${d.slice(0, 4)} ${d.slice(4, 7)} ***`; };
+const chuCai = (ten: string) => ten.trim().split(/\s+/).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
+
+export default function TheTinDoc({ tin }: { tin: Tin }) {
+  const dieuHuong = useNavigate();
+  const { nguoiDung } = usePhien();
+  const h = HANG[hangHieuLuc(tin)];
+  const [luu, setLuu] = useState(() => daLuu(tin.id));
+  const [hienSo, setHienSo] = useState(false);
+  const anhs = tachAnh(tin.images);
+  const moTa = tomTatTin(tin);
+  const ten = tin.nguoi_dang || "Coastal Land";
+  const the = useRef<HTMLElement>(null);
+  useEffect(() => (the.current ? theoDoiThe(the.current, tin.id) : undefined), [tin.id]);
+
+  const dung = (e: React.MouseEvent) => e.stopPropagation();
+  // Mở số như trang tin (XemSo): khách đã liên kết → ghi Khách quan tâm cho người đăng
+  const moSo = (e: React.MouseEvent) => {
+    dung(e);
+    if (!hienSo) {
+      setHienSo(true);
+      if (nguoiDung) supabase.rpc("reveal_contact", { p_listing_id: tin.id, p_nguon: "zalo" }).then(() => {}, () => {});
+    } else if (tin.sdt) openPhone({ phoneNumber: tin.sdt }).catch(() => {});
+  };
+  const nhanZalo = (e: React.MouseEvent) => {
+    dung(e);
+    if (!tin.sdt) return;
+    const link = `https://zalo.me/${tin.sdt.replace(/\D/g, "")}`;
+    openWebview({ url: link }).catch(() => { window.location.href = link; });
+  };
+
+  return (
+    <article ref={the} className={`the-to ${h ? "co-hang" : ""}`} style={h ? { borderTopColor: h.mau } : undefined} onClick={() => dieuHuong(`/tin/${tin.id}`)}>
+      <div className="the-to-anh">
+        {anhs[0] ? <img src={anh(anhs[0])} alt={tin.title} loading="lazy" /> : <div className="anh-trong"><img src={logoTron} alt="" /></div>}
+        {h && <span className="the-to-hang" style={{ background: h.mau }}>{h.ten}</span>}
+        {anhs.length > 1 && <span className="the-to-so"><Icon icon="zi-photo" size={14} /> {anhs.length}</span>}
+      </div>
+      {h?.anhNho && anhs.length >= 4 && (
+        <div className="the-to-nho">{anhs.slice(1, 4).map((a) => <img key={a} src={anh(a)} alt="" loading="lazy" />)}</div>
+      )}
+      <div className="the-to-than">
+        <h3 className={h?.hoa ? "hoa" : ""}>{tin.title}</h3>
+        <div className="the-to-gia">
+          <span>{gia(tin)}</span>
+          {dienTich(tin) && <><i>·</i><span>{dienTich(tin)}</span></>}
+        </div>
+        <div className="the-to-dc"><Icon icon="zi-location" size={16} /> {diaChi(tin)}</div>
+        {h && moTa && <p className="the-to-mota" style={{ WebkitLineClamp: h.dong }}>{moTa}</p>}
+        <div className="the-to-nguoi">
+          <span className="the-to-avt">{chuCai(ten)}</span>
+          <div><b>{ten}</b><small>{luc(tin)}</small></div>
+          <button aria-label="Lưu tin" onClick={(e) => { dung(e); setLuu(doiLuu(tin.id)); }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={luu ? "#e11d48" : "none"} stroke={luu ? "#e11d48" : "currentColor"} strokeWidth="1.8"><path d="M12 20.3s-7.5-4.6-9.2-9.4C1.6 7.4 4 4.2 7.4 4.2c2 0 3.5 1.1 4.6 2.6 1.1-1.5 2.6-2.6 4.6-2.6 3.4 0 5.8 3.2 4.6 6.7-1.7 4.8-9.2 9.4-9.2 9.4Z" /></svg>
+          </button>
+          <button aria-label="Chia sẻ" onClick={(e) => { dung(e); chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(anhs[0]), `/tin/${tin.id}`); }}>
+            <Icon icon="zi-share-external-1" size={22} />
+          </button>
+        </div>
+        {tin.sdt && (
+          <div className="the-to-lienhe">
+            <button className="the-to-zalo" onClick={nhanZalo}>Zalo</button>
+            <button className="the-to-goi" onClick={moSo}><Icon icon="zi-call" size={18} /> {hienSo ? `Gọi ${tin.sdt}` : anDuoi(tin.sdt)}{!hienSo && <Icon icon="zi-unhide" size={18} />}</button>
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
