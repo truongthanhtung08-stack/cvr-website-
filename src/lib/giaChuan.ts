@@ -108,12 +108,11 @@ export function thieuThongTin(c: ChuongTrinh): string[] {
 // duyệt sớm thì cái cũ coi như kết thúc từ ngày cái mới bắt đầu); không có thì chương trình
 // SẮP bắt đầu gần nhất; không có nữa thì cái tạo sau cùng.
 export function chonMienPhi(ds: ChuongTrinh[], homNay: string): ChuongTrinh | undefined {
+  // MIỄN PHÍ THÀNH VIÊN MỚI KHÔNG CÓ NGÀY (anh 12/11/2026: "thành viên mới, bất kể lúc nào, cho đến khi tôi thu hồi chương trình";
+  // hạn 30 ngày tính từ ngày đăng nhập vào web) → bỏ qua tu/den còn sót trong bản nháp cũ; chương trình đang bật mới nhất là chương trình chạy.
+  void homNay;
   const mp = ds.filter((c) => laMienPhiTvMoi(c) && c.bat);
-  return (
-    mp.filter((c) => (!c.tu || c.tu <= homNay) && (!c.den || homNay <= c.den)).sort((x, y) => (y.tu || "").localeCompare(x.tu || ""))[0] ??
-    mp.filter((c) => c.tu && c.tu > homNay).sort((a, b) => a.tu.localeCompare(b.tu))[0] ??
-    [...ds].reverse().find(laMienPhiTvMoi)
-  );
+  return mp[mp.length - 1] ?? [...ds].reverse().find(laMienPhiTvMoi);
 }
 
 // Gói hội viên — giá chuẩn (từ Batdongsan) theo SỐ THÁNG; voucher & quyền lợi

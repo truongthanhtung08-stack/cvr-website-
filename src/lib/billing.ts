@@ -601,15 +601,20 @@ export function chuongTrinhTvMoi(data: BillingData, hanRieng?: string | null): {
   const anh = f.soAnh ?? soAnhToiDa(data, f.tierId);
   const video = f.soVideo ?? soVideoToiDa(data, f.tierId);
   const apDung =
-    hanRieng ? `miễn phí đến hết ${ngayVn(hanRieng)}`
-    : f.from && f.to ? `tài khoản đăng ký từ ${ngayVn(f.from)} đến ${ngayVn(f.to)}`
-    : f.to ? `tài khoản đăng ký đến hết ${ngayVn(f.to)}`
-    : "";
+    // Chương trình không có ngày từ–đến (anh 12/11/2026): chỉ ghi hạn riêng của khách khi đã biết, không ghi khoảng ngày.
+    hanRieng ? `miễn phí đến hết ${ngayVn(hanRieng)}` : `thành viên mới, ${f.days} ngày kể từ lần đăng nhập đầu`;
   return {
     ten: f.ten?.trim() ?? "",
-    the: [`Tin ${getTier(f.tierId).name}`, `Hiển thị ${f.hienThi ?? f.days} ngày`, `${anh} ảnh`, ...(video > 0 ? [`${video} video`] : [])],
-    // Đúng câu anh chốt 12/11/2026: "Thành viên mới được đăng tin miễn phí trong thời hạn 30 ngày"
-    noiDung: [`Thành viên mới được đăng tin miễn phí trong thời hạn ${f.days} ngày${f.quota > 0 ? ` (tối đa ${f.quota} tin)` : ""}.`],
+    // CẤU TRÚC TỰ HIỂU, không câu giải thích (anh 12/11/2026: "nói để bạn hiểu, không phải ghi nguyên câu vào đó"):
+    // tên chương trình + nhãn: cấp tin · số ngày hiển thị · ảnh · video (· tối đa N tin) + dòng Áp dụng (ai, bao lâu).
+    the: [
+      `Tin ${getTier(f.tierId).name}`,
+      `Hiển thị ${f.hienThi ?? f.days} ngày`,
+      `${anh} ảnh`,
+      ...(video > 0 ? [`${video} video`] : []),
+      ...(f.quota > 0 ? [`Tối đa ${f.quota} tin`] : []),
+    ],
+    noiDung: [],
     apDung,
   };
 }
@@ -617,10 +622,9 @@ export function chuongTrinhTvMoi(data: BillingData, hanRieng?: string | null): {
 // Chương trình miễn phí có đang chạy vào ngày `today` ("YYYY-MM-DD") không?
 // Tắt bằng nút Trạng thái, hoặc hết hạn `to` — cả hai đều chặn như nhau.
 export function freeDangChay(f: FreePolicy, today: string): boolean {
-  if (!f.active) return false;
-  if (f.from && today < f.from) return false;
-  if (f.to && today > f.to) return false;
-  return true;
+  // Không xét from/to (anh 12/11/2026: chạy tới khi Thu hồi) — ngày cũ còn sót trong bảng giá không chặn.
+  void today;
+  return !!f.active;
 }
 
 // THÀNH VIÊN MỚI — MỘT ĐỊNH NGHĨA DUY NHẤT cho mọi chương trình (chủ dự án duyệt 22/10/2026; trước đây
@@ -633,7 +637,8 @@ export function thanhVienMoi(
   f: FreePolicy,
   k: { coChu: boolean; homNay: string; soNgayMoTk: number; ngayTaoTk?: string },
 ): boolean {
-  const trongKy = (ngay: string) => (!f.from || ngay >= f.from) && (!f.to || ngay <= f.to);
+  // "Thành viên mới, bất kể lúc nào" (anh 12/11/2026): không giới hạn theo ngày chương trình — chỉ xét N ngày từ lần đăng nhập đầu.
+  const trongKy = (ngay: string) => { void ngay; return true; };
   if (!k.coChu) return trongKy(k.homNay);
   const ngayTaoTk = k.ngayTaoTk ?? new Date(new Date(`${k.homNay}T12:00:00+07:00`).getTime() - k.soNgayMoTk * 86_400_000)
     .toISOString().slice(0, 10);

@@ -175,8 +175,9 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
         ...BILLING_DEFAULT.free,
         ten: mp.ten, // đúng tên admin đặt — web hiện tên này (22/10/2026)
         active: mp.bat,
-        from: mp.tu,
-        to: mp.den,
+        // Không ngày từ–đến: chạy tới khi Thu hồi; mỗi thành viên mới N ngày từ lần đăng nhập đầu (anh 12/11/2026)
+        from: "",
+        to: "",
         days: mp.soNgayTuDangKy ?? 0,
         quota: mp.soTin ?? 0,
         tierId: mp.tiers[0],
