@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { openOutApp } from "zmp-sdk";
 import { Box, Icon, ImageViewer, Page, Sheet, Spinner, Text, useNavigate } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
 import ThuGonTin from "../components/ThuGonTin";
@@ -260,6 +261,16 @@ export default function ChiTietTin() {
           loading="lazy"
           src={`https://www.google.com/maps?q=${encodeURIComponent(tin.ghim?.trim() || [tin.dia_chi_ct?.trim(), tin.ward, tin.district, tin.province].filter(Boolean).join(", "))}&z=${tin.ghim?.trim() || tin.dia_chi_ct?.trim() ? 17 : 15}&hl=vi&output=embed`}
         />
+        {/* Như web (MapPaneGoogle): nút mở thẳng Google Maps — trong Zalo mở ra ngoài (openOutApp) để máy tự chuyển vào app bản đồ */}
+        <button
+          className="nut-mo-ban-do"
+          onClick={() => {
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tin.ghim?.trim() || [tin.dia_chi_ct?.trim(), tin.ward, tin.district, tin.province].filter(Boolean).join(", "))}`;
+            openOutApp({ url }).catch(() => { window.location.href = url; });
+          }}
+        >
+          <Icon icon="zi-location" size={18} /> Xem vị trí trên Google Maps
+        </button>
       </section>
 
       {(tin.du_an || tin.nguoi_dang) && (
