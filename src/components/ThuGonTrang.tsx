@@ -62,7 +62,7 @@ export default function ThuGonTrang({ children, className = "" }: { children: Re
       {dai && (
         // Như Batdongsan: "Xem thêm" → mở hết, "Thu gọn" nằm SÁT ngay dưới nội dung (chủ dự án 31/10/2026). Cùng kiểu nút cả web
         <div className="mt-3 flex justify-center">
-          <button type="button" onClick={() => { if (mo && ref.current) veDauKhoi(ref.current); setMo((v) => !v); }} className="btn-xemthem">
+          <button type="button" onClick={() => { if (mo && ref.current) veDauKhoi(ref.current); setMo((v) => !v); }} className="nut-mo-rong">
             {mo ? "Thu gọn" : "Xem thêm"}
             <svg className={`h-4 w-4 transition-transform ${mo ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
           </button>

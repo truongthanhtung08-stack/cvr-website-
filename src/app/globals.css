@@ -254,6 +254,26 @@ select option {
   transform: translateY(0);
 }
 
+/* ===== Xem thêm / Thu gọn NỘI DUNG (mô tả tin, tổng quan dự án, danh sách trong trang chi tiết) — KHÁC nút
+   "Xem thêm" của một khối/mục (btn-xemthem, nút đen): chữ + mũi tên, không nền (anh 12/11/2026). ===== */
+.nut-mo-rong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 36px;
+  padding-inline: 0.75rem;
+  color: var(--color-cvr-ink, #1d1d1f);
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: transparent;
+  border-radius: 9999px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+.nut-mo-rong:hover { background-color: rgba(0, 0, 0, 0.04); }
+.nut-mo-rong:active { background-color: rgba(0, 0, 0, 0.07); }
+
 /* ===== Phân cách giữa các khối — đường gradient mờ dần 2 đầu ===== */
 .section-edge {
   position: relative;
