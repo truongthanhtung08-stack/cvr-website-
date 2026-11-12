@@ -8,10 +8,31 @@ import Footer from "@/components/Footer";
 import { asset } from "@/lib/asset";
 import { getAbout } from "@/lib/siteContent";
 import { layThuongHieu } from "@/lib/thuongHieu";
+import { getListings, getListingsHetHan } from "@/lib/listingsDb";
+import { getProjects } from "@/lib/contentDb";
+import { PHAP_LY } from "@/lib/phapLy";
+
+// TRANG GIỚI THIỆU = TRANG CHA CỦA THƯƠNG HIỆU (anh 12/11/2026: "phần giới thiệu rất sơ sài, làm lại CHUẨN", "phong cách đơn giản"):
+// trả lời "Coastal Land là gì" (tiêu đề, H1, hỏi đáp) · web có gì (link 6 mục, số tin thật) · khu vực (7 tỉnh, kèm tên cũ khách còn gõ)
+// · cách dùng cho người mua / người đăng tin · doanh nghiệp + kênh chính thức. Mã số thuế CHỈ ghi một lần trên web (chân trang) — không lặp ở đây.
+const KHU_VUC = [
+  { ten: "Đà Nẵng", cu: "Quảng Nam", slug: "da-nang" },
+  { ten: "Huế", cu: "Thừa Thiên Huế", slug: "hue" },
+  { ten: "Khánh Hòa", cu: "Nha Trang, Ninh Thuận", slug: "khanh-hoa" },
+  { ten: "Gia Lai", cu: "Quy Nhơn, Bình Định", slug: "gia-lai" },
+  { ten: "Lâm Đồng", cu: "Đà Lạt, Phan Thiết, Bình Thuận", slug: "lam-dong" },
+  { ten: "Quảng Ngãi", cu: "Kon Tum", slug: "quang-ngai" },
+  { ten: "Quảng Trị", cu: "Đông Hà, Quảng Bình", slug: "quang-tri" },
+];
+
+const TEN_KENH: [RegExp, string][] = [
+  [/zalo\.me\/s\//, "Zalo Mini App"], [/zalo\.me/, "Zalo"], [/facebook\.com/, "Facebook"], [/youtube\.com/, "YouTube"],
+  [/maps\.google|google\.com\/maps/, "Google Maps"], [/linkedin\.com/, "LinkedIn"],
+];
 
 export const metadata: Metadata = {
   alternates: { canonical: "/gioi-thieu" },
-  title: "Giới thiệu",
+  title: "Coastal Land là gì? Cổng thông tin bất động sản trực tuyến",
   // 149 ký tự — Google hiển thị được khoảng 155. Bản cũ 188 ký tự bị cắt mất câu
   // cuối. Chữ "thực hiện giao dịch" cũng đã bỏ: Coastal Land là CỔNG THÔNG TIN,
   // không đứng ra môi giới hay giao dịch hộ ai.
@@ -83,7 +104,20 @@ function Figure({ src, alt, className = "" }: { src: string; alt: string; classN
 
 export default async function GioiThieuPage() {
   // Nội dung admin sửa được (site_content key 'about') — chưa nhập → mặc định trong code.
-  const [about, th] = await Promise.all([getAbout(), layThuongHieu()]);
+  // Số tin = tin đang hiện + tin hết hạn (vẫn xem được trên web) — cùng cách đếm ô khu vực trang chủ (anh chốt 06/11/2026)
+  const [about, th, dangHien, hetHan, duAn] = await Promise.all([getAbout(), layThuongHieu(), getListings().catch(() => []), getListingsHetHan().catch(() => []), getProjects().catch(() => [])]);
+  const tin = [...dangHien, ...hetHan];
+  const soBan = tin.filter((l) => (l.purpose ?? "ban") === "ban").length;
+  const soThue = tin.filter((l) => l.purpose === "thue").length;
+  const MUC = [
+    { href: "/mua-ban", ten: "Mua bán nhà đất", so: soBan ? `${soBan.toLocaleString("vi-VN")} tin` : "" },
+    { href: "/cho-thue", ten: "Cho thuê nhà đất", so: soThue ? `${soThue.toLocaleString("vi-VN")} tin` : "" },
+    { href: "/du-an", ten: "Dự án", so: duAn.length ? `${duAn.length.toLocaleString("vi-VN")} dự án` : "" },
+    { href: "/gia-nha-dat/da-nang", ten: "Giá nhà đất theo khu vực", so: "" },
+    { href: "/tin-tuc", ten: "Tin tức thị trường", so: "" },
+    { href: "/tien-ich/gia-nha-dat", ten: "Tiện ích", so: "" },
+  ];
+  const kenh = th.kenh.map((href) => ({ href, ten: TEN_KENH.find(([re]) => re.test(href))?.[1] ?? "" })).filter((k) => k.ten);
   // ẢNH ĐẦU TRANG TẢI TRƯỚC ĐÚNG KHỔ MÁY (cùng cách Hero trang chủ, 27/10/2026): trước đây hai ảnh (điện thoại + máy tính) đều
   // "priority" → điện thoại tải trước CẢ ảnh máy tính đang ẩn, giành đường truyền với ảnh đang hiện (LCP).
   // Cùng một tệp cho cả hai máy → tải trước MỘT lần, không kèm điều kiện (React gộp hai lệnh cùng địa chỉ, giữ lệnh đầu).
@@ -154,6 +188,54 @@ export default async function GioiThieuPage() {
           </div>
         </section>
 
+        {/* ── Coastal Land có gì — 6 mục, số tin thật ── */}
+        <section className={SECTION_CARD}>
+          <Title>Coastal Land có gì</Title>
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            {MUC.map((m) => (
+              <Link key={m.href} href={m.href} className="press rounded-2xl border border-cvr-line bg-white p-4 transition hover:border-cvr-ink sm:p-5">
+                <span className="block text-[15px] font-semibold text-cvr-ink sm:text-base">{m.ten}</span>
+                {m.so && <span className="mt-1 block text-[13px] text-cvr-muted">{m.so}</span>}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Khu vực — 7 tỉnh, kèm tên khách còn gõ (tỉnh cũ, thành phố) ── */}
+        <section className="bg-cvr-surface">
+          <div className={SECTION_CARD}>
+            <Title>Khu vực</Title>
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+              {KHU_VUC.map((k) => (
+                <Link key={k.slug} href={`/mua-ban/${k.slug}`} className="press rounded-2xl border border-cvr-line bg-white p-4 transition hover:border-cvr-ink">
+                  <span className="block text-[15px] font-semibold text-cvr-ink">Nhà đất {k.ten}</span>
+                  <span className="mt-1 block text-[13px] leading-snug text-cvr-muted">{k.cu}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Cách dùng: người mua / thuê · người đăng tin ── */}
+        <section className={SECTION_CARD}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+            {[
+              { ten: "Người mua, người thuê", y: ["Kết nối người bán và người mua", "Tin xác thực"], link: { href: "/mua-ban", nhan: "Xem tin" } },
+              { ten: "Người đăng tin", y: ["Đăng nhập bằng số điện thoại, email, Google, Zalo", "Chọn gói theo bảng giá", "Tin được duyệt rồi lên web"], link: { href: "/bao-gia-dang-tin", nhan: "Báo giá" } },
+            ].map((c) => (
+              <div key={c.ten} className="rounded-2xl border border-cvr-line bg-white p-5 sm:p-6">
+                <h3 className={CARD_TITLE}>{c.ten}</h3>
+                <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-cvr-body">
+                  {c.y.map((y) => (
+                    <li key={y} className="flex gap-2.5"><span aria-hidden className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-cvr-ink" />{y}</li>
+                  ))}
+                </ul>
+                <Link href={c.link.href} className="mt-4 inline-flex text-[15px] font-semibold text-cvr-blue-ink hover:underline">{c.link.nhan} ›</Link>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* ── Tầm nhìn & Sứ mệnh — mỗi thẻ một ICON cho chuyên nghiệp ── */}
         <section className="bg-cvr-surface">
           <div className={SECTION_CARD}>
@@ -214,27 +296,35 @@ export default async function GioiThieuPage() {
         {/* ── Số liệu: ĐÃ BỎ theo yêu cầu (file V3 10.08.2026).
              Dữ liệu stats/statsImage vẫn còn trong admin — chưa xoá, chỉ không hiển thị. ── */}
 
-        {/* ── Thị trường Miền Trung ── */}
-        <section className="bg-cvr-surface">
-          <div className={SECTION}>
-            <div className={about.market.image ? SPLIT : ""}>
-              <Figure src={about.market.image} alt="Coastal Land" className="order-2 lg:order-1" />
-              <div className="order-1 lg:order-2">
-                {/* CỘT PHẢI THEO ADMIN (anh 08/11/2026): Nhãn nhỏ · Tiêu đề · Mô tả · nút CTA — ô nào trống thì không hiện; nút chỉ hiện khi có
-                    cả nhãn lẫn link (Admin → Nội dung → Giới thiệu, khối Thị trường) */}
-                {about.market.eyebrow?.trim() && <Eyebrow>{about.market.eyebrow}</Eyebrow>}
-                {about.market.title?.trim() && <Title>{about.market.title}</Title>}
-                {about.market.desc?.trim() && <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-cvr-body sm:text-base">{about.market.desc}</p>}
-                {about.market.ctaLabel?.trim() && about.market.ctaHref?.trim() && (
-                  <Link href={about.market.ctaHref} className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-cvr-blue px-7 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(0,113,227,0.28)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-cvr-blue-ink">
-                    {about.market.ctaLabel}
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                  </Link>
-                )}
-              </div>
+        {/* ── Khối "Thị trường" (ảnh + nút Xem dự án, Admin → Giới thiệu) — ĐÃ BỎ (anh 12/11/2026: "phần cuối bị thừa, bỏ đi"); lối vào Dự án
+             đã có ở khối "Coastal Land có gì". Dữ liệu about.market vẫn còn trong Admin, chỉ không hiển thị. ── */}
+
+        {/* ── Doanh nghiệp + kênh chính thức (một nguồn: phapLy.ts, sheet Thương hiệu). Địa chỉ, điện thoại, email ở chân trang — không lặp ── */}
+        <section className={SECTION_CARD}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+            <div className="rounded-2xl border border-cvr-line bg-white p-5 sm:p-6">
+              <h3 className={CARD_TITLE}>Thông tin doanh nghiệp</h3>
+              <p className="mt-3 text-[15px] font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</p>
+              <p className="mt-1 text-[15px] text-cvr-body">Thành lập {PHAP_LY.ngayCap}</p>
             </div>
+            {kenh.length > 0 && (
+              <div className="rounded-2xl border border-cvr-line bg-white p-5 sm:p-6">
+                <h3 className={CARD_TITLE}>Kênh chính thức</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {kenh.map((k) => (
+                    <a key={k.href} href={k.href} target="_blank" rel="noopener noreferrer" className="press rounded-full border border-cvr-line px-4 py-2 text-[14px] font-medium text-cvr-ink transition hover:border-cvr-ink">{k.ten}</a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
+
+        {/* Trang giới thiệu khai cho Google là trang "về" tổ chức (AboutPage → #to-chuc) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "AboutPage", "@id": "https://coastalland.vn/gioi-thieu", url: "https://coastalland.vn/gioi-thieu", name: `${th.ten} là gì? ${th.cau1}`, isPartOf: { "@id": "https://coastalland.vn/#website" }, about: { "@id": "https://coastalland.vn/#to-chuc" }, mainEntity: { "@id": "https://coastalland.vn/#to-chuc" } }) }}
+        />
 
         {/* HỎI ĐÁP VỀ THƯƠNG HIỆU (GEO, anh 12/11/2026) — từ sheet "Thương hiệu" (dòng Hỏi đáp); bảng chưa có câu hỏi thì không hiện.
             Kèm dữ liệu FAQPage để Google + mọi AI trích đúng "Coastal Land là gì". */}
