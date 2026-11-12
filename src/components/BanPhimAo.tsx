@@ -69,7 +69,7 @@ export default function BanPhimAo() {
       if (timLopPhu(el)) return 0;
       let day = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
       const ds = Array.from(document.querySelectorAll<HTMLElement>("header, .sticky, .fixed"))
-        .filter((n) => !n.contains(el) && /^(sticky|fixed)$/.test(getComputedStyle(n).position))
+        .filter((n) => !n.contains(el) && /^(sticky|fixed)$/.test(getComputedStyle(n).position) && getComputedStyle(n).visibility !== "hidden")
         .map((n) => n.getBoundingClientRect())
         .filter((r) => r.height > 0 && r.width >= window.innerWidth * 0.5 && r.height <= window.innerHeight * 0.4)
         .sort((a, b) => a.top - b.top);

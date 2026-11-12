@@ -19,7 +19,7 @@ import ChonHoacGhi from "@/components/ChonHoacGhi";
 import { isVideoUrl } from "@/lib/media";
 import ThemTuGhi from "@/components/ThemTuGhi";
 import OGoTuGian from "@/components/OGoTuGian";
-import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
+import { donViGiaNenDung, goiYDienTich, goiYGia, goiYMoTa, goiYTieuDe } from "@/lib/goiYNhapTin";
 import { doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import {
   demandTypes, DEMAND_DU_AN,
@@ -273,7 +273,10 @@ export default function PostListingForm() {
   const ngungTuLuu = useRef(false); // tin nháp đã gửi duyệt / bị xoá ở máy khác → thôi tự lưu
   // Đổ bản soạn dở vào form (khách bấm "Soạn tiếp", hoặc bản nháp chưa có gì đáng hỏi).
   function apDungNhap(d: Record<string, unknown>) {
-    if (typeof d.maNhap === "string") maNhapTk.current = d.maNhap;
+    // Bản soạn trên máy đã thành TIN NHÁP trên CSDL → mở đúng tin đó (CSDL là nguồn mới nhất: khách có thể đã chọn gói, sửa tiếp
+    // ở máy khác). Đổ bản cũ trên máy vào rồi tự lưu là ghi đè mất gói (lỗi 10–11/11/2026: tin nháp lưu gói rỗng).
+    if (typeof d.maNhap === "string" && d.maNhap) { router.replace(`/dang-tin?id=${d.maNhap}`); return; }
+    boQuaDoiLoai.current = true; setTimeout(() => { boQuaDoiLoai.current = false; }, 800); // chỉ nuốt lần đổi do nạp
     const s = (k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
     const ds = (k: string) => (Array.isArray(d[k]) ? (d[k] as string[]) : []);
     if (s("demand")) setDemand(s("demand"));
@@ -538,12 +541,15 @@ export default function PostListingForm() {
   // xưởng), pháp lý của loại khác (sổ hồng ↔ sổ đỏ). Chữ khách tự ghi ngoài danh mục thì giữ. Chạy cả khi nạp bản nháp.
   const khoaLoai = `${loaiHinh}|${purposeOfDemand(demand)}`;
   const khoaLoaiTruoc = useRef(khoaLoai);
+  const boQuaDoiLoai = useRef(false); // vừa nạp bản nháp / tin → không coi là khách đổi
   /* eslint-disable react-hooks/set-state-in-effect -- lọc lại dữ liệu đã nhập khi khách đổi loại hình */
   useEffect(() => {
     if (khoaLoaiTruoc.current === khoaLoai) return;
     const [loaiTruoc, mdTruoc] = khoaLoaiTruoc.current.split("|");
     // Lần nạp đầu (bản nháp / tin đang sửa: loại hình từ rỗng → có) KHÔNG tính là khách đổi — không xoá gói vừa nạp.
-    const doiMucDich = !!loaiTruoc && mdTruoc !== khoaLoai.split("|")[1];
+    // Bảng giá chỉ có HAI (Bán · Thuê): Cần bán ↔ Cần mua không đổi bảng → giữ gói (12/11/2026)
+    const doiMucDich = !!loaiTruoc && !boQuaDoiLoai.current && mucDichGia(mdTruoc as Parameters<typeof mucDichGia>[0]) !== mucDichGia(khoaLoai.split("|")[1] as Parameters<typeof mucDichGia>[0]);
+    boQuaDoiLoai.current = false;
     khoaLoaiTruoc.current = khoaLoai;
     // GÓI TIN: bảng giá Bán và Cho thuê là hai bảng riêng trong admin → đổi mục đích thì bỏ gói đang chọn, khách chọn
     // lại theo đúng bảng giá mới (không để giá / số ngày của bảng cũ đi theo).
@@ -779,6 +785,8 @@ export default function PostListingForm() {
       const { data, error } = await supabase.from("listings").select("*").eq("id", editId).single();
       if (error || !data) { setEditLoad("notfound"); return; }
       const r = data as ListingRow;
+      boQuaDoiLoai.current = true; setTimeout(() => { boQuaDoiLoai.current = false; }, 800);
+      try { if (userId) { const k = khoaNhap(userId); const cu = JSON.parse(localStorage.getItem(k) ?? "null"); if (cu?.maNhap === editId) localStorage.removeItem(k); } } catch {}
       // Tin đã lên web (đang hiện · hết hạn · khách tự hạ): sửa nội dung giữ nguyên gói, KHÔNG bắt chọn gói (chủ dự án 05/11/2026)
       const khachHa = r.status === "hidden" && (r.details as { ha_boi?: string } | null)?.ha_boi === "khach";
       if (r.status === "approved" || r.status === "expired" || khachHa) setGoiDangDung({ tier: r.tier as TierId, het: r.tier_expires_at, tu: r.published_at });
@@ -786,8 +794,8 @@ export default function PostListingForm() {
       // Tin NHÁP / CHỜ DUYỆT: nạp lại gói khách đã chọn (details.plan) — trước đây form mở ra trống gói, khách lưu
       // là gói của tin bị ghi thành trống (26/10/2026)
       if (r.status === "draft" || r.status === "pending") {
-        const p = (r.details as { plan?: { tier?: string; days?: number; khuyenMai?: boolean; batDau?: string } } | null)?.plan;
-        if (p?.tier) { setPlanTier(p.tier as TierId); setPlanDays(Number(p.days) || 0); setChonKm(p.khuyenMai === true); }
+        const p = (r.details as { plan?: { tier?: string; days?: number; khuyenMai?: boolean; chonKm?: boolean; batDau?: string } } | null)?.plan;
+        if (p?.tier) { setPlanTier(p.tier as TierId); setPlanDays(Number(p.days) || 0); setChonKm(p.chonKm ?? p.khuyenMai === true); }
         if (p?.batDau) setBatDau(p.batDau); // Chọn ngày đi theo gói (về từ nạp tiền không mất ngày đã chọn)
       }
       veThanhToan(editId);
@@ -931,7 +939,7 @@ export default function PostListingForm() {
       // cùng thang với quotePrice). Lúc admin duyệt, máy chủ tính lại giá; nếu
       // khuyến mãi đã hết hạn hay bảng giá đã đổi thì giá mới có thể cao hơn —
       // khi đó vẫn chỉ thu đúng con số khách đã nhìn thấy ở đây.
-      plan: { tier: planTier, days: planDays, giaBao: thanhTien, khuyenMai: duocMienPhi, ...(batDau ? { batDau } : {}) },
+      plan: { tier: planTier, days: planDays, giaBao: planTier ? thanhTien : 0, khuyenMai: duocMienPhi, chonKm, ...(batDau ? { batDau } : {}) },
       project: slugDuAn() || undefined,
       projectName: projectName.trim() || undefined,
       // TIN CỦA CHÍNH KHÁCH = THÔNG TIN TÀI KHOẢN (chủ dự án 05/11/2026: "mặc định thì để mặc định, cấm sửa — sửa ở Cài đặt")
@@ -1123,8 +1131,10 @@ export default function PostListingForm() {
     // tài khoản đã có số → đăng luôn, không hỏi gì. Chưa có (vào bằng Gmail / Zalo) → hộp hỏi số + mã một lần → số thành số tài khoản
     // (tự gộp tài khoản cùng số), đường Đăng lẫn Nạp thêm như nhau. Admin mở tin của khách thì không hỏi.
     // CHỈ HỎI DUY NHẤT KHI TÀI KHOẢN KHÔNG CÓ SỐ (chủ dự án 05/11/2026 chốt: "có số thì không hỏi, chỉ hỏi duy nhất khi không có số")
-    if (!asDraft && !daXacMinhXong && laCuaMinh && !soTaiKhoan) {
-      setSoXacMinh("");
+    // Số CHƯA XÁC MINH (đăng ký email có gõ kèm số, tài khoản tạo hộ…) cũng phải nhận mã một lần — luật 06/11: đăng tin bắt buộc số ĐÃ
+    // xác minh (12/11/2026: trước đây chỉ xét có số hay không → tin đi duyệt với số chưa xác minh). Có số thì điền sẵn.
+    if (!asDraft && !daXacMinhXong && laCuaMinh && (!soTaiKhoan || !soDaXacMinh)) {
+      setSoXacMinh(soTaiKhoan || "");
       setMoXacMinh(true);
       return;
     }
@@ -1342,7 +1352,7 @@ export default function PostListingForm() {
         <div className="mx-auto mt-6 grid max-w-sm gap-2.5">
           <Link href={`/tai-khoan/tin-dang?muc=${done === "draft" ? "draft" : done === "capNhat" ? "approved" : "pending"}`} replace className="flex h-12 w-full items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
           {!editId && (
-            <button type="button" onClick={() => { setDone(""); setTitle(""); setImages([]); }} className="h-12 w-full rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">Đăng tin khác</button>
+            <button type="button" onClick={() => { window.location.href = "/dang-tin"; }} className="h-12 w-full rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">Đăng tin khác</button>
           )}
         </div>
       </div>
@@ -1480,7 +1490,7 @@ export default function PostListingForm() {
               // LOẠI HÌNH CHUẨN (chủ dự án 05/11/2026: "Đất - Đất nền - Đất nền dự án là CHA" · "Loại hình CHA là mục bắt buộc"): danh sách
               // theo nhóm menu web; loại con (Loại đất, Loại căn hộ…) nằm trong Đặc điểm như cũ.
               value={loaiHinh && giaTriChonLoaiHinh(loaiHinh, specValues.landType)}
-              onChange={(v) => { const { type, loaiCon } = tachChonLoaiHinh(v); setCategory(type); setSpecValues(loaiCon ? { landType: loaiCon } : {}); }}
+              onChange={(v) => { if (v === (loaiHinh && giaTriChonLoaiHinh(loaiHinh, specValues.landType))) return; const { type, loaiCon } = tachChonLoaiHinh(v); setCategory(type); setSpecValues(loaiCon ? { landType: loaiCon } : {}); }}
               options={nhomChonLoaiHinh(laThue ? "thue" : "ban").flatMap((g) => g.items)}
               nhanHien={(v) => tenLoaiHinhMenu(v, laThue ? "thue" : "ban")}
               placeholder="Chọn loại hình"
@@ -1538,7 +1548,8 @@ export default function PostListingForm() {
             đối chiếu. */}
         <div id="o-tinh" className={`grid grid-cols-2 gap-3 sm:gap-4 ${coDanhMucQuan ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           <PickTim label="Tỉnh / Thành *" value={province} onChange={(v) => {
-            if (v !== province) diaChiMoi();
+            if (v === province) return; // chọn lại đúng tỉnh: giữ phường đã chọn
+            diaChiMoi();
             setProvince(v); setDistrict(""); setWard("");
             // Đổi tỉnh → dự án đang chọn không thuộc tỉnh mới thì bỏ (tự ghi tên thì giữ)
             const o = projectOptions.find((x) => x.slug === projectSlug);
@@ -1822,7 +1833,7 @@ export default function PostListingForm() {
           value={description}
           onChange={setDescription}
           rows={5}
-          placeholder="Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)"
+          placeholder={loaiHinh ? goiYMoTa(loaiHinh, laThue) : "Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)"}
         />
         </div>
       </Card>
@@ -1875,7 +1886,7 @@ export default function PostListingForm() {
                 disabled={!duocChonKm}
                 aria-pressed={chonKm}
                 onClick={() => {
-                  if (chonKm) { setChonKm(false); setPlanTier(""); setPlanDays(0); return; }
+                  if (chonKm) return; // chạm lại ô đang chọn: giữ nguyên (12/11/2026)
                   setChonKm(true); setPlanTier(goiMp); setPlanDays(ngayMp);
                 }}
                 className={`flex w-full items-start justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
@@ -1911,7 +1922,7 @@ export default function PostListingForm() {
               plans={plansChon}
               chon={{ tier: chonKm ? "" : planTier, days: planDays }}
               onChon={(t, d) => { setChonKm(false); setPlanTier(t); setPlanDays(d); }}
-              onBoChon={() => { setChonKm(false); setPlanTier(""); setPlanDays(0); }}
+              onBoChon={() => { /* chạm lại ô đang chọn: giữ nguyên — muốn đổi thì chọn ô khác (12/11/2026) */ }}
               kieuBaoGia
               canhVat={
                 <button type="button" aria-haspopup="dialog" onClick={() => setXemTinMau(true)} className="inline-flex shrink-0 items-center gap-0.5 text-[13.5px] font-semibold text-cvr-blue-ink hover:underline">
@@ -2369,7 +2380,7 @@ function ThanhBuoc({ boQua = [] }: { boQua?: string[] }) {
       </nav>
     </aside>
     {/* ĐIỆN THOẠI / MÁY TÍNH BẢNG: thanh mục dính trên đầu, vuốt ngang */}
-    <div className="sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
+    <div className="an-buoc-khi-go sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
       {/* MÁY TÍNH HIỆN ĐỦ MỌI MỤC (chủ dự án 23/10/2026: "trên PC phải làm cho logic như bản mobile — vào đăng tin bấm mục 6 thì
           như thế nào"): điện thoại vuốt ngang được, máy tính dùng chuột thì không → trước đây mục 5–7 khuất ngoài khung, không
           bấm tới được. Máy tính chia đều bề ngang cho các mục, tên dài xuống hai dòng; điện thoại giữ thanh vuốt như cũ. */}

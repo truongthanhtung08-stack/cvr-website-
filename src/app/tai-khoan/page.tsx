@@ -133,6 +133,10 @@ export default function AccountOverviewPage() {
           {emailThat(profile.email) && <span className="block break-all text-sm text-cvr-muted">{emailThat(profile.email)}</span>}
         </span>
       </Link>
+      {/* ĐIỆN THOẠI: nút Đăng tin chính ngay đầu Tổng quan (anh 12/11/2026) — cùng kiểu nút Đăng tin cột trái máy tính; máy tính đã có ở cột trái */}
+      <Link href="/dang-tin" className="press inline-flex h-10 items-center rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue/90 lg:hidden">
+        + Đăng tin
+      </Link>
       {/* Môi giới được đăng tin hộ: mời nhận tin mang số điện thoại của mình về */}
       <NhanTinCuaToi />
 

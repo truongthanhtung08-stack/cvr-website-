@@ -82,6 +82,7 @@ export async function GET(request: Request) {
         code_verifier: verifier,
       }),
       cache: "no-store",
+        signal: AbortSignal.timeout(8000), // trạm VN / Zalo treo → báo lỗi sau 8 giây, khách quay về chọn cách khác (12/11/2026)
     });
     const token = (await tokenRes.json()) as { access_token?: string; error?: number };
     if (!token.access_token) return loi("zalo_doi_ma_that_bai");
@@ -106,6 +107,7 @@ export async function GET(request: Request) {
           headers: { "Content-Type": "application/json", "x-cl-key": proxyKey },
           body: JSON.stringify({ access_token: token.access_token, fields }),
           cache: "no-store",
+        signal: AbortSignal.timeout(8000), // trạm VN / Zalo treo → báo lỗi sau 8 giây, khách quay về chọn cách khác (12/11/2026)
         });
         return (await r.json()) as ZaloMe;
       }
@@ -116,6 +118,7 @@ export async function GET(request: Request) {
       const r = await fetch(u.toString(), {
         headers: { access_token: token.access_token! },
         cache: "no-store",
+        signal: AbortSignal.timeout(8000), // trạm VN / Zalo treo → báo lỗi sau 8 giây, khách quay về chọn cách khác (12/11/2026)
       });
       return (await r.json()) as ZaloMe;
     };
@@ -129,10 +132,7 @@ export async function GET(request: Request) {
       console.error("[zalo] xin moi id cung that bai:", JSON.stringify(me));
       // TẠM THỜI: đưa nguyên câu trả lời của Zalo ra màn hình để dò lỗi.
       // Gỡ đoạn ?chi_tiet= này khi đăng nhập Zalo đã chạy ổn định.
-      const chiTiet = encodeURIComponent(JSON.stringify(me).slice(0, 160));
-      return NextResponse.redirect(
-        `${origin}/dang-nhap?error=zalo_khong_lay_duoc_thong_tin&chi_tiet=${chiTiet}`,
-      );
+      return loi("zalo_khong_lay_duoc_thong_tin"); // chi tiết lỗi chỉ ghi log (dòng trên), không đưa ra màn hình khách (12/11/2026)
     }
 
     let email = emailKyThuat(me.id);

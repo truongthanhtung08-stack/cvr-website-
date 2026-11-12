@@ -31,7 +31,8 @@ export default function LoginForm() {
     // Kèm MÃ (và câu trả lời của Zalo nếu có) để biết hỏng ở khâu nào.
     if (e.startsWith("zalo_")) {
       const chiTiet = searchParams.get("chi_tiet");
-      return `Đăng nhập Zalo chưa hoàn tất (mã: ${e}${chiTiet ? ` · Zalo trả về: ${chiTiet}` : ""}). Vui lòng thử lại hoặc dùng cách khác.`;
+      void chiTiet; // không đưa mã kỹ thuật ra màn hình khách (12/11/2026)
+      return "Đăng nhập Zalo chưa hoàn tất. Vui lòng thử lại hoặc dùng cách khác.";
     }
     return "";
   });

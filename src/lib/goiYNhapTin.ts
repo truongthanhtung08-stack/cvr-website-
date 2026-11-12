@@ -86,3 +86,16 @@ export function goiYDienTich(type: string): string {
   if (/biệt thự|villa/i.test(type)) return "VD: 300";
   return "VD: 100";
 }
+
+// ─── MÔ TẢ ──────────────────────────────────────────────────────────────────
+// Liệt kê ĐÚNG những thứ người mua / người thuê loại hình đó hỏi trước tiên (12/11/2026: anh "cần ví dụ chính xác để khách nhập").
+export function goiYMoTa(type: string, laThue: boolean): string {
+  const cuoi = laThue ? "giá thuê, tiền cọc, thời hạn thuê" : "pháp lý (sổ hồng / sổ đỏ), giá và cách thanh toán";
+  if (/trọ/i.test(type)) return "VD: Diện tích, có gác / wc riêng, nội thất có sẵn, giờ giấc, chỗ để xe, giá điện nước, khoảng cách tới trường / chợ, tiền cọc";
+  if (/căn hộ|chung cư|condotel/i.test(type)) return `VD: Tên toà, tầng, hướng, view, số phòng ngủ / tắm, nội thất có sẵn, tiện ích toà nhà (hồ bơi, gym, bãi xe), ${cuoi}`;
+  if (/nhà xưởng|kho|đất công nghiệp|thuê đất/i.test(type)) return `VD: Vị trí (KCN, đường container), diện tích, kết cấu, chiều cao, công suất điện, PCCC, giấy phép, ${cuoi}`;
+  if (/văn phòng|mặt bằng|cửa hàng|shophouse/i.test(type)) return `VD: Mặt tiền rộng bao nhiêu, vỉa hè, số tầng / sàn, ngành nghề phù hợp, chỗ để xe, ${cuoi}`;
+  if (/đất/i.test(type)) return `VD: Vị trí, mặt tiền và chiều sâu, đường trước đất rộng bao nhiêu, hướng, quy hoạch, khoảng cách tới biển / trung tâm, ${cuoi}`;
+  if (/biệt thự|villa|liền kề|nhà/i.test(type)) return `VD: Vị trí, đường / kiệt rộng bao nhiêu, ô tô vào được không, số tầng, số phòng ngủ / tắm, hướng, nội thất, ${cuoi}`;
+  return `VD: Vị trí, diện tích, kết cấu, tiện ích xung quanh, ${cuoi}`;
+}

@@ -637,6 +637,9 @@ body {
 /* BÀN PHÍM ẢO ĐANG MỞ (BanPhimAo.tsx) — ẩn thanh dính đáy để không nằm đè ô đang gõ; lớp phủ toàn
    màn hình đã co lại vừa phần trên bàn phím thì khung bên trong không được cao hơn nó. */
 html.ban-phim-mo .an-khi-go-phim { display: none !important; }
+/* Thanh bước đăng tin: khách đang gõ thì TRONG SUỐT, vẫn giữ chỗ — gỡ khỏi trang (display:none) làm cả trang nhảy lên đúng lúc bàn phím bật → giật (anh 12/11/2026) */
+.an-buoc-khi-go { transition: opacity 180ms ease-out; }
+html.ban-phim-mo .an-buoc-khi-go { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 120ms ease-out, visibility 0s 120ms; }
 /* BẢNG CHỌN (sheet) ĐANG GÕ Ô TÌM → ẩn hàng nút dính đáy, KHÔNG phụ thuộc đo bàn phím (01/11/2026, ảnh chủ dự án: Samsung không báo
    bàn phím nên hàng "Đặt lại · Áp dụng" đè kín danh sách quận/huyện, chủ đầu tư…) — mọi bảng của bộ lọc con */
 /* Hàng Đặt lại · Áp dụng trong BẢNG CHỌN chỉ ẩn khi khách đang gõ Ô CHỮ TRONG BẢNG (tick ô chọn / kéo thanh giá không tính — 01/11/2026 tick Nhà riêng làm mất nút Áp dụng) — ô gõ bên ngoài (màn gõ) còn con trỏ không được làm mất nút (01/11/2026) */

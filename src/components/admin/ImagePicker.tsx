@@ -215,6 +215,9 @@ export default function ImagePicker({
   const conNhan = maxImages == null ? Infinity : Math.max(0, maxImages - soAnh);
 
   // Số VIDEO đang có và còn nhận thêm được bao nhiêu (đếm riêng, không lẫn với ảnh)
+  // Giá trị MỚI NHẤT cho các lần tải xong muộn: tải ảnh và video cùng lúc, bên xong sau không ghi đè mất bên kia (12/11/2026)
+  const valueRef = useRef(value);
+  valueRef.current = value;
   const soVideo = value.filter(isVideoUrl).length;
   // VIDEO LUÔN ĐỨNG ĐẦU (anh 10/11/2026: "video vẫn ở giữa") — tin cũ lưu video giữa/cuối dải ảnh thì tự xếp lại; ảnh giữ nguyên thứ tự.
   useEffect(() => {
@@ -257,7 +260,7 @@ export default function ImagePicker({
       if (e) setError(e);
       else if (url) added.push(url);
     }
-    if (added.length) onChange([...value, ...added]);
+    if (added.length) onChange([...valueRef.current, ...added]);
     setUploadingImg(false);
     xoaOChon();
   }
@@ -295,7 +298,7 @@ export default function ImagePicker({
     const { url, error: e } = await uploadVideoFile(file, setTienDoVideo);
     setUploadingVideo(false);
     if (e) setError(e);
-    else if (url) onChange([url, ...value]); // video lên ĐẦU danh sách (anh 10/11/2026); ảnh đại diện vẫn là ẢNH đầu tiên
+    else if (url) onChange([url, ...valueRef.current]); // video lên ĐẦU danh sách (anh 10/11/2026); ảnh đại diện vẫn là ẢNH đầu tiên
     if (videoRef.current) videoRef.current.value = "";
   }
 

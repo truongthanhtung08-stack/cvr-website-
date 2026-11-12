@@ -38,6 +38,8 @@ export async function POST(req: Request) {
   const matKhau = b.matKhau ?? "";
   const ma = (b.ma ?? "").trim();
 
+  // Họ tên bắt buộc cả ở máy chủ (luật 06/11) — gọi thẳng API / Mini App không lách được (12/11/2026)
+  if (!hoTen) return NextResponse.json({ ok: false, loi: "Nhập họ và tên." }, { status: 400 });
   if (matKhau.length < 6)
     return NextResponse.json({ ok: false, loi: "Mật khẩu cần ít nhất 6 ký tự." }, { status: 400 });
   if (sdt && !laSdtVN(sdt))

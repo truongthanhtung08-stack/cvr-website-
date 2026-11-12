@@ -13,7 +13,8 @@ export default function KhungDangTin() {
   const [khoa, setKhoa] = useState(0);
   const truoc = useRef(id);
   useEffect(() => {
-    if (truoc.current && !id) setKhoa((k) => k + 1);
+    // có id → không id, hoặc tin này → tin khác (12/11/2026: mở tin B mang theo gói / nội dung của tin A)
+    if (truoc.current && truoc.current !== id) setKhoa((k) => k + 1);
     truoc.current = id;
   }, [id]);
   return <PostListingForm key={khoa} />;

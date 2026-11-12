@@ -126,6 +126,19 @@ export default function ContentEditor({
   rows?: number;
 }) {
   const khungRef = useRef<HTMLDivElement>(null);
+  // THANH KÉO MỞ RỘNG TRÊN ĐIỆN THOẠI (anh 12/11/2026: "có chỗ kéo mở rộng") — góc kéo của trình duyệt quá nhỏ cho ngón tay.
+  const [caoKeo, setCaoKeo] = useState<number | null>(null);
+  const batDauKeo = (e: React.PointerEvent) => {
+    const el = khungRef.current;
+    if (!el) return;
+    const y0 = e.clientY;
+    const h0 = el.getBoundingClientRect().height;
+    const keo = (ev: PointerEvent) => setCaoKeo(Math.max(120, h0 + ev.clientY - y0));
+    const tha = () => { window.removeEventListener("pointermove", keo); window.removeEventListener("pointerup", tha); window.removeEventListener("pointercancel", tha); };
+    window.addEventListener("pointermove", keo);
+    window.addEventListener("pointerup", tha);
+    window.addEventListener("pointercancel", tha);
+  };
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
@@ -373,13 +386,16 @@ export default function ContentEditor({
             nut.closest("[data-anh],[data-video]")?.remove();
             phat();
           }}
-          // Khung tự cao theo nội dung; trên máy tính KÉO GÓC DƯỚI để nới rộng thêm (như ô cũ).
-          style={{ minHeight: `${Math.max(rows, 3) * 1.6}rem` }}
-          className="soan-thao w-full resize-y overflow-auto whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-sm leading-relaxed text-cvr-ink outline-none transition focus:border-cvr-ink"
+          // Khung tự cao theo nội dung. Điện thoại: thanh kéo to bên dưới, chữ 16px (iPhone không tự phóng); máy tính KÉO GÓC DƯỚI (12/11/2026).
+          style={{ minHeight: caoKeo ? `${caoKeo}px` : `${Math.max(rows, 3) * 1.6}rem` }}
+          className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
-          <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-sm leading-relaxed text-cvr-faint">{placeholder}</p>
+          <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-[16px] leading-relaxed text-cvr-faint sm:text-sm">{placeholder}</p>
         )}
+        <div onPointerDown={batDauKeo} role="separator" aria-label="Kéo để mở rộng khung soạn" className="flex h-7 touch-none cursor-ns-resize items-center justify-center sm:hidden">
+          <span className="h-1.5 w-12 rounded-full bg-cvr-line" />
+        </div>
       </div>
 
       {error && (

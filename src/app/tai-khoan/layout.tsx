@@ -113,10 +113,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                       pathname === "/tai-khoan/ca-nhan" ? "bg-cvr-ink text-white" : "text-cvr-ink hover:bg-cvr-surface"
                     }`}
                   >
-                    Tài khoản
+                    Hồ sơ
                   </Link>
                   <div className="space-y-0.5">
-                    {MUC_TAI_KHOAN.map((m) =>
+                    {/* MỘT danh sách với trang Hồ sơ điện thoại (/tai-khoan/ca-nhan), kể cả Trang quản trị cho admin (12/11/2026) */}
+                    {[...MUC_TAI_KHOAN, ...(profile?.role === "admin" ? [{ label: "Trang quản trị", href: "/admin", icon: "" }] : [])].map((m) =>
                       dong(
                         m,
                         m.href === "/tai-khoan/nap-tien" ? (
