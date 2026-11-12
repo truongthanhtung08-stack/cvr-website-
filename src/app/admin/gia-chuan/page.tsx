@@ -514,45 +514,51 @@ function OPtGiam({ value, onChange }: { value?: number; onChange: (n: number | u
   );
 }
 
-// ── Up tin – Nâng gói (chủ dự án 01/11/2026): CÙNG khuôn thẻ gói tin — mỗi gói một thẻ (tên + ô Chiết khấu ưu đãi (%) + dòng
+// ── Up tin – Nâng gói (chủ dự án 01/11/2026; bảng như Tin Bán từ 12/11/2026): mỗi hạng một cột (ô % ưu đãi nâng gói + từng
 // Ngày · giá công bố của CHÍNH gói tin, không nhập lại giá → giá nâng). Giá nâng = giá công bố gói tin → chương trình "Up tin" →
 // − Chiết khấu ưu đãi (%), làm tròn nghìn (bản xem trước = đúng hàm công bố tinhCongBo); nút Duyệt ở đầu trang mới lên web.
 function BangNangGoiGia({ ten, bang, ptTin, nang, pt, onPt }: {
   ten: string; bang: BangChuan; ptTin: PhanTramCot; nang: Plan[]; pt: PhanTramCot; onPt: (p: PhanTramCot) => void;
 }) {
+  // CÙNG KIỂU BẢNG Tin Bán / Tin Cho thuê (anh 12/11/2026: "đồng nhất, logic"): cột = hạng có Up tin (thứ tự Báo giá), hàng đầu = % ưu đãi
+  // nâng gói, các hàng dưới = thời hạn. Mỗi ô: giá công bố gói tin (đọc từ bảng Tin, không nhập lại) → giá nâng · gồm VAT.
+  const cot = COT_HIEN.filter((t) => (COT_NANG_GOI as TierId[]).includes(t));
+  const hang = [...new Set(bang.plans.filter((p) => cot.includes(p.tierId)).flatMap((p) => p.terms.map((x) => x.days)))].filter((d) => d > 0).sort((x, y) => x - y);
   return (
     <Panel title={ten}>
-      <div className="grid gap-3 lg:grid-cols-2">
-        {COT_NANG_GOI.map((t) => {
-          const terms = [...(bang.plans.find((p) => p.tierId === t)?.terms ?? [])].sort((a, b) => a.days - b.days);
-          const giaNang = (n: number) => nang.find((p) => p.tierId === t)?.terms.find((x) => x.days === n)?.price;
-          return (
-            <div key={t} className="rounded-xl border border-cvr-line p-3">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-                <p className="font-semibold text-cvr-ink">{tenCap(t)} <span className="text-xs font-normal text-cvr-muted">X{getTier(t).heSo}</span></p>
-                <label className="flex items-center gap-2 text-xs text-cvr-muted">Chiết khấu ưu đãi (%)
-                  <OPtGiam value={pt[t]} onChange={(n) => onPt({ ...pt, [t]: n })} />
-                </label>
-              </div>
-              {terms.length === 0 ? <p className="text-xs text-amber-700">Bảng gói chưa có thời hạn</p> : (
-                <div className="space-y-2">
-                  {terms.map((term) => {
-                    const g = giaNang(term.days);
-                    return (
-                      <div key={term.days} className="flex items-start gap-2 text-sm">
-                        <p className="w-16 text-xs text-cvr-muted">Ngày<span className="mt-1 block text-sm text-cvr-ink">{term.days}</span></p>
-                        <div className="flex-1 text-xs text-cvr-muted">Giá công bố gói tin
-                          <p className="mt-1 text-sm text-cvr-ink">{ptTin[t] === undefined ? "—" : dong(tronNghin(apDung(term.price, ptTin[t])))}</p>
-                          {g !== undefined && <p className="mt-0.5 text-[11px] text-cvr-faint">Giá nâng {dong(g)} · gồm VAT <b className="text-cvr-ink">{tra(g)}</b></p>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
+          <thead>
+            <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
+              <th className="py-2 pr-3">Thời gian</th>
+              {cot.map((t) => <th key={t} className="py-2 pr-3 normal-case"><span className="font-semibold text-cvr-ink">{tenCap(t)}</span> X{getTier(t).heSo}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-cvr-line bg-cvr-surface/50">
+              <td className="py-2 pr-3 text-xs font-semibold text-cvr-ink">% ưu đãi nâng gói</td>
+              {cot.map((t) => <td key={t} className="py-2 pr-3"><OPtGiam value={pt[t]} onChange={(n) => onPt({ ...pt, [t]: n })} /></td>)}
+            </tr>
+            {hang.map((d) => (
+              <tr key={d} className="border-b border-cvr-line/60 align-top">
+                <td className="whitespace-nowrap py-2 pr-3 font-semibold text-cvr-ink">{d} ngày</td>
+                {cot.map((t) => {
+                  const term = bang.plans.find((p) => p.tierId === t)?.terms.find((x) => x.days === d);
+                  const g = nang.find((p) => p.tierId === t)?.terms.find((x) => x.days === d)?.price;
+                  if (!term) return <td key={t} className="py-2 pr-3 text-cvr-faint">–</td>;
+                  return (
+                    <td key={t} className="py-2 pr-3">
+                      <p className="text-[11px] text-cvr-muted">Gói tin {ptTin[t] === undefined ? "—" : dong(tronNghin(apDung(term.price, ptTin[t])))}</p>
+                      {g !== undefined
+                        ? <p className="mt-0.5 text-sm text-cvr-ink">Nâng <b>{dong(g)}</b><span className="block text-[11px] text-cvr-faint">gồm VAT <b className="text-cvr-ink">{tra(g)}</b></span></p>
+                        : <p className="mt-0.5 text-[11px] text-amber-700">Chưa có giá nâng</p>}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </Panel>
   );
