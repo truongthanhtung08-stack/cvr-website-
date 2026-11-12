@@ -30,6 +30,11 @@ từ anh → chia cho phiên con → nhận kết quả → KIỂM lại (web th
 | **ZALO MINI APP** | Mini App + OA + ZBS | `zalo-mini-app/`, `thongBao.ts` |
 | **THIẾT KẾ** | Ảnh, banner, video, mẫu giao diện (đưa anh duyệt trước khi vào mã) | `public/`, tệp mẫu |
 | **MẠNG XÃ HỘI** | Bài Tin tức, Facebook, Zalo OA — soạn, anh đăng | ổ D: `SEO\MAU\mxh` |
+**⛔ MÔI TRƯỜNG ĐIỆN THOẠI DỰNG SẴN TRƯỚC KHI SỬA (anh 12/11/2026: "làm trên đt phải chuẩn bị kỹ môi trường trước khi chỉnh sửa, bất cứ thứ gì"):**
+trước khi đụng giao diện điện thoại, Claude tự dựng xong và tự kiểm được: ① khung Browser của app ở cỡ Mobile (375×812), mở coastalland.vn
+hoặc localhost:3000, **đã đăng nhập tài khoản thử** (khung giữ phiên; lần đầu anh nhập cookie coastalland.vn + localhost từ Chrome qua ⋮ →
+Import cookies — Claude không gõ mật khẩu) · ② máy 3000 chạy · ③ link điện thoại thật (cùng Wi‑Fi, hoặc đường hầm cloudflared). Thiếu cái nào
+báo anh MỘT dòng trước khi sửa, không bắt anh tự mò. Không dùng khung lồng `khung-web.html` để đăng nhập Google (Google chặn trong iframe).
 **Luật chung:** ① mỗi tệp chỉ MỘT phiên sửa tại một lúc (phiên khác cần → nhắn Điều phối) · ② phiên con commit đúng tệp của mình, KHÔNG push ·
 ③ báo về Điều phối: đã sửa gì (commit) · đã kiểm gì, ở đâu · chưa kiểm gì · ④ đụng quy trình khách (bảng trên) → thử lại ①→⑥ khổ 375 + máy
 tính trước khi báo · ⑤ ghi chú dài để ở thư mục ghi chú chung của nhóm phiên, không dán vào tin nhắn · ⑥ phiên bị cấm (đầu tệp) không được giao.
