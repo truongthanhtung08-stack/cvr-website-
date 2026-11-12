@@ -147,6 +147,9 @@ export default function ContentEditor({
   // trượt xuống dưới thanh. Rời ô là khung trở lại như cũ (tự cao / thanh kéo). Máy tính không đổi.
   const thanhRef = useRef<HTMLDivElement>(null);
   const [caoGo, setCaoGo] = useState<number | null>(null);
+  // CỠ CHUẨN ĐIỆN THOẠI (anh 12/11/2026: "cần chuẩn thôi, vốn đã có kéo giãn, không cần làm quá to"): mặc định 6 dòng, cần thì kéo giãn.
+  const [laDt, setLaDt] = useState(false);
+  useEffect(() => { setLaDt(window.matchMedia("(max-width: 639px)").matches); }, []);
   useEffect(() => {
     const el = khungRef.current;
     if (!el) return;
@@ -449,7 +452,10 @@ export default function ContentEditor({
             phat();
           }}
           // Khung tự cao theo nội dung. Điện thoại: thanh kéo to bên dưới, chữ 16px (iPhone không tự phóng); máy tính KÉO GÓC DƯỚI (12/11/2026).
-          style={caoGo ? { minHeight: `min(${caoGo}px, ${caoKeo ? `${caoKeo}px` : `${Math.max(rows, 7) * 1.6}rem`})`, maxHeight: `${caoGo}px`, overflowY: "auto" } : { minHeight: caoKeo ? `${caoKeo}px` : `${Math.max(rows, 7) * 1.6}rem` }}
+          style={(() => {
+            const coSo = caoKeo ? `${caoKeo}px` : `${(laDt ? 6 : Math.max(rows, 7)) * 1.6}rem`;
+            return caoGo ? { minHeight: `min(${caoGo}px, ${coSo})`, maxHeight: `${caoGo}px`, overflowY: "auto" as const } : { minHeight: coSo };
+          })()}
           className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
