@@ -49,13 +49,16 @@ export async function tuSuaTkKhoa(admin: Admin, id: string): Promise<string> {
   // bằng chứng chắc — số đăng nhập của nó đã là số ĐÃ XÁC MINH của tài khoản khác, hoặc mã Zalo của nó đang gắn tài khoản khác
   // (không bao giờ là tài khoản quản trị) → đánh dấu gộp vào đó, khách vào thẳng tài khoản chính. Không tìm thấy → chỉ gỡ cấm,
   // khách vào bình thường; lần đầu đăng tin xác minh số thì web gộp theo quy trình.
+  // TẠM THỜI KHÔNG GỘP (anh 12/11/2026: "đăng nhập tài khoản nào làm tài khoản ấy" · "gộp sai là ảnh hưởng đủ thứ"): tài khoản bị khoá
+  // đời cũ chỉ được MỞ KHOÁ, khách vào đúng tài khoản đó — không tự gắn sang tài khoản khác. Bật lại: TU_GAN = true.
+  const TU_GAN = false;
   let dich: string | null = null;
-  const sdt = u.phone ? `0${u.phone.replace(/^\+?84/, "")}` : null;
+  const sdt = TU_GAN && u.phone ? `0${u.phone.replace(/^\+?84/, "")}` : null;
   if (sdt && /^0\d{9}$/.test(sdt)) {
     const t = await timTaiKhoan(admin, sdt, { boQuaAdmin: true });
     if (t && t !== "trung" && t.id !== id) dich = t.id;
   }
-  const zid = /^zalo_(.+)@users\.coastalland\.vn$/.exec(u.email ?? "")?.[1];
+  const zid = TU_GAN ? /^zalo_(.+)@users\.coastalland\.vn$/.exec(u.email ?? "")?.[1] : undefined;
   if (!dich && zid) {
     const { data: p } = await admin.from("profiles").select("id").eq("zalo_id", zid).neq("id", id).neq("role", "admin").limit(1).maybeSingle();
     if (p?.id) dich = p.id as string;

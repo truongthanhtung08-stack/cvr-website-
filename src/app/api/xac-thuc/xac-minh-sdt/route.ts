@@ -197,7 +197,9 @@ async function xuLy(req: Request) {
   //   Đang đăng nhập bằng chính họ = phiên của khách (token) gọi đường này · xác minh số = mã vừa đúng · đã đăng tin = xác minh ngay
   //   trong lúc đăng tin (dangTin, form đăng tin) hoặc tài khoản đã có tin. Thiếu điều kiện / dính tiền → không gộp (choAdminGop:
   //   khách vẫn đăng tin, nạp tiền bình thường bằng tài khoản đang dùng; email báo chủ dự án). Tắt hẳn tự gộp → đặt cờ này false.
-  const WEB_TU_GOP = true;
+  // TẠM THỜI KHÔNG GỘP GÌ HẾT (anh 12/11/2026: "đăng nhập tài khoản nào làm tài khoản ấy" · "tạm thời KHÔNG GỘP gì hết") — xác minh số chỉ
+  // xác minh, khách ở nguyên tài khoản đang đăng nhập; trùng số với tài khoản khác → choAdminGop (ghi Admin → Tổng quan, anh xem).
+  const WEB_TU_GOP = false;
   // CHỈ GỘP TRONG LÚC ĐĂNG TIN (06/11/2026: "mọi thứ khác khách tự thay đổi trong Cài đặt, kể cả thêm số thì cứ thêm") — Cài đặt / nạp tiền không gộp
   const duDieuKienGop = WEB_TU_GOP && b.dangTin === true;
 
