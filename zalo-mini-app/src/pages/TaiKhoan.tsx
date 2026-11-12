@@ -89,9 +89,9 @@ export default function TaiKhoan() {
       ))}
       {nguoiDung && (
         <section className="tk-nhom">
-          <button className="tk-muc" onClick={() => supabase.auth.signOut()}>
+          <button className="tk-muc tk-dang-xuat" onClick={() => supabase.auth.signOut()}>
             <Icon icon="zi-leave" />
-            <span className="tk-muc-ten">Hủy liên kết tài khoản</span>
+            <span className="tk-muc-ten">Đăng xuất</span>
           </button>
         </section>
       )}
