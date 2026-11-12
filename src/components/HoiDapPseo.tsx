@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Listing } from "@/lib/data";
 import { giaMoiM2 } from "@/lib/chiSoGia";
-import { phuongCuaTin, tenCu, tieuDe, type DieuKien } from "@/lib/pseo";
+import { duongDan, giuSoCu, phuongCuaTin, tenCu, tieuDe, type DieuKien } from "@/lib/pseo";
 import { thangHienTai } from "@/lib/thang";
 
 // ============================================================================
@@ -139,7 +139,8 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
     hoi: `Giá ${thueChu}${ngan} ${noi} ${thang}?`,
     tong: !tong ? "" : ngan !== mon ? `Giá ${thueChu}${ngan} ${noi}, ${mon} tại ${noi} ${thang} ${tong}.` : `Giá ${thueChu}${mon} ${noi} ${thang} ${tong}.`,
     veGia: { href: `/gia-nha-dat/${dk.tinh.slug}`, nhan: `Giá nhà đất ${dk.tinh.name} ${thang}` },
-    veTinh: { href: `/${thue ? "cho-thue" : "mua-ban"}/${dk.tinh.slug}`, nhan: `Xem thêm nhà đất ${thue ? "cho thuê " : ""}${dk.tinh.name}` },
+    // Chữ neo về trang tỉnh = ĐÚNG CHỮ LÕI của trang tỉnh ("Nhà đất Đà Nẵng") — liên kết nội bộ dồn sức cho lõi (anh 12/11/2026); trang đang top giữ chữ cũ
+    veTinh: { href: `/${thue ? "cho-thue" : "mua-ban"}/${dk.tinh.slug}`, nhan: giuSoCu(duongDan(dk)) ? `Xem thêm nhà đất ${thue ? "cho thuê " : ""}${dk.tinh.name}` : tieuDe({ muc: dk.muc, tinh: dk.tinh }) },
     tieuDe: `Tham khảo giá ${thue ? "thuê" : "bán"} ${mon} ${noi}`,
     duAn: duAn.length >= 2 ? duAn : [],
     khuVuc: khuVuc.length >= 2 ? khuVuc : [],

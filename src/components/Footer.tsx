@@ -101,15 +101,15 @@ const columns = [
     // Nhóm truy vấn địa phương ("bất động sản Đà Nẵng", "nhà đất Huế") là nhóm
     // đông nhất ngành — đây là chỗ đáng giá nhất của liên kết nội bộ.
     links: [
-      { label: "BĐS Đà Nẵng", href: "/mua-ban/da-nang" },
-      { label: "BĐS Huế", href: "/mua-ban/hue" },
-      { label: "BĐS Quảng Trị", href: "/mua-ban/quang-tri" },
-      { label: "BĐS Quảng Ngãi", href: "/mua-ban/quang-ngai" },
-      { label: "BĐS Khánh Hòa", href: "/mua-ban/khanh-hoa" },
-      { label: "BĐS Lâm Đồng", href: "/mua-ban/lam-dong" },
-      { label: "BĐS Gia Lai", href: "/mua-ban/gia-lai" },
-      { label: "BĐS Hà Nội", href: "/mua-ban/ha-noi" },
-      { label: "BĐS Hồ Chí Minh", href: "/mua-ban/ho-chi-minh" },
+      { label: "Nhà đất Đà Nẵng", href: "/mua-ban/da-nang" },
+      { label: "Nhà đất Huế", href: "/mua-ban/hue" },
+      { label: "Nhà đất Quảng Trị", href: "/mua-ban/quang-tri" },
+      { label: "Nhà đất Quảng Ngãi", href: "/mua-ban/quang-ngai" },
+      { label: "Nhà đất Khánh Hòa", href: "/mua-ban/khanh-hoa" },
+      { label: "Nhà đất Lâm Đồng", href: "/mua-ban/lam-dong" },
+      { label: "Nhà đất Gia Lai", href: "/mua-ban/gia-lai" },
+      { label: "Nhà đất Hà Nội", href: "/mua-ban/ha-noi" },
+      { label: "Nhà đất Hồ Chí Minh", href: "/mua-ban/ho-chi-minh" },
     ],
   },
 ];
