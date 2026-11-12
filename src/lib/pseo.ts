@@ -233,7 +233,10 @@ export function duongDan(dk: DieuKien): string {
 
 // Tiêu đề (không kèm tháng) — dùng làm H1 + <title> (nối thêm thangHienTai()).
 export function tieuDe(dk: DieuKien): string {
-  const noi = dk.thanhPho ? `${dk.thanhPho.name}, ${dk.tinh.name}` : dk.phuong ? `${dk.phuong}, ${dk.tinh.name}` : dk.tinh.name;
+  // TRANG THÀNH PHỐ THUỘC TỈNH (anh 12/11/2026: "khách gõ nhà đất nha trang tháng 11, không gõ khánh hòa"): tiêu đề = lõi + TÊN THÀNH
+  // PHỐ + đặc điểm, không chen tên tỉnh vào giữa câu; tỉnh nằm ở mô tả (moTa) + breadcrumb để Google vẫn hiểu Nha Trang thuộc Khánh Hòa.
+  // Trang đang top / giữ bản cũ (giuSoCu) vẫn vẽ như cũ. Phường giữ kèm tỉnh (tên phường trùng nhiều tỉnh).
+  const noi = dk.thanhPho ? (giuSoCu(duongDan(dk)) ? `${dk.thanhPho.name}, ${dk.tinh.name}` : dk.thanhPho.name) : dk.phuong ? `${dk.phuong}, ${dk.tinh.name}` : dk.tinh.name;
   if (dk.duong) return `Bán nhà đất đường ${dk.duong}, ${dk.tinh.name}`;
   if (dk.huong) return dk.cat ? `${tuKhoa(dk.cat, dk)} hướng ${dk.huong} ${noi}` : `Bán nhà đất hướng ${dk.huong} ${noi}`;
   if (dk.cat) {
@@ -282,8 +285,10 @@ export function moTa(dk: DieuKien, tin: Listing[] = []): string {
   // chỉ kèm khi cả câu còn ≤ 160 ký tự (Google hiện trọn) — dài hơn thì giữ câu gốc
   const coCu = cu && dk.phuong ? moTaSoLieu(tieuDe(dk).replace(dk.phuong, `${dk.phuong} (${cu})`), tin, dk.muc, pb) : null;
   if (coCu && [...coCu].length <= 160) return coCu;
-  return moTaSoLieu(tieuDe(dk), tin, dk.muc, pb)
-    ?? `${tieuDe(dk)} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp ${dk.muc === "thue" ? "người cho thuê" : "người bán"}.`;
+  // Trang thành phố: tiêu đề không có tỉnh → mô tả nói rõ thuộc tỉnh nào
+  const dau = dk.thanhPho && !tieuDe(dk).includes(dk.tinh.name) ? `${tieuDe(dk)}, ${dk.tinh.name}` : tieuDe(dk);
+  return moTaSoLieu(dau, tin, dk.muc, pb)
+    ?? `${dau} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp ${dk.muc === "thue" ? "người cho thuê" : "người bán"}.`;
 }
 
 export type Crumb = { name: string; href: string };
