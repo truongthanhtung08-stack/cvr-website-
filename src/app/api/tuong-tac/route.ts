@@ -67,7 +67,9 @@ export async function POST(req: Request) {
   } else {
     return NextResponse.json({ ok: false, loi: "Thao tác không hợp lệ." }, { status: 400 });
   }
-  await baoNguoiDang(db, listingId, user.id).catch(() => {});
+  // Thích / bình luận KHÔNG báo tức thời nữa (anh 12/11/2026: "không phải ngày nào cũng thông báo") — số lượt nằm trong báo cáo tuần
+  // thứ Hai + mục Khách hàng. Giữ hàm baoNguoiDang để bật lại nếu anh muốn.
+  void baoNguoiDang;
   return NextResponse.json({ ok: true });
 }
 

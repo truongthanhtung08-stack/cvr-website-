@@ -160,16 +160,16 @@ async function traSo(listingId: string, sdtKhach: string, ten: string | undefine
 }
 
 // ── BÁO NGƯỜI ĐĂNG "CÓ NGƯỜI QUAN TÂM" ─────────────────────────────────────
-// Tối đa MỘT tin mỗi ngày cho mỗi tin đăng (chống làm phiền, ZBS tính tiền từng tin):
-// chỉ báo khi đây là lượt xem số ĐẦU TIÊN của tin trong ngày (giờ Việt Nam).
+// Tối đa MỘT tin mỗi 7 ngày cho mỗi tin đăng (chống làm phiền, ZBS tính tiền từng tin — anh 12/11/2026).
 // KHÔNG đưa SĐT người xem vào tin — bảo vệ dữ liệu người mua.
 async function baoCoNguoiQuanTam(admin: NonNullable<ReturnType<typeof createAdminClient>>, listingId: string) {
-  const dauNgayVN = new Date(new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10) + "T00:00:00+07:00").toISOString();
+  // TỐI ĐA MỘT LẦN MỖI 7 NGÀY mỗi tin (anh 12/11/2026: trước là mỗi ngày — quá nhiều): chỉ báo lượt xem số ĐẦU TIÊN trong 7 ngày qua.
+  const bayNgayTruoc = new Date(Date.now() - 7 * 86_400_000).toISOString();
   const { count: homNay } = await admin
     .from("listing_leads")
     .select("id", { count: "exact", head: true })
     .eq("listing_id", listingId)
-    .gte("created_at", dauNgayVN);
+    .gte("created_at", bayNgayTruoc);
   if ((homNay ?? 0) !== 1) return;
 
   const { count: tong } = await admin
