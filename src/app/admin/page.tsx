@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { LOC_CHO_DUYET_KHACH } from "@/lib/choDuyet";
 import { PageHeader, Panel } from "@/components/Ui";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
 import { VIEC, KHOI, NHAN_SU_CO, HOP_BAO } from "@/lib/chuThongBao";
@@ -53,9 +54,8 @@ export default function AdminDashboard() {
         supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("profiles").select("*", { count: "exact", head: true }).in("role", ["agent", "company"]),
-        // Chờ duyệt = tin khách gửi (pending) + tin đăng hàng loạt chờ chủ duyệt (ẩn + choChuDuyet) — 29/10/2026: đợt 7 tin
-        // vào hàng chờ mà ô này ghi 0
-        supabase.from("listings").select("*", { count: "exact", head: true }).or("status.eq.pending,and(status.eq.hidden,details->>choChuDuyet.eq.true)"),
+        // Chờ duyệt TIN KHÁCH gửi; tin đăng hộ chờ duyệt đếm riêng ở tinNap (src/lib/choDuyet.ts)
+        supabase.from("listings").select("*", { count: "exact", head: true }).eq(LOC_CHO_DUYET_KHACH.cot, LOC_CHO_DUYET_KHACH.gia),
         supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("customer_requests").select("*", { count: "exact", head: true }).eq("status", "moi"),
         supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "pending"),
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
   // Nay việc nào đang chờ thì hiện thành DÒNG BẤM ĐƯỢC, đi thẳng tới nơi xử lý.
   // LUẬT: mọi tin đăng và mọi dự án đều phải được quản trị viên duyệt mới lên web.
   const viec = [
-    { n: (stats?.tinPending ?? 0) - (stats?.tinNap ?? 0), chu: VIEC.tinKhach, href: "/admin/tin-dang?trang-thai=pending" },
+    { n: stats?.tinPending ?? 0, chu: VIEC.tinKhach, href: "/admin/tin-dang?trang-thai=pending" },
     { n: stats?.tinNap ?? 0, chu: VIEC.tinNap, href: "/admin/tin-dang/duyet-nap" },
     { n: loiTuKiem, chu: VIEC.tuKiem, href: "/admin/tin-dang" },
     { n: chuaChuan?.length ?? 0, chu: VIEC.chuaChuanSeo, href: "#tin-chua-chuan" },

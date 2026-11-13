@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { LOC_CHO_DUYET_KHACH } from "@/lib/choDuyet";
 import { useProfile } from "@/lib/useProfile";
 import { signOut, useRoiKhiMatPhien } from "@/lib/useAuth";
 
@@ -70,16 +71,18 @@ function useSoViec(pathname: string, bat: boolean): Record<string, number> {
     let huy = false;
     (async () => {
       const dem = async (q: PromiseLike<{ count: number | null; error: unknown }>) => { const r = await q; return r.error ? 0 : r.count ?? 0; };
-      const [tin, duAn, yeuCau, khach, suCo, nangGoi] = await Promise.all([
-        dem(sb.from("listings").select("*", { count: "exact", head: true }).or("status.eq.pending,and(status.eq.hidden,details->>choChuDuyet.eq.true)")),
+      const [tin, duAn, yeuCau, khach, suCo, nangGoi, tinNap] = await Promise.all([
+        // Mục Tin đăng: chỉ tin KHÁCH gửi chờ duyệt; tin đăng hộ chờ duyệt đếm riêng ở mục Đăng nhiều tin (src/lib/choDuyet.ts)
+        dem(sb.from("listings").select("*", { count: "exact", head: true }).eq(LOC_CHO_DUYET_KHACH.cot, LOC_CHO_DUYET_KHACH.gia)),
         dem(sb.from("projects").select("*", { count: "exact", head: true }).eq("status", "pending")),
         dem(sb.from("customer_requests").select("*", { count: "exact", head: true }).eq("status", "moi")),
         dem(sb.from("profiles").select("*", { count: "exact", head: true }).eq("status", "pending")),
         dem(sb.from("su_co").select("*", { count: "exact", head: true }).eq("da_xu_ly", false)),
         // Yêu cầu Up tin (nâng gói) khách gửi, chờ anh duyệt — details.nang_cho (06/11/2026)
         dem(sb.from("listings").select("*", { count: "exact", head: true }).eq("status", "approved").not("details->nang_cho", "is", null)),
+        dem(sb.from("listings").select("*", { count: "exact", head: true }).eq("status", "hidden").eq("details->>choChuDuyet", "true")),
       ]);
-      if (!huy) setSo({ "/admin": suCo, "/admin/tin-dang": tin + nangGoi, "/admin/du-an": duAn, "/admin/yeu-cau": yeuCau, "/admin/khach-hang": khach });
+      if (!huy) setSo({ "/admin": suCo, "/admin/tin-dang": tin + nangGoi, "/admin/tin-dang/nhap-hang-loat": tinNap, "/admin/du-an": duAn, "/admin/yeu-cau": yeuCau, "/admin/khach-hang": khach });
     })();
     return () => { huy = true; };
   }, [pathname, bat]);

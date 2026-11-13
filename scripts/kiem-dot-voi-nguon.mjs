@@ -34,6 +34,18 @@ const tim = (o, d = 0) => { if (o && typeof o === "object") { if (o.body && o.ti
 // Đọc tin gốc → { ok, conHan, tt: { "Diện tích": "65 m²", … }, gia }
 function docNguon(u) {
   if (!u) return { ok: false, ly: "không có link nguon" };
+  // Chợ Tốt: trang tin trả bản rút gọn "không tồn tại" cho máy tải tự động (14/11: báo nhầm 13/13 tin còn hạn là hết hạn)
+  // → đọc API công khai của chính Chợ Tốt; mất mạng / API đổi thì rơi xuống cách đọc trang cũ.
+  const maCT = /nhatot|chotot/.test(u) && u.match(/(\d{6,})\.htm/)?.[1];
+  if (maCT) {
+    try {
+      const j = JSON.parse(execFileSync("curl", ["-s", "--compressed", "-A", UA, `https://gateway.chotot.com/v1/public/ad-listing/${maCT}`], { maxBuffer: 5e7 }).toString());
+      if (j?.ad?.subject) {
+        const tt = Object.fromEntries((j.parameters || []).map((x) => [x.label, x.value]));
+        return { ok: true, conHan: !j.ad.status || j.ad.status === "active", ly: j.ad.status, tt, gia: j.ad.price_string, loiKhach: `${j.ad.subject} ${j.ad.body ?? ""}` };
+      }
+    } catch { /* rơi xuống đọc trang */ }
+  }
   let h = "";
   try { h = execFileSync("curl", ["-sL", "--compressed", "-A", UA, u], { maxBuffer: 5e7 }).toString(); }
   catch (e) { return { ok: false, ly: "không mở được: " + e.message }; }

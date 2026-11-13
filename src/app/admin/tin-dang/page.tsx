@@ -8,6 +8,7 @@ import YeuCauNangGoi from "@/components/admin/YeuCauNangGoi";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
 import { HOP_BAO } from "@/lib/chuThongBao";
 import { tenLoaiHinh } from "@/lib/filters";
+import { hienTrongTinDangAdmin, laChoDuyetKhach, laChuAdminSoan } from "@/lib/choDuyet";
 import {
   type ListingRow,
   type ListingTier,
@@ -71,13 +72,21 @@ export default function AdminListingsPage() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) setDbMissing(true); // bảng chưa tạo (chưa chạy 0002_listings.sql)
-      else setRows((data ?? []) as ListingRow[]);
+      else {
+        // Luật chung src/lib/choDuyet.ts: bỏ tin đăng hộ chờ duyệt (ở trang Tin chờ duyệt) + nháp khách tự soạn.
+        const ds = (data ?? []) as ListingRow[];
+        const chuNhap = [...new Set(ds.filter((r) => r.status === "draft" && r.owner_id).map((r) => r.owner_id as string))];
+        const { data: hs } = chuNhap.length
+          ? await supabase.from("profiles").select("id,role,tao_ho").in("id", chuNhap)
+          : { data: [] as { id: string; role: string | null; tao_ho: boolean | null }[] };
+        const chuAdmin = new Set((hs ?? []).filter(laChuAdminSoan).map((p) => p.id));
+        setRows(ds.filter((r) => hienTrongTinDangAdmin(r, chuAdmin)));
+      }
       setLoading(false);
     })();
   }, []);
 
-  // Chờ duyệt = tin khách gửi (pending) + tin đăng hàng loạt chờ chủ duyệt (ẩn + choChuDuyet) — 29/10/2026
-  const choDuyet = (r: ListingRow) => r.status === "pending" || (r.status === "hidden" && !!(r.details as { choChuDuyet?: boolean } | null)?.choChuDuyet);
+  const choDuyet = laChoDuyetKhach; // Chờ duyệt = tin KHÁCH gửi (src/lib/choDuyet.ts)
   const filtered = useMemo(() => {
     const kw = q.trim().toLowerCase();
     const ds = rows.filter((r) => {
