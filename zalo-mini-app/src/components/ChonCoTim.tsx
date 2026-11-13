@@ -21,18 +21,17 @@ export default function ChonCoTim({
   const dangChon = ds.find((d) => d.gt === giaTri)?.nhan;
   const chon = (gt: string) => { onChon(gt); setMo(false); setTu(""); };
 
+  // Một khối duy nhất (ô + bảng trượt) — đặt trong lưới 2 cột không bị bảng trượt chiếm một ô lưới
   return (
-    <>
-      <div className="o-chon-tim">
-        <label>{nhan}</label>
+    <div className="o-chon-tim">
+        {nhan && <label>{nhan}</label>}
         <button type="button" disabled={tat} className={dangChon ? "" : "trong"} onClick={() => setMo(true)}>
           <span>{dangChon ?? giuCho}</span>
           <Icon icon="zi-chevron-down" size={20} />
         </button>
-      </div>
       <Sheet visible={mo} onClose={() => { setMo(false); setTu(""); }} autoHeight mask handler swipeToClose>
         <Box p={4} style={{ display: "grid", gap: 8 }}>
-          <Text.Title size="normal">{nhan.replace(/\s*\*$/, "")}</Text.Title>
+          <Text.Title size="normal">{(nhan || giuCho).replace(/\s*\*$/, "")}</Text.Title>
           <input className="o-tim-bang" placeholder="Tìm" value={tu} onChange={(e) => setTu(e.target.value)} />
           <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
             {loc.map((d) => (
@@ -44,6 +43,6 @@ export default function ChonCoTim({
           </div>
         </Box>
       </Sheet>
-    </>
+    </div>
   );
 }

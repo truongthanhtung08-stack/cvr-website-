@@ -40,12 +40,25 @@ const ngayVnSau = (n: number) => new Date(Date.now() + 7 * 3_600_000 + n * 86_40
 const so = (s: string) => (s.trim() ? Number(s.replace(/\./g, "").replace(",", ".")) : NaN);
 const vnd = (n: number) => `${Math.round(n).toLocaleString("vi-VN")} đ`;
 
-function Nhom({ tieuDe, children }: { tieuDe: string; children: React.ReactNode }) {
+// GIAO DIỆN = FORM WEB ĐIỆN THOẠI (PostListingForm, đo cạnh nhau khổ 375 ngày 14/11/2026 — anh: "như một bãi rác"):
+// mỗi mục một thẻ viền mảnh, đầu thẻ số tròn đen + tên mục; nhãn ô chữ nhỏ xám; ô nhập bo 10px cao 44px.
+const BUOC = ["Loại hình & địa chỉ", "Thông tin chính", "Đặc điểm & tiện ích", "Tiêu đề & mô tả", "Gói tin — thanh toán", "Hình ảnh & video", "Thông tin liên hệ"];
+function Nhom({ so, tieuDe, children }: { so: number; tieuDe: string; children: React.ReactNode }) {
   return (
-    <Box mt={2} p={4} style={{ background: "#fff", display: "grid", gap: 12 }}>
-      <Text.Title size="small">{tieuDe}</Text.Title>
+    <section id={`b${so}`} className="the-muc">
+      <h2 className="the-muc-dau"><span className="so">{so}</span>{tieuDe}</h2>
       {children}
-    </Box>
+    </section>
+  );
+}
+type ONhapProps = { nhan?: string; vung?: boolean; dem?: boolean } & React.InputHTMLAttributes<HTMLInputElement> & React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+function ONhap({ nhan, vung, dem, ...p }: ONhapProps) {
+  return (
+    <label className="o-nhap">
+      {nhan && <span>{nhan}</span>}
+      {vung ? <textarea {...(p as React.TextareaHTMLAttributes<HTMLTextAreaElement>)} /> : <input {...(p as React.InputHTMLAttributes<HTMLInputElement>)} />}
+      {dem && <small>{String(p.value ?? "").length} ký tự</small>}
+    </label>
   );
 }
 
@@ -107,6 +120,16 @@ export default function DangTin() {
   const [hang, setHang] = useState("basic"); // hạng tin: diamond · gold · silver · basic (như web)
   const [soNgay, setSoNgay] = useState<number>();
   const [batDau, setBatDau] = useState(""); // details.plan.batDau như web: trống = Ngay khi được duyệt
+  const [buoc, setBuoc] = useState(1); // mục đang xem — tô đậm ở thanh các bước
+  useEffect(() => {
+    const io = new IntersectionObserver((ds) => {
+      const thay = ds.filter((d) => d.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (thay) setBuoc(Number(thay.target.id.slice(1)));
+    }, { rootMargin: "-120px 0px -55% 0px" });
+    const t = setTimeout(() => document.querySelectorAll(".the-muc").forEach((el) => io.observe(el)), 300);
+    return () => { clearTimeout(t); io.disconnect(); };
+  }, []);
+  useEffect(() => { document.querySelector(".thanh-buoc .bat")?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); }, [buoc]); // bước đang xem luôn nằm trong thanh
   const [xemTruoc, setXemTruoc] = useState(false); // nút Xem trước như web: thẻ tin đúng như sẽ hiện
   const [luuNhap, setLuuNhap] = useState(false); // bấm Lưu nháp (như web: ghi được tới đâu lưu tới đó, không gửi duyệt)
   const [dangGui, setDangGui] = useState(false);
@@ -324,7 +347,7 @@ export default function DangTin() {
     const dat = (x: string) => setOLoai((o) => ({ ...o, [fd.key]: x }));
     return fd.type === "select"
       ? <ChonCoTim key={fd.key} nhan={nhan} giuCho={`Chọn ${fd.label.toLowerCase()}`} giaTri={v} ds={(fd.options ?? []).map((o) => ({ gt: o, nhan: o }))} onChon={dat} />
-      : <Input key={fd.key} label={nhan} placeholder={fd.placeholder ?? ""} inputMode={fd.type === "number" ? "decimal" : undefined} value={v} onChange={(e) => dat(e.target.value)} />;
+      : <ONhap key={fd.key} nhan={nhan} placeholder={fd.placeholder ?? ""} inputMode={fd.type === "number" ? "decimal" : undefined} value={v} onChange={(e) => dat(e.target.value)} />;
   };
 
   // LƯU NHÁP như web: CSDL chỉ bắt Tỉnh/Thành + Tiêu đề, còn lại ghi tới đâu lưu tới đó; không trừ tiền, không gửi duyệt.
@@ -490,7 +513,9 @@ export default function DangTin() {
 
   if (!san) return <Page><TieuDe title="Đăng tin" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
 
-  if (!phien)
+  // Khung giả lập trên máy (vite dev, ?xem-thu=1): xem form khi chưa vào tài khoản để soát giao diện cạnh form web. Bản đưa lên Zalo không có.
+  const xemThu = import.meta.env.DEV && thamSo.get("xem-thu") === "1";
+  if (!phien && !xemThu)
     return (
       <Page style={{ background: "#fff" }}>
         <TieuDe title={maSua ? "Sửa tin" : "Đăng tin"} ve="/" />
@@ -520,66 +545,70 @@ export default function DangTin() {
     );
 
   return (
-    <Page style={{ paddingBottom: 96 }}>
+    <Page className="form-tin" style={{ paddingBottom: 96 }}>
       <TieuDe title={maSua ? "Sửa tin" : "Đăng tin"} />
+      <h1 className="tieu-de-form">{maSua ? "Sửa tin đăng" : "Tạo tin đăng"}</h1>
+      <nav className="thanh-buoc">
+        {BUOC.map((t, i) => (daDang && i === 4 ? null : (
+          <button key={t} className={buoc === i + 1 ? "bat" : ""} onClick={() => document.getElementById(`b${i + 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+            <span>{i + 1}</span>{t}
+          </button>
+        )))}
+      </nav>
 
       {maSua && loiNap && <Box p={4}><Text size="small" style={{ color: "#d70018" }}>Không tìm thấy tin.</Text></Box>}
 
       {/* THỨ TỰ 7 MỤC = FORM WEB (PostListingForm, 14/11/2026 "web một nẻo, đây một nẻo"): 1 Loại hình & địa chỉ · 2 Thông tin chính ·
           3 Đặc điểm & tiện ích · 4 Tiêu đề & mô tả · 5 Gói tin — thanh toán · 6 Hình ảnh & video · 7 Thông tin liên hệ. Nhãn chép theo web. */}
-      <Nhom tieuDe="1. Loại hình & địa chỉ">
-        {!daDang && <div className="tab-md bon">
-          {([["ban", "Cần bán"], ["mua", "Cần mua"], ["thue", "Cho thuê"], ["can-thue", "Cần thuê"]] as [NhuCau, string][]).map(([k, t]) => (
-            <button key={k} className={nhuCau === k ? "bat" : ""} onClick={() => doiNhuCau(k)}>{t}</button>
-          ))}
-        </div>}
-        <ChonCoTim nhan="Loại hình *" giuCho="Chọn loại hình" giaTri={loai} ds={DS_LOAI[md].map((l) => ({ gt: l.ma, nhan: l.ten }))} onChon={(v) => { if (v === loai) return; setLoai(v); setLoaiCon(""); setConTuGhi(false); }} />
+      <Nhom so={1} tieuDe="Loại hình & địa chỉ">
+        {!daDang && <ChonCoTim nhan="Nhu cầu *" giuCho="Chọn nhu cầu" giaTri={nhuCau} ds={[["ban", "Cần bán"], ["mua", "Cần mua"], ["thue", "Cho thuê"], ["can-thue", "Cần thuê"]].map(([gt, nhan]) => ({ gt, nhan }))} onChon={(v) => doiNhuCau(v as NhuCau)} />}
+        <ChonCoTim nhan="Loại hình bất động sản *" giuCho="Chọn loại hình" giaTri={loai} ds={DS_LOAI[md].map((l) => ({ gt: l.ma, nhan: l.ten }))} onChon={(v) => { if (v === loai) return; setLoai(v); setLoaiCon(""); setConTuGhi(false); }} />
         {oCon && (
           <ChonCoTim nhan={oCon.label} giuCho={`Chọn ${oCon.label.toLowerCase()}`} giaTri={conTuGhi ? KHAC : loaiCon}
             ds={[...oCon.options.map((o) => ({ gt: o, nhan: o })), { gt: KHAC, nhan: "Khác — tự ghi" }]}
             onChon={(v) => { const k = v === KHAC; setConTuGhi(k); setLoaiCon(k ? "" : v); }} />
         )}
-        {oCon && conTuGhi && <Input placeholder={oCon.label} value={loaiCon} onChange={(e) => setLoaiCon(e.target.value)} maxLength={60} />}
-        <Button size="small" variant="secondary" loading={dangViTri} onClick={dungViTri}>Dùng vị trí hiện tại</Button>
-        <div className="tab-md">
+        {oCon && conTuGhi && <ONhap placeholder={oCon.label} value={loaiCon} onChange={(e) => setLoaiCon(e.target.value)} maxLength={60} />}
+        <div className="chia" />
+        <div className="muc-phu">Địa chỉ bất động sản</div>
+        <div className="chon-he">
           <button className={he === "moi" ? "bat" : ""} onClick={() => doiHe("moi")}>Địa chỉ mới</button>
           <button className={he === "cu" ? "bat" : ""} onClick={() => doiHe("cu")}>Địa chỉ cũ</button>
         </div>
+        <div className={he === "moi" ? "hai-cot" : ""} style={he === "cu" ? { display: "grid", gap: 14 } : undefined}>
         <ChonCoTim nhan="Tỉnh / Thành *" giuCho="Chọn tỉnh/thành" giaTri={tinh}
           ds={(he === "moi" ? provincesNew.map((p) => p.name) : dsCu.map((p) => p.name)).map((n) => ({ gt: n, nhan: n }))}
           onChon={(v) => { if (v !== tinh) { setTinh(v); setQuan(""); setPhuong(""); } }} />
         {he === "cu" && <ChonCoTim nhan="Quận / Huyện" giuCho={tinh ? "Chọn quận/huyện" : "Chọn tỉnh/thành trước"} giaTri={quan} tat={!tinh} ds={dsQuan.map((q) => ({ gt: q, nhan: q }))} onChon={(v) => { if (v !== quan) { setQuan(v); setPhuong(""); } }} />}
         <ChonCoTim nhan="Phường / Xã" giuCho={he === "cu" ? (quan ? "Chọn phường/xã" : "Chọn quận/huyện trước") : tinh ? "Chọn phường/xã" : "Chọn tỉnh/thành trước"} giaTri={phuong} tat={he === "cu" ? !quan : !tinh} ds={dsPhuong.map((w) => ({ gt: w, nhan: w }))} onChon={setPhuong} />
-        <Input label="Số nhà, tên đường" placeholder="VD: 123 Võ Nguyên Giáp · Lô A12…" value={diaChi} onChange={(e) => setDiaChi(e.target.value)} />
+        </div>
+        <ONhap nhan="Địa chỉ cụ thể (số nhà, tên đường, số lô…)" placeholder="VD: 123 Võ Nguyên Giáp · Lô A12…" value={diaChi} onChange={(e) => setDiaChi(e.target.value)} />
         <ChonCoTim nhan="Thuộc dự án" giuCho="Chọn dự án" giaTri={duAnTuGhi ? KHAC : duAnSlug}
           ds={[{ gt: "__khong", nhan: "Không thuộc dự án" }, ...duAnTrongTinh.map((d) => ({ gt: d.slug, nhan: d.ten })), { gt: KHAC, nhan: "Khác — tự ghi" }]}
           onChon={(v) => { const k = v === KHAC; setDuAnTuGhi(k); if (k || v === "__khong") { setDuAnSlug(""); setDuAnTen(""); } else { const d = dsDuAn.data.find((x) => x.slug === v); setDuAnSlug(d?.slug ?? ""); setDuAnTen(d?.ten ?? ""); } }} />
-        {duAnTuGhi && <Input placeholder="Tên dự án" value={duAnTen} onChange={(e) => setDuAnTen(e.target.value)} maxLength={80} />}
+        <button type="button" className="nut-vi-tri" disabled={dangViTri} onClick={dungViTri}>{dangViTri ? "Đang lấy vị trí…" : "Dùng vị trí hiện tại"}</button>
+        {duAnTuGhi && <ONhap placeholder="Tên dự án" value={duAnTen} onChange={(e) => setDuAnTen(e.target.value)} maxLength={80} />}
       </Nhom>
 
-      <Nhom tieuDe="2. Thông tin chính">
-        <Input label={`${loaiGoc ? nhanDienTich(loaiGoc) : "Diện tích (m²)"} *`} inputMode="decimal" value={dienTich} onChange={(e) => setDienTich(e.target.value)} />
-        <Box flex style={{ gap: 8, alignItems: "flex-end" }}>
-          <div style={{ flex: 1 }}>
-            <Input label={md === "thue" ? "Giá (triệu/tháng)" : "Mức giá"} placeholder="Trống = Thỏa thuận" inputMode="decimal" value={gia} onChange={(e) => setGia(e.target.value)} />
+      <Nhom so={2} tieuDe="Thông tin chính">
+        <div style={{ display: "grid", gap: 8 }}>
+          <div>
+            <ONhap nhan={md === "thue" ? "Giá thuê (triệu/tháng)" : "Giá bán"} placeholder={md === "thue" ? "VD: 12" : "VD: 4,2"} inputMode="decimal" value={gia} onChange={(e) => setGia(e.target.value)} />
           </div>
-          {md === "ban" && (
-            <div className="tab-md" style={{ width: 130 }}>
-              <button className={donVi === "ty" ? "bat" : ""} onClick={() => setDonVi("ty")}>Tỷ</button>
-              <button className={donVi === "trieu" ? "bat" : ""} onClick={() => setDonVi("trieu")}>Triệu</button>
-            </div>
-          )}
-        </Box>
-        {loaiGoc && coDienTichXayDung(loaiGoc) && <Input label="Diện tích sử dụng (m²)" inputMode="decimal" placeholder="VD: 95" value={dtXay} onChange={(e) => setDtXay(e.target.value)} />}
+          {md === "ban" && <ChonCoTim nhan="" giuCho="Đơn vị" giaTri={donVi} ds={[{ gt: "ty", nhan: "tỷ" }, { gt: "trieu", nhan: "triệu" }]} onChon={(v) => setDonVi(v as "ty" | "trieu")} />}
+          {!gia.trim() && <small className="goi-y-o">Để trống giá = Thỏa thuận</small>}
+        </div>
+        <ONhap nhan={`${loaiGoc ? nhanDienTich(loaiGoc) : "Diện tích (m²)"} *`} placeholder="VD: 100" inputMode="decimal" value={dienTich} onChange={(e) => setDienTich(e.target.value)} />
+        {loaiGoc && coDienTichXayDung(loaiGoc) && <ONhap nhan="Diện tích sử dụng (m²)" inputMode="decimal" placeholder="VD: 95" value={dtXay} onChange={(e) => setDtXay(e.target.value)} />}
         {truong.chinh.filter(boLoaiCon).map(oTruong)}
       </Nhom>
 
-      <Nhom tieuDe="3. Đặc điểm & tiện ích">
+      <Nhom so={3} tieuDe="Đặc điểm & tiện ích">
         {loaiGoc && (coPhongNgu(loaiGoc) || coPhongTam(loaiGoc)) && (
-          <Box flex style={{ gap: 8 }}>
-            {coPhongNgu(loaiGoc) && <div style={{ flex: 1 }}><Input label="Số phòng ngủ" inputMode="numeric" value={ngu} onChange={(e) => setNgu(e.target.value.replace(/[^0-9]/g, ""))} /></div>}
-            {coPhongTam(loaiGoc) && <div style={{ flex: 1 }}><Input label="Số phòng tắm" inputMode="numeric" value={tam} onChange={(e) => setTam(e.target.value.replace(/[^0-9]/g, ""))} /></div>}
-          </Box>
+          <div className="hai-cot">
+            {coPhongNgu(loaiGoc) && <div><ONhap nhan="Số phòng ngủ" inputMode="numeric" value={ngu} onChange={(e) => setNgu(e.target.value.replace(/[^0-9]/g, ""))} /></div>}
+            {coPhongTam(loaiGoc) && <div><ONhap nhan="Số phòng tắm" inputMode="numeric" value={tam} onChange={(e) => setTam(e.target.value.replace(/[^0-9]/g, ""))} /></div>}
+          </div>
         )}
         {truong.dacDiem.filter(boLoaiCon).map(oTruong)}
         <ChonCoTim nhan="Hướng nhà / đất" giuCho="Chọn hướng" giaTri={huong} ds={HUONG.map((h) => ({ gt: h, nhan: h }))} onChon={setHuong} />
@@ -603,12 +632,12 @@ export default function DangTin() {
         ))}
       </Nhom>
 
-      <Nhom tieuDe="4. Tiêu đề & mô tả">
-        <Input label="Tiêu đề tin đăng *" placeholder="VD: Bán nhà 3 tầng mặt tiền Hòa Xuân, Đà Nẵng" value={tieuDe} onChange={(e) => setTieuDe(e.target.value)} maxLength={120} showCount />
-        <Input.TextArea label="Mô tả chi tiết" placeholder="Vị trí, pháp lý, tiện ích, hướng nhà…" value={moTa} onChange={(e) => setMoTa(e.target.value)} />
+      <Nhom so={4} tieuDe="Tiêu đề & mô tả">
+        <ONhap nhan="Tiêu đề tin đăng *" placeholder="VD: Bán nhà 3 tầng 90 m² kiệt ô tô Hải Châu, sổ hồng riêng" value={tieuDe} onChange={(e) => setTieuDe(e.target.value)} maxLength={120} dem />
+        <ONhap vung nhan="Mô tả chi tiết" placeholder="Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)" value={moTa} onChange={(e) => setMoTa(e.target.value)} />
       </Nhom>
 
-      {!daDang && <Nhom tieuDe="5. Gói tin — thanh toán *">
+      {!daDang && <Nhom so={5} tieuDe="Gói tin — thanh toán *">
         {/* BẢNG GIÁ MA TRẬN như web — bấm ô = chọn hạng + số ngày. Giá từ admin, đã gồm VAT. */}
         {dsGoi.length ? (
           <BangGiaMaTran
@@ -649,7 +678,8 @@ export default function DangTin() {
       </Nhom>}
 
 
-      <Nhom tieuDe={`6. Hình ảnh & video${laTinTim ? "" : " *"} (${anh.length}/${TOI_DA_ANH})`}>
+      <Nhom so={6} tieuDe={`Hình ảnh & video${laTinTim ? "" : " *"}`}>
+        <small className="goi-y-o">Ảnh: {anh.length}/{TOI_DA_ANH}</small>
         <div className="luoi-anh">
           {anh.map((u, i) => (
             <div key={u} className="o-anh">
@@ -673,13 +703,13 @@ export default function DangTin() {
             <Button size="small" variant="secondary" disabled={tienDoVideo !== null || dangTaiAnh} onClick={themVideo}>
               {tienDoVideo !== null ? `Đang tải video…${tienDoVideo ? ` ${tienDoVideo}%` : ""}` : "Thêm video"}
             </Button>
-            <Input label="Hoặc link YouTube" placeholder="https://youtu.be/…" value={video} onChange={(e) => setVideo(e.target.value)} />
+            <ONhap nhan="Thêm video (link YouTube)" placeholder="https://youtu.be/…" value={video} onChange={(e) => setVideo(e.target.value)} />
             {video.trim() && !laVideo(video.trim()) && <Text size="xSmall" style={{ color: "#d70018" }}>Link chưa đúng — dán link YouTube của video.</Text>}
           </>
         )}
       </Nhom>
 
-      <Nhom tieuDe="7. Thông tin liên hệ">
+      <Nhom so={7} tieuDe="Thông tin liên hệ">
         {daXacMinh || tinSua ? (
           <Text size="small">{ten || "—"} · {sdt}</Text>
         ) : (
