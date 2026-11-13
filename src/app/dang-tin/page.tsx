@@ -10,12 +10,14 @@ import KhungDangTin from "@/components/KhungDangTin";
 const ANH_DAI_DIEN = { url: "/images/anh-dai-dien-dang-tin.jpg", width: 1200, height: 630, alt: "Đăng tin mua bán, cho thuê nhà đất — COASTAL LAND" };
 export async function generateMetadata(_: unknown, parent: ResolvingMetadata): Promise<Metadata> {
   const p = await parent;
+  // Mô tả anh duyệt nguyên văn 14/11/2026 (Zalo hiện câu cũ dài dòng) — dùng chung cho Google, Facebook, Zalo.
+  const moTa = "Cổng đăng tin mua bán, cho thuê nhà đất";
   return {
     alternates: { canonical: "/dang-tin" },
     title: "Đăng tin bất động sản",
-    description: "Đăng tin bán / cho thuê nhà đất trên Coastal Land — biểu mẫu đầy đủ thuộc tính theo loại hình, tin được duyệt nhanh.",
-    openGraph: { ...p.openGraph, url: "/dang-tin", images: [ANH_DAI_DIEN] },
-    twitter: { ...p.twitter, images: [ANH_DAI_DIEN.url] },
+    description: moTa,
+    openGraph: { ...p.openGraph, url: "/dang-tin", description: moTa, images: [ANH_DAI_DIEN] },
+    twitter: { ...p.twitter, description: moTa, images: [ANH_DAI_DIEN.url] },
   };
 }
 
