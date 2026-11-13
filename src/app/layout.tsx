@@ -5,6 +5,7 @@ import "./globals.css";
 import { getHeroBanners } from "@/lib/siteContent";
 import { asset } from "@/lib/asset";
 import Chatbox from "@/components/Chatbox";
+import PhanHoiCham from "@/components/PhanHoiCham";
 import MobileTabBar from "@/components/MobileTabBar";
 import BanPhimAo from "@/components/BanPhimAo";
 import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
@@ -222,6 +223,7 @@ export default function RootLayout({
         {children}
         <Chatbox />
         <MobileTabBar />
+        <PhanHoiCham />
         <HieuUngCham />
         <DoThanhDay />
         {/* Bàn phím ảo không được che ô khách đang gõ — mọi trang, mọi trình duyệt */}
