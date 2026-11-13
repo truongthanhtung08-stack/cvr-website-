@@ -109,10 +109,11 @@ export default async function GioiThieuPage() {
   const tin = [...dangHien, ...hetHan];
   const soBan = tin.filter((l) => (l.purpose ?? "ban") === "ban").length;
   const soThue = tin.filter((l) => l.purpose === "thue").length;
+  const soDuAnNoiBat = duAn.filter((p) => !p.dangThe).length; // dự án nổi bật = có ảnh, không thuộc Tra cứu (contentDb, 01/11/2026)
   const MUC = [
-    { href: "/mua-ban", ten: "Mua bán nhà đất", so: soBan ? `${soBan.toLocaleString("vi-VN")} tin` : "" },
-    { href: "/cho-thue", ten: "Cho thuê nhà đất", so: soThue ? `${soThue.toLocaleString("vi-VN")} tin` : "" },
-    { href: "/du-an", ten: "Dự án", so: duAn.length ? `${duAn.length.toLocaleString("vi-VN")} dự án` : "" },
+    { href: "/mua-ban", ten: "Mua bán nhà đất", so: soBan ? `Bất động sản nổi bật (${soBan.toLocaleString("vi-VN")})` : "" },
+    { href: "/cho-thue", ten: "Cho thuê nhà đất", so: soThue ? `Bất động sản nổi bật (${soThue.toLocaleString("vi-VN")})` : "" },
+    { href: "/du-an", ten: "Dự án", so: soDuAnNoiBat ? `Dự án nổi bật (${soDuAnNoiBat.toLocaleString("vi-VN")})` : "" },
     { href: "/gia-nha-dat/da-nang", ten: "Giá nhà đất theo khu vực", so: "" },
     { href: "/tin-tuc", ten: "Tin tức thị trường", so: "" },
     { href: "/tien-ich/gia-nha-dat", ten: "Tiện ích", so: "" },

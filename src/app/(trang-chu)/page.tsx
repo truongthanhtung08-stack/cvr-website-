@@ -99,7 +99,8 @@ export default async function Home() {
           <ForYou /> */}
           {/* Ô thành phố (Nha Trang, Quy Nhơn…) trỏ thẳng trang thành phố thay cho /mua-ban?tinh= — Search Console 20/10/2026:
               /mua-ban?tinh=Nha Trang có lượt hiện nhưng canonical về /mua-ban nên phí. Tính ở máy chủ, không thêm mã cho máy khách. */}
-          <LocationGrid areas={homeAreas.map((a) => {
+          {/* THỨ TỰ Ô (anh 13/11/2026): Đà Nẵng (ô lớn, ô đầu) giữ nguyên; các khu vực còn lại xếp theo số tin nhiều → ít */}
+          <LocationGrid areas={((ds) => [ds[0], ...ds.slice(1).sort((x, y) => Number(String(y.count).replace(/\D/g, "") || 0) - Number(String(x.count).replace(/\D/g, "") || 0))].filter(Boolean))(homeAreas.map((a) => {
             const ten = decodeURIComponent(a.href.match(/[?&]tinh=([^&]+)/)?.[1] ?? "");
             const tp = ten ? THANH_PHO.find((t) => t.name === ten) : undefined;
             // SỐ TIN THẬT (chủ dự án 31/10/2026: cấm số liệu mẫu — web thật từng hiện "Đà Nẵng 1.240 tin" viết sẵn): đếm tin bán.
@@ -110,7 +111,7 @@ export default async function Home() {
               && normalizeVi(l.location.split(",").pop() ?? "") === tinhO).length : null;
             const b = so === null ? a : { ...a, count: `${so.toLocaleString("vi-VN")} tin` };
             return tp ? { ...b, href: `/mua-ban/${slugKhuVuc(tp.tinh)}/${tp.slug}` } : b;
-          })} />
+          }))} />
           {/* cuoiTrang: khi đang mở danh sách Tin tức thì Tin tức là khối cuối (khối Tìm kiếm phổ biến ẩn) → cách footer đúng chuẩn */}
           <NewsSection articles={baiThe} featuredSlug={featuredSlug} cuoiTrang />
           {/* Tìm kiếm phổ biến (đường dẫn từ khoá cho Google) ở CUỐI trang chủ, sát footer như Airbnb, Batdongsan — không chen giữa

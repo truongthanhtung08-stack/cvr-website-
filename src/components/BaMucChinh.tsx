@@ -37,7 +37,7 @@ export default function BaMucChinh() {
           prefetch={false}
           onClick={() => { try { sessionStorage.setItem("cvr-kq-den", m.href); } catch { /* vẫn sang trang, chỉ không có nút ‹ */ } }}
           // press = hiệu ứng chạm chung của web (globals.css: nhấn mờ + thu nhẹ, nhả bật lại) — trước 10/11 ba nút này bấm không thấy gì
-          className="press flex items-center justify-center rounded-2xl bg-cvr-surface py-3 text-[14px] font-semibold text-cvr-ink"
+          className="press flex items-center justify-center rounded-xl bg-cvr-surface py-2.5 text-[14px] font-semibold text-cvr-ink"
         >
           {m.nhan}
         </Link>
