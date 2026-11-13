@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 type KetQua = { doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number };
 type HienTai = KetQua & { tenTep?: string; capNhat?: string };
 type DongTheoDoi = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean; daIndex: boolean; xin: string | null;
-  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean };
+  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean; noiToi?: boolean; thieu?: string[] };
 type TheoDoi = { nguong: number; dong: DongTheoDoi[] };
 const LOC = [
   ["chon", "Đã chọn (x)"], ["chua-index", "Chưa index"], ["da-index", "Đã index"], ["thieu", "Chưa đủ tin"], ["mo-trang", "Cần mở trang"], ["tat-ca", "Tất cả"],
@@ -129,11 +129,11 @@ export default function TuKhoaLoiPage() {
               ))}
             </div>
             <div className="mt-3 overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full min-w-[960px] text-sm">
                 <thead>
                   <tr className="border-b border-cvr-line text-left text-xs text-cvr-muted">
                     <th className="py-2 pr-2">{tang === "dd" ? "Địa điểm" : "Tỉnh"}</th><th className="py-2 pr-2">{tang === "dd" ? "Longtail (lõi + đặc điểm)" : "Từ khoá lõi (tiêu đề trang)"}</th><th className="py-2 pr-2">{tang === "dd" ? "Nhóm · Google" : "Tầng"}</th>
-                    <th className="py-2 pr-2 text-right">Tin</th><th className="py-2 pr-2">Đủ chuẩn</th><th className="py-2">Index</th>
+                    <th className="py-2 pr-2 text-right">Tin</th><th className="py-2 pr-2">Đủ chuẩn</th><th className="py-2 pr-2">Index</th><th className="py-2">Thiếu gì</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -144,7 +144,7 @@ export default function TuKhoaLoiPage() {
                         {d.trang ? <a href={d.trang} target="_blank" rel="noreferrer" className="font-medium text-cvr-ink hover:underline">{d.longtail || d.tuKhoa || d.trang}</a>
                           : <span className="font-medium text-cvr-ink">{d.longtail}</span>}
                         {d.chon && <span className="ml-1 rounded bg-cvr-ink px-1.5 text-[11px] font-semibold text-white">x</span>}
-                        <div className="text-xs text-cvr-faint">{d.trang || "chưa có trang"}{d.tang === "Đặc điểm" ? ` · lõi ${d.tuKhoa}` : d.trongBang ? " · trong bảng" : ""}</div>
+                        <div className="text-xs text-cvr-faint">{d.trang ? `coastalland.vn${d.trang}` : "chưa có trang"}{d.tang === "Đặc điểm" ? ` · lõi ${d.tuKhoa}` : d.trongBang ? " · trong bảng" : ""}</div>
                       </td>
                       <td className="py-2 pr-2 text-cvr-muted">{d.tang === "Đặc điểm" ? <>{d.nhom}<div className="text-xs text-cvr-faint">Google {d.google ?? 0} câu</div></> : d.tang}</td>
                       <td className="py-2 pr-2 text-right tabular-nums">{d.soTin}</td>
@@ -153,6 +153,9 @@ export default function TuKhoaLoiPage() {
                         {d.tang === "Đặc điểm" && !d.coTrang ? <span className="font-medium text-amber-700">{d.soTin >= td.nguong ? "Cần mở trang" : "Chưa có trang"}</span>
                           : d.daIndex ? <span className="font-medium text-emerald-700">✓ Đã index</span>
                           : <span className="font-medium text-amber-700">Chưa index{d.xin ? <span className="font-normal text-cvr-muted"> · đã xin {ngayVn(d.xin)}</span> : null}</span>}
+                      </td>
+                      <td className="py-2 pl-2 text-xs">
+                        {d.thieu?.length ? <ul className="space-y-0.5 text-amber-800">{d.thieu.map((t) => <li key={t}>{t}</li>)}</ul> : <span className="text-emerald-700">Đủ</span>}
                       </td>
                     </tr>
                   ))}

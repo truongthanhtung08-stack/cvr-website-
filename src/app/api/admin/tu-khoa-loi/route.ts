@@ -3,8 +3,8 @@ import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { docBangTuKhoaLoi, docThuongHieu, type DongKeHoach } from "@/lib/tuKhoaLoiDoc";
-import { getTinXetTrang } from "@/lib/listingsDb";
-import { tatCaTrang, tieuDe, NGUONG_INDEX } from "@/lib/pseo";
+import { getListings, getListingsHetHan } from "@/lib/listingsDb";
+import { tatCaTrang, tieuDe, lienKetCho, NGUONG_INDEX } from "@/lib/pseo";
 import { docSoXinIndex, trangThaiIndex, type TrangThaiIndex } from "@/lib/xinIndex";
 
 // ============================================================================
@@ -36,12 +36,33 @@ async function chiAdmin() {
 // + DÒNG ĐẶC ĐIỂM của bảng (13/11/2026): longtail → trang đích. Trang đã có trên web → số tin, đủ chuẩn, index lấy từ web (một luật
 // với sitemap); chưa có trang → số tin trong bảng, trạng thái "Cần mở trang" / "Chưa đủ tin" như cột "Xin index" của bảng.
 type DongTD = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean;
-  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean } & TrangThaiIndex;
+  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean; noiToi?: boolean; thieu?: string[] } & TrangThaiIndex;
 async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>, bang: Record<string, unknown>, keHoach: DongKeHoach[] = []) {
-  const [tin, so] = await Promise.all([getTinXetTrang().catch(() => []), docSoXinIndex(admin)]);
+  const [con, het, so] = await Promise.all([getListings().catch(() => []), getListingsHetHan().catch(() => []), docSoXinIndex(admin)]);
+  const tin = [...con, ...het]; // cùng bộ tin xét trang với sitemap (getTinXetTrang)
   const gSet = new Set(so.google?.ds ?? []);
   const dong = new Map<string, DongTD>();
   const moiTrang = tatCaTrang(tin);
+  // LIÊN KẾT NỘI BỘ (anh 13/11/2026: "liên kết nội bộ chuẩn xác, ổn định"): trang nào được ít nhất một trang pSEO khác dẫn tới
+  // bằng đúng khối liên kết đang vẽ trên web (lienKetChoDu). Trang tỉnh luôn có link từ chân trang + menu.
+  const noiToi = new Set<string>();
+  // = hợp của lienKetChoDu (khối theo tin còn hạn + phần thêm theo cả tin hết hạn). Chạy HAI lượt, mỗi lượt cùng một bộ tin để
+  // tatCaTrang dùng lại bản tính sẵn (gọi xen kẽ hai bộ tin thì mỗi lần tính lại cả web — trước đo > 80 giây).
+  const trangCon = [...tatCaTrang(con).values()];
+  for (const p of trangCon) for (const g of lienKetCho(p.dk, con)) for (const l of g.links) if (l.href !== p.path) noiToi.add(l.href);
+  for (const p of moiTrang.values()) for (const g of lienKetCho(p.dk, tin)) for (const l of g.links) if (l.href !== p.path) noiToi.add(l.href);
+  tatCaTrang(tin); // để các bước dưới dùng bản tính sẵn của cả bộ tin
+  // THIẾU GÌ — mỗi dòng một câu ngắn: chưa có trang / thiếu tin / chưa có link nội bộ / chưa xin index / đã xin, chờ Google
+  const thieuCua = (d: DongTD): string[] => {
+    const t: string[] = [];
+    if (!d.trang) { t.push(d.soTin >= NGUONG_INDEX ? "Chưa có trang (đủ tin — cần mở)" : `Chưa có trang · thiếu ${Math.max(1, NGUONG_INDEX - d.soTin)} tin`); return t; }
+    const tinh = d.trang.split("/").length <= 3; // trang tỉnh: luôn mở, không qua cổng pSEO
+    if (!d.duChuan && !tinh) t.push(d.soTin < NGUONG_INDEX ? `Thiếu ${NGUONG_INDEX - d.soTin} tin` : "Trùng bộ tin với trang khác (Google chỉ cần một trang)");
+    // khối liên kết chỉ dẫn tới trang đủ chuẩn → trang chưa đủ chuẩn không có link là đúng luật, chỉ báo khi trang đã đủ chuẩn
+    if (!tinh && d.duChuan && !noiToi.has(d.trang)) t.push("Chưa có liên kết nội bộ trỏ tới");
+    if (!d.daIndex) t.push(d.xin ? `Đã xin ${d.xin.split("-").reverse().slice(0, 2).join("/")}, chờ Google` : d.duChuan || tinh ? "Chưa xin index" : "Chưa index");
+    return t;
+  };
   for (const k of keHoach) {
     const duong = k.trang.replace(/\s*\(chưa có\)$/, "");
     const p = duong.startsWith("/") ? moiTrang.get(duong) : undefined;
@@ -61,6 +82,7 @@ async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>,
     const muc = t.startsWith("/cho-thue") ? "thue" : "ban";
     dong.set(t, { trang: t, muc, tinh: "", tang: t.split("/").length > 3 ? "Loại hình + tỉnh" : "Tỉnh", tuKhoa: "", soTin: 0, duChuan: false, trongBang: true, ...trangThaiIndex(t, so, gSet) });
   }
+  for (const d of dong.values()) { d.noiToi = !!d.trang && (d.trang.split("/").length <= 3 || noiToi.has(d.trang)); d.thieu = thieuCua(d); }
   return { nguong: NGUONG_INDEX, dong: [...dong.values()].sort((a, b) => a.muc.localeCompare(b.muc) || a.tinh.localeCompare(b.tinh) || a.tang.localeCompare(b.tang) || b.soTin - a.soTin) };
 }
 
