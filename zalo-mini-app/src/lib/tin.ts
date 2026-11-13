@@ -302,10 +302,27 @@ export async function layAnhDauTrang(): Promise<AnhDau[]> {
 
 // Ô KHU VỰC TRANG CHỦ — đúng ô web (site_content home_areas): tên + ảnh chính, ô đầu to (LocationGrid).
 export type OKhuVuc = { ten: string; anh: string; tinh: string };
+// THỨ TỰ Ô như web (trang chủ, anh 13/11/2026): ô đầu (Đà Nẵng, ô lớn) giữ nguyên, các ô còn lại xếp theo số tin bán nhiều → ít.
+// Số tin = tin bán đang hiện + hết hạn của CẢ TỈNH chứa khu vực (như web): thành phố → tỉnh mới theo bảng sáp nhập
+// (src/lib/pseo.ts NGUON_THANH_PHO, tỉnh cũ → tỉnh mới). Đếm bằng count=exact (1 dòng/ô, không tải dữ liệu tin).
+const TINH_CUA_THANH_PHO: Record<string, string> = {
+  "Nha Trang": "Khánh Hòa", "Cam Ranh": "Khánh Hòa", "Phan Rang - Tháp Chàm": "Khánh Hòa", "Đà Lạt": "Lâm Đồng", "Bảo Lộc": "Lâm Đồng",
+  "Phan Thiết": "Lâm Đồng", "Gia Nghĩa": "Lâm Đồng", "Quy Nhơn": "Gia Lai", "Pleiku": "Gia Lai", "Buôn Ma Thuột": "Đắk Lắk", "Tuy Hòa": "Đắk Lắk",
+  "Hội An": "Đà Nẵng", "Tam Kỳ": "Đà Nẵng", "Đông Hà": "Quảng Trị", "Đồng Hới": "Quảng Trị",
+};
+async function demTinBan(tinh: string): Promise<number> {
+  const res = await fetch(`${URL_DB}/rest/v1/listings?select=id&purpose=eq.ban&status=in.(approved,expired)&province=eq.${encodeURIComponent(tinh)}`, {
+    headers: { apikey: KHOA, Authorization: `Bearer ${KHOA}`, Prefer: "count=exact", Range: "0-0" },
+  }).catch(() => null);
+  return Number(res?.headers.get("content-range")?.split("/")[1] ?? 0) || 0;
+}
 export async function layKhuVucTrangChu(): Promise<OKhuVuc[]> {
   const r = await doc<{ data: { items?: { name?: string; image?: string; href?: string }[] } }>("site_content", "select=data&key=eq.home_areas&limit=1").catch(() => []);
-  return (r[0]?.data?.items ?? []).filter((x) => x?.name && x.image).map((x) => {
+  const ds = (r[0]?.data?.items ?? []).filter((x) => x?.name && x.image).map((x) => {
     const tinh = decodeURIComponent(x.href?.match(/[?&]tinh=([^&]+)/)?.[1] ?? x.name!);
     return { ten: x.name!, anh: anh(x.image), tinh };
   });
+  const so = await Promise.all(ds.map((k) => demTinBan(TINH_CUA_THANH_PHO[k.tinh] ?? k.tinh)));
+  const kem = ds.map((k, i) => ({ k, so: so[i] }));
+  return [kem[0], ...kem.slice(1).sort((a, b) => b.so - a.so)].filter(Boolean).map((x) => x.k);
 }

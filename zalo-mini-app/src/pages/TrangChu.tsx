@@ -22,11 +22,11 @@ import ChanTrang from "../components/ChanTrang";
 // Nhà đất bán · Nhà đất cho thuê (mỗi khối: VIP trước, tin mới sau, slide tự trôi như web) · Dự án · Khu vực.
 // Phần lớn trang là TIN (80/20). Không banner (chủ dự án bỏ 27/09).
 
-// BA MẢNG CHÍNH — đúng web (src/components/BaMucChinh.tsx 12/11/2026): ô nền xám Apple, biểu tượng nét mảnh trên chữ
+// BA MẢNG CHÍNH — đúng web (src/components/BaMucChinh.tsx 13/11/2026): ô nền xám Apple, CHỈ CHỮ (anh: "bỏ symbol trên trang chủ")
 const BA_MUC = [
-  { duong: "/ds/ban", nhan: "Mua bán", icon: "M3 10.5 12 3l9 7.5M5 9v11h14V9M10 20v-6h4v6" },
-  { duong: "/ds/thue", nhan: "Cho thuê", icon: "M15.5 8.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0ZM12 12v9m0-4h3m-3 2.5h2" },
-  { duong: "/du-an", nhan: "Dự án", icon: "M4 21V7l6-3v17M10 21V9l10 3v9M3 21h18M7 9v.01M7 12v.01M7 15v.01M14 14v.01M17 14v.01M14 17v.01M17 17v.01" },
+  { duong: "/ds/ban", nhan: "Mua bán" },
+  { duong: "/ds/thue", nhan: "Cho thuê" },
+  { duong: "/du-an", nhan: "Dự án" },
 ];
 
 type DichVu = { nhan: string; icon: TenIcon; nen: string; mau: string } & ({ duong: string } | { bam: () => void });
@@ -69,7 +69,6 @@ export default function TrangChu() {
       <nav className="ba-muc">
         {BA_MUC.map((m) => (
           <button key={m.duong} className="press" onClick={() => dieuHuong(m.duong)}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={m.icon} /></svg>
             {m.nhan}
           </button>
         ))}

@@ -931,3 +931,5 @@ html.xem-thu .hang-app { padding-right: 0; }
 /* Bản đồ MapLibre trong trang tin — như web (12/11/2026); câu nhắc hai ngón của thư viện ẩn như web */
 .ban-do-tin { width: 100%; height: 220px; border-radius: 12px; overflow: hidden; background: #e8eaed; margin-bottom: 8px; }
 .ban-do-tin .maplibregl-cooperative-gesture-screen { display: none !important; }
+/* 3 ô chỉ chữ như web 13/11/2026: cao ~41px, chữ 14 đậm */
+.ba-muc button { flex-direction: row; gap: 0; padding: 12px 0; }
