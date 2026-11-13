@@ -4,8 +4,10 @@ import type { Metadata, ResolvingMetadata } from "next";
 // "Đăng tin mua bán, cho thuê nhà đất" + nút Đăng tin. Chỉ trang này đổi ảnh. 5 mẫu, mỗi mẫu một liên kết:
 // /dang-tin = mẫu 1 · /dang-tin?mau=2..5 = mẫu 2..5 (next.config rewrite sang trang dựng sẵn dang-tin/mau/[n] — không chạy
 // máy chủ mỗi lượt xem; ?mau lạ ở lại mẫu 1). og:url mang ?mau=N để Facebook coi là liên kết riêng; canonical luôn /dang-tin.
-// KHÔNG mô tả (anh chốt 14/11/2026: dưới ảnh chỉ 1 câu tiêu đề): bỏ meta description + og/twitter description, kể cả bản mặc định
-// của layout. Trang đăng tin là biểu mẫu, không phải trang đích từ khoá — Google tự lấy đoạn chữ trên trang.
+// Chữ dưới ảnh (anh chốt 14/11/2026): dòng 1 "COASTAL LAND" (og/twitter title) · dòng 2 slogan (meta + og/twitter description —
+// Zalo đọc meta description, Facebook đọc og:description). <title> cho Google giữ "Đăng tin bất động sản".
+const TEN = "COASTAL LAND";
+const SLOGAN = "Cổng thông tin bất động sản trực tuyến";
 
 export async function metaDangTin(parent: ResolvingMetadata, mau = 1): Promise<Metadata> {
   const p = await parent;
@@ -18,8 +20,8 @@ export async function metaDangTin(parent: ResolvingMetadata, mau = 1): Promise<M
   return {
     alternates: { canonical: "/dang-tin" },
     title: "Đăng tin bất động sản",
-    description: null,
-    openGraph: { ...p.openGraph, url: mau === 1 ? "/dang-tin" : `/dang-tin?mau=${mau}`, description: undefined, images: [anh] },
-    twitter: { ...p.twitter, description: undefined, images: [anh.url] },
+    description: SLOGAN,
+    openGraph: { ...p.openGraph, url: mau === 1 ? "/dang-tin" : `/dang-tin?mau=${mau}`, title: TEN, description: SLOGAN, images: [anh] },
+    twitter: { ...p.twitter, title: TEN, description: SLOGAN, images: [anh.url] },
   };
 }
