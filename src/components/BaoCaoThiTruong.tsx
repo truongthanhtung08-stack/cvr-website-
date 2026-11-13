@@ -3,6 +3,8 @@
 // DKRA, thị trường sơ cấp) nạp ở Admin — xem src/lib/baoCaoThiTruong.ts. Bố cục 3 chương như DKRA. Biểu đồ SVG ngay trong trang.
 // Phần chưa có số: trang công khai ẩn; Admin xem trước (xemThu) hiện ô viền vàng để biết còn thiếu gì.
 import { createContext, useContext, useState } from "react";
+import dynamic from "next/dynamic";
+import { docToaDo, type DiemHaTang } from "@/lib/baoCaoThiTruong";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { napSupabase } from "@/lib/supabase/nap";
 import { TEN_PHAN_KHUC, diemNhan, duBaoTuSo, nhanDinhTuSo, quySau, tenQuy, type SoPhanKhuc, type SoVung } from "@/lib/baoCaoThiTruong";
@@ -11,6 +13,8 @@ const XANH = ["#0066cc", "#2997ff", "#86b7ef", "#c4dcf7", "#e3eefb", "#f0f5fc"];
 const VANG = "#b89254";
 const vn = (n?: number, d = 1) => (n == null ? "—" : n.toLocaleString("vi-VN", { maximumFractionDigits: d }));
 const XemThu = createContext(false);
+// Bản đồ hạ tầng: thư viện bản đồ chỉ tải khi trang có công trình kèm toạ độ (khung giữ chỗ cùng cỡ để trang không nhảy)
+const BanDoHaTang = dynamic(() => import("@/components/BanDoHaTang"), { ssr: false, loading: () => <div className="h-[260px] w-full rounded-xl bg-cvr-surface sm:h-[320px]" /> });
 
 function OCho({ tieuDe, children }: { tieuDe: string; children: React.ReactNode }) {
   if (!useContext(XemThu)) return null;
@@ -21,9 +25,12 @@ function OCho({ tieuDe, children }: { tieuDe: string; children: React.ReactNode 
     </div>
   );
 }
-function Doi({ v }: { v?: number }) {
-  if (v == null) return null;
-  return <p className={`text-[13px] ${v >= 0 ? "text-[#1f8a4c]" : "text-[#c0392b]"}`}>{v >= 0 ? "▲ Tăng" : "▼ Giảm"} {vn(Math.abs(v))}% Q-o-Q</p>;
+function Doi({ v, nam }: { v?: number; nam?: number }) {
+  const dong = (x: number, nhan: string) => (
+    <p className={`text-[13px] ${x >= 0 ? "text-[#1f8a4c]" : "text-[#c0392b]"}`}>{x >= 0 ? "▲" : "▼"} {vn(Math.abs(x))}% {nhan}</p>
+  );
+  if (v == null && nam == null) return null;
+  return <div className="mt-0.5 grid gap-0.5">{v != null && dong(v, "Q-o-Q")}{nam != null && dong(nam, "Y-o-Y")}</div>;
 }
 function The({ nhan, giaTri, donVi, chinh, phu }: { nhan: string; giaTri: string; donVi?: string; chinh?: boolean; phu?: React.ReactNode }) {
   return (
@@ -102,16 +109,51 @@ function GiaKhuVuc({ d }: { d: SoPhanKhuc["giaKhuVuc"] }) {
   );
 }
 
+// Căn hộ theo hạng (A · B · C): cột nguồn cung · tiêu thụ, dưới mỗi nhóm ghi giá trung bình (như DKRA)
+function TheoHang({ d, dvGia }: { d: SoPhanKhuc["theoHang"]; dvGia: string }) {
+  const max = Math.max(1, ...d.map((x) => Math.max(x.nguonCung ?? 0, x.tieuThu ?? 0))) * 1.2, H = 105, y0 = 125, nhom = 440 / d.length, bw = Math.min(30, nhom / 4);
+  const Y = (v: number) => y0 - (v / max) * H;
+  return (
+    <svg viewBox="0 0 440 182" className="h-auto w-full" role="img" aria-label="Nguồn cung và tiêu thụ theo hạng căn hộ">
+      <line x1={0} x2={440} y1={y0} y2={y0} stroke="#d2d2d7" />
+      {d.map((x, i) => { const c = i * nhom + nhom / 2; return (
+        <g key={x.hang}>
+          {x.nguonCung != null && <><rect x={c - bw - 2} y={Y(x.nguonCung)} width={bw} height={y0 - Y(x.nguonCung)} rx={3} fill={XANH[0]} /><text x={c - bw / 2 - 2} y={Y(x.nguonCung) - 5} textAnchor="middle" {...chuSo}>{vn(x.nguonCung, 0)}</text></>}
+          {x.tieuThu != null && <><rect x={c + 2} y={Y(x.tieuThu)} width={bw} height={y0 - Y(x.tieuThu)} rx={3} fill={VANG} /><text x={c + bw / 2 + 2} y={Y(x.tieuThu) - 5} textAnchor="middle" {...chuSo}>{vn(x.tieuThu, 0)}</text></>}
+          <text x={c} y={y0 + 17} textAnchor="middle" {...chuSo}>{x.hang}</text>
+          {x.giaTB != null && <text x={c} y={y0 + 33} textAnchor="middle" {...chu}>{vn(x.giaTB)} {dvGia}</text>}
+          {x.tyLe != null && <text x={c} y={y0 + 48} textAnchor="middle" {...chu}>Tiêu thụ {vn(x.tyLe, 0)}%</text>}
+        </g>); })}
+    </svg>
+  );
+}
+// Giá thứ cấp theo phường — lấy từ Lịch sử giá trên web: thanh ngang = giá phổ biến, bên phải là biến động so với quý trước
+function GiaThuCap({ d }: { d: SoPhanKhuc["thuCap"] }) {
+  const max = Math.max(1, ...d.map((x) => x.gia)), W = 210;
+  return (
+    <svg viewBox={`0 0 440 ${14 + d.length * 30}`} className="h-auto w-full" role="img" aria-label="Giá thứ cấp theo khu vực">
+      {d.map((x, i) => { const y = 8 + i * 30; return (
+        <g key={x.kv}>
+          <text x={0} y={y + 13} {...chu}>{x.kv.replace(/^(Phường|Xã)\s*/, "")}</text>
+          <rect x={130} y={y + 2} width={(x.gia / max) * W} height={16} rx={3} fill={XANH[1]} />
+          <text x={136 + (x.gia / max) * W} y={y + 14} {...chuSo}>{vn(x.gia)}</text>
+          {x.doi != null && <text x={440} y={y + 14} textAnchor="end" style={{ fontSize: 11, fontWeight: 600, fill: x.doi >= 0 ? "#1f8a4c" : "#c0392b" }}>{x.doi >= 0 ? "▲" : "▼"} {vn(Math.abs(x.doi))}%</text>}
+        </g>); })}
+    </svg>
+  );
+}
+
 function PhanKhuc({ p, v }: { p: SoPhanKhuc; v: SoVung }) {
   const nd = v.nhanDinh[p.phanKhuc]?.length ? v.nhanDinh[p.phanKhuc] : nhanDinhTuSo(p);
   return (
     <section className="border-t border-cvr-line pb-6 pt-6 first-of-type:border-t-0 first-of-type:pt-0 [break-inside:avoid-page]">
       <h3 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink">{TEN_PHAN_KHUC[p.phanKhuc]}</h3>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 [&>*:last-child:nth-child(odd)]:col-span-2 lg:[&>*:last-child:nth-child(odd)]:col-span-1">
         <The nhan="Thị trường sơ cấp" giaTri={vn(p.soDuAn, 0)} donVi="dự án" chinh />
-        <The nhan="Nguồn cung sơ cấp" giaTri={vn(p.nguonCung, 0)} donVi={p.donVi} phu={<Doi v={p.doiCung} />} />
-        <The nhan="Tiêu thụ sơ cấp" giaTri={vn(p.tieuThu, 0)} donVi={p.donVi} phu={<Doi v={p.doiTieuThu} />} />
+        <The nhan="Nguồn cung sơ cấp" giaTri={vn(p.nguonCung, 0)} donVi={p.donVi} phu={<Doi v={p.doiCung} nam={p.doiCungNam} />} />
+        <The nhan="Tiêu thụ sơ cấp" giaTri={vn(p.tieuThu, 0)} donVi={p.donVi} phu={<Doi v={p.doiTieuThu} nam={p.doiTieuThuNam} />} />
         <The nhan="Tỷ lệ tiêu thụ" giaTri={p.tyLe == null ? "—" : `${vn(p.tyLe)}%`} />
+        {p.giaTB != null && <The nhan="Giá sơ cấp trung bình" giaTri={vn(p.giaTB)} donVi={p.donViGia} phu={<Doi v={p.bdSoCap} nam={p.doiGiaNam} />} />}
       </div>
       <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:[&>*:last-child:nth-child(odd)]:col-span-2">
         {p.theoQuy.filter((x) => x.nguonCung != null).length >= 2 ? (
@@ -126,6 +168,16 @@ function PhanKhuc({ p, v }: { p: SoPhanKhuc; v: SoVung }) {
             <GiaKhuVuc d={p.giaKhuVuc} /><ChuGiai ds={[[XANH[3], "Thấp nhất"], [XANH[0], "Cao nhất"], [VANG, "Trung bình"]]} />
           </KhungBieuDo>
         ) : <OCho tieuDe="Thiếu số liệu">Giá sơ cấp thấp – trung bình – cao theo khu vực.</OCho>}
+        {p.theoHang.length ? (
+          <KhungBieuDo tieuDe="Nguồn cung và tiêu thụ theo hạng căn hộ" dvt={`Đvt: ${p.donVi} · giá trung bình ${p.donViGia}`}>
+            <TheoHang d={p.theoHang} dvGia={p.donViGia} /><ChuGiai ds={[[XANH[0], "Nguồn cung"], [VANG, "Tiêu thụ"]]} />
+          </KhungBieuDo>
+        ) : p.phanKhuc === "Căn hộ" ? <OCho tieuDe="Thiếu số liệu">Nguồn cung, tiêu thụ, giá theo hạng A · B · C (cột hang).</OCho> : null}
+        {p.thuCap.length ? (
+          <KhungBieuDo tieuDe="Giá thứ cấp một số khu vực" dvt={`Đvt: ${p.donViThuCap} · biến động Q-o-Q`}>
+            <GiaThuCap d={p.thuCap} />
+          </KhungBieuDo>
+        ) : <OCho tieuDe="Giá thứ cấp">Lấy từ Lịch sử giá trên web khi phường đã có dãy giá quý này.</OCho>}
         {p.duAn.length ? (
           <KhungBieuDo tieuDe="Dự án chào bán trong quý" dvt="Chủ đầu tư · sản phẩm · giá công bố">
             <ul className="grid gap-2 text-sm">{p.duAn.slice(0, 8).map((d) => (
@@ -234,6 +286,7 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
     { id: "du-bao", ten: `Dự báo thị trường ${qSau}`, co: v.phanKhuc.length > 0 },
   ].filter((c) => c.co).map((c, i) => ({ ...c, so: String(i + 1).padStart(2, "0") + "." }));
   const soCua = (id: string) => chuong.find((c) => c.id === id);
+  const diemHaTang: DiemHaTang[] = v.haTang.flatMap((h, i) => { const t = docToaDo(h.toaDo); return t ? [{ so: i + 1, ten: h.ten, ...t }] : []; });
   return (
     <XemThu.Provider value={xemThu}>
     <div className="bao-cao">
@@ -296,10 +349,14 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
           </div>
           <div>
             <h3 className="mb-2.5 text-[17px] font-semibold text-cvr-ink">Hạ tầng giao thông</h3>
-            {v.haTang.length ? <ol className="grid gap-3 text-sm">{v.haTang.map((h) => (
-              <li key={h.ten} className="rounded-xl border border-cvr-line p-3"><b className="text-cvr-ink">{h.ten}</b> <span className="text-cvr-muted">· {h.moc}{h.ngay ? ` ${h.ngay}` : ""}{h.von ? ` · ${h.von}` : ""}</span>
-                <span className="block text-cvr-body">{h.noiDung}</span></li>))}</ol>
-              : <OCho tieuDe="Chưa có số liệu">Công trình khởi công, thông xe, khánh thành trong quý.</OCho>}
+            {v.haTang.length ? (<>
+              {diemHaTang.length > 0 && <div className="mb-3"><BanDoHaTang diem={diemHaTang} /></div>}
+              <ol className="grid gap-3 text-sm">{v.haTang.map((h, i) => (
+                <li key={h.ten} className="flex gap-3 rounded-xl border border-cvr-line p-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cvr-ink text-xs font-semibold text-white">{i + 1}</span>
+                  <span><b className="text-cvr-ink">{h.ten}</b> <span className="text-cvr-muted">· {h.moc}{h.ngay ? ` ${h.ngay}` : ""}{h.von ? ` · ${h.von}` : ""}</span>
+                  <span className="block text-cvr-body">{h.noiDung}</span></span></li>))}</ol>
+            </>) : <OCho tieuDe="Chưa có số liệu">Công trình khởi công, thông xe, khánh thành trong quý (kèm toạ độ để hiện trên bản đồ).</OCho>}
           </div>
         </div>
       </section>}

@@ -3,7 +3,9 @@ import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { docSheet } from "@/lib/tuKhoaLoiDoc";
-import { docBangBaoCao, type BaoCaoNhap } from "@/lib/baoCaoThiTruong";
+import { bangLichSuTuBaoCao, docBangBaoCao, type BaoCaoNhap } from "@/lib/baoCaoThiTruong";
+import { docBangChiSo, soNhapHopLe, type ChiSoGiaData, type ChiSoKhuVuc } from "@/lib/chiSoGia";
+import { chuanTen } from "@/lib/locations";
 
 // ============================================================================
 // ĐIỂM TIN THỊ TRƯỜNG — API CHỈ DÀNH CHO ADMIN (anh 13/11/2026: "Cowork lọc xong nhập vào là lên số liệu và biểu đồ")
@@ -39,6 +41,36 @@ async function ghi(admin: Admin, bang: BaoCaoNhap) {
   return null;
 }
 
+// MỘT LẦN LỌC, HAI CHỖ DÙNG (anh 13/11/2026): giá sơ cấp theo phường / dự án trong báo cáo → BỔ SUNG Lịch sử giá (site_content
+// "chi_so_gia"). Chỉ THÊM quý dãy đó còn thiếu — quý đã có số (Cowork lọc riêng cho Lịch sử giá) giữ nguyên, không đè.
+const khoaDay = (x: ChiSoKhuVuc) =>
+  [chuanTen(x.tinh), chuanTen(x.khuVuc ?? ""), chuanTen(x.loaiHinh ?? ""), x.mucDich ?? "ban", x.viTri ?? "", chuanTen(x.duAn ?? ""), chuanTen(x.duong ?? ""), chuanTen(x.loaiCon ?? "")].join("|");
+function gopLichSu(cu: ChiSoKhuVuc[], moi: ChiSoKhuVuc[]) {
+  const ds = cu.map((x) => ({ ...x, moc: [...x.moc] }));
+  let them = 0, dayMoi = 0;
+  for (const m of moi) {
+    const c = ds.find((x) => khoaDay(x) === khoaDay(m));
+    if (!c) { ds.push(m); dayMoi++; them += m.moc.length; continue; }
+    for (const q of m.moc) if (!c.moc.some((x) => x.quy === q.quy)) { c.moc.push(q); them++; }
+    c.moc.sort((a, b) => a.quy.localeCompare(b.quy));
+  }
+  return { items: ds, them, dayMoi };
+}
+async function boSungLichSu(admin: Admin, bang: BaoCaoNhap, ghiThat: boolean) {
+  const { items: moi, loi: loiLs } = docBangChiSo(bangLichSuTuBaoCao(bang));
+  const { data } = await admin.from("site_content").select("data").eq("key", "chi_so_gia").limit(1);
+  const cu = (data?.[0]?.data as ChiSoGiaData | undefined)?.items ?? [];
+  // Chỉ gộp vào dãy còn hiệu lực (sau đợt làm mới 03/10); dãy cũ trước mốc giữ nguyên, không đụng
+  const hopLe = soNhapHopLe(cu), conLai = cu.filter((x) => !hopLe.includes(x));
+  const g = gopLichSu(hopLe, moi);
+  if (ghiThat && g.them) {
+    const { error } = await admin.from("site_content").upsert({ key: "chi_so_gia", data: { items: [...conLai, ...g.items] } });
+    if (error) return { them: 0, dayMoi: 0, loi: ["Lịch sử giá: " + error.message] };
+    revalidateTag("noi-dung", "max");
+  }
+  return { them: g.them, dayMoi: g.dayMoi, loi: loiLs.slice(0, 10).map((x) => `Lịch sử giá dòng ${x.dong}: ${x.ly}`) };
+}
+
 export async function GET() {
   const { admin, err } = await chiAdmin();
   if (err) return err;
@@ -60,13 +92,13 @@ export async function POST(req: Request) {
     return loi(e instanceof Error ? e.message : "Không đọc được tệp");
   }
   if (!kq.bang.thiTruong.length) return loi("Sheet THI-TRUONG chưa có dòng số liệu nào. " + kq.loi.slice(0, 3).join(" · "));
-  if (new URL(req.url).searchParams.get("xemTruoc")) return NextResponse.json({ ok: true, xemTruoc: true, ...kq });
+  if (new URL(req.url).searchParams.get("xemTruoc")) return NextResponse.json({ ok: true, xemTruoc: true, ...kq, lichSu: await boSungLichSu(admin, kq.bang, false) });
   // Nạp tệp mới thay phần số liệu; giữ đường dẫn PDF + nhận định anh đã sửa của lần trước
   const cu = await banDangChay(admin);
   const bang: BaoCaoNhap = { ...kq.bang, pdf: cu?.pdf ?? {}, nhanDinh: cu?.nhanDinh ?? {} };
   const hong = await ghi(admin, bang);
   if (hong) return hong;
-  return NextResponse.json({ ok: true, ...kq, bang });
+  return NextResponse.json({ ok: true, ...kq, bang, lichSu: await boSungLichSu(admin, bang, true) });
 }
 
 export async function PATCH(req: Request) {

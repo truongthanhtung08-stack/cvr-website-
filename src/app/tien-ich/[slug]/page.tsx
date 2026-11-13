@@ -8,7 +8,8 @@ import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
 import TinhLaiVay from "@/components/TinhLaiVay";
 import { packages, utilityTools, getPackage, tiers, trangTienIchDat } from "@/lib/packages";
-import { getBilling, getQuyDinhGia, getBaoCaoThiTruong } from "@/lib/siteContent";
+import { getBilling, getQuyDinhGia, getBaoCaoThiTruong, getChiSoGia } from "@/lib/siteContent";
+import { soNhapHopLe } from "@/lib/chiSoGia";
 import BaoCaoThiTruong from "@/components/BaoCaoThiTruong";
 import { VUNG_BAO_CAO, soLieuVung, quyVuaXong } from "@/lib/baoCaoThiTruong";
 import { bangTheoMucDich } from "@/lib/billing";
@@ -58,7 +59,9 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
   const quyDinh = await getQuyDinhGia();
   // ĐIỂM TIN THỊ TRƯỜNG (anh 13/11/2026): menu "Báo cáo thị trường" vào thẳng báo cáo quý 3 vùng — số Cowork lọc, nạp ở Admin
   const baoCao = slug === "bao-cao-thi-truong-bds" ? await getBaoCaoThiTruong() : null;
-  const soVung = VUNG_BAO_CAO.map((v) => soLieuVung(v, baoCao, baoCao?.quyBaoCao || quyVuaXong()));
+  // Giá thứ cấp của báo cáo lấy từ Lịch sử giá đã có trên web (anh 13/11/2026: "kể cả dữ liệu đã có trên web")
+  const lichSu = slug === "bao-cao-thi-truong-bds" ? soNhapHopLe((await getChiSoGia())?.items) : [];
+  const soVung = VUNG_BAO_CAO.map((v) => soLieuVung(v, baoCao, baoCao?.quyBaoCao || quyVuaXong(), lichSu));
 
   return (
     <>

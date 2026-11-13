@@ -6,7 +6,8 @@ import { PHAN_KHUC, VUNG_BAO_CAO, nhanDinhTuSo, soLieuVung, tenQuy, type BaoCaoN
 
 // ADMIN → ĐIỂM TIN THỊ TRƯỜNG (anh 13/11/2026): nạp bảng Cowork lọc (MAU-BAO-CAO-THI-TRUONG.xlsx) → xem trước CẢ báo cáo (có ô viền vàng
 // chỗ còn thiếu) → Đưa lên web. Sau đó chọn quý đang hiện, dán đường dẫn PDF từng vùng, sửa câu nhận định (để trống = web viết từ số).
-type KetQua = { ok: boolean; message?: string; bang: BaoCaoNhap; loi: string[]; dem: Record<string, number> };
+// lichSu: số quý giá sẽ / đã bổ sung sang Lịch sử giá (giá theo phường + dự án của bảng này)
+type KetQua = { ok: boolean; message?: string; bang: BaoCaoNhap; loi: string[]; dem: Record<string, number>; lichSu?: { them: number; dayMoi: number; loi: string[] } };
 
 export default function DiemTinThiTruongPage() {
   const [dangChay, setDangChay] = useState<BaoCaoNhap | null>(null);
@@ -33,7 +34,7 @@ export default function DiemTinThiTruongPage() {
       const j: KetQua = await (await fetch(`/api/admin/diem-tin-thi-truong${xemTruoc ? "?xemTruoc=1" : ""}`, { method: "POST", body: fd })).json();
       if (!j.ok) setBao({ loi: j.message ?? "Lỗi" });
       else if (xemTruoc) setXem(j);
-      else { setXem(null); setTep(null); setDangChay(j.bang); setBao({ xong: `Đã đưa lên web: ${j.dem["Thị trường"]} dòng số liệu thị trường.` }); }
+      else { setXem(null); setTep(null); setDangChay(j.bang); setBao({ xong: `Đã đưa lên web: ${j.dem["Thị trường"]} dòng số liệu thị trường.${j.lichSu?.them ? ` Lịch sử giá thêm ${j.lichSu.them} quý (${j.lichSu.dayMoi} dãy mới).` : ""}` }); }
     } catch { setBao({ loi: "Không gửi được tệp" }); }
     setDangGui(false);
   };
@@ -68,6 +69,8 @@ export default function DiemTinThiTruongPage() {
         {xem && (
           <div className="mt-4 space-y-2 border-t border-cvr-line pt-4 text-sm">
             <p className="text-cvr-ink">{Object.entries(xem.dem).map(([k, v]) => `${k}: ${v}`).join(" · ")}</p>
+            {xem.lichSu && <p className="text-cvr-body">Lịch sử giá sẽ thêm: {xem.lichSu.them} quý · {xem.lichSu.dayMoi} dãy mới</p>}
+            {[...(xem.lichSu?.loi ?? [])].length > 0 && <ul className="list-disc space-y-0.5 pl-5 text-red-700">{xem.lichSu!.loi.map((x) => <li key={x}>{x}</li>)}</ul>}
             {xem.loi.length > 0 && <ul className="list-disc space-y-0.5 pl-5 text-red-700">{xem.loi.slice(0, 30).map((x) => <li key={x}>{x}</li>)}</ul>}
           </div>
         )}
