@@ -1271,6 +1271,9 @@ export default function FilterBar({
             {cacTruong}
           </div>
         )}
+        {/* GIỮ CHỖ HÀNG TRƯỜNG LỌC (anh 13/11/2026: "cho nó mượt"): màn tìm dựng sẵn hiện ngay bằng lớp CSS, hàng trường lọc tới sau
+            một nhịp (startTransition) — trước đây chèn vào đẩy danh sách xuống 49px. Giữ đúng chỗ (py-2 + nút 32 + viền 1) để không xô. */}
+        {!compact && laDt && !overlay && <div aria-hidden className="h-[49px] shrink-0 border-b border-cvr-line" />}
         {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
             điện thoại, ngay dưới ô nhập. Ngoài Hero mobile chỉ để đúng ô tìm cho
             gọn; vào đây mới có đủ chỗ chọn, và chọn xong bấm Tìm là ra ĐÚNG mục. */}
@@ -1338,6 +1341,9 @@ export default function FilterBar({
             {cacTruong}
             {/* Bỏ nút "Đặt lại" (chủ dự án 17/10/2026): trùng việc với nút "Xoá lọc" cạnh tiêu đề kết quả */}
           </div>}
+          {/* Màn tìm đang mở (điện thoại): hàng trường ngoài trang nhường cho hàng trong màn tìm — GIỮ CHỖ đúng cao 34px để đóng màn tìm
+              trang phía sau không nhảy (anh 13/11/2026: "cho nó mượt") */}
+          {laDt && overlay && !dinh && <div aria-hidden className="h-[34px] sm:hidden" />}
         </div>
       </div>
     </FilterDropdownGroup>
