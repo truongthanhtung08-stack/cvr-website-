@@ -7,10 +7,10 @@ import { useEffect, useState } from "react";
 type KetQua = { doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number };
 type HienTai = KetQua & { tenTep?: string; capNhat?: string };
 type DongTheoDoi = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean; daIndex: boolean; xin: string | null;
-  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string };
+  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean };
 type TheoDoi = { nguong: number; dong: DongTheoDoi[] };
 const LOC = [
-  ["chua-index", "Chưa index"], ["da-index", "Đã index"], ["thieu", "Chưa đủ tin"], ["mo-trang", "Cần mở trang"], ["tat-ca", "Tất cả"],
+  ["chon", "Đã chọn (x)"], ["chua-index", "Chưa index"], ["da-index", "Đã index"], ["thieu", "Chưa đủ tin"], ["mo-trang", "Cần mở trang"], ["tat-ca", "Tất cả"],
 ] as const;
 type Loc = (typeof LOC)[number][0];
 const ngayVn = (s: string) => s.split("-").reverse().slice(0, 2).join("/");
@@ -102,7 +102,7 @@ export default function TuKhoaLoiPage() {
         const ds = td.dong.filter((d) => d.muc === muc && (tang === "dd" ? d.tang === "Đặc điểm" : d.tang !== "Đặc điểm"));
         // Một luật với Admin → Xin index: Đã index · Chưa index (đủ tin, chờ xin / đã xin) · Chưa đủ tin (chưa index, chưa xin được)
         const thuoc = (d: DongTheoDoi, l: Loc) =>
-          l === "da-index" ? d.daIndex : l === "chua-index" ? !d.daIndex && d.duChuan : l === "mo-trang" ? d.tang === "Đặc điểm" && !d.coTrang && d.soTin >= td.nguong
+          l === "chon" ? (d.tang === "Đặc điểm" ? !!d.chon : d.trongBang) : l === "da-index" ? d.daIndex : l === "chua-index" ? !d.daIndex && d.duChuan : l === "mo-trang" ? d.tang === "Đặc điểm" && !d.coTrang && d.soTin >= td.nguong
             : l === "thieu" ? !d.daIndex && !d.duChuan && !(d.tang === "Đặc điểm" && !d.coTrang && d.soTin >= td.nguong) : true;
         const dem = (l: Loc) => ds.filter((d) => thuoc(d, l)).length;
         const hien = ds.filter((d) => thuoc(d, loc));
@@ -143,6 +143,7 @@ export default function TuKhoaLoiPage() {
                       <td className="py-2 pr-2">
                         {d.trang ? <a href={d.trang} target="_blank" rel="noreferrer" className="font-medium text-cvr-ink hover:underline">{d.longtail || d.tuKhoa || d.trang}</a>
                           : <span className="font-medium text-cvr-ink">{d.longtail}</span>}
+                        {d.chon && <span className="ml-1 rounded bg-cvr-ink px-1.5 text-[11px] font-semibold text-white">x</span>}
                         <div className="text-xs text-cvr-faint">{d.trang || "chưa có trang"}{d.tang === "Đặc điểm" ? ` · lõi ${d.tuKhoa}` : d.trongBang ? " · trong bảng" : ""}</div>
                       </td>
                       <td className="py-2 pr-2 text-cvr-muted">{d.tang === "Đặc điểm" ? <>{d.nhom}<div className="text-xs text-cvr-faint">Google {d.google ?? 0} câu</div></> : d.tang}</td>

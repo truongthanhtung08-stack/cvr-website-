@@ -36,7 +36,7 @@ async function chiAdmin() {
 // + DÒNG ĐẶC ĐIỂM của bảng (13/11/2026): longtail → trang đích. Trang đã có trên web → số tin, đủ chuẩn, index lấy từ web (một luật
 // với sitemap); chưa có trang → số tin trong bảng, trạng thái "Cần mở trang" / "Chưa đủ tin" như cột "Xin index" của bảng.
 type DongTD = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean;
-  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string } & TrangThaiIndex;
+  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean } & TrangThaiIndex;
 async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>, bang: Record<string, unknown>, keHoach: DongKeHoach[] = []) {
   const [tin, so] = await Promise.all([getTinXetTrang().catch(() => []), docSoXinIndex(admin)]);
   const gSet = new Set(so.google?.ds ?? []);
@@ -48,7 +48,7 @@ async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>,
     const khoa = `dd|${k.muc}|${k.longtail}`;
     if (dong.has(khoa)) continue;
     dong.set(khoa, { trang: p ? duong : "", muc: k.muc, tinh: k.noi, tang: "Đặc điểm", tuKhoa: k.loi, longtail: k.longtail, dacDiem: k.dacDiem, nhom: k.nhom, google: k.google,
-      soTin: p ? p.n : k.soTin, duChuan: p ? p.index : false, trongBang: true, coTrang: !!p, ghiChu: p ? "" : k.xin, ...(p ? trangThaiIndex(duong, so, gSet) : { daIndex: false, xin: null }) });
+      soTin: p ? p.n : k.soTin, duChuan: p ? p.index : false, trongBang: true, coTrang: !!p, ghiChu: p ? "" : k.xin, chon: !!k.chon, ...(p ? trangThaiIndex(duong, so, gSet) : { daIndex: false, xin: null }) });
   }
   for (const p of moiTrang.values()) {
     const d = p.dk;

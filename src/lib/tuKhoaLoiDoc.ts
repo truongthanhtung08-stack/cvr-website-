@@ -12,7 +12,7 @@ import type { ThuongHieu } from "@/lib/thuongHieu";
 export type TuKhoaLoiTrang = Record<string, { loi?: string; loiCon?: string; longtail?: string; uuTien?: true }>;
 // DÒNG ĐẶC ĐIỂM (anh 13/11/2026: "một bảng kế hoạch, thống nhất Admin và web"): dòng tầng "Đặc điểm" của sheet — CHỈ để Admin theo dõi
 // (longtail · đặc điểm · trang đích · trạng thái), KHÔNG đổi chữ nào trên web (chữ trên web chỉ đi theo LÕI GỌN của dòng có x).
-export type DongKeHoach = { muc: "ban" | "thue"; noi: string; loi: string; longtail: string; dacDiem: string; nhom: string; google: number; soTin: number; trang: string; xin: string };
+export type DongKeHoach = { muc: "ban" | "thue"; noi: string; loi: string; longtail: string; dacDiem: string; nhom: string; google: number; soTin: number; trang: string; xin: string; chon: boolean };
 export type KetQuaDocBang = { trang: TuKhoaLoiTrang; doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number; keHoach: DongKeHoach[] };
 
 function moZip(buf: Buffer): Map<string, Buffer> {
@@ -116,6 +116,7 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
       muc: (r[K.muc] ?? "").includes("thuê") ? "thue" : "ban", noi: (r[C.noi] ?? "").trim(), loi: (r[C.loi] ?? "").trim(), longtail: (r[C.lt] ?? "").trim(),
       dacDiem: (r[K.dd] ?? "").trim(), nhom: K.nhom < 0 ? "" : (r[K.nhom] ?? "").trim(), google: Number(r[K.g] ?? 0) || 0, soTin: Number(r[K.tin] ?? 0) || 0,
       trang: (r[C.trang] ?? "").trim(), xin: K.xin < 0 ? "" : (r[K.xin] ?? "").trim(),
+      chon: (r[C.len] ?? "").trim().toLowerCase() === "x", // anh lọc bảng, đánh x ở "Lên web" = dòng đặc điểm đang làm (xin index / mở trang)
     }));
   return { trang, doi, giu, soDong: chon.length, keHoach };
 }
