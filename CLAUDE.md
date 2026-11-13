@@ -46,9 +46,10 @@ riêng · khoảng giá lấy cho CHẮC (căn hộ ĐN không có căn bình th
 **giá rẻ = giá/m² DƯỚI mức trung bình** (lịch sử giá) · cao cấp = trên trung bình + tiện ích · "tháng 11" = web cập nhật thời gian thực
 (đủ cho "mới nhất") · index: dồn nhiều longtail vào MỘT trang đích, chi tiết → trang chính xác nhất, chung → trang lõi.
 **Đã lưu `D:\Coastal Land\SEO\Plan SEO - pSEO\HE-THONG-TU-KHOA.xlsx`** (bản cũ `SEO\_cu\HE-THONG-TU-KHOA-truoc-longtail-13-11.xlsx`):
-sheet **"Longtail"** 2.013 câu → 92 trang đích (67 đã index; 10 đã xin/đã có 12/11 — cột Ngày xin CHƯA ghi; 15 trang con chưa xin) ·
-sheet **"Đặc điểm"** 392 dòng (lõi × đặc điểm × mục đích, nhóm ý định, số gợi ý Google, trang top, số tin khớp, cách tính, trang web,
-cột Xin index: 4 x · 82 Cần mở trang · 248 Chưa đủ tin · 35 đã index). Đã giao Cowork mục **0E** `RA\VIEC.md` + `RA\tin-can-loc-theo-longtail.csv`.
+**MỘT bảng kế hoạch (13/11 tối, anh: "thống nhất với Admin, mapping lên web"):** sheet **"Từ khoá lõi"** 616 dòng = 224 dòng LÕI
+(giữ nguyên cột + chữ Admin đọc, 74 x Lên web — đã chạy bộ đọc Admin: chữ lõi lên web GIỐNG HỆT bản trước) + 392 dòng ĐẶC ĐIỂM nằm dưới
+lõi của nó (nhóm ý định, gợi ý Google, trang top, tin, cách tính, trang, Index, Ngày xin, Xin index). Đã bỏ sheet "Longtail", "Đặc điểm"
+(gộp vào). LONGTAIL không dùng trên web (chỉ LÕI GỌN đổi chữ). Cowork: mục **0E** `RA\VIEC.md` (tin + DỰ ÁN lọc luôn 13/11).
 Công cụ scratchpad phiên 18419c5a: `ghep.mjs` → `lt-ghi2.mjs` (Longtail) · `dd-loai.json` (gợi ý Google 17 loại × 6 thành phố) ·
 `tin-web.json` (302 tin đang hiện) · `csg.json` (128 dãy lịch sử giá) · `dd-bang.mjs` → `dd-ghi.mjs` (Đặc điểm).
 **MAI LÀM TIẾP:** ① anh xem sheet Đặc điểm, lọc lại cho chuẩn (đặc điểm nào giữ) ② ghi Ngày xin 12/11 cho 10 trang trong Longtail ·
