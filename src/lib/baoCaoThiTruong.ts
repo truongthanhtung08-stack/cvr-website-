@@ -204,16 +204,20 @@ export function soLieuVung(vung: VungBaoCao, bang: BaoCaoNhap | null, quy: strin
   };
 }
 
-// Câu nhận định VIẾT TỪ SỐ (anh duyệt / sửa ở Admin trước khi đăng) — chỉ nói điều số cho thấy, không bình luận cảm tính
+// NHẬN ĐỊNH THỊ TRƯỜNG — KHUNG CÂU CỐ ĐỊNH KIỂU DKRA (anh 13/11/2026: "nhận định những dòng cơ bản theo số liệu, theo câu chữ đã fix
+// như DKRA"). Mỗi câu một khuôn, chỉ thay số; thiếu số nào thì bỏ câu đó. Anh sửa / ghi đè ở Admin trước khi đăng.
 const vn = (n: number, d = 1) => n.toLocaleString("vi-VN", { maximumFractionDigits: d });
-const doi = (v?: number) => (v == null ? "" : v > 0 ? `tăng ${vn(Math.abs(v))}%` : v < 0 ? `giảm ${vn(Math.abs(v))}%` : "đi ngang");
+// Biến động: dưới 1% coi là "không có nhiều biến động" (cách DKRA ghi)
+const doi = (v?: number) => (v == null ? "" : Math.abs(v) < 1 ? "không có nhiều biến động" : v > 0 ? `tăng khoảng ${vn(Math.abs(v), 0)}%` : `giảm khoảng ${vn(Math.abs(v), 0)}%`);
 export function nhanDinhTuSo(p: SoPhanKhuc): string[] {
   const ra: string[] = [];
-  if (p.nguonCung != null) ra.push(`Nguồn cung sơ cấp đạt ${vn(p.nguonCung, 0)} ${p.donVi}${p.soDuAn ? ` từ ${vn(p.soDuAn, 0)} dự án` : ""}${p.doiCung != null ? `, ${doi(p.doiCung)} so với quý trước` : ""}.`);
-  if (p.tieuThu != null) ra.push(`Tiêu thụ sơ cấp ${vn(p.tieuThu, 0)} ${p.donVi}${p.doiTieuThu != null ? `, ${doi(p.doiTieuThu)} so với quý trước` : ""}${p.tyLe != null ? `; tỷ lệ tiêu thụ ${vn(p.tyLe)}%` : ""}.`);
-  if (p.tyTrong.length > 1) { const t = p.tyTrong.reduce((s, x) => s + x[1], 0); ra.push(`${p.tyTrong[0][0]} dẫn đầu nguồn cung với ${vn((p.tyTrong[0][1] / t) * 100, 0)}% tổng nguồn cung sơ cấp.`); }
-  if (p.bdSoCap != null) ra.push(`Mặt bằng giá sơ cấp ${doi(p.bdSoCap)} so với quý trước${p.giaTB != null ? `, trung bình ${vn(p.giaTB)} ${p.donViGia}` : ""}.`);
-  if (p.bdThuCap != null) ra.push(`Giá thứ cấp ${doi(p.bdThuCap)} so với quý trước.`);
+  if (p.nguonCung != null)
+    ra.push(`Nguồn cung sơ cấp ghi nhận ${vn(p.nguonCung, 0)} ${p.donVi}${p.soDuAn ? ` đến từ ${vn(p.soDuAn, 0)} dự án` : ""}${p.doiCung != null ? `, ${doi(p.doiCung)} so với quý trước` : ""}${p.cungMoi != null && p.nguonCung ? `; nguồn cung mới chiếm khoảng ${vn((p.cungMoi / p.nguonCung) * 100, 0)}% tổng nguồn cung sơ cấp` : ""}.`);
+  if (p.tieuThu != null)
+    ra.push(`Lượng tiêu thụ đạt ${vn(p.tieuThu, 0)} ${p.donVi}${p.tyLe != null ? `, tương đương khoảng ${vn(p.tyLe, 0)}% tổng nguồn cung sơ cấp` : ""}${p.doiTieuThu != null ? `, ${doi(p.doiTieuThu)} so với quý trước` : ""}.`);
+  if (p.tyTrong.length > 1 && p.tyTrong[0][0] !== "Khu vực khác") { const t = p.tyTrong.reduce((s, x) => s + x[1], 0); ra.push(`${p.tyTrong[0][0]} dẫn đầu thị trường với tỷ trọng khoảng ${vn((p.tyTrong[0][1] / t) * 100, 0)}% tổng nguồn cung sơ cấp.`); }
+  if (p.bdSoCap != null) ra.push(`Mặt bằng giá sơ cấp ${doi(p.bdSoCap)} so với quý trước${p.giaTB != null ? `, giá bán trung bình khoảng ${vn(p.giaTB)} ${p.donViGia}` : ""}.`);
+  if (p.bdThuCap != null) ra.push(`Mặt bằng giá thứ cấp ${doi(p.bdThuCap)} so với quý trước.`);
   return ra;
 }
 
