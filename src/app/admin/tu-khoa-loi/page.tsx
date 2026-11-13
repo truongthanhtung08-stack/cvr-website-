@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 type KetQua = { doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number };
 type HienTai = KetQua & { tenTep?: string; capNhat?: string };
 type DongTheoDoi = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean; daIndex: boolean; xin: string | null;
-  loTrinh?: string; tieuDeWeb?: string; longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; chon?: boolean; noiToi?: boolean; thieu?: string[]; khuVuc?: string; loiGoc?: string };
+  loTrinh?: string; tieuDeWeb?: string; longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; chon?: boolean; noiToi?: boolean; thieu?: string[]; khuVuc?: string; loaiHinh?: string; loiGoc?: string };
 type TheoDoi = { nguong: number; dong: DongTheoDoi[] };
 // MỘT BẢNG = ĐÚNG FILE (13/11/2026): lọc theo trạng thái thật trên web
 const LOC = [
@@ -25,6 +25,7 @@ export default function TuKhoaLoiPage() {
   const [lo, setLo] = useState<"" | "1" | "2">("");
   const [tim, setTim] = useState("");
   const [kv, setKv] = useState(""); // 7 khu vực (cột A của file)
+  const [lh, setLh] = useState(""); // nhóm loại hình (cột "Loại hình" của file)
   const [tep, setTep] = useState<File | null>(null);
   const [xem, setXem] = useState<KetQua | null>(null);
   const [dangGui, setDangGui] = useState(false);
@@ -103,7 +104,7 @@ export default function TuKhoaLoiPage() {
 
       {td && (() => {
         const bo = (x: string) => x.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d");
-        const ds = td.dong.filter((d) => d.muc === muc && (!kv || d.khuVuc === kv || (!d.khuVuc && d.tinh === kv)) && (!lo || (d.loTrinh ?? "").startsWith(lo)) && (!tim || bo(`${d.tinh} ${d.tuKhoa} ${d.longtail ?? ""} ${d.trang}`).includes(bo(tim))));
+        const ds = td.dong.filter((d) => d.muc === muc && (!kv || d.khuVuc === kv || (!d.khuVuc && d.tinh === kv)) && (!lo || (d.loTrinh ?? "").startsWith(lo)) && (!lh || d.loaiHinh === lh) && (!tim || bo(`${d.tinh} ${d.tuKhoa} ${d.longtail ?? ""} ${d.trang}`).includes(bo(tim))));
         const thuoc = (d: DongTheoDoi, l: Loc) =>
           l === "chua-index" ? !!d.trang && !d.daIndex && !d.xin : l === "da-xin" ? !!d.trang && !d.daIndex && !!d.xin : l === "da-index" ? d.daIndex
           : l === "chua-trang" ? !d.trang : l === "thieu-tin" ? (d.thieu ?? []).some((t) => /thiếu \d+ tin/i.test(t)) : l === "chon" ? !!d.chon
@@ -118,6 +119,10 @@ export default function TuKhoaLoiPage() {
               <select value={kv} onChange={(e) => setKv(e.target.value)} className="rounded-full border border-cvr-line px-3 py-1.5 text-sm">
                 <option value="">7 khu vực</option>
                 {["Đà Nẵng", "Huế", "Khánh Hòa", "Lâm Đồng", "Gia Lai", "Quảng Ngãi", "Quảng Trị"].map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <select value={lh} onChange={(e) => setLh(e.target.value)} className="rounded-full border border-cvr-line px-3 py-1.5 text-sm">
+                <option value="">Mọi loại hình</option>
+                {[...new Set(td.dong.map((d) => d.loaiHinh ?? "").filter(Boolean))].map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
               <div className="flex rounded-full bg-cvr-surface p-1 text-sm">
                 {([["", "Tất cả"], ["1", "CHA"], ["2", "CON"]] as const).map(([k, t]) => (

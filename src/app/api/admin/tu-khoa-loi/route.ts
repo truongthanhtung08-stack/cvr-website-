@@ -36,7 +36,7 @@ async function chiAdmin() {
 // + DÒNG ĐẶC ĐIỂM của bảng (13/11/2026): longtail → trang đích. Trang đã có trên web → số tin, đủ chuẩn, index lấy từ web (một luật
 // với sitemap); chưa có trang → số tin trong bảng, trạng thái "Cần mở trang" / "Chưa đủ tin" như cột "Xin index" của bảng.
 type DongTD = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean;
-  loTrinh?: string; tieuDeWeb?: string; longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean; noiToi?: boolean; thieu?: string[]; khuVuc?: string; loiGoc?: string } & TrangThaiIndex;
+  loTrinh?: string; tieuDeWeb?: string; longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean; noiToi?: boolean; thieu?: string[]; khuVuc?: string; loaiHinh?: string; loiGoc?: string } & TrangThaiIndex;
 async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>, bang: Record<string, unknown>, keHoach: DongKeHoach[] = []) {
   const [con, het, so] = await Promise.all([getListings().catch(() => []), getListingsHetHan().catch(() => []), docSoXinIndex(admin)]);
   const tin = [...con, ...het]; // cùng bộ tin xét trang với sitemap (getTinXetTrang)
@@ -81,7 +81,7 @@ async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>,
     const trangKhac = !p && /^\/(gia-nha-dat|du-an|bao-cao-thi-truong)\//.test(duong); // trang giá, dự án: luôn mở, không qua cổng pSEO
     const co = !!p || trangKhac;
     if (co) coTrongFile.add(duong);
-    dong.set(`f${i++}`, { trang: co ? duong : "", muc: k.muc, tinh: k.noi, tang: k.tang, khuVuc: k.khuVuc, loiGoc: k.loiGoc, loTrinh: k.loTrinh, tuKhoa: k.loi, tieuDeWeb: p ? tieuDe(p.dk) : "", longtail: k.longtail,
+    dong.set(`f${i++}`, { trang: co ? duong : "", muc: k.muc, tinh: k.noi, tang: k.tang, khuVuc: k.khuVuc, loaiHinh: k.loaiHinh, loiGoc: k.loiGoc, loTrinh: k.loTrinh, tuKhoa: k.loi, tieuDeWeb: p ? tieuDe(p.dk) : "", longtail: k.longtail,
       dacDiem: k.dacDiem, nhom: k.nhom, google: k.google, soTin: p ? p.n : k.soTin, duChuan: p ? p.index : trangKhac, trongBang: true, coTrang: co, chon: !!k.chon,
       ...(co ? trangThaiIndex(duong, so, gSet) : { daIndex: false, xin: null }) });
   }
