@@ -6,6 +6,7 @@ import BrandLogo from "@/components/BrandLogo";
 import BackBar from "@/components/BackBar";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { TIEN_ICH } from "@/lib/packages";
+import { VUNG_BAO_CAO } from "@/lib/baoCaoThiTruong";
 import BieuTuong, { type TenBieuTuong } from "@/components/BieuTuong";
 import { cayLoaiHinh } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
@@ -63,6 +64,7 @@ const danhMucDuAn: NavChild[] = [
 ];
 // MENU TIỆN ÍCH (chủ dự án duyệt 25/10/2026): một cột, chỉ công cụ dùng được ngay — danh sách ở packages.ts (TIEN_ICH)
 // Báo cáo thị trường TÁCH RA thành mục riêng của menu chính (chủ dự án 07/11/2026) — giữ nguyên đường dẫn trang
+const danhMucDiemTin: NavChild[] = VUNG_BAO_CAO.map((v) => ({ label: v.nut, href: `/tien-ich/bao-cao-thi-truong-bds#${v.id}` })); // cùng tên tab trong trang
 const danhMucTienIch: NavChild[] = TIEN_ICH.filter((t) => t.slug !== "bao-cao-thi-truong-bds").map((t) => ({ label: t.label, href: t.href }));
 
 // Thứ tự menu (chủ dự án duyệt 22/10/2026 — PC trái → phải, điện thoại trên → dưới): người tìm nhà dùng nhiều nhất
@@ -76,7 +78,8 @@ const navItems: NavItem[] = [
   { label: "Tiện ích", href: "/tien-ich/gia-nha-dat", children: danhMucTienIch, icon: "tienIch" as const },
   { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: "baoGia" as const },
   // cuối cùng (chủ dự án 07/11/2026)
-  { label: "Báo cáo thị trường", href: "/tien-ich/bao-cao-thi-truong-bds", icon: "baoCao" as const },
+  // Điểm tin thị trường (anh 14/11/2026: đổi tên, mục con theo 3 khu vực — bấm mở đúng tab khu vực đó)
+  { label: "Điểm tin thị trường", href: "/tien-ich/bao-cao-thi-truong-bds", children: danhMucDiemTin, icon: "baoCao" as const },
 ];
 
 const chevronDown = (

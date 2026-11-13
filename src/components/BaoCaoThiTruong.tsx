@@ -2,7 +2,7 @@
 // ĐIỂM TIN THỊ TRƯỜNG COASTAL LAND — một trang, 3 vùng, báo cáo QUÝ ĐÃ KẾT THÚC (anh 13/11/2026). Số = bảng Cowork lọc (cơ sở số liệu
 // DKRA, thị trường sơ cấp) nạp ở Admin — xem src/lib/baoCaoThiTruong.ts. Bố cục 3 chương như DKRA. Biểu đồ SVG ngay trong trang.
 // Phần chưa có số: trang công khai ẩn; Admin xem trước (xemThu) hiện ô viền vàng để biết còn thiếu gì.
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { docToaDo, type DiemHaTang } from "@/lib/baoCaoThiTruong";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
@@ -273,6 +273,19 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
   // KHU VỰC NÀO ĐỦ SỐ THÌ HIỆN (anh 13/11/2026) — trang công khai chỉ có tab khu vực đủ số; Admin xem trước hiện đủ 3 khu vực
   const coSo = xemThu ? vung : vung.filter((x) => x.du);
   const [chon, setChon] = useState(vungDau ?? (coSo.find((x) => x.du) ?? coSo[0] ?? vung[0]).vung.id);
+  // MENU "Điểm tin thị trường" → mục con khu vực (…#da-nang): mở đúng tab. Đọc # lúc mở trang + lúc bấm mục menu khi đang ở trang này
+  // (chuyển trang trong Next không phát sự kiện hashchange nên bắt cú bấm liên kết có #<khu vực>).
+  useEffect(() => {
+    const ids = coSo.map((x) => x.vung.id);
+    const theoHash = (h: string) => { const id = h.replace(/^#/, ""); if (ids.includes(id)) { setChon(id); return true; } return false; };
+    theoHash(location.hash);
+    const bam = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (a && a.pathname === location.pathname && theoHash(a.hash)) requestAnimationFrame(() => document.querySelector(".bao-cao")?.scrollIntoView({ block: "start" }));
+    };
+    document.addEventListener("click", bam, true);
+    return () => document.removeEventListener("click", bam, true);
+  }, [coSo.map((x) => x.vung.id).join()]); // eslint-disable-line react-hooks/exhaustive-deps -- so theo danh sách khu vực
   if (!coSo.length) return <p className="text-base text-cvr-muted">Báo cáo đang được cập nhật.</p>;
   const v = coSo.find((x) => x.vung.id === chon) ?? coSo[0];
   const chuaCo = !v.phanKhuc.length && !xemThu;
