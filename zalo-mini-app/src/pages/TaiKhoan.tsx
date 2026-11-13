@@ -2,6 +2,7 @@ import React from "react";
 import { Button, Icon, Page, useNavigate } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
 import { goiHotline, nhanCoastalLand, quanTamOA } from "../lib/zalo";
+import { createShortcut, favoriteApp, requestSendNotification } from "zmp-sdk";
 import { useTai } from "../lib/useTai";
 import { soVN, supabase, usePhien } from "../lib/supabase";
 import { DA_DANG_XUAT, lienKetZalo } from "../lib/lienKet";
@@ -53,6 +54,13 @@ export default function TaiKhoan() {
       { ten: "Nhắn Zalo Coastal Land", icon: "zi-chat", bam: () => nhanCoastalLand() },
       { ten: "Gọi 0377 985 036", icon: "zi-call", bam: () => goiHotline() },
       { ten: "Quan tâm Zalo OA", icon: "zi-add-user", bam: () => quanTamOA() },
+    ] },
+    // CHỨC NĂNG NỀN TẢNG ZALO (anh 14/11/2026: "đủ các chức năng nó có trên nền tảng này với người dùng") — quyền 66 · 120 đã cấp.
+    // Mỗi nút gọi hộp chuẩn của Zalo, khách tự xác nhận trong hộp đó.
+    { ten: "Zalo", muc: [
+      { ten: "Thêm vào màn hình chính", icon: "zi-add-photo", bam: () => { createShortcut().catch(() => {}); } },
+      { ten: "Thêm vào Mini App yêu thích", icon: "zi-heart", bam: () => { favoriteApp().catch(() => {}); } },
+      { ten: "Nhận thông báo từ Coastal Land", icon: "zi-notif", bam: () => { requestSendNotification().catch(() => {}); } },
     ] },
   ];
   const mo = (m: Muc) => {
