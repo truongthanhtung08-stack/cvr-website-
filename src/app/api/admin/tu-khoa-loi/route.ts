@@ -36,7 +36,7 @@ async function chiAdmin() {
 // + DÒNG ĐẶC ĐIỂM của bảng (13/11/2026): longtail → trang đích. Trang đã có trên web → số tin, đủ chuẩn, index lấy từ web (một luật
 // với sitemap); chưa có trang → số tin trong bảng, trạng thái "Cần mở trang" / "Chưa đủ tin" như cột "Xin index" của bảng.
 type DongTD = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean;
-  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean; noiToi?: boolean; thieu?: string[] } & TrangThaiIndex;
+  loTrinh?: string; tieuDeWeb?: string; longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean; noiToi?: boolean; thieu?: string[] } & TrangThaiIndex;
 async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>, bang: Record<string, unknown>, keHoach: DongKeHoach[] = []) {
   const [con, het, so] = await Promise.all([getListings().catch(() => []), getListingsHetHan().catch(() => []), docSoXinIndex(admin)]);
   const tin = [...con, ...het]; // cùng bộ tin xét trang với sitemap (getTinXetTrang)
@@ -63,27 +63,28 @@ async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>,
     if (!d.daIndex) t.push(d.xin ? `Đã xin ${d.xin.split("-").reverse().slice(0, 2).join("/")}, chờ Google` : d.duChuan || tinh ? "Chưa xin index" : "Chưa index");
     return t;
   };
+  // MỘT BẢNG = ĐÚNG FILE (anh 13/11/2026): mỗi dòng của sheet "Từ khoá lõi" một dòng ở đây, giữ thứ tự file (Lộ trình CHA → CON),
+  // trạng thái lấy từ web thật. Trang có trên web mà file chưa có dòng nào trỏ tới → thêm cuối, tầng "Ngoài bảng".
+  const coTrongFile = new Set<string>();
+  let i = 0;
   for (const k of keHoach) {
-    const duong = k.trang.replace(/\s*\(chưa có\)$/, "");
+    const duong = k.trang.replace(/\s*\(chưa có\)$/, "").trim();
     const p = duong.startsWith("/") ? moiTrang.get(duong) : undefined;
-    const khoa = `dd|${k.muc}|${k.longtail}`;
-    if (dong.has(khoa)) continue;
-    dong.set(khoa, { trang: p ? duong : "", muc: k.muc, tinh: k.noi, tang: "Đặc điểm", tuKhoa: k.loi, longtail: k.longtail, dacDiem: k.dacDiem, nhom: k.nhom, google: k.google,
-      soTin: p ? p.n : k.soTin, duChuan: p ? p.index : false, trongBang: true, coTrang: !!p, ghiChu: p ? "" : k.xin, chon: !!k.chon, ...(p ? trangThaiIndex(duong, so, gSet) : { daIndex: false, xin: null }) });
+    const trangKhac = !p && /^\/(gia-nha-dat|du-an|bao-cao-thi-truong)\//.test(duong); // trang giá, dự án: luôn mở, không qua cổng pSEO
+    const co = !!p || trangKhac;
+    if (co) coTrongFile.add(duong);
+    dong.set(`f${i++}`, { trang: co ? duong : "", muc: k.muc, tinh: k.noi, tang: k.tang, loTrinh: k.loTrinh, tuKhoa: k.loi, tieuDeWeb: p ? tieuDe(p.dk) : "", longtail: k.longtail,
+      dacDiem: k.dacDiem, nhom: k.nhom, google: k.google, soTin: p ? p.n : k.soTin, duChuan: p ? p.index : trangKhac, trongBang: true, coTrang: co, chon: !!k.chon,
+      ...(co ? trangThaiIndex(duong, so, gSet) : { daIndex: false, xin: null }) });
   }
   for (const p of moiTrang.values()) {
+    if (coTrongFile.has(p.path) || !(p.index || p.path.split("/").length === 3)) continue; // chỉ trang đủ chuẩn (hoặc trang tỉnh) mà file chưa có
     const d = p.dk;
-    if (d.phuong || d.duong || d.huong || d.phapLy || d.kiet || d.phongNgu || d.giaDuoi) continue;
-    if (d.thanhPho && d.cat) continue; // thành phố: chỉ tầng nhà đất
-    const tang = d.thanhPho ? "Thành phố" : d.cat ? "Loại hình + tỉnh" : "Tỉnh";
-    dong.set(p.path, { trang: p.path, muc: d.muc, tinh: d.tinh.name, tang, tuKhoa: tieuDe(d), soTin: p.n, duChuan: p.index, trongBang: p.path in bang, ...trangThaiIndex(p.path, so, gSet) });
-  }
-  for (const t of Object.keys(bang)) if (!dong.has(t)) {
-    const muc = t.startsWith("/cho-thue") ? "thue" : "ban";
-    dong.set(t, { trang: t, muc, tinh: "", tang: t.split("/").length > 3 ? "Loại hình + tỉnh" : "Tỉnh", tuKhoa: "", soTin: 0, duChuan: false, trongBang: true, ...trangThaiIndex(t, so, gSet) });
+    dong.set(p.path, { trang: p.path, muc: d.muc, tinh: d.tinh.name, tang: "Ngoài bảng (có trên web)", loTrinh: d.cat ? "2 · CON: Loại hình + địa điểm" : "1 · CHA: Bất động sản / Nhà đất + địa điểm",
+      tuKhoa: tieuDe(d), tieuDeWeb: tieuDe(d), longtail: tieuDe(d), soTin: p.n, duChuan: p.index, trongBang: false, coTrang: true, ...trangThaiIndex(p.path, so, gSet) });
   }
   for (const d of dong.values()) { d.noiToi = !!d.trang && (d.trang.split("/").length <= 3 || noiToi.has(d.trang)); d.thieu = thieuCua(d); }
-  return { nguong: NGUONG_INDEX, dong: [...dong.values()].sort((a, b) => a.muc.localeCompare(b.muc) || a.tinh.localeCompare(b.tinh) || a.tang.localeCompare(b.tang) || b.soTin - a.soTin) };
+  return { nguong: NGUONG_INDEX, dong: [...dong.values()] };
 }
 
 export async function GET() {
