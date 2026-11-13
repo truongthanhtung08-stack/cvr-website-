@@ -66,6 +66,11 @@ export default function TheTinDoc({ tin }: { tin: Tin }) {
         <div className="the-to-gia">
           <span>{gia(tin) === "Thỏa thuận" ? "Giá thỏa thuận" : gia(tin)}</span>
           {dienTich(tin) && <><i>·</i><span>{dienTich(tin)}</span></>}
+          {/* Như web TheTinMobile: Diamond · Gold thêm số phòng ngủ, phòng tắm (hình giường, bồn tắm của web BieuTuongThe) */}
+          {(hangHieuLuc(tin) === "diamond" || hangHieuLuc(tin) === "gold") && <>
+            {!!tin.beds && <span className="the-to-pn"><i>·</i>{tin.beds}<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" aria-label="phòng ngủ"><path d="M2 4v16" /><path d="M2 8h18a2 2 0 0 1 2 2v10" /><path d="M2 17h20" /><path d="M6 8v9" /></svg></span>}
+            {!!tin.baths && <span className="the-to-pn"><i>·</i>{tin.baths}<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" aria-label="phòng tắm"><path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.683 3 4 3.683 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" /><path d="M10 5 8 7" /><path d="M2 12h20" /><path d="M7 19v2" /><path d="M17 19v2" /></svg></span>}
+          </>}
         </div>
         <div className="the-to-dc"><BieuTuongWeb ten="viTri" co={16} /> {diaChi(tin)}</div>
         {moTa && <p className="the-to-mota" style={{ WebkitLineClamp: h?.dong ?? 2 }}>{moTa}</p>}

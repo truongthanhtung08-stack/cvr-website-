@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "zmp-ui";
 import { anh, type DuAn } from "../lib/tin";
 import { diaChiDuAn } from "../lib/dinhDang";
+import { tachAnh } from "../lib/media";
 import logoTron from "../assets/logo-tron.svg";
 
 // Thẻ dự án — CHỮ DƯỚI ẢNH THEO THẺ DỰ ÁN MỘT CHUẨN của web (ProjectSlider ChuTheChuan, chốt 30–31/10/2026):
@@ -22,7 +23,8 @@ export default function TheDuAn({ duAn }: { duAn: DuAn }) {
   return (
     <div className="the-tin the-du-an" onClick={() => dieuHuong(`/du-an/${duAn.slug}`)}>
       <div className="anh-the">
-        {duAn.images?.[0] ? <img src={anh(duAn.images[0])} alt={duAn.name} loading="lazy" /> : <div className="anh-trong"><img src={logoTron} alt="" /></div>}
+        {/* Ảnh bìa = ẢNH đầu tiên (bỏ qua link video YouTube nằm chung mảng images — như web) */}
+        {tachAnh(duAn.images)[0] ? <img src={anh(tachAnh(duAn.images)[0])} alt={duAn.name} loading="lazy" /> : <div className="anh-trong"><img src={logoTron} alt="" /></div>}
         {/* Như web (NhanTinhTrang): chỉ dự án cấp VIP có nhãn tình trạng trên ảnh + dải màu cấp đỉnh ảnh; màu theo cấp */}
         {mau && <span className="dai-da" style={{ background: mau }} aria-hidden />}
         {mau && <span className="nhan-da" style={{ background: mau }}>{duAn.status_text || "Đang cập nhật"}</span>}

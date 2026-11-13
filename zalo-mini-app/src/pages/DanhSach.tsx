@@ -34,7 +34,6 @@ export default function DanhSach() {
 
   const dsTinh = useTai(() => layTinhCoTin(md), [md], []);
   const { data, dangTai, loi } = useTai(() => locTin(md, boLoc), [md, JSON.stringify(boLoc)], []);
-  const ten = md === "thue" ? "cho thuê" : "bán";
   const noi = boLoc.khuVuc ?? boLoc.tinh;
 
   return (
@@ -47,11 +46,15 @@ export default function DanhSach() {
       </div>
       <ThanhLoc md={md} boLoc={boLoc} doi={setBoLoc} dsTinh={dsTinh.data} />
       <div className="hang-tieu-de-ds">
-        <p className="tieu-de-ds">
-          {boLoc.loai ?? `Nhà đất ${ten}`}
-          {noi && ` tại ${noi}`}
-        </p>
-        <button className="nut-chuong" disabled={!!luu} onClick={nhanTinMoi}>{luu ?? "Nhận tin mới"}</button>
+        {/* Tiêu đề như trang web (ListingBrowser): "Mua bán nhà đất tháng 11/2026" · có loại / nơi thì ghép vào */}
+        <h1 className="tieu-de-ds">
+          {boLoc.loai ? `${md === "thue" ? "Cho thuê" : "Bán"} ${boLoc.loai.toLowerCase()}` : `${md === "thue" ? "Cho thuê" : "Mua bán"} nhà đất`}
+          {noi ? ` ${noi}` : ""} tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
+        </h1>
+        {/* Như web: nút Nhận tin mới chỉ hiện khi khách đang lọc */}
+        {(boLoc.tinh || boLoc.khuVuc || boLoc.loai || boLoc.gia || boLoc.dienTich) && (
+          <button className="nut-chuong" disabled={!!luu} onClick={nhanTinMoi}>{luu ?? "Nhận tin mới"}</button>
+        )}
       </div>
       <DanhSachTin ds={data} dangTai={dangTai} loi={loi} trong="Chưa có tin khớp bộ lọc." />
     </Page>

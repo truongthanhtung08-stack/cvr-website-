@@ -8,6 +8,7 @@ import { useParams } from "react-router-dom";
 import TheTin from "../components/TheTin";
 import TruotNgang from "../components/TruotNgang";
 import XemSo from "../components/XemSo";
+import { nhanDienTich } from "../lib/listingSpec";
 import LichSuGia from "../components/LichSuGia";
 import { anh, hangHieuLuc, layNhieuTin, layTinChiTiet, layTinTuongTu, type TinChiTiet } from "../lib/tin";
 import { gia, dienTich, diaChi, ngay } from "../lib/dinhDang";
@@ -169,7 +170,7 @@ export default function ChiTietTin() {
   // KHUNG THÔNG SỐ 2 CỘT = khung đầu tin trên web: Mức giá · Diện tích · Giá/m² · PN · WC · các ô đặc điểm · Hướng · Nội thất.
   const chinh: [string, string][] = [
     [tin.purpose === "thue" ? "Giá thuê" : "Mức giá", gia(tin)], // nhãn giá như web
-    ...(dienTich(tin) ? [[laDat(tin) ? "Diện tích đất" : "Diện tích", dienTich(tin)!] as [string, string]] : []),
+    ...(dienTich(tin) ? [[nhanDienTich(tin.type).replace(/\s*\(m²\)$/, ""), dienTich(tin)!] as [string, string]] : []),
     ...(dg ? [["Giá / m²", dg] as [string, string]] : []),
     ...(tin.beds ? [["Phòng ngủ", `${tin.beds} PN`] as [string, string]] : []),
     ...(tin.baths ? [["Phòng tắm", `${tin.baths} WC`] as [string, string]] : []),
@@ -199,7 +200,7 @@ export default function ChiTietTin() {
           Hiệu lực · Hết hạn → tiêu đề → địa chỉ (+ địa chỉ cũ) → khung thông số 2 cột (Mức giá, Diện tích, Giá/m², PN, WC…). */}
       <section className="khoi-ct">
         <div className="meta-ct">
-          <span className="nhan-loai" style={{ color: hang.mau, borderColor: hang.mau }}>{hang.ten}</span>
+          <span className="nhan-loai dac" style={{ ["--nen" as string]: hang.mau }}>{hang.ten}</span>
           <span>Mã tin: {tin.id.slice(0, 8).toUpperCase()}</span>
           <div className="nut-ct">
             {/* Như web: chỉ nút Chia sẻ (06/11/2026 "cái gì không cần thì bỏ" — Mã tin không bị che) */}
@@ -308,7 +309,7 @@ export default function ChiTietTin() {
       )}
 
       <div className="nut-chinh">
-        <XemSo id={tin.id} sdt={tin.sdt} soAn={tin.sdt_an} />
+        <XemSo id={tin.id} sdt={tin.sdt} soAn={tin.sdt_an} ten={tin.nguoi_dang} />
       </div>
     </Page>
   );

@@ -1004,3 +1004,16 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 .the-muc .zaui-btn .zaui-btn-container, .the-muc .zaui-btn .zaui-btn-container > * { white-space: normal; overflow: visible; text-overflow: clip; }
 .the-muc .zaui-btn-primary { background: var(--cl-ink); }
 .the-muc .zaui-btn-secondary { background: #fff; color: var(--cl-ink); border: 1px solid var(--cl-line); }
+/* Tiêu đề danh sách như web: đậm, to (14/11/2026) */
+.hang-tieu-de-ds .tieu-de-ds { margin: 0; padding: 12px 16px 6px !important; font-size: 20px; font-weight: 600; color: var(--cl-ink); letter-spacing: -0.01em; }
+.the-to-pn { display: inline-flex; align-items: center; gap: 3px; color: var(--cl-body); font-weight: 500; }
+.the-to-pn i { margin-right: 3px; }
+.hang-tieu-de-ds { background: #fff; }
+/* ===== TRANG TIN = TRANG TIN WEB ĐIỆN THOẠI (đo cạnh nhau 14/11/2026) ===== */
+.khoi-ct .meta-ct .nhan-loai.dac { background: var(--nen) !important; color: #fff !important; border-color: transparent !important; }
+.khoi-ct .luoi-tt dd.gia-o { color: var(--cl-ink); }
+.lien-he { align-items: center; }
+.lien-he .lien-he-avt { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--cl-surface); color: var(--cl-body); font-size: 13px; font-weight: 600; display: grid; place-items: center; }
+.lien-he .nut-zalo { width: 48px; padding: 0 !important; justify-content: center; border-color: var(--cl-line); }
+.lien-he .logo-zalo { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0068ff; color: #fff; font-size: 9px; font-weight: 700; }
+.lien-he .nut-goi { height: 48px; border: 0 !important; border-radius: 12px !important; background: var(--cl-blue) !important; color: #fff !important; justify-content: center; }

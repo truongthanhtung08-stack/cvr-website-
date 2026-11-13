@@ -31,7 +31,7 @@ const HUONG = ["Đông", "Tây", "Nam", "Bắc", "Đông Bắc", "Đông Nam", "
 const NOI_THAT = ["Không nội thất", "Bàn giao thô", "Nội thất cơ bản", "Nội thất đầy đủ", "Nội thất cao cấp"];
 // Ô "Thuộc dự án" như web: danh sách = /api/du-an/ten (dự án có hồ sơ + dự án khách đã ghi), lọc theo tỉnh; "Khác — tự ghi" → slug từ tên (web slugify)
 const boDau = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
-const gonTinh = (x: string) => boDau(x.replace(/^(Thành phố|Tỉnh)s+/i, "")).trim();
+const gonTinh = (x: string) => boDau(x.replace(/^(Thành phố|Tỉnh)\s+/i, "")).trim();
 const slugTen = (x: string) => boDau(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 const TOI_DA_ANH = 15; // web: mọi tin 15 ảnh (mức chung hiện hành)
 const VAT = 0.08; // src/lib/thue.ts — giá niêm yết chưa gồm GTGT
@@ -298,7 +298,7 @@ export default function DangTin() {
   // VỊ TRÍ HIỆN TẠI (Zalo getLocation): Zalo hỏi khách cho chia sẻ vị trí → máy chủ web đổi ra tỉnh · phường · đường (/api/vi-tri-zalo),
   // điền sẵn ô Vị trí; khách vẫn sửa được. Từ chối thì thôi, không báo lỗi (Chính sách kiểm duyệt Zalo 6.3).
   const [dangViTri, setDangViTri] = useState(false);
-  const boDauVT = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/^(thanh pho|tinh)s+/, "").trim();
+  const boDauVT = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/^(thanh pho|tinh)\s+/, "").trim();
   const dungViTri = async () => {
     setLoi(undefined);
     setDangViTri(true);
@@ -693,7 +693,7 @@ export default function DangTin() {
             </button>
           )}
         </div>
-        {laVideo(video) && !/youtube.com|youtu.be|vimeo.com/i.test(video) ? (
+        {laVideo(video) && !/youtube\.com|youtu\.be|vimeo\.com/i.test(video) ? (
           <div className="o-video">
             <video src={video} controls playsInline preload="metadata" />
             <button onClick={() => setVideo("")} aria-label="Bỏ video">×</button>

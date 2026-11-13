@@ -10,7 +10,7 @@ import { supabase, usePhien } from "../lib/supabase";
 // Chưa đăng nhập vẫn hiện số — chỉ là không ghi được ai đã hỏi.
 const dep = (s: string) => s.replace(/(\d{4})(\d{3})(\d+)/, "$1 $2 $3");
 
-export default function XemSo({ id, sdt, soAn }: { id: string; sdt?: string | null; soAn?: string | null }) {
+export default function XemSo({ id, sdt, soAn, ten }: { id: string; sdt?: string | null; soAn?: string | null; ten?: string | null }) {
   const { nguoiDung } = usePhien();
   const [hien, setHien] = useState(false);
   if (!sdt) return null;
@@ -28,9 +28,11 @@ export default function XemSo({ id, sdt, soAn }: { id: string; sdt?: string | nu
   };
 
   return (
+    // Như thanh liên hệ web điện thoại: ảnh / chữ cái người đăng · ô Zalo chỉ logo · nút số xanh
     <div className="lien-he">
-      <button className="nut-zalo" onClick={nhanZalo}>
-        <BieuTuongWeb ten="chat" co={20} /> Zalo
+      {ten && <span className="lien-he-avt">{ten.trim().split(/\s+/).slice(0, 2).map((x) => x[0]).join("").toUpperCase()}</span>}
+      <button className="nut-zalo" onClick={nhanZalo} aria-label="Nhắn Zalo">
+        <span className="logo-zalo">Zalo</span>
       </button>
       {!hien ? (
         <button className="nut-goi" onClick={moSo}>
