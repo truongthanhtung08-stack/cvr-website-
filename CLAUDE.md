@@ -50,6 +50,11 @@ riêng · khoảng giá lấy cho CHẮC (căn hộ ĐN không có căn bình th
 (giữ nguyên cột + chữ Admin đọc, 74 x Lên web — đã chạy bộ đọc Admin: chữ lõi lên web GIỐNG HỆT bản trước) + 392 dòng ĐẶC ĐIỂM nằm dưới
 lõi của nó (nhóm ý định, gợi ý Google, trang top, tin, cách tính, trang, Index, Ngày xin, Xin index). Đã bỏ sheet "Longtail", "Đặc điểm"
 (gộp vào). LONGTAIL không dùng trên web (chỉ LÕI GỌN đổi chữ). Cowork: mục **0E** `RA\VIEC.md` (tin + DỰ ÁN lọc luôn 13/11).
++ 78 dòng **CHA TỔNG** "Nhà đất / Bất động sản + địa điểm" (gợi ý Google 12 nơi; giá · thị trường → /gia-nha-dat/<tỉnh>, dự án → /du-an/<tỉnh>,
+còn lại → /mua-ban|cho-thue/<tỉnh>[/thành phố]) → bảng 694 dòng. Tra Google 13/11: "nhà đất đà nẵng" và "bất động sản đà nẵng" — coastalland KHÔNG
+có trong top 9 (top: batdongsan/nhatot "Mua Bán Nhà Đất Đà Nẵng Giá Rẻ T11/2026"). /mua-ban/da-nang là TRANG_TOP (giữ tiêu đề) — anh quyết.
+**Commit e4c2fe2e (CHƯA PUSH, build qua):** Admin → Từ khoá lõi có tab "Đặc điểm (longtail)" đọc cùng sheet. Sau Push: Admin tải lại bảng
+(chữ lõi không đổi — đã so bằng bộ đọc Admin: 0 khác) → tab Đặc điểm hiện. Chưa xem giao diện Admin (cần tải bảng = ghi CSDL thật).
 Công cụ scratchpad phiên 18419c5a: `ghep.mjs` → `lt-ghi2.mjs` (Longtail) · `dd-loai.json` (gợi ý Google 17 loại × 6 thành phố) ·
 `tin-web.json` (302 tin đang hiện) · `csg.json` (128 dãy lịch sử giá) · `dd-bang.mjs` → `dd-ghi.mjs` (Đặc điểm).
 **MAI LÀM TIẾP:** ① anh xem sheet Đặc điểm, lọc lại cho chuẩn (đặc điểm nào giữ) ② ghi Ngày xin 12/11 cho 10 trang trong Longtail ·
