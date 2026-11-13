@@ -8,10 +8,10 @@
 export type VungBaoCao = { id: string; ten: string; nut: string; phu: string; tinh: string[] };
 // 3 VÙNG (anh 13/11/2026). Tên tỉnh cũ của nguồn (Quảng Nam, Bình Định, Phú Yên, Bình Thuận…) cũng nhận về đúng vùng.
 export const VUNG_BAO_CAO: VungBaoCao[] = [
-  // SỐ LIỆU THEO TỈNH THÀNH MỚI (anh 13/11/2026): tab + tiêu đề gọi theo tỉnh mới; tinh = tỉnh mới của vùng
-  { id: "da-nang", ten: "Đà Nẵng – Huế – Quảng Trị – Quảng Ngãi", nut: "Đà Nẵng", phu: "Huế · Quảng Trị · Quảng Ngãi", tinh: ["Đà Nẵng", "Huế", "Quảng Trị", "Quảng Ngãi"] },
-  { id: "quy-nhon", ten: "Gia Lai – Đắk Lắk", nut: "Gia Lai", phu: "Đắk Lắk", tinh: ["Gia Lai", "Đắk Lắk"] },
-  { id: "nha-trang", ten: "Khánh Hòa – Lâm Đồng", nut: "Khánh Hòa", phu: "Lâm Đồng", tinh: ["Khánh Hòa", "Lâm Đồng"] },
+  // 3 KHU VỰC GIỮ ĐÚNG TÊN ANH CHIA (tab + tiêu đề); SỐ LIỆU bên trong theo tỉnh thành mới (anh 13/11/2026) — tinh = tỉnh MỚI của khu vực
+  { id: "da-nang", ten: "Đà Nẵng và phụ cận", nut: "Đà Nẵng", phu: "Huế · Quảng Trị · Quảng Ngãi", tinh: ["Đà Nẵng", "Huế", "Quảng Trị", "Quảng Ngãi"] },
+  { id: "quy-nhon", ten: "Quy Nhơn – Gia Lai – Phú Yên", nut: "Quy Nhơn", phu: "Gia Lai · Phú Yên", tinh: ["Gia Lai", "Đắk Lắk"] },
+  { id: "nha-trang", ten: "Nha Trang – Phan Thiết – Lâm Đồng", nut: "Nha Trang", phu: "Phan Thiết · Lâm Đồng", tinh: ["Khánh Hòa", "Lâm Đồng"] },
 ];
 
 // Phân khúc như DKRA — chỉ đúng các tên này (bảng mẫu cột phan_khuc)
