@@ -120,6 +120,9 @@ const nextConfig: NextConfig = isPages
             { source: "/_next/static/chunks/maplibre-gl-worker.mjs", destination: toi("maplibre-gl-worker.js") },
             { source: "/_next/static/chunks/maplibre-gl-shared.mjs", destination: toi("maplibre-gl-shared.js") },
             { source: "/_next/static/chunks/maplibre-gl-shared.js", destination: toi("maplibre-gl-shared.js") },
+            // /dang-tin?mau=2..5 (14/11/2026): ảnh đại diện chia sẻ mẫu 2..5 — trang dựng sẵn src/app/dang-tin/mau/[n]; ?mau lạ ở lại /dang-tin (mẫu 1).
+            // Phải ở beforeFiles: /dang-tin là trang có sẵn, afterFiles không bao giờ tới.
+            { source: "/dang-tin", has: [{ type: "query" as const, key: "mau", value: "^(?<n>[2-5])$" }], destination: "/dang-tin/mau/:n" },
           ],
           // /favicon.ico 404 (Search Console 24/10/2026: Google + trình duyệt gọi địa chỉ này) → trỏ về biểu tượng sẵn có src/app/icon.png
           afterFiles: [

@@ -4,21 +4,11 @@ import { Suspense } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import KhungDangTin from "@/components/KhungDangTin";
+import { metaDangTin } from "./metaDangTin";
 
-// ẢNH ĐẠI DIỆN KHI DÁN LIÊN KẾT /dang-tin lên Facebook, Zalo (anh chọn mẫu 1 xanh biển 14/11/2026, phiên Thiết kế làm): ảnh
-// "Đăng tin mua bán, cho thuê nhà đất" + nút Đăng tin. Chỉ trang này đổi ảnh; tiêu đề, mô tả chia sẻ giữ như mọi trang (lấy từ layout).
-const ANH_DAI_DIEN = { url: "/images/anh-dai-dien-dang-tin.jpg", width: 1200, height: 630, alt: "Đăng tin mua bán, cho thuê nhà đất — COASTAL LAND" };
+// Ảnh đại diện + mô tả khi chia sẻ (mẫu 1; ?mau=2..5 ở dang-tin/mau/[n]): metaDangTin.ts
 export async function generateMetadata(_: unknown, parent: ResolvingMetadata): Promise<Metadata> {
-  const p = await parent;
-  // Mô tả anh duyệt nguyên văn 14/11/2026 (Zalo hiện câu cũ dài dòng) — dùng chung cho Google, Facebook, Zalo.
-  const moTa = "Cổng đăng tin mua bán, cho thuê nhà đất";
-  return {
-    alternates: { canonical: "/dang-tin" },
-    title: "Đăng tin bất động sản",
-    description: moTa,
-    openGraph: { ...p.openGraph, url: "/dang-tin", description: moTa, images: [ANH_DAI_DIEN] },
-    twitter: { ...p.twitter, description: moTa, images: [ANH_DAI_DIEN.url] },
-  };
+  return metaDangTin(parent);
 }
 
 export default function DangTinPage() {
