@@ -4,32 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 // Middleware chạy trên Vercel (SSR) — làm mới session Supabase Auth cho mọi request
 // và gác các vùng cần đăng nhập (/admin, /tai-khoan). KHÔNG chạy khi static export
 // (GitHub Pages) — đây là một phần của B0: chuyển runtime sang Vercel.
-// TIN ZALO TỰ ĐỘNG (ZBS) → MỞ MINI APP (anh 14/11/2026: "đường mạnh nhất là tin Zalo gửi tới khách"): 13 mẫu ZBS đã duyệt có nút
-// mở các trang tài khoản của web (docs/MAU-ZBS-MOI.md). Khách bấm trong Zalo → chuyển sang Mini App Coastal Land đúng màn đó (Mini App
-// tự vào tài khoản theo Zalo). CHỈ đúng cú bấm từ tin: trong Zalo (UA "Zalo"), GET, đúng đường, không tham số (trang thanh toán quay
-// về /tai-khoan/nap-tien?ket-qua=… không bị chuyển), không phải chuyển trang trong web (RSC / Referer coastalland.vn) — khách đang
-// dùng web trong Zalo vẫn ở web; khách đã đăng nhập web (cookie phiên) cũng ở web. /tai-khoan/tuong-tac Mini App chưa có màn tương ứng → giữ web.
-const MINI_APP = "https://zalo.me/s/1268705237708475790";
-const ZBS_SANG_MINI_APP: Record<string, string> = {
-  "/tai-khoan/tin-dang": "/tin-cua-toi",
-  "/tai-khoan/khach-hang": "/khach-hang",
-  "/tai-khoan/nap-tien": "/nap-tien",
-  "/tai-khoan/hoi-vien": "/hoi-vien",
-};
-function tuTinZalo(request: NextRequest): string | null {
-  const dich = ZBS_SANG_MINI_APP[request.nextUrl.pathname];
-  if (!dich || request.method !== "GET" || request.nextUrl.search) return null;
-  if (!/Zalo/i.test(request.headers.get("user-agent") ?? "")) return null;
-  if (request.headers.get("rsc") || request.headers.get("next-router-state-tree")) return null;
-  if (/coastalland\.vn/i.test(request.headers.get("referer") ?? "")) return null;
-  // Khách đã đăng nhập web trong trình duyệt của Zalo (có cookie phiên "sb-") → ở lại web, không đẩy sang Mini App (anh 14/11/2026)
-  if (request.cookies.getAll().some((c) => c.name.startsWith("sb-"))) return null;
-  return MINI_APP + dich;
-}
-
 export async function middleware(request: NextRequest) {
-  const sangMiniApp = tuTinZalo(request);
-  if (sangMiniApp) return NextResponse.redirect(sangMiniApp, 302);
   let response = NextResponse.next({ request });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
