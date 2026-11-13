@@ -82,7 +82,7 @@ export default function TaiKhoan() {
       <div className="tk-dau">
         {nguoiDung ? (
           <>
-            {h?.avatar_url ? <img className="tk-anh" src={h.avatar_url} alt="" /> : <span className="tk-anh"><Icon icon="zi-user" /></span>}
+            {h?.avatar_url ? <img className="tk-anh" src={h.avatar_url} alt="" /> : <span className="tk-anh"><BieuTuongWeb ten="nguoi" co={24} /></span>}
             <div className="tk-ten">
               <strong>{h?.full_name || "Tài khoản"}</strong>
               <span>{soVN(h?.phone ?? nguoiDung.phone) || emailThat(h?.email) || emailThat(nguoiDung.email)}</span>

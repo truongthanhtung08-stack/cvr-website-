@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Icon } from "zmp-ui";
 import { openPhone, openWebview } from "zmp-sdk";
+import BieuTuongWeb from "./BieuTuongWeb";
 import { supabase, usePhien } from "../lib/supabase";
 
 // LIÊN HỆ NGƯỜI ĐĂNG — thanh đáy trang tin, như web: [Zalo] [0981 234 ••• · Hiện số để gọi].
@@ -30,16 +30,16 @@ export default function XemSo({ id, sdt, soAn }: { id: string; sdt?: string | nu
   return (
     <div className="lien-he">
       <button className="nut-zalo" onClick={nhanZalo}>
-        <Icon icon="zi-chat" size={20} /> Zalo
+        <BieuTuongWeb ten="chat" co={20} /> Zalo
       </button>
       {!hien ? (
         <button className="nut-goi" onClick={moSo}>
           {/* Như web: số ẩn đuôi + CON MẮT (06/11/2026 "hiện số chỉ cần con mắt") */}
-          <Icon icon="zi-call" size={20} /> {soAn} <Icon icon="zi-unhide" size={20} aria-label="Hiện số" />
+          <BieuTuongWeb ten="dienThoai" co={20} /> {soAn} <BieuTuongWeb ten="mat" co={20} />
         </button>
       ) : (
         <button className="nut-goi" onClick={() => openPhone({ phoneNumber: sdt }).catch(() => {})}>
-          <Icon icon="zi-call" size={20} /> Gọi {dep(sdt)}
+          <BieuTuongWeb ten="dienThoai" co={20} /> Gọi {dep(sdt)}
         </button>
       )}
     </div>

@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import TieuDe from "../components/TieuDe";
 import DanhSachTin from "../components/DanhSachTin";
 import { layNhieuTin } from "../lib/tin";
+import BieuTuongWeb from "../components/BieuTuongWeb";
 import { useTai } from "../lib/useTai";
 
 // DANH BẠ CHUYÊN GIA — bản gọn của web (/chuyen-gia): người bán, cho thuê nhà đất trên Coastal Land, gom từ tin thật trên máy chủ web
@@ -13,7 +14,7 @@ type CG = { slug: string; ten: string; anh?: string; soTin: number; khuVuc: stri
 const boDau = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
 
 function Anh({ cg }: { cg: CG }) {
-  return cg.anh ? <img className="cg-anh" src={cg.anh} alt="" /> : <span className="cg-anh"><Icon icon="zi-user" /></span>;
+  return cg.anh ? <img className="cg-anh" src={cg.anh} alt="" /> : <span className="cg-anh"><BieuTuongWeb ten="nguoi" co={24} /></span>;
 }
 
 export function DanhBaChuyenGia() {

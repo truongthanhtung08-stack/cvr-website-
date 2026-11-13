@@ -17,6 +17,7 @@ import { chiaSeTin } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
 import { supabase } from "../lib/supabase";
 import { nhungVideo, tachAnh, tachVideo } from "../lib/media";
+import BieuTuongWeb from "../components/BieuTuongWeb";
 import { tachDinhDang } from "../../../src/lib/dinhDangMoTa"; // MỘT bộ đọc đậm / nghiêng với web
 
 // CHI TIẾT TIN — kiểu Mini App Zalo: ảnh · các khối trắng trên nền xám (giá + tiêu đề ·
@@ -82,7 +83,7 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
           nằm trên trình phát — vuốt ngang để sang ảnh; tin có video thì hàng "video · ảnh · Xem ảnh & video" nằm NGAY DƯỚI khung. */}
       {!laVideoDang && (
         <span className="anh-tin-dem">
-          <Icon icon="zi-photo" size={14} /> {anhs.length}
+          <BieuTuongWeb ten="anh" co={14} /> {anhs.length}
         </span>
       )}
       {!laVideoDang && tong > 1 && dang > 0 && (
@@ -93,7 +94,7 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
       )}
       {!laVideoDang && (
         <div className="anh-tin-day">
-          {videos.length === 0 ? <button onClick={() => setTatCa(true)}><Icon icon="zi-gallery" size={16} /> Tất cả ảnh</button> : <i />}
+          {videos.length === 0 ? <button onClick={() => setTatCa(true)}><BieuTuongWeb ten="boSuuTap" co={16} /> Tất cả ảnh</button> : <i />}
           <span>{dang - videos.length + 1}/{dsAnh.length}</span>
         </div>
       )}
@@ -117,7 +118,7 @@ export function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: strin
     </div>
     {videos.length > 0 && (
       <div className="anh-tin-duoi">
-        <span><Icon icon="zi-video" size={16} /> {videos.length} video · <Icon icon="zi-photo" size={16} /> {anhs.length} ảnh</span>
+        <span><BieuTuongWeb ten="video" co={16} /> {videos.length} video · <BieuTuongWeb ten="anh" co={16} /> {anhs.length} ảnh</span>
         <button onClick={() => setTatCa(true)}>Xem ảnh &amp; video</button>
       </div>
     )}
@@ -203,7 +204,7 @@ export default function ChiTietTin() {
           <div className="nut-ct">
             {/* Như web: chỉ nút Chia sẻ (06/11/2026 "cái gì không cần thì bỏ" — Mã tin không bị che) */}
             <button onClick={() => chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(tachAnh(tin.images)[0]), `/tin/${tin.id}`)} aria-label="Chia sẻ">
-              <Icon icon="zi-share-external-1" size={20} />
+              <BieuTuongWeb ten="chiaSe" co={20} />
             </button>
           </div>
         </div>
@@ -216,7 +217,7 @@ export default function ChiTietTin() {
         )}
         <h1 className="tieu-de-tin">{tin.title}</h1>
         <p className="dong-dc">
-          <Icon icon="zi-location" size={16} />
+          <BieuTuongWeb ten="viTri" co={16} />
           <span>
             {[tin.dia_chi_ct?.trim(), diaChi(tin)].filter(Boolean).join(", ")}
             {diaChiCu && <small>Địa chỉ cũ: {diaChiCu}</small>}
@@ -259,7 +260,7 @@ export default function ChiTietTin() {
         {/* Zalo CHẶN trang google.com nhúng trong Mini App (anh chụp bản 58, 12/11/2026: "Trang web hiện không khả dụng") → bỏ khung nhúng,
             hiện địa chỉ + nút mở app bản đồ của máy (openOutApp). */}
         <BanDoTin ghim={tin.ghim} soNhaDuong={tin.dia_chi_ct} khuVuc={[tin.ward, tin.district, tin.province].filter(Boolean).join(", ")} />
-        <div className="dia-chi-ban-do"><Icon icon="zi-location" size={20} /><span>{[tin.dia_chi_ct?.trim(), tin.ward, tin.district, tin.province].filter(Boolean).join(", ")}</span></div>
+        <div className="dia-chi-ban-do"><BieuTuongWeb ten="viTri" co={20} /><span>{[tin.dia_chi_ct?.trim(), tin.ward, tin.district, tin.province].filter(Boolean).join(", ")}</span></div>
         {/* Như web (MapPaneGoogle): nút mở thẳng Google Maps — trong Zalo mở ra ngoài (openOutApp) để máy tự chuyển vào app bản đồ */}
         <button
           className="nut-mo-ban-do"
@@ -268,7 +269,7 @@ export default function ChiTietTin() {
             openOutApp({ url }).catch(() => { window.location.href = url; });
           }}
         >
-          <Icon icon="zi-location" size={18} /> Xem vị trí trên Google Maps
+          <BieuTuongWeb ten="viTri" co={18} /> Xem vị trí trên Google Maps
         </button>
       </section>
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Icon, useNavigate } from "zmp-ui";
+import { useNavigate } from "zmp-ui";
 import { openPhone, openWebview } from "zmp-sdk";
 import { anh, hangHieuLuc, type Tin } from "../lib/tin";
 import { gia, dienTich, diaChi, luc, tomTatTin } from "../lib/dinhDang";
@@ -8,6 +8,7 @@ import { tachAnh } from "../lib/media";
 import { theoDoiThe } from "../lib/hienThi";
 import { chiaSeTin } from "../lib/zalo";
 import { supabase, usePhien } from "../lib/supabase";
+import BieuTuongWeb from "./BieuTuongWeb";
 import logoTron from "../assets/logo-tron.svg";
 
 // THẺ TIN TO — trang chủ, ĐÚNG thẻ web điện thoại (src/components/TheTinMobile.tsx, 12/11/2026): ảnh lớn tràn bề ngang · hàng 3 ảnh nhỏ
@@ -54,7 +55,7 @@ export default function TheTinDoc({ tin }: { tin: Tin }) {
       <div className="the-to-anh">
         {anhs[0] ? <img src={anh(anhs[0])} alt={tin.title} loading="lazy" /> : <div className="anh-trong"><img src={logoTron} alt="" /></div>}
         {h && <span className="the-to-hang" style={{ background: h.mau }}>{h.ten}</span>}
-        {anhs.length > 1 && <span className="the-to-so"><Icon icon="zi-photo" size={14} /> {anhs.length}</span>}
+        {anhs.length > 1 && <span className="the-to-so"><BieuTuongWeb ten="anh" co={14} /> {anhs.length}</span>}
       </div>
       {h?.anhNho && anhs.length >= 4 && (
         <div className="the-to-nho">{anhs.slice(1, 4).map((a) => <img key={a} src={anh(a)} alt="" loading="lazy" />)}</div>
@@ -65,7 +66,7 @@ export default function TheTinDoc({ tin }: { tin: Tin }) {
           <span>{gia(tin)}</span>
           {dienTich(tin) && <><i>·</i><span>{dienTich(tin)}</span></>}
         </div>
-        <div className="the-to-dc"><Icon icon="zi-location" size={16} /> {diaChi(tin)}</div>
+        <div className="the-to-dc"><BieuTuongWeb ten="viTri" co={16} /> {diaChi(tin)}</div>
         {h && moTa && <p className="the-to-mota" style={{ WebkitLineClamp: h.dong }}>{moTa}</p>}
         <div className="the-to-nguoi">
           <span className="the-to-avt">{chuCai(ten)}</span>
@@ -74,13 +75,13 @@ export default function TheTinDoc({ tin }: { tin: Tin }) {
             <svg width="22" height="22" viewBox="0 0 24 24" fill={luu ? "#e11d48" : "none"} stroke={luu ? "#e11d48" : "currentColor"} strokeWidth="1.8"><path d="M12 20.3s-7.5-4.6-9.2-9.4C1.6 7.4 4 4.2 7.4 4.2c2 0 3.5 1.1 4.6 2.6 1.1-1.5 2.6-2.6 4.6-2.6 3.4 0 5.8 3.2 4.6 6.7-1.7 4.8-9.2 9.4-9.2 9.4Z" /></svg>
           </button>
           <button aria-label="Chia sẻ" onClick={(e) => { dung(e); chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(anhs[0]), `/tin/${tin.id}`); }}>
-            <Icon icon="zi-share-external-1" size={22} />
+            <BieuTuongWeb ten="chiaSe" co={22} />
           </button>
         </div>
         {tin.sdt && (
           <div className="the-to-lienhe">
             <button className="the-to-zalo" onClick={nhanZalo}>Zalo</button>
-            <button className="the-to-goi" onClick={moSo}><Icon icon="zi-call" size={18} /> {hienSo ? `Gọi ${tin.sdt}` : anDuoi(tin.sdt)}{!hienSo && <Icon icon="zi-unhide" size={18} />}</button>
+            <button className="the-to-goi" onClick={moSo}><BieuTuongWeb ten="dienThoai" co={18} /> {hienSo ? `Gọi ${tin.sdt}` : anDuoi(tin.sdt)}{!hienSo && <BieuTuongWeb ten="mat" co={18} />}</button>
           </div>
         )}
       </div>

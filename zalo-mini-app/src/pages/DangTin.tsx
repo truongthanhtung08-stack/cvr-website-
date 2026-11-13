@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button, Icon, Input, Page, Select, Spinner, Text, useNavigate } from "zmp-ui";
+import { Box, Button, Input, Page, Select, Spinner, Text, useNavigate } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
 import { useSearchParams } from "react-router-dom";
 import { provincesNew } from "../lib/provincesNew";
@@ -12,6 +12,7 @@ import { layNguoiZalo } from "../lib/zalo";
 import { getAccessToken, getLocation } from "zmp-sdk";
 import XacMinhSo from "../components/XacMinhSo";
 import BangGiaMaTran, { TEN_HANG } from "../components/BangGiaMaTran";
+import BieuTuongWeb from "../components/BieuTuongWeb";
 import { DS_LOAI, O_LOAI_CON } from "../lib/loaiHinh";
 
 const { Option } = Select;
@@ -375,7 +376,7 @@ export default function DangTin() {
       <Page style={{ background: "#fff" }}>
         <TieuDe title="Đăng tin" />
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
-          <Icon icon="zi-check-circle-solid" size={56} style={{ color: "var(--cl-blue)", margin: "0 auto" }} />
+          <BieuTuongWeb ten="xong" co={56} dac style={{ color: "var(--cl-blue)", margin: "0 auto" }} />
           <Text.Title size="large">{xong === "sua" ? "Đã cập nhật tin" : xong === "pending" ? "Đã gửi tin, đang chờ duyệt" : "Đã lưu nháp tin"}</Text.Title>
           {xong !== "sua" && <Text className="chu-phu">
             {xong === "pending"
@@ -464,7 +465,7 @@ export default function DangTin() {
           ))}
           {anh.length < TOI_DA_ANH && (
             <button className="o-anh them" onClick={themAnh} disabled={dangTaiAnh}>
-              {dangTaiAnh ? <Spinner /> : <><Icon icon="zi-add-photo" /><span>Thêm ảnh</span></>}
+              {dangTaiAnh ? <Spinner /> : <><BieuTuongWeb ten="anh" co={24} /><span>Thêm ảnh</span></>}
             </button>
           )}
         </div>

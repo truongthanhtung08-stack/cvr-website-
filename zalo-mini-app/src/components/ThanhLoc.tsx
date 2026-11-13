@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box, Button, Icon, Sheet, Text } from "zmp-ui";
+import BieuTuongWeb from "./BieuTuongWeb";
 import { dtTheo, giaTheo, loaiTheo, SAP_XEP, type BoLoc, type MucDich } from "../lib/boLoc";
 
 type O = "tinh" | "loai" | "gia" | "dienTich" | "sapXep";
@@ -71,13 +72,13 @@ export default function ThanhLoc({ md, boLoc, doi, dsTinh }: { md: MucDich; boLo
             {mo !== "sapXep" && (
               <div className="dong-chon" onClick={() => chon(mo, undefined)}>
                 <span>Tất cả</span>
-                {!giaTriNut(mo) && <Icon icon="zi-check" />}
+                {!giaTriNut(mo) && <BieuTuongWeb ten="dau" co={24} />}
               </div>
             )}
             {luaChon[mo].ds.map((v) => (
               <div key={v} className="dong-chon" onClick={() => chon(mo, v)}>
                 <span>{v}</span>
-                {giaTriNut(mo) === v && <Icon icon="zi-check" />}
+                {giaTriNut(mo) === v && <BieuTuongWeb ten="dau" co={24} />}
               </div>
             ))}
             <Box mt={3}><Button fullWidth variant="secondary" onClick={() => setMo(null)}>Đóng</Button></Box>

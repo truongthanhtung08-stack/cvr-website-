@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button, Icon, Page, Spinner, Text, useNavigate } from "zmp-ui";
+import { Box, Button, Page, Spinner, Text, useNavigate } from "zmp-ui";
 import { useParams, useSearchParams } from "react-router-dom";
 import TieuDe from "../components/TieuDe";
 import BangGiaMaTran, { TEN_HANG, type GoiBang } from "../components/BangGiaMaTran";
 import { supabase, usePhien } from "../lib/supabase";
 import { layBangGia } from "../lib/tin";
+import BieuTuongWeb from "../components/BieuTuongWeb";
 import { useTai } from "../lib/useTai";
 
 // ============================================================================
@@ -123,7 +124,7 @@ export default function GoiTin() {
       <Page style={{ background: "#fff" }}>
         <TieuDe title={TEN[viec]} ve="/tin-cua-toi" />
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
-          <Icon icon="zi-check-circle-solid" size={56} style={{ color: "var(--cl-blue)", margin: "0 auto" }} />
+          <BieuTuongWeb ten="xong" co={56} dac style={{ color: "var(--cl-blue)", margin: "0 auto" }} />
           <Text.Title size="large">{xong}</Text.Title>
           <Button fullWidth onClick={() => dieuHuong("/tin-cua-toi", { replace: true })}>Xem tin của tôi</Button>
         </Box>
