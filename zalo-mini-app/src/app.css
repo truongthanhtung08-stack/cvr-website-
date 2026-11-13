@@ -954,3 +954,10 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 .o-chon-tim button.trong span { color: var(--cl-faint); }
 .o-chon-tim button:disabled { background: var(--cl-surface); }
 .o-tim-bang { height: 44px; padding: 0 12px; border: 1px solid var(--cl-line); border-radius: 8px; font-size: 16px; }
+/* Chọn nhiều (tiện ích, nội thất) như web: nút viên, bấm bật/tắt */
+.chon-nhieu { display: flex; flex-wrap: wrap; gap: 8px; }
+.chon-nhieu button { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--cl-line); background: #fff; color: var(--cl-body); font-size: 13px; }
+.chon-nhieu button.bat { background: var(--cl-ink); border-color: var(--cl-ink); color: #fff; }
+/* Ô ngày bắt đầu hiển thị (như web): hiện ngày kiểu Việt, ô lịch của máy phủ trong suốt */
+.o-ngay { position: relative; display: flex; align-items: center; height: 48px; padding: 0 12px; border: 1px solid var(--cl-line); border-radius: 8px; background: #fff; font-size: 15px; }
+.o-ngay input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }

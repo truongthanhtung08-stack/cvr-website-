@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button, Input, Page, Select, Spinner, Text, useNavigate } from "zmp-ui";
+import { Box, Button, Input, Page, Select, Sheet, Spinner, Text, useNavigate } from "zmp-ui";
+import TheTinDoc from "../components/TheTinDoc";
+import type { Tin } from "../lib/tin";
 import TieuDe from "../components/TieuDe";
 import { useSearchParams } from "react-router-dom";
 import { provincesNew } from "../lib/provincesNew";
@@ -16,6 +18,7 @@ import BangGiaMaTran, { TEN_HANG } from "../components/BangGiaMaTran";
 import BieuTuongWeb from "../components/BieuTuongWeb";
 import ChonCoTim from "../components/ChonCoTim";
 import { DS_LOAI, O_LOAI_CON } from "../lib/loaiHinh";
+import { coDienTichXayDung, coNoiThat, coPhongNgu, coPhongTam, fieldsSplit, nhanDienTich, noiThatCho, phapLyCho, thieuMucBatBuoc, tienIchCho, type Field } from "../lib/listingSpec";
 
 const { Option } = Select;
 
@@ -25,7 +28,6 @@ const { Option } = Select;
 
 const KHAC = "__khac"; // dòng "Khác — tự ghi" của ô chọn (như web ChonHoacGhi)
 // Danh sách CHÉP ĐÚNG web (src/lib/listingSpec.ts legalOptions · directions · furnishLevels) — 14/11/2026 "web một nẻo, đây một nẻo"
-const PHAP_LY = ["Sổ đỏ chính chủ", "Sổ hồng chính chủ", "Hợp đồng mua bán", "Hợp đồng góp vốn", "Đang chờ sổ", "Sổ chung / vi bằng", "Giấy tờ tay", "Đang cập nhật"];
 const HUONG = ["Đông", "Tây", "Nam", "Bắc", "Đông Bắc", "Đông Nam", "Tây Bắc", "Tây Nam"];
 const NOI_THAT = ["Không nội thất", "Bàn giao thô", "Nội thất cơ bản", "Nội thất đầy đủ", "Nội thất cao cấp"];
 // Ô "Thuộc dự án" như web: danh sách = /api/du-an/ten (dự án có hồ sơ + dự án khách đã ghi), lọc theo tỉnh; "Khác — tự ghi" → slug từ tên (web slugify)
@@ -35,6 +37,7 @@ const slugTen = (x: string) => boDau(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+
 const TOI_DA_ANH = 15; // web: mọi tin 15 ảnh (mức chung hiện hành)
 const VAT = 0.08; // src/lib/thue.ts — giá niêm yết chưa gồm GTGT
 
+const ngayVnSau = (n: number) => new Date(Date.now() + 7 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
 const so = (s: string) => (s.trim() ? Number(s.replace(/\./g, "").replace(",", ".")) : NaN);
 const vnd = (n: number) => `${Math.round(n).toLocaleString("vi-VN")} đ`;
 
@@ -81,8 +84,11 @@ export default function DangTin() {
   const [dienTich, setDienTich] = useState("");
   const [ngu, setNgu] = useState("");
   const [tam, setTam] = useState("");
-  const [matTien, setMatTien] = useState("");
-  const [soTang, setSoTang] = useState("");
+  // Ô THEO LOẠI HÌNH = web (src/lib/listingSpec.ts chép nguyên, fieldsSplit): ô chính → mục 2, đặc điểm → mục 3; lưu details.specs[key]
+  const [oLoai, setOLoai] = useState<Record<string, string>>({});
+  const [dtXay, setDtXay] = useState(""); // built_area_m2
+  const [tienIch, setTienIch] = useState<string[]>([]); // details.amenities
+  const [noiThatDs, setNoiThatDs] = useState<string[]>([]); // details.interior
   const [phapLy, setPhapLy] = useState("");
   const [huong, setHuong] = useState("");
   const [noiThat, setNoiThat] = useState(""); // details.furnish như web
@@ -101,6 +107,9 @@ export default function DangTin() {
   const [daXmXong, setDaXmXong] = useState(false);
   const [hang, setHang] = useState("basic"); // hạng tin: diamond · gold · silver · basic (như web)
   const [soNgay, setSoNgay] = useState<number>();
+  const [batDau, setBatDau] = useState(""); // details.plan.batDau như web: trống = Ngay khi được duyệt
+  const [xemTruoc, setXemTruoc] = useState(false); // nút Xem trước như web: thẻ tin đúng như sẽ hiện
+  const [luuNhap, setLuuNhap] = useState(false); // bấm Lưu nháp (như web: ghi được tới đâu lưu tới đó, không gửi duyệt)
   const [dangGui, setDangGui] = useState(false);
   const [loi, setLoi] = useState<string>();
   const [xong, setXong] = useState<"pending" | "draft" | "sua" | null>(null);
@@ -140,8 +149,10 @@ export default function DangTin() {
       setDienTich(r.area_m2 != null ? String(r.area_m2).replace(".", ",") : "");
       setNgu(r.beds != null ? String(r.beds) : "");
       setTam(r.baths != null ? String(r.baths) : "");
-      setMatTien(sp.frontage ? String(sp.frontage) : "");
-      setSoTang(sp.floors ? String(sp.floors) : "");
+      setOLoai(Object.fromEntries(Object.entries(sp).filter(([k, v]) => !O_LOAI_CON.includes(k) && v != null && String(v).trim()).map(([k, v]) => [k, String(v)])));
+      setDtXay(r.built_area_m2 != null ? String(r.built_area_m2).replace(".", ",") : "");
+      setTienIch(Array.isArray(d.amenities) ? d.amenities : []);
+      setNoiThatDs(Array.isArray(d.interior) ? d.interior : []);
       setPhapLy(d.legal ?? "");
       setHuong(d.direction ?? "");
       setNoiThat(d.furnish ?? "");
@@ -154,6 +165,7 @@ export default function DangTin() {
       if (d.contact?.phone) setSdt(soVN(d.contact.phone));
       if (d.plan?.tier) setHang(d.plan.tier);
       if (d.plan?.days) setSoNgay(d.plan.days);
+      if (d.plan?.batDau && d.plan.batDau >= ngayVnSau(1)) setBatDau(d.plan.batDau);
     });
   }, [maSua, nguoiDung?.id]);
 
@@ -302,13 +314,55 @@ export default function DangTin() {
     return sp;
   };
 
-  const gui = async () => {
+  const loaiGoc = loai.split("::")[0];
+  const truong = loaiGoc ? fieldsSplit(loaiGoc, nhuCau) : { chinh: [] as Field[], dacDiem: [] as Field[] };
+  const boLoaiCon = (fd: Field) => !O_LOAI_CON.includes(fd.key); // ô loại con đã có ô riêng ngay dưới Loại hình
+  const oLoaiLuu = () => Object.fromEntries([...truong.chinh, ...truong.dacDiem].filter(boLoaiCon).map((fd) => [fd.key, (oLoai[fd.key] ?? "").trim()]).filter(([, v]) => v));
+  const bat = (ds: string[], v: string) => (ds.includes(v) ? ds.filter((x) => x !== v) : [...ds, v]);
+  const oTruong = (fd: Field) => {
+    const nhan = `${fd.label}${fd.unit ? ` (${fd.unit})` : ""}${fd.batBuoc ? " *" : ""}`;
+    const v = oLoai[fd.key] ?? "";
+    const dat = (x: string) => setOLoai((o) => ({ ...o, [fd.key]: x }));
+    return fd.type === "select"
+      ? <ChonCoTim key={fd.key} nhan={nhan} giuCho={`Chọn ${fd.label.toLowerCase()}`} giaTri={v} ds={(fd.options ?? []).map((o) => ({ gt: o, nhan: o }))} onChon={dat} />
+      : <Input key={fd.key} label={nhan} placeholder={fd.placeholder ?? ""} inputMode={fd.type === "number" ? "decimal" : undefined} value={v} onChange={(e) => dat(e.target.value)} />;
+  };
+
+  // LƯU NHÁP như web: CSDL chỉ bắt Tỉnh/Thành + Tiêu đề, còn lại ghi tới đâu lưu tới đó; không trừ tiền, không gửi duyệt.
+  const luuBanNhap = async () => {
+    if (!nguoiDung) return;
+    setDangGui(true);
+    const { error } = await supabase.from("listings").insert({
+      purpose: nhuCau, type: loaiGoc || "Bất động sản khác", title: tieuDe.trim(), description: moTa.trim() || null,
+      price_vnd: giaVnd(), area_m2: Number.isNaN(so(dienTich)) ? null : so(dienTich),
+      beds: ngu.trim() ? parseInt(ngu, 10) : null, baths: tam.trim() ? parseInt(tam, 10) : null,
+      built_area_m2: dtXay.trim() && !Number.isNaN(so(dtXay)) ? so(dtXay) : null,
+      ward: phuong || null, district: he === "cu" ? quan || null : null, province: tinh,
+      images: laVideo(video.trim()) ? [video.trim(), ...anh] : anh,
+      details: {
+        specs: { ...specLoai(), ...oLoaiLuu() }, legal: phapLy || undefined, direction: huong || undefined, furnish: noiThat || undefined,
+        amenities: tienIch, interior: loaiGoc && coNoiThat(loaiGoc) ? noiThatDs : [], ...duAnLuu(), addressDetail: diaChi.trim() || undefined,
+        plan: { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien, ...(batDau ? { batDau } : {}) },
+        contact: { name: ten.trim(), phone: sdt.replace(/[^0-9]/g, "") }, nguonDang: "zalo-mini-app",
+      },
+      status: "draft", owner_id: nguoiDung.id, tier: goi?.tierId ?? "basic", published_at: null,
+    });
+    setDangGui(false);
+    if (error) return setLoi(`Lưu nháp thất bại: ${error.message}`);
+    setXong("draft");
+  };
+
+  const gui = async (nhap = false) => {
     setLoi(undefined);
+    setLuuNhap(nhap);
     if (!nguoiDung) return dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`);
     if (!loai) return setLoi("Chưa chọn loại hình bất động sản.");
     if (!tinh) return setLoi("Chưa chọn Tỉnh/Thành.");
     if (!tieuDe.trim()) return setLoi("Chưa nhập tiêu đề tin.");
+    if (nhap && !maSua) return luuBanNhap();
     if (Number.isNaN(so(dienTich))) return setLoi("Chưa nhập diện tích.");
+    const thieu = loaiGoc ? thieuMucBatBuoc(loaiGoc, nhuCau, oLoai).filter((t) => !(oCon && t === oCon.label)) : [];
+    if (thieu.length) return setLoi(`Chưa nhập: ${thieu.join(", ")}.`);
     if (!anh.length && !laTinTim) return setLoi("Chưa thêm ảnh — tin cần ít nhất 1 ảnh."); // như web: đăng tin bắt ít nhất 1 ảnh
     if (!tinSua && (!daXacMinh || !sdt.trim())) return setLoi("Xác minh số điện thoại trước khi đăng tin.");
     if (!ten.trim()) return setLoi("Tài khoản chưa có họ tên — vào Cá nhân để đặt tên.");
@@ -318,9 +372,8 @@ export default function DangTin() {
     const specsSua = (goc: Record<string, any>) => {
       const s: Record<string, any> = { ...goc };
       for (const k of O_LOAI_CON) delete s[k]; // đổi loại hình → bỏ loại con cũ, ghi lại theo ô đang chọn
-      Object.assign(s, specLoai());
-      if (matTien.trim()) s.frontage = matTien.trim(); else delete s.frontage;
-      if (soTang.trim()) s.floors = soTang.trim(); else delete s.floors;
+      for (const fd of [...truong.chinh, ...truong.dacDiem]) delete s[fd.key]; // ô của loại hình đang chọn: ghi lại theo form
+      Object.assign(s, specLoai(), oLoaiLuu());
       return s;
     };
     const noiDung = {
@@ -331,6 +384,7 @@ export default function DangTin() {
       area_m2: so(dienTich),
       beds: ngu.trim() ? parseInt(ngu, 10) : null,
       baths: tam.trim() ? parseInt(tam, 10) : null,
+      built_area_m2: dtXay.trim() && !Number.isNaN(so(dtXay)) ? so(dtXay) : null,
       ward: phuong || null,
       district: he === "cu" ? quan || null : null,
       province: tinh,
@@ -355,12 +409,14 @@ export default function DangTin() {
           legal: phapLy || undefined,
           direction: huong || undefined,
           furnish: noiThat || undefined,
+          amenities: tienIch,
+          interior: coNoiThat(loaiGoc) ? noiThatDs : [],
           project: undefined,
           projectName: undefined,
           ...duAnLuu(),
           addressDetail: diaChi.trim() || undefined,
           contact: { ...(goc.contact ?? {}), name: ten.trim() },
-          plan: daDang ? goc.plan : { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien },
+          plan: daDang ? goc.plan : { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien, ...(batDau ? { batDau } : {}) },
         };
         const capNhat: Record<string, unknown> = daDang
           ? { ...noiDung, details }
@@ -382,9 +438,7 @@ export default function DangTin() {
     setDangGui(true);
     const specs: Record<string, string> = {};
     const loaiLuu = loai.split("::")[0];
-    Object.assign(specs, specLoai());
-    if (matTien.trim()) specs.frontage = matTien.trim();
-    if (soTang.trim()) specs.floors = soTang.trim();
+    Object.assign(specs, specLoai(), oLoaiLuu());
     const { error } = await supabase.from("listings").insert({
       purpose: nhuCau,
       type: loaiLuu,
@@ -394,6 +448,7 @@ export default function DangTin() {
       area_m2: so(dienTich),
       beds: ngu.trim() ? parseInt(ngu, 10) : null,
       baths: tam.trim() ? parseInt(tam, 10) : null,
+      built_area_m2: dtXay.trim() && !Number.isNaN(so(dtXay)) ? so(dtXay) : null,
       ward: phuong || null,
       district: he === "cu" ? quan || null : null,
       province: tinh,
@@ -404,9 +459,11 @@ export default function DangTin() {
         legal: phapLy || undefined,
         direction: huong || undefined,
         furnish: noiThat || undefined,
+        amenities: tienIch,
+        interior: coNoiThat(loaiGoc) ? noiThatDs : [],
         ...duAnLuu(),
         addressDetail: diaChi.trim() || undefined,
-        plan: { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien },
+        plan: { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien, ...(batDau ? { batDau } : {}) },
         contact: { name: ten.trim(), phone: sdt.replace(/\D/g, "") },
         nguonDang: "zalo-mini-app",
       },
@@ -454,9 +511,9 @@ export default function DangTin() {
           {xong !== "sua" && <Text className="chu-phu">
             {xong === "pending"
               ? "Coastal Land sẽ báo kết quả duyệt qua Zalo."
-              : `Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn. Tin đã lưu nháp nguyên vẹn — nạp tiền xong là đăng tiếp.`}
+              : luuNhap ? "" : `Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn. Tin đã lưu nháp nguyên vẹn — nạp tiền xong là đăng tiếp.`}
           </Text>}
-          {xong === "draft" && <Button fullWidth onClick={() => dieuHuong("/nap-tien")}>Nạp tiền để đăng tin</Button>}
+          {xong === "draft" && !luuNhap && <Button fullWidth onClick={() => dieuHuong("/nap-tien")}>Nạp tiền để đăng tin</Button>}
           <Button fullWidth variant={xong === "draft" ? "secondary" : "primary"} onClick={() => dieuHuong("/tin-cua-toi", { replace: true })}>Xem tin của tôi</Button>
           <Button fullWidth variant="secondary" onClick={() => dieuHuong("/", { replace: true })}>Về trang chủ</Button>
         </Box>
@@ -503,7 +560,7 @@ export default function DangTin() {
       </Nhom>
 
       <Nhom tieuDe="2. Thông tin chính">
-        <Input label="Diện tích (m²) *" inputMode="decimal" value={dienTich} onChange={(e) => setDienTich(e.target.value)} />
+        <Input label={`${loaiGoc ? nhanDienTich(loaiGoc) : "Diện tích (m²)"} *`} inputMode="decimal" value={dienTich} onChange={(e) => setDienTich(e.target.value)} />
         <Box flex style={{ gap: 8, alignItems: "flex-end" }}>
           <div style={{ flex: 1 }}>
             <Input label={md === "thue" ? "Giá (triệu/tháng)" : "Mức giá"} placeholder="Trống = Thỏa thuận" inputMode="decimal" value={gia} onChange={(e) => setGia(e.target.value)} />
@@ -515,26 +572,43 @@ export default function DangTin() {
             </div>
           )}
         </Box>
+        {loaiGoc && coDienTichXayDung(loaiGoc) && <Input label="Diện tích sử dụng (m²)" inputMode="decimal" placeholder="VD: 95" value={dtXay} onChange={(e) => setDtXay(e.target.value)} />}
+        {truong.chinh.filter(boLoaiCon).map(oTruong)}
       </Nhom>
 
       <Nhom tieuDe="3. Đặc điểm & tiện ích">
-        <Box flex style={{ gap: 8 }}>
-          <div style={{ flex: 1 }}><Input label="Số phòng ngủ" inputMode="numeric" value={ngu} onChange={(e) => setNgu(e.target.value.replace(/D/g, ""))} /></div>
-          <div style={{ flex: 1 }}><Input label="Số phòng tắm" inputMode="numeric" value={tam} onChange={(e) => setTam(e.target.value.replace(/D/g, ""))} /></div>
-        </Box>
-        <Box flex style={{ gap: 8 }}>
-          <div style={{ flex: 1 }}><Input label="Mặt tiền (m)" inputMode="decimal" value={matTien} onChange={(e) => setMatTien(e.target.value)} /></div>
-          <div style={{ flex: 1 }}><Input label="Số tầng" inputMode="decimal" value={soTang} onChange={(e) => setSoTang(e.target.value)} /></div>
-        </Box>
+        {loaiGoc && (coPhongNgu(loaiGoc) || coPhongTam(loaiGoc)) && (
+          <Box flex style={{ gap: 8 }}>
+            {coPhongNgu(loaiGoc) && <div style={{ flex: 1 }}><Input label="Số phòng ngủ" inputMode="numeric" value={ngu} onChange={(e) => setNgu(e.target.value.replace(/[^0-9]/g, ""))} /></div>}
+            {coPhongTam(loaiGoc) && <div style={{ flex: 1 }}><Input label="Số phòng tắm" inputMode="numeric" value={tam} onChange={(e) => setTam(e.target.value.replace(/[^0-9]/g, ""))} /></div>}
+          </Box>
+        )}
+        {truong.dacDiem.filter(boLoaiCon).map(oTruong)}
         <Select label="Hướng nhà / đất" placeholder="Chọn hướng" value={huong} onChange={(v) => setHuong(String(v))} closeOnSelect>
           {HUONG.map((h) => <Option key={h} value={h} title={h} />)}
         </Select>
         <Select label="Tình trạng pháp lý" placeholder="Chọn pháp lý" value={phapLy} onChange={(v) => setPhapLy(String(v))} closeOnSelect>
-          {PHAP_LY.map((p) => <Option key={p} value={p} title={p} />)}
+          {phapLyCho(loaiGoc || undefined).map((p) => <Option key={p} value={p} title={p} />)}
         </Select>
-        <Select label="Tình trạng nội thất" placeholder="Chọn nội thất" value={noiThat} onChange={(v) => setNoiThat(String(v))} closeOnSelect>
-          {NOI_THAT.map((p) => <Option key={p} value={p} title={p} />)}
-        </Select>
+        {(!loaiGoc || coNoiThat(loaiGoc)) && (
+          <Select label="Tình trạng nội thất" placeholder="Chọn nội thất" value={noiThat} onChange={(v) => setNoiThat(String(v))} closeOnSelect>
+            {NOI_THAT.map((p) => <Option key={p} value={p} title={p} />)}
+          </Select>
+        )}
+        {/* Danh sách nội thất như web: có nội thất (không phải "Không nội thất" / "Bàn giao thô") mới bày */}
+        {loaiGoc && coNoiThat(loaiGoc) && !!noiThat && !/^(Không nội thất|Bàn giao thô)$/.test(noiThat) && (
+          <div className="chon-nhieu">
+            {noiThatCho(loaiGoc).map((it) => <button key={it} className={noiThatDs.includes(it) ? "bat" : ""} onClick={() => setNoiThatDs((d) => bat(d, it))}>{it}</button>)}
+          </div>
+        )}
+        {loaiGoc && tienIchCho(loaiGoc).map((g) => (
+          <div key={g.group} style={{ display: "grid", gap: 6 }}>
+            <Text size="small" bold>{g.group}</Text>
+            <div className="chon-nhieu">
+              {g.items.map((it) => <button key={it} className={tienIch.includes(it) ? "bat" : ""} onClick={() => setTienIch((d) => bat(d, it))}>{it}</button>)}
+            </div>
+          </div>
+        ))}
       </Nhom>
 
       <Nhom tieuDe="4. Tiêu đề & mô tả">
@@ -557,7 +631,7 @@ export default function DangTin() {
           <div className="tom-tat-goi">
             <div><span>Loại tin</span><b>{TEN_HANG[goi.tierId] ?? goi.name}</b></div>
             <div><span>Thời gian đăng</span><b>{tien.soNgayThat} ngày</b></div>
-            <div><span>Bắt đầu hiển thị</span><b>Khi tin được duyệt</b></div>
+            <div><span>Bắt đầu hiển thị</span><b>{batDau ? batDau.split("-").reverse().join("/") : "Khi tin được duyệt"}</b></div>
             {tien.mienPhi ? (
               <div><span>Ưu đãi thành viên mới</span><b>Miễn phí</b></div>
             ) : (
@@ -569,6 +643,17 @@ export default function DangTin() {
           </div>
         )}
 
+        <Text size="small" bold>Bắt đầu hiển thị</Text>
+        <div className="tab-md">
+          <button className={!batDau ? "bat" : ""} onClick={() => setBatDau("")}>Ngay khi được duyệt</button>
+          <button className={batDau ? "bat" : ""} onClick={() => setBatDau(batDau || ngayVnSau(1))}>Chọn ngày</button>
+        </div>
+        {batDau && (
+          <label className="o-ngay">
+            <span>{batDau.split("-").reverse().join("/")}</span>
+            <input type="date" value={batDau} min={ngayVnSau(1)} max={ngayVnSau(30)} onChange={(e) => setBatDau(e.target.value)} aria-label="Ngày bắt đầu hiển thị" />
+          </label>
+        )}
       </Nhom>}
 
 
@@ -617,8 +702,28 @@ export default function DangTin() {
 
       {loi && <Box p={4}><Text size="small" style={{ color: "#d70018" }}>{loi}</Text></Box>}
 
+      <Sheet visible={xemTruoc} onClose={() => setXemTruoc(false)} autoHeight mask handler swipeToClose>
+        <Box p={4} style={{ maxHeight: "80vh", overflowY: "auto" }}>
+          <div style={{ pointerEvents: "none" }}>
+            <TheTinDoc tin={{
+              id: "xem-truoc", purpose: nhuCau, type: loaiGoc, title: tieuDe.trim() || "Tiêu đề tin đăng", description: moTa.trim() || null,
+              price_vnd: giaVnd(), area_m2: Number.isNaN(so(dienTich)) ? null : so(dienTich), beds: ngu ? parseInt(ngu, 10) : null, baths: tam ? parseInt(tam, 10) : null,
+              ward: phuong || null, district: he === "cu" ? quan || null : null, province: tinh, images: laVideo(video.trim()) ? [video.trim(), ...anh] : anh,
+              tier: (goi?.tierId ?? "basic") as Tin["tier"], tier_expires_at: new Date(Date.now() + 86_400_000 * (tien.soNgayThat || 7)).toISOString(),
+              published_at: new Date().toISOString(), bumped_at: null, nguoi_dang: ten || null, sdt: sdt.replace(/[^0-9]/g, "") || null,
+            }} />
+          </div>
+        </Box>
+      </Sheet>
+
       <div className="nut-chinh">
-        <Button fullWidth loading={dangGui} disabled={dangTaiAnh || tienDoVideo !== null} onClick={gui}>{daDang || tinSua?.status === "pending" ? "Cập nhật" : "Gửi tin chờ duyệt"}</Button>
+        <Box flex style={{ gap: 8 }}>
+          <Button variant="tertiary" style={{ flex: 1 }} onClick={() => setXemTruoc(true)}>Xem trước</Button>
+          {!daDang && tinSua?.status !== "pending" && (
+            <Button variant="secondary" style={{ flex: 1 }} loading={dangGui && luuNhap} disabled={dangGui || dangTaiAnh || tienDoVideo !== null} onClick={() => gui(true)}>Lưu nháp</Button>
+          )}
+          <Button style={{ flex: 1 }} loading={dangGui && !luuNhap} disabled={dangGui || dangTaiAnh || tienDoVideo !== null} onClick={() => gui(false)}>{daDang || tinSua?.status === "pending" ? "Cập nhật" : "Đăng tin"}</Button>
+        </Box>
       </div>
     </Page>
   );

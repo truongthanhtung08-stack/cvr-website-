@@ -33,7 +33,7 @@ export default function TheTinDoc({ tin }: { tin: Tin }) {
   const moTa = tomTatTin(tin);
   const ten = tin.nguoi_dang || "Coastal Land";
   const the = useRef<HTMLElement>(null);
-  useEffect(() => (the.current ? theoDoiThe(the.current, tin.id) : undefined), [tin.id]);
+  useEffect(() => (the.current && tin.id !== "xem-truoc" ? theoDoiThe(the.current, tin.id) : undefined), [tin.id]); // Xem trước ở form đăng tin: không đếm lượt hiển thị
 
   const dung = (e: React.MouseEvent) => e.stopPropagation();
   // Mở số như trang tin (XemSo): khách đã liên kết → ghi Khách quan tâm cho người đăng
