@@ -19,6 +19,13 @@ Web làm ra để **khách / thành viên tự đăng tin**. Mọi lần cập n
 Đụng mã dùng chung của các bước này (`PostListingForm`, `ImagePicker`, `uploadImage`, `nenVideo`, `ChonCoTim`, gói / ví / thanh toán, đăng nhập) → thử lại trọn ①→⑥ trên điện thoại (khổ 375 + máy thật) và máy tính. Không thử được bước nào → nói rõ bước đó chưa kiểm.
 Bài học 10/11: tin khách 1e3be917 lên web với video chỉ có tiếng (nén bỏ mất phần hình) — không ai kiểm bước ⑤.
 
+## ⛔⛔⛔ KHÔNG GỘP TÀI KHOẢN — KỂ CẢ ĐĂNG HỘ (anh chốt 14/11/2026)
+**Từ giờ KHÔNG GỘP TÀI KHOẢN gì cả, kể cả tin đăng hộ. Tài khoản nào lấy tài khoản đó** — tin của tài khoản nào thì nằm ở tài khoản đó,
+đăng nhập bằng tài khoản nào thì làm việc trên tài khoản đó. Không tự gộp, không chuyển tin sang tài khoản khác, không gộp theo số / Zalo / email.
+Duyệt tin: khách bấm gửi duyệt mới vào **Chờ duyệt**; tin nháp khách đang soạn KHÔNG đưa vào Admin; tin đăng hộ chỉ ở mục **Tin chờ duyệt**
+(nạp file), không vào chỗ của khách (một luật: `src/lib/choDuyet.ts`, commit 47d5d3b7). Cờ gộp đang tắt: `WEB_TU_GOP` (xac-minh-sdt) +
+`TU_GAN` (gopTaiKhoan.ts) — CẤM bật lại.
+
 ## ⛔⛔⛔ PHÂN QUYỀN + QUY TRÌNH LÀM VIỆC GIỮA CÁC PHIÊN (anh giao 12/11/2026)
 **Anh** quyết việc, duyệt chữ/giao diện, nhắn "Push". **Điều phối** = phiên anh đang làm việc trực tiếp (12/11: phiên 18419c5a): nhận việc
 từ anh → chia cho phiên con → nhận kết quả → KIỂM lại (web thật + điện thoại) → gom → push MỘT lần khi anh nói. Chỉ Điều phối push.
