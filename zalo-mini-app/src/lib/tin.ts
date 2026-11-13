@@ -326,3 +326,19 @@ export async function layKhuVucTrangChu(): Promise<OKhuVuc[]> {
   const kem = ds.map((k, i) => ({ k, so: so[i] }));
   return [kem[0], ...kem.slice(1).sort((a, b) => b.so - a.so)].filter(Boolean).map((x) => x.k);
 }
+
+// CHI TIẾT DỰ ÁN ĐỦ MỤC NHƯ WEB (src/app/du-an/[slug] + contentDb, 14/11/2026): bảng thông số (scale), mặt bằng, bảng giá, chủ đầu tư.
+export type DuAnDu = DuAn & {
+  scale: { label: string; value: string }[] | null;
+  ct: {
+    priceMode?: string; priceTable?: { unit?: string; area?: string; direction?: string; price?: string }[];
+    floorPlans?: { label?: string; image?: string; note?: string }[]; developmentUnit?: string; mapPin?: string; ngayCapNhat?: string;
+    developerInfo?: { logo?: string; established?: string; website?: string; desc?: string };
+  } | null;
+  updated_at: string | null;
+};
+export const layChiTietDuAn = async (slug: string) =>
+  (await doc<DuAnDu>("projects", `select=${COT_DU_AN},scale,updated_at,ct:details&status=eq.published&slug=eq.${encodeURIComponent(slug)}&limit=1`))[0] ?? null;
+// Tin thuộc dự án (details.project = mã dự án) — như mục "Tin thuộc dự án" của web
+export const layTinDuAn = (slug: string) =>
+  rest(`select=${COT}&status=eq.approved&details->>project=eq.${encodeURIComponent(slug)}&${THU_TU}&limit=20`);

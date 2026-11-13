@@ -1017,3 +1017,54 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 .lien-he .nut-zalo { width: 48px; padding: 0 !important; justify-content: center; border-color: var(--cl-line); }
 .lien-he .logo-zalo { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #0068ff; color: #fff; font-size: 9px; font-weight: 700; }
 .lien-he .nut-goi { height: 48px; border: 0 !important; border-radius: 12px !important; background: var(--cl-blue) !important; color: #fff !important; justify-content: center; }
+/* ===== CHI TIẾT DỰ ÁN = TRANG DỰ ÁN WEB ĐIỆN THOẠI (14/11/2026) ===== */
+.bang-ts { display: grid; gap: 12px; }
+.bang-ts > div { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; line-height: 24px; }
+.bang-ts span { flex: none; width: 128px; font-size: 14px; color: var(--cl-muted); }
+.bang-ts strong { min-width: 0; font-weight: 500; color: var(--cl-ink); }
+.bang-ts strong.mo { font-weight: 400; color: var(--cl-faint); }
+.ngay-cap-nhat { margin: 16px 0 0; font-size: 13px; color: var(--cl-faint); }
+.nut-ban-do { margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border: 1px solid var(--cl-line); border-radius: 10px; background: #fff; font-size: 14px; font-weight: 500; color: var(--cl-ink); }
+.ds-tien-ich { display: grid; gap: 12px; }
+.ds-tien-ich span { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 24px; color: var(--cl-body); }
+.ds-tien-ich span svg { flex: none; margin-top: 4px; color: var(--cl-blue); }
+.mat-bang { display: grid; gap: 12px; }
+.mat-bang figure { margin: 0; }
+.mat-bang img { display: block; width: 100%; border-radius: 12px; border: 1px solid var(--cl-line); }
+.mat-bang figcaption { margin-top: 6px; font-size: 13px; color: var(--cl-muted); }
+.bang-gia-da { border: 1px solid var(--cl-line); border-radius: 12px; overflow: hidden; }
+.bang-gia-da > div { display: grid; grid-template-columns: 1.4fr 1fr .8fr 1fr; gap: 6px; padding: 12px 14px; font-size: 14px; color: var(--cl-body); border-top: 1px solid var(--cl-line); }
+.bang-gia-da > div.dau { border-top: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--cl-muted); }
+.bang-gia-da > div > span:first-child { font-weight: 500; color: var(--cl-ink); }
+.bang-gia-da > div > span:last-child { text-align: right; font-weight: 600; color: var(--cl-ink); }
+.cdt-dau { display: flex; align-items: center; gap: 12px; }
+.cdt-dau img { width: 48px; height: 48px; border-radius: 10px; object-fit: contain; background: #fff; border: 1px solid var(--cl-line); }
+.cdt-dau strong { display: block; font-size: 16px; color: var(--cl-ink); }
+.cdt-dau small { display: block; margin-top: 2px; font-size: 14px; color: var(--cl-muted); }
+/* ===== TIN TỨC = TRANG TIN TỨC WEB ĐIỆN THOẠI (14/11/2026) ===== */
+.gioi-thieu-tt { margin: -4px 24px 20px; text-align: center; font-size: 14px; line-height: 1.5; color: var(--cl-muted); }
+.ds-bai { display: grid; gap: 28px; padding: 0 16px 24px; }
+.bai-noi-bat { position: relative; border-radius: 4px; overflow: hidden; aspect-ratio: 1.618 / 1; background: var(--cl-surface); }
+.bai-noi-bat > img, .bai-noi-bat > .anh-trong { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bai-noi-bat > div { position: absolute; inset: auto 0 0 0; padding: 40px 18px 16px; background: linear-gradient(to top, rgba(0,0,0,.72), rgba(0,0,0,0)); color: #fff; }
+.bai-noi-bat h2 { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bai-noi-bat p { margin: 6px 0 0; font-size: 12px; opacity: .9; }
+.bai-dong .bai-anh { aspect-ratio: 1.618 / 1; border-radius: 4px; overflow: hidden; background: var(--cl-surface); }
+.bai-dong .bai-anh img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bai-dong h3 { margin: 12px 0 0; font-size: 16px; font-weight: 600; line-height: 1.45; color: var(--cl-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bai-dong .tom-tat { margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: var(--cl-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bai-dong .phu { margin: 6px 0 0; font-size: 12px; color: var(--cl-muted); }
+.bai-viet { padding: 16px; }
+.bai-viet .nhan-muc { display: inline-block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--cl-blue); }
+.bai-viet h1 { margin: 8px 0 0; font-size: 24px; font-weight: 600; line-height: 1.3; color: var(--cl-ink); letter-spacing: -0.01em; }
+.bai-viet .ngay-bai { margin: 8px 0 16px; font-size: 13px; color: var(--cl-muted); }
+.bai-viet .anh-bai { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; display: block; margin-bottom: 16px; }
+.bai-khac { padding: 8px 16px 32px; border-top: 1px solid var(--cl-line); }
+.bai-khac h2 { margin: 16px 0 12px; font-size: 20px; font-weight: 600; color: var(--cl-ink); }
+.dong-bai-khac { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--cl-surface); }
+.dong-bai-khac img { flex: none; width: 96px; height: 64px; border-radius: 4px; object-fit: cover; }
+.dong-bai-khac b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--cl-ink); }
+.dong-bai-khac small { display: block; margin-top: 4px; font-size: 12px; color: var(--cl-muted); }
+/* Bảng Khu vực: dòng quay lại danh sách tỉnh · hàng nút Lọc thêm (như web: Đặt lại · Áp dụng) */
+.dong-lui span { color: var(--cl-blue); font-weight: 500; }
+.hang-nut-loc { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

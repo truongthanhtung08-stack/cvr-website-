@@ -4,7 +4,7 @@ import TieuDe from "../components/TieuDe";
 import { useParams, useSearchParams } from "react-router-dom";
 import DanhSachTin from "../components/DanhSachTin";
 import ThanhLoc from "../components/ThanhLoc";
-import { BO_LOC_TRONG, type BoLoc, type MucDich } from "../lib/boLoc";
+import { BO_LOC_TRONG, type BoLoc, type MucDich, soBoLocDangBat } from "../lib/boLoc";
 import { layTinhCoTin, locTin } from "../lib/tin";
 import { useTai } from "../lib/useTai";
 import { usePhien } from "../lib/supabase";
@@ -34,7 +34,7 @@ export default function DanhSach() {
 
   const dsTinh = useTai(() => layTinhCoTin(md), [md], []);
   const { data, dangTai, loi } = useTai(() => locTin(md, boLoc), [md, JSON.stringify(boLoc)], []);
-  const noi = boLoc.khuVuc ?? boLoc.tinh;
+  const noi = boLoc.phuong ?? boLoc.khuVuc ?? boLoc.tinh;
 
   return (
     <Page style={{ paddingBottom: 72 }}>
@@ -52,7 +52,7 @@ export default function DanhSach() {
           {noi ? ` ${noi}` : ""} tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
         </h1>
         {/* Như web: nút Nhận tin mới chỉ hiện khi khách đang lọc */}
-        {(boLoc.tinh || boLoc.khuVuc || boLoc.loai || boLoc.gia || boLoc.dienTich) && (
+        {soBoLocDangBat(boLoc) > 0 && (
           <button className="nut-chuong" disabled={!!luu} onClick={nhanTinMoi}>{luu ?? "Nhận tin mới"}</button>
         )}
       </div>

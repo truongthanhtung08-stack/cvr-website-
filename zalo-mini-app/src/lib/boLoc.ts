@@ -5,6 +5,10 @@ export type MucDich = "ban" | "thue";
 
 export type BoLoc = {
   tinh?: string;
+  phuong?: string; // phường / xã của tỉnh đang chọn (bảng Khu vực như web: tỉnh → phường)
+  huong?: string; // Lọc thêm như web: details.direction
+  phapLy?: string; // details.legal
+  noiThat?: string; // details.furnish
   khuVuc?: string; // địa danh gõ tự do (Quy Nhơn, Nha Trang…) — dò chuỗi con trong địa chỉ như web
   loai?: string; // nhãn loại hình
   gia?: string; // nhãn mức giá
@@ -79,11 +83,20 @@ export const SAP_XEP: { gt: BoLoc["sapXep"]; nhan: string }[] = [
   { gt: "dt-giam", nhan: "Diện tích lớn nhất" },
 ];
 
+// LỌC THÊM — danh sách chép từ web (src/lib/listingSpec.ts directions · legalOptions · furnishLevels)
+export const HUONG_LOC = ["Đông", "Tây", "Nam", "Bắc", "Đông Bắc", "Đông Nam", "Tây Bắc", "Tây Nam"];
+export const PHAP_LY_LOC = ["Sổ đỏ chính chủ", "Sổ hồng chính chủ", "Hợp đồng mua bán", "Hợp đồng góp vốn", "Đang chờ sổ", "Sổ chung / vi bằng", "Giấy tờ tay"];
+export const NOI_THAT_LOC = ["Không nội thất", "Bàn giao thô", "Nội thất cơ bản", "Nội thất đầy đủ", "Nội thất cao cấp"];
+
 // Bộ lọc → tham số PostgREST.
 export function thamSo(md: MucDich, b: BoLoc): string {
   const q: string[] = [];
   const nhomOr: string[] = []; // nhiều nhóm "hoặc" → gộp and=(or(..),or(..)) cho PostgREST
   if (b.tinh) q.push(`province=eq.${encodeURIComponent(b.tinh)}`);
+  if (b.phuong) q.push(`ward=eq.${encodeURIComponent(b.phuong)}`);
+  if (b.huong) q.push(`details->>direction=eq.${encodeURIComponent(b.huong)}`);
+  if (b.phapLy) q.push(`details->>legal=eq.${encodeURIComponent(b.phapLy)}`);
+  if (b.noiThat) q.push(`details->>furnish=eq.${encodeURIComponent(b.noiThat)}`);
   if (b.khuVuc) {
     const k = encodeURIComponent(b.khuVuc.replace(/[(),*]/g, " "));
     nhomOr.push(`or(province.ilike.*${k}*,ward.ilike.*${k}*,district.ilike.*${k}*)`);
@@ -111,4 +124,4 @@ export function thamSo(md: MucDich, b: BoLoc): string {
   return q.join("&");
 }
 
-export const soBoLocDangBat = (b: BoLoc) => [b.tinh, b.khuVuc, b.loai, b.gia, b.dienTich].filter(Boolean).length;
+export const soBoLocDangBat = (b: BoLoc) => [b.tinh, b.phuong, b.khuVuc, b.loai, b.gia, b.dienTich, b.huong, b.phapLy, b.noiThat].filter(Boolean).length;

@@ -1,17 +1,22 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Button, Icon, Sheet, Text } from "zmp-ui";
 import BieuTuongWeb from "./BieuTuongWeb";
-import { dtTheo, giaTheo, loaiTheo, SAP_XEP, type BoLoc, type MucDich } from "../lib/boLoc";
+import { dtTheo, giaTheo, HUONG_LOC, loaiTheo, NOI_THAT_LOC, PHAP_LY_LOC, type BoLoc, type MucDich } from "../lib/boLoc";
+import { provincesNew } from "../lib/provincesNew";
 
-type O = "tinh" | "loai" | "gia" | "dienTich" | "sapXep";
+type O = "tinh" | "loai" | "gia" | "dienTich" | "them";
+const boDau = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
 
-// Thanh lọc gọn kiểu Zalo: hàng nút trượt ngang, bấm nút nào mở bảng chọn dưới lên.
+// THANH LỌC = BỘ LỌC WEB ĐIỆN THOẠI (FilterBar, 14/11/2026 "web một nẻo, đây một nẻo"): Toàn quốc · Loại BĐS · Khoảng giá · Diện tích ·
+// Lọc thêm (web điện thoại không có ô sắp xếp). Khu vực: ô tìm + tỉnh/thành → phường/xã của tỉnh đó (có "Tất cả <tỉnh>").
+// Chọn một ô thì tìm ngay; Lọc thêm chọn nhiều mục → Áp dụng mới tìm (luật bộ lọc đã chốt).
 export default function ThanhLoc({ md, boLoc, doi, dsTinh }: { md: MucDich; boLoc: BoLoc; doi: (b: BoLoc) => void; dsTinh: string[] }) {
   const [mo, setMo] = useState<O | null>(null);
+  const [tu, setTu] = useState("");
+  const [tinhMo, setTinhMo] = useState<string | null>(null); // đang xem phường của tỉnh này
+  const [them, setThem] = useState({ huong: boLoc.huong, phapLy: boLoc.phapLy, noiThat: boLoc.noiThat });
 
-  // BÁM NGAY DƯỚI THANH TIÊU ĐỀ khi cuộn. Không đặt số cố định: chiều cao thanh tiêu đề
-  // mỗi nơi một khác (Zalo, trình duyệt trong Zalo, máy có tai thỏ) — đo thật trên máy khách:
-  // mép dưới thanh tiêu đề − (mép trên khung cuộn + lớp đệm trên) = khoảng cách bám.
+  // BÁM NGAY DƯỚI THANH TIÊU ĐỀ khi cuộn (đo thật trên máy khách — chiều cao thanh tiêu đề mỗi nơi một khác).
   const thanh = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = thanh.current;
@@ -19,7 +24,6 @@ export default function ThanhLoc({ md, boLoc, doi, dsTinh }: { md: MucDich; boLo
     const dau = (khung?.querySelector(".zaui-header") ?? document.querySelector(".zaui-header")) as HTMLElement | null;
     if (!el || !khung) return;
     const dat = () => {
-      // Trình duyệt tính chỗ bám từ mép trong khung cuộn (đã trừ lớp đệm trên chừa cho thanh tiêu đề).
       const dem = parseFloat(getComputedStyle(khung).paddingTop) || 0;
       const top = (dau ? dau.getBoundingClientRect().bottom : 0) - khung.getBoundingClientRect().top - dem;
       el.style.top = `${Math.max(0, Math.round(top))}px`;
@@ -29,59 +33,99 @@ export default function ThanhLoc({ md, boLoc, doi, dsTinh }: { md: MucDich; boLo
     return () => window.removeEventListener("resize", dat);
   }, []);
 
-  const luaChon: Record<O, { tieuDe: string; ds: string[] }> = {
-    tinh: { tieuDe: "Toàn quốc", ds: dsTinh },
-    loai: { tieuDe: "Loại BĐS", ds: loaiTheo(md).map((l) => l.nhan) },
-    gia: { tieuDe: "Khoảng giá", ds: giaTheo(md).map((g) => g.nhan) },
-    dienTich: { tieuDe: "Diện tích", ds: dtTheo(md).map((d) => d.nhan) },
-    sapXep: { tieuDe: "Sắp xếp", ds: SAP_XEP.map((s) => s.nhan) },
+  const moBang = (o: O) => {
+    setTu("");
+    setTinhMo(o === "tinh" && boLoc.tinh ? boLoc.tinh : null);
+    if (o === "them") setThem({ huong: boLoc.huong, phapLy: boLoc.phapLy, noiThat: boLoc.noiThat });
+    setMo(o);
   };
-
-  const giaTriNut = (o: O) =>
-    o === "sapXep"
-      ? SAP_XEP.find((s) => s.gt === boLoc.sapXep)!.nhan
-      : o === "tinh"
-        ? boLoc.tinh ?? boLoc.khuVuc // ô khu vực trang chủ (Quy Nhơn…) hiện ở nút Khu vực
-        : (boLoc[o] as string | undefined);
-
-  const chon = (o: O, v?: string) => {
-    if (o === "sapXep") doi({ ...boLoc, sapXep: SAP_XEP.find((s) => s.nhan === v)?.gt ?? "moi" });
-    else if (o === "tinh") doi({ ...boLoc, tinh: v, khuVuc: undefined });
-    else doi({ ...boLoc, [o]: v });
-    setMo(null);
+  const dong = () => setMo(null);
+  const loc = (ds: string[]) => {
+    const k = boDau(tu.trim());
+    if (!k) return ds;
+    const dau = ds.filter((x) => boDau(x).startsWith(k));
+    return [...dau, ...ds.filter((x) => !dau.includes(x) && boDau(x).includes(k))];
   };
+  const dsPhuong = useMemo(() => (tinhMo ? provincesNew.find((p) => p.name === tinhMo)?.wards ?? [] : []), [tinhMo]);
+  const soThem = [boLoc.huong, boLoc.phapLy, boLoc.noiThat].filter(Boolean).length;
+
+  const nhanNut = (o: O) =>
+    o === "tinh" ? (boLoc.phuong ? `${boLoc.phuong}` : boLoc.tinh ?? boLoc.khuVuc ?? "Toàn quốc")
+      : o === "loai" ? boLoc.loai ?? "Loại BĐS"
+        : o === "gia" ? boLoc.gia ?? "Khoảng giá"
+          : o === "dienTich" ? boLoc.dienTich ?? "Diện tích"
+            : soThem ? `Lọc thêm (${soThem})` : "Lọc thêm";
+  const dangBat = (o: O) =>
+    o === "tinh" ? !!(boLoc.tinh || boLoc.khuVuc || boLoc.phuong) : o === "them" ? soThem > 0 : !!boLoc[o];
+
+  const Dong = ({ chu, dang, bam }: { chu: string; dang: boolean; bam: () => void }) => (
+    <div className="dong-chon" onClick={bam}><span>{chu}</span>{dang && <BieuTuongWeb ten="dau" co={24} />}</div>
+  );
+  const ChonMot = ({ nhan, ds, gt, dat }: { nhan: string; ds: string[]; gt?: string; dat: (v?: string) => void }) => (
+    <div style={{ display: "grid", gap: 8 }}>
+      <Text size="small" bold>{nhan}</Text>
+      <div className="chon-nhieu">
+        {ds.map((v) => <button key={v} className={gt === v ? "bat" : ""} onClick={() => dat(gt === v ? undefined : v)}>{v}</button>)}
+      </div>
+    </div>
+  );
 
   return (
     <>
       <div ref={thanh} className="thanh-loc">
-        {(["tinh", "loai", "gia", "dienTich", "sapXep"] as O[]).map((o) => {
-          const gt = giaTriNut(o);
-          const bat = o !== "sapXep" && !!gt;
-          return (
-            <button key={o} className={bat ? "bat" : ""} onClick={() => setMo(o)}>
-              {gt ?? luaChon[o].tieuDe}
-              <Icon icon="zi-chevron-down" size={16} />
-            </button>
-          );
-        })}
+        {(["tinh", "loai", "gia", "dienTich", "them"] as O[]).map((o) => (
+          <button key={o} className={dangBat(o) ? "bat" : ""} onClick={() => moBang(o)}>
+            {nhanNut(o)}
+            <Icon icon="zi-chevron-down" size={16} />
+          </button>
+        ))}
       </div>
-      <Sheet visible={mo !== null} onClose={() => setMo(null)} autoHeight mask handler swipeToClose>
-        {mo && (
+      <Sheet visible={mo !== null} onClose={dong} autoHeight mask handler swipeToClose>
+        {mo === "tinh" && (
+          <Box p={4} style={{ display: "grid", gap: 8 }}>
+            <Text.Title size="normal">{tinhMo ? tinhMo : "Khu vực"}</Text.Title>
+            <input className="o-tim-bang" placeholder={tinhMo ? "Tìm phường / xã" : "Tìm tỉnh / thành"} value={tu} onChange={(e) => setTu(e.target.value)} />
+            <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
+              {tinhMo ? (
+                <>
+                  <div className="dong-chon dong-lui" onClick={() => { setTinhMo(null); setTu(""); }}><span>‹ Tỉnh / thành khác</span></div>
+                  <Dong chu={`Tất cả ${tinhMo}`} dang={boLoc.tinh === tinhMo && !boLoc.phuong} bam={() => { doi({ ...boLoc, tinh: tinhMo, phuong: undefined, khuVuc: undefined }); dong(); }} />
+                  {loc(dsPhuong).map((w) => (
+                    <Dong key={w} chu={w} dang={boLoc.phuong === w} bam={() => { doi({ ...boLoc, tinh: tinhMo, phuong: w, khuVuc: undefined }); dong(); }} />
+                  ))}
+                </>
+              ) : (
+                <>
+                  <Dong chu="Toàn quốc" dang={!boLoc.tinh && !boLoc.khuVuc} bam={() => { doi({ ...boLoc, tinh: undefined, phuong: undefined, khuVuc: undefined }); dong(); }} />
+                  {loc(dsTinh).map((t) => (
+                    <div key={t} className="dong-chon" onClick={() => { setTinhMo(t); setTu(""); }}>
+                      <span>{t}</span>{boLoc.tinh === t ? <BieuTuongWeb ten="dau" co={24} /> : <Icon icon="zi-chevron-right" size={18} />}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </Box>
+        )}
+        {(mo === "loai" || mo === "gia" || mo === "dienTich") && (
           <Box p={4} style={{ maxHeight: "70vh", overflowY: "auto" }}>
-            <Text.Title size="normal" style={{ marginBottom: 8 }}>{luaChon[mo].tieuDe}</Text.Title>
-            {mo !== "sapXep" && (
-              <div className="dong-chon" onClick={() => chon(mo, undefined)}>
-                <span>Tất cả</span>
-                {!giaTriNut(mo) && <BieuTuongWeb ten="dau" co={24} />}
-              </div>
-            )}
-            {luaChon[mo].ds.map((v) => (
-              <div key={v} className="dong-chon" onClick={() => chon(mo, v)}>
-                <span>{v}</span>
-                {giaTriNut(mo) === v && <BieuTuongWeb ten="dau" co={24} />}
-              </div>
+            <Text.Title size="normal" style={{ marginBottom: 8 }}>{{ loai: "Loại BĐS", gia: "Khoảng giá", dienTich: "Diện tích" }[mo]}</Text.Title>
+            <Dong chu="Tất cả" dang={!boLoc[mo]} bam={() => { doi({ ...boLoc, [mo]: undefined }); dong(); }} />
+            {(mo === "loai" ? loaiTheo(md).map((l) => l.nhan) : mo === "gia" ? giaTheo(md).map((g) => g.nhan) : dtTheo(md).map((d) => d.nhan)).map((v) => (
+              <Dong key={v} chu={v} dang={boLoc[mo] === v} bam={() => { doi({ ...boLoc, [mo]: v }); dong(); }} />
             ))}
-            <Box mt={3}><Button fullWidth variant="secondary" onClick={() => setMo(null)}>Đóng</Button></Box>
+          </Box>
+        )}
+        {mo === "them" && (
+          <Box p={4} style={{ display: "grid", gap: 16, maxHeight: "75vh", overflowY: "auto" }}>
+            <Text.Title size="normal">Lọc thêm</Text.Title>
+            <ChonMot nhan="Hướng nhà" ds={HUONG_LOC} gt={them.huong} dat={(v) => setThem((x) => ({ ...x, huong: v }))} />
+            <ChonMot nhan="Pháp lý" ds={PHAP_LY_LOC} gt={them.phapLy} dat={(v) => setThem((x) => ({ ...x, phapLy: v }))} />
+            <ChonMot nhan="Nội thất" ds={NOI_THAT_LOC} gt={them.noiThat} dat={(v) => setThem((x) => ({ ...x, noiThat: v }))} />
+            <div className="hang-nut-loc">
+              <Button variant="secondary" onClick={() => setThem({ huong: undefined, phapLy: undefined, noiThat: undefined })}>Đặt lại</Button>
+              <Button onClick={() => { doi({ ...boLoc, ...them }); dong(); }}>Áp dụng</Button>
+            </div>
           </Box>
         )}
       </Sheet>
