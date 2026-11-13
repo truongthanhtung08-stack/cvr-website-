@@ -53,6 +53,10 @@ lõi của nó (nhóm ý định, gợi ý Google, trang top, tin, cách tính, 
 + 78 dòng **CHA TỔNG** "Nhà đất / Bất động sản + địa điểm" (gợi ý Google 12 nơi; giá · thị trường → /gia-nha-dat/<tỉnh>, dự án → /du-an/<tỉnh>,
 còn lại → /mua-ban|cho-thue/<tỉnh>[/thành phố]) → bảng 694 dòng. Tra Google 13/11: "nhà đất đà nẵng" và "bất động sản đà nẵng" — coastalland KHÔNG
 có trong top 9 (top: batdongsan/nhatot "Mua Bán Nhà Đất Đà Nẵng Giá Rẻ T11/2026"). /mua-ban/da-nang là TRANG_TOP (giữ tiêu đề) — anh quyết.
++ cột A **Lộ trình** (1 BĐS + địa điểm → 2 Nhà đất + địa điểm → 3 Loại hình + địa điểm), LONGTAIL mọi dòng = Lõi + Đặc điểm ·
++ 125 dòng **"Đặc điểm (Google tra)"**: tra Google trên Chrome anh 31/192 lõi (top 10 đối thủ → ý định; "Mọi người cũng tìm kiếm" → longtail
+xếp đúng lõi) — Google CHẶN sau ~40 câu (lưu lượng bất thường), còn ~160 lõi chưa tra → tra tiếp mỗi ngày ~25 câu, cách nhau vài giây,
+công cụ scratchpad `tra-ghep.cjs` (vào `tra-google.json`) → `thong-nhat.mjs`. Bảng 819 dòng, chữ lõi lên web 0 khác.
 **Commit e4c2fe2e (CHƯA PUSH, build qua):** Admin → Từ khoá lõi có tab "Đặc điểm (longtail)" đọc cùng sheet. Sau Push: Admin tải lại bảng
 (chữ lõi không đổi — đã so bằng bộ đọc Admin: 0 khác) → tab Đặc điểm hiện. Chưa xem giao diện Admin (cần tải bảng = ghi CSDL thật).
 Công cụ scratchpad phiên 18419c5a: `ghep.mjs` → `lt-ghi2.mjs` (Longtail) · `dd-loai.json` (gợi ý Google 17 loại × 6 thành phố) ·
