@@ -230,6 +230,7 @@ export function duongDan(dk: DieuKien): string {
     return `${g}/${dk.cat.slug}/${dk.tinh.slug}${duoi ? `/${duoi}` : ""}`;
   }
   if (dk.kiet) return `${g}/${dk.tinh.slug}/${KIET_SLUG}`;
+  if (dk.giaDuoi) return `${g}/${dk.tinh.slug}/${dk.giaDuoi.slug}`; // cha tổng + mức giá (13/11/2026)
   if (dk.thanhPho) return `${g}/${dk.tinh.slug}/${dk.thanhPho.slug}`;
   return `${g}/${dk.tinh.slug}${dk.phuong ? `/${slugKhuVuc(dk.phuong)}` : ""}`;
 }
@@ -252,7 +253,7 @@ export function tieuDe(dk: DieuKien): string {
     ].filter(Boolean).join(" ");
   }
   if (dk.kiet) return `Bán nhà kiệt, hẻm ${noi}`;
-  return `${nhaDat(dk.muc, dk.tinh, duongDan(dk))} ${noi}`;
+  return `${nhaDat(dk.muc, dk.tinh, duongDan(dk))} ${noi}${dk.giaDuoi ? ` ${dk.giaDuoi.nhan}` : ""}`;
 }
 
 // Mô tả cho Google — câu chủ dự án duyệt 24/10/2026 (mỗi trang một đoạn riêng từ chính các tin của trang, Google/AI
@@ -332,7 +333,7 @@ export function cha(dk: DieuKien): DieuKien | null {
   if (dk.duong || dk.kiet) return { muc, tinh };
   if (dk.huong) return cat ? { muc, tinh, cat } : { muc, tinh };
   if (cat && (dk.phuong || dk.thanhPho || dk.giaDuoi || dk.phapLy || dk.phongNgu)) return { muc, tinh, cat };
-  if (dk.phuong || dk.thanhPho || cat) return { muc, tinh };
+  if (dk.phuong || dk.thanhPho || dk.giaDuoi || cat) return { muc, tinh };
   return null;
 }
 
@@ -370,6 +371,8 @@ export function giaiMaDanhSach(muc: Muc, loai: string, rest: string[], tin: List
   const tinh = timKhuVuc(loai);
   if (!tinh || rest.length !== 1) return null;
   if (muc === "ban" && rest[0] === KIET_SLUG) return { muc, tinh, kiet: true };
+  const giaTinh = GIA_DUOI[muc].find((g) => g.slug === rest[0]);
+  if (giaTinh) return { muc, tinh, giaDuoi: giaTinh };
   const tp = timThanhPho(tinh, rest[0]);
   if (tp) return { muc, tinh, thanhPho: tp };
   const phuong = timPhuong(tin, tinh, rest[0]);
@@ -414,6 +417,9 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
   if (!tinh) return [];
   const phuong = phuongCuaTin(l) || undefined;
   const ds: DieuKien[] = [{ muc, tinh }];
+  // CHA TỔNG + MỨC GIÁ (anh 13/11/2026: "xây đặc điểm cho lõi chung theo gợi ý Google" — "nhà đất đà nẵng dưới 1 / 2 / 3 tỷ"):
+  // mọi loại hình, cùng mốc giá với trang loại hình; mở trang theo cùng cổng (≥ 5 tin, khác rõ trang tỉnh, không trùng mốc bên cạnh)
+  for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, giaDuoi: g });
   if (phuong) ds.push({ muc, tinh, phuong });
   const thanhPho = phuong ? thanhPhoCuaPhuong(tinh.name, phuong) : undefined;
   if (thanhPho) ds.push({ muc, tinh, thanhPho });
@@ -596,6 +602,7 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   them("Theo loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong), (p) => tieuDe(p.dk));
   them("Theo thành phố", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "thanhPho")), (p) => tieuDe(p.dk));
   them("Theo phường, xã", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "phuong")), (p) => p.dk.phuong!);
+  if (!dk.cat && !dk.phuong && !dk.thanhPho && !dk.giaDuoi) them("Theo mức giá", ds.filter((p) => cungTinh(p) && !p.dk.cat && chiCo(p, "giaDuoi")), (p) => tieuDe(p.dk));
   if (dk.cat) {
     them("Theo mức giá", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "giaDuoi")), (p) => viHoa(p.dk.giaDuoi!.nhan));
     them("Theo số phòng ngủ", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "phongNgu")), (p) => viHoa(phongNguNhan(p.dk.phongNgu!)));
