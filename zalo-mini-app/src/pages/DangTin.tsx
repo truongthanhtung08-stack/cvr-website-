@@ -365,8 +365,7 @@ export default function DangTin() {
       <Page style={{ background: "#fff" }}>
         <TieuDe title={maSua ? "Sửa tin" : "Đăng tin"} ve="/" />
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
-          <Text.Title size="large">Liên kết tài khoản để đăng tin</Text.Title>
-          <Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`)}>Liên kết tài khoản</Button>
+          <Button fullWidth onClick={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`)}>Thử lại</Button>
         </Box>
       </Page>
     );

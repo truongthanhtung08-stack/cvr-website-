@@ -5,7 +5,7 @@ import { goiHotline, nhanCoastalLand, quanTamOA } from "../lib/zalo";
 import { createShortcut, favoriteApp, requestSendNotification } from "zmp-sdk";
 import { useTai } from "../lib/useTai";
 import { soVN, supabase, usePhien } from "../lib/supabase";
-import { DA_DANG_XUAT, lienKetZalo } from "../lib/lienKet";
+import { lienKetZalo, vaoNgay } from "../lib/lienKet";
 
 // ============================================================================
 // CÁ NHÂN — GỌN NHƯNG ĐỦ (chủ dự án 06/11/2026). Mục = ĐÚNG menu Tài khoản của web (src/app/tai-khoan/layout.tsx MUC_CHINH +
@@ -30,7 +30,6 @@ export default function TaiKhoan() {
   );
   const h = hoSo.data;
   const [dangLk, setDangLk] = React.useState(false);
-  const [loiLk, setLoiLk] = React.useState(false);
 
   const NHOM: { ten: string; muc: Muc[] }[] = [
     { ten: "Quản lý", muc: [
@@ -89,12 +88,9 @@ export default function TaiKhoan() {
             )}
           </>
         ) : (
-          // Bấm là Zalo hỏi quyền ngay (12/11/2026). Câu giải thích anh duyệt 09/11 đặt ngay dưới nút — Zalo 6.1: nói rõ lấy gì, để làm gì trước khi xin quyền.
+          // Mở app là vào bằng Zalo (lib/lienKet). Chỉ khi lần vào ngầm hỏng (mạng) mới có nút này — bấm là vào lại bằng Zalo.
           <div className="tk-lien-ket">
-            <Button fullWidth loading={dangLk} onClick={async () => { setDangLk(true); setLoiLk(false); const ok = await lienKetZalo(); setDangLk(false); setLoiLk(!ok); }}>Liên kết tài khoản</Button>
-            <p>Dùng tên và ảnh đại diện Zalo để tạo tài khoản Coastal Land: đăng tin, lưu tin, nạp tiền và nhận thông báo.</p>
-            {loiLk && <p className="loi">Chưa liên kết được. Vui lòng thử lại.</p>}
-            <button className="tk-lk-so" onClick={() => dieuHuong("/dang-nhap?so=1")}>Liên kết bằng số điện thoại</button>
+            <Button fullWidth loading={dangLk} onClick={async () => { setDangLk(true); await vaoNgay(); setDangLk(false); }}>Thử lại</Button>
           </div>
         )}
       </div>
@@ -111,14 +107,6 @@ export default function TaiKhoan() {
           ))}
         </section>
       ))}
-      {nguoiDung && (
-        <section className="tk-nhom">
-          <button className="tk-muc tk-dang-xuat" onClick={() => { try { localStorage.setItem(DA_DANG_XUAT, "1"); } catch { /* bỏ qua */ } void supabase.auth.signOut(); }}>
-            <Icon icon="zi-leave" />
-            <span className="tk-muc-ten">Đăng xuất</span>
-          </button>
-        </section>
-      )}
     </Page>
   );
 }
