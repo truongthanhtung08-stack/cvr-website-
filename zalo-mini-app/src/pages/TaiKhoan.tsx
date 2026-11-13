@@ -14,15 +14,18 @@ import { DA_DANG_XUAT, lienKetZalo } from "../lib/lienKet";
 // Không câu giải thích (CLAUDE.md "CẤM chú thích vớ vẩn").
 // ============================================================================
 const vnd = (n: number) => `${n.toLocaleString("vi-VN")} đ`;
+// Tài khoản vào bằng mã Zalo (chưa cho dùng tên + ảnh): email kỹ thuật zalo_<id>@users.coastalland.vn không hiện cho khách
+const emailThat = (e?: string | null) => (e && !/@users.coastalland.vn$/i.test(e) ? e : "");
 
 type Muc = { ten: string; icon: string; app?: string; bam?: () => void; phu?: string };
 
 export default function TaiKhoan() {
   const dieuHuong = useNavigate();
   const { nguoiDung } = usePhien();
+  const [lan, setLan] = React.useState(0); // tải lại hồ sơ sau khi lấy tên + ảnh Zalo
   const hoSo = useTai(
     async () => (nguoiDung ? ((await supabase.from("profiles").select("full_name,avatar_url,phone,email,balance").eq("id", nguoiDung.id).maybeSingle()).data as { full_name?: string; avatar_url?: string; phone?: string; email?: string; balance?: number } | null) : null),
-    [nguoiDung?.id],
+    [nguoiDung?.id, lan],
     null as { full_name?: string; avatar_url?: string; phone?: string; email?: string; balance?: number } | null,
   );
   const h = hoSo.data;
@@ -78,8 +81,12 @@ export default function TaiKhoan() {
             {h?.avatar_url ? <img className="tk-anh" src={h.avatar_url} alt="" /> : <span className="tk-anh"><Icon icon="zi-user" /></span>}
             <div className="tk-ten">
               <strong>{h?.full_name || "Tài khoản"}</strong>
-              <span>{soVN(h?.phone ?? nguoiDung.phone) || h?.email || nguoiDung.email}</span>
+              <span>{soVN(h?.phone ?? nguoiDung.phone) || emailThat(h?.email) || emailThat(nguoiDung.email)}</span>
             </div>
+            {/* Vào ngầm bằng mã Zalo thì chưa có tên + ảnh: khách bấm là Zalo hỏi cho dùng tên + ảnh (hộp chuẩn của Zalo) */}
+            {!h?.avatar_url && (
+              <Button size="small" variant="secondary" loading={dangLk} onClick={async () => { setDangLk(true); await lienKetZalo(); setDangLk(false); setLan((x) => x + 1); }}>Dùng tên và ảnh Zalo</Button>
+            )}
           </>
         ) : (
           // Bấm là Zalo hỏi quyền ngay (12/11/2026). Câu giải thích anh duyệt 09/11 đặt ngay dưới nút — Zalo 6.1: nói rõ lấy gì, để làm gì trước khi xin quyền.

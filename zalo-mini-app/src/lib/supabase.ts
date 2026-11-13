@@ -19,11 +19,15 @@ export const e164 = (v: string) => {
 // +84905… → 0905…
 export const soVN = (p?: string | null) => (p ? p.replace(/^\+?84/, "0") : "");
 
+// Mở app là tự vào bằng Zalo (lib/lienKet tuVaoBangZalo): màn cần tài khoản chờ lần vào ngầm này xong mới quyết định hiện
+// "Liên kết tài khoản" — tránh nháy màn liên kết rồi mới vào form (14/11/2026).
+let choVao: Promise<unknown> = Promise.resolve();
+export function datChoVao(p: Promise<unknown>) { choVao = p.catch(() => {}); }
 export function usePhien() {
   const [phien, setPhien] = useState<Session | null>(null);
   const [san, setSan] = useState(false);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    choVao.then(() => supabase.auth.getSession()).then(({ data }) => {
       setPhien(data.session);
       setSan(true);
     });

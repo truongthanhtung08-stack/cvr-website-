@@ -1,8 +1,9 @@
 import React, { Suspense, lazy } from "react";
 import { AnimationRoutes, App, BottomNavigation, Route, SnackbarProvider, ZMPRouter, useLocation, useNavigate } from "zmp-ui";
 import IconCL from "./components/IconCL";
-import { tuVaoNeuDaChoPhep } from "./lib/lienKet";
+import { tuVaoBangZalo } from "./lib/lienKet";
 import { canBanPhim } from "./lib/banPhim";
+import { datChoVao } from "./lib/supabase";
 
 // TẢI THEO MÀN (chuẩn hiệu suất Zalo: LCP < 2,5 giây, tải trang < 1,5 giây — Chính sách kiểm duyệt mục 5.3): màn đầu (5 tab) nằm sẵn
 // trong gói chính; màn khác chỉ tải khi mở. Khung chờ = trang trắng cùng nền (không nhảy bố cục).
@@ -74,8 +75,10 @@ function ThanhDuoi() {
   );
 }
 
+// Mở app là vào tài khoản theo Zalo — chạy ngay khi tải mã (trước khi màn nào đọc phiên)
+datChoVao(tuVaoBangZalo());
+
 export default function UngDung() {
-  React.useEffect(() => { void tuVaoNeuDaChoPhep(); }, []);
   React.useEffect(() => canBanPhim(), []);
   return (
     <App>
