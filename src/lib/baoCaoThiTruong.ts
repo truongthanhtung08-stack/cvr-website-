@@ -74,6 +74,8 @@ export type DongThiTruong = {
   hang?: string;
   soDuAn?: number; nguonCung?: number; cungMoi?: number; tieuThu?: number; tyLe?: number;
   giaThap?: number; giaTB?: number; giaCao?: number; donViGia: string; bdSoCap?: number; bdThuCap?: number;
+  /** % biến động nguồn cung / tiêu thụ ĐÚNG THEO NGUỒN (DKRA công bố) — có thì trang dùng số này thay số tự tính từ các quý (nguồn hay hiệu chỉnh số quý trước) */
+  bdCung?: number; bdCungNam?: number; bdTieuThu?: number; bdTieuThuNam?: number;
   nguon: string; link?: string; ngay?: string; ghiChu?: string;
 };
 export type ChiSoKinhTe = { vung: string; tinh: string; chiSo: string; ky: string; giaTri: string; donVi: string; caNuoc: string; soCungKy: string; nguon: string; link?: string };
@@ -126,6 +128,7 @@ export function docBangBaoCao(sheet: (ten: string) => string[][] | null): KetQua
     return { vung: v, tinh: tinhMoi(g("tinh")), khuVuc: g("khu_vuc"), phanKhuc: pk, quy: q, hang: hangChuan(g("hang")), soDuAn: so(g("so_du_an")), nguonCung: so(g("nguon_cung_so_cap")),
       cungMoi: so(g("nguon_cung_moi")), tieuThu: so(g("tieu_thu")), tyLe: so(g("ty_le_tieu_thu")), giaThap: so(g("gia_thap")), giaTB: so(g("gia_tb")),
       giaCao: so(g("gia_cao")), donViGia: g("don_vi_gia") || "triệu/m²", bdSoCap: so(g("bien_dong_so_cap")), bdThuCap: so(g("bien_dong_thu_cap")),
+      bdCung: so(g("bien_dong_cung")), bdCungNam: so(g("bien_dong_cung_nam")), bdTieuThu: so(g("bien_dong_tieu_thu")), bdTieuThuNam: so(g("bien_dong_tieu_thu_nam")),
       nguon: g("nguon"), link: g("link"), ngay: g("ngay_cong_bo"), ghiChu: [g("ghi_chu"), bo(g("tinh")) !== bo(tinhMoi(g("tinh"))) ? `tỉnh cũ: ${g("tinh")}` : ""].filter(Boolean).join(" · ") };
   });
   const kinhTe = doc<ChiSoKinhTe>("KINH-TE", (g) => { const v = vungCua(g("vung"), g("tinh")); return v && g("chi_so") ? { vung: v, tinh: tinhMoi(g("tinh")), chiSo: g("chi_so"), ky: g("ky"), giaTri: g("gia_tri_tinh"), donVi: g("don_vi"), caNuoc: g("gia_tri_ca_nuoc"), soCungKy: g("so_cung_ky"), nguon: g("nguon"), link: g("link") } : null; });
@@ -234,6 +237,7 @@ export function soLieuVung(vung: VungBaoCao, bang: BaoCaoNhap | null, quy: strin
     const giua = (a: number[]) => { const z = [...a].sort((x, y) => x - y); return z.length ? z[Math.floor(z.length / 2)] : undefined; };
     let q = quy; const theoQuy: SoQuy[] = [];
     for (let i = 0; i < 5; i++) { const x = cua(pk, q); theoQuy.unshift({ quy: q, nguonCung: tongVung(x, "nguonCung"), tieuThu: tongVung(x, "tieuThu") }); q = quyTruoc(q); }
+    while (theoQuy.length && theoQuy[0].nguonCung == null && theoQuy[0].tieuThu == null) theoQuy.shift(); // quý đầu chưa có số → không vẽ cột trống
     const khu = d.filter((x) => x.khuVuc);
     const nhom = (khu.length ? khu.map((x) => [x.khuVuc, x.nguonCung ?? 0] as [string, number]) : d.map((x) => [x.tinh, x.nguonCung ?? 0] as [string, number]))
       .filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]);
@@ -245,8 +249,8 @@ export function soLieuVung(vung: VungBaoCao, bang: BaoCaoNhap | null, quy: strin
     phanKhuc.push({
       phanKhuc: pk, donVi: DON_VI_SP[pk], soDuAn: tongVung(d, "soDuAn"), nguonCung, cungMoi: tongVung(d, "cungMoi"), tieuThu,
       tyLe: ca.tyLe ?? (nguonCung && tieuThu != null ? (tieuThu / nguonCung) * 100 : undefined),
-      doiCung: pt(nguonCung, tongVung(dt, "nguonCung")), doiTieuThu: pt(tieuThu, tongVung(dt, "tieuThu")),
-      doiCungNam: pt(nguonCung, tongVung(dn, "nguonCung")), doiTieuThuNam: pt(tieuThu, tongVung(dn, "tieuThu")), doiGiaNam: pt(ca.giaTB, caNam?.giaTB),
+      doiCung: ca.bdCung ?? pt(nguonCung, tongVung(dt, "nguonCung")), doiTieuThu: ca.bdTieuThu ?? pt(tieuThu, tongVung(dt, "tieuThu")),
+      doiCungNam: ca.bdCungNam ?? pt(nguonCung, tongVung(dn, "nguonCung")), doiTieuThuNam: ca.bdTieuThuNam ?? pt(tieuThu, tongVung(dn, "tieuThu")), doiGiaNam: pt(ca.giaTB, caNam?.giaTB),
       theoHang, thuCap, donViThuCap: thuCap.length ? (pk === "Đất nền" ? "triệu/m² đất" : pk === "Căn hộ" || pk === "Condotel" ? "triệu/m² căn" : "triệu/m² sàn") : undefined,
       // Biến động giá thứ cấp: Cowork ghi theo nguồn thì dùng; trống → trung vị biến động các dãy Lịch sử giá trên web
       giaTB: ca.giaTB, donViGia: ca.donViGia, bdSoCap: ca.bdSoCap, bdThuCap: ca.bdThuCap ?? giua(thuCap.map((x) => x.doi).filter((x): x is number => x != null)), theoQuy, tyTrong,
@@ -271,13 +275,17 @@ export function soLieuVung(vung: VungBaoCao, bang: BaoCaoNhap | null, quy: strin
 // như DKRA"). Mỗi câu một khuôn, chỉ thay số; thiếu số nào thì bỏ câu đó. Anh sửa / ghi đè ở Admin trước khi đăng.
 const vn = (n: number, d = 1) => n.toLocaleString("vi-VN", { maximumFractionDigits: d });
 // Biến động: dưới 1% coi là "không có nhiều biến động" (cách DKRA ghi)
-const doi = (v?: number) => (v == null ? "" : Math.abs(v) < 1 ? "không có nhiều biến động" : v > 0 ? `tăng khoảng ${vn(Math.abs(v), 0)}%` : `giảm khoảng ${vn(Math.abs(v), 0)}%`);
+// Tăng từ 100% trở lên ghi "gấp N lần" (cách DKRA ghi, vd tiêu thụ gấp 12 lần quý trước)
+const doi = (v?: number) => (v == null ? "" : Math.abs(v) < 1 ? "không có nhiều biến động" : v >= 100 ? `gấp ${vn(1 + v / 100, 1)} lần` : v > 0 ? `tăng khoảng ${vn(Math.abs(v), 0)}%` : `giảm khoảng ${vn(Math.abs(v), 0)}%`);
+// Tỷ lệ dưới 1% giữ một số lẻ (0,6% — không làm tròn thành 1%)
+const tl = (v: number) => vn(v, v < 1 ? 1 : 0);
 export function nhanDinhTuSo(p: SoPhanKhuc): string[] {
   const ra: string[] = [];
   if (p.nguonCung != null)
     ra.push(`Nguồn cung sơ cấp ghi nhận ${vn(p.nguonCung, 0)} ${p.donVi}${p.soDuAn ? ` đến từ ${vn(p.soDuAn, 0)} dự án` : ""}${p.doiCung != null ? `, ${doi(p.doiCung)} so với quý trước` : ""}${p.doiCungNam != null ? ` và ${doi(p.doiCungNam)} so với cùng kỳ năm trước` : ""}${p.cungMoi != null && p.nguonCung ? `; nguồn cung mới chiếm khoảng ${vn((p.cungMoi / p.nguonCung) * 100, 0)}% tổng nguồn cung sơ cấp` : ""}.`);
-  if (p.tieuThu != null)
-    ra.push(`Lượng tiêu thụ đạt ${vn(p.tieuThu, 0)} ${p.donVi}${p.tyLe != null ? `, tương đương khoảng ${vn(p.tyLe, 0)}% tổng nguồn cung sơ cấp` : ""}${p.doiTieuThu != null ? `, ${doi(p.doiTieuThu)} so với quý trước` : ""}${p.doiTieuThuNam != null ? ` và ${doi(p.doiTieuThuNam)} so với cùng kỳ năm trước` : ""}.`);
+  if (p.tieuThu === 0) ra.push("Không ghi nhận tiêu thụ sơ cấp trong quý.");
+  else if (p.tieuThu != null)
+    ra.push(`Lượng tiêu thụ đạt ${vn(p.tieuThu, 0)} ${p.donVi}${p.tyLe != null ? `, tương đương khoảng ${tl(p.tyLe)}% tổng nguồn cung sơ cấp` : ""}${p.doiTieuThu != null ? `, ${doi(p.doiTieuThu)} so với quý trước` : ""}${p.doiTieuThuNam != null ? ` và ${doi(p.doiTieuThuNam)} so với cùng kỳ năm trước` : ""}.`);
   const tongH = p.theoHang.reduce((s, x) => s + (x.nguonCung ?? 0), 0);
   const hl = [...p.theoHang].sort((a, b) => (b.nguonCung ?? 0) - (a.nguonCung ?? 0))[0];
   if (hl && tongH) ra.push(`Căn hộ ${hl.hang.replace("Hạng", "hạng")} chiếm tỷ trọng lớn nhất với khoảng ${vn(((hl.nguonCung ?? 0) / tongH) * 100, 0)}% nguồn cung sơ cấp${hl.giaTB != null ? `, giá bán trung bình khoảng ${vn(hl.giaTB)} ${p.donViGia}` : ""}.`);
