@@ -184,7 +184,9 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   }, [muc, duAnLoc]);
   const [mo, setMo] = useState(false); // điện thoại: màn tìm
   // DỰNG SẴN MÀN TÌM như Airbnb (chủ dự án 17/10/2026: "giật, lag"): dựng ẩn sau khi trang rảnh, chạm vào chỉ việc hiện ra
-  // (đo trên máy chậm: dựng lúc chạm làm khựng 0,3–1,4 giây). Ẩn bằng display:none nên hiệu ứng mở vẫn chạy lại mỗi lần hiện.
+  // (đo trên máy chậm: dựng lúc chạm làm khựng 0,3–1,4 giây). ẨN BẰNG visibility (13/11/2026), không display:none: phần display:none
+  // trình duyệt không tính kiểu → lần chạm đầu phải tính kiểu cả màn tìm (đo CPU chậm 4x: 0,2–0,85 s chỉ riêng tính kiểu). Ẩn bằng
+  // visibility thì kiểu + bố cục đã tính sẵn lúc máy rảnh, chạm chỉ việc hiện ra; ẩn rồi thì không vẽ, không bấm, không nhận con trỏ.
   const [sanSang, setSanSang] = useState(false);
   useEffect(() => {
     if (!window.matchMedia("(max-width: 639px)").matches) return;
@@ -256,8 +258,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     // cú chạm. Trước đây flushSync vẽ lại cả khối tìm (kể cả bản PC đang ẩn) ~40 ms ở máy tính, 0,2 s ở điện thoại → khựng.
     const dlg = document.querySelector<HTMLElement>("[role='dialog'][aria-label='Tìm nhà đất']");
     if (dlg) {
-      dlg.classList.remove("hidden");
-      dlg.classList.add("flex");
+      dlg.classList.remove("invisible", "pointer-events-none");
       dlg.querySelector<HTMLTextAreaElement>("textarea")?.focus({ preventScroll: true });
       startTransition(() => { setDangGo(true); setMo(true); });
     } else {
@@ -844,7 +845,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
       {(mo || sanSang) && createPortal(
         // MỞ TỨC THÌ khi vào thẳng màn gõ (chủ dự án 01/11/2026: "giật, không mượt khi bấm vào ô search"): bỏ hiệu ứng nền mờ 0,45 s
         // chạy cùng lúc bàn phím bật — Google mở màn gõ ngay, không hiệu ứng
-        <div className={`${!mo ? "hidden" : dangDong ? "mb-dong flex" : dangGo ? "flex" : "mb-nen-mo flex"} fixed inset-0 z-[200] flex-col ${dangGo ? "bg-white" : "bg-[#f0f0f0]"} sm:hidden`} role="dialog" aria-modal="true" aria-hidden={!mo} aria-label="Tìm nhà đất">
+        <div className={`${!mo ? "invisible pointer-events-none flex" : dangDong ? "mb-dong flex" : dangGo ? "flex" : "mb-nen-mo flex"} fixed inset-0 z-[200] flex-col ${dangGo ? "bg-white" : "bg-[#f0f0f0]"} sm:hidden`} role="dialog" aria-modal="true" aria-hidden={!mo} aria-label="Tìm nhà đất">
           {/* KHUNG CUỘN RIÊNG: BanPhimAo ép mọi con trực tiếp của lớp phủ "max-height: 100%" khi bàn phím bật → để mỗi
               khung này chịu giới hạn, thẻ tìm bên trong giữ đủ cao và cuộn được (không bị cắt cụt). */}
           {/* CẢ MÀN TÌM CUỘN MỘT KHỐI như Google: vuốt lên thì ô gõ + hàng lọc trôi lên, gợi ý chiếm cả màn hình (trước đây danh
