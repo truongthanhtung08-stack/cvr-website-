@@ -10,7 +10,7 @@ import TinhLaiVay from "@/components/TinhLaiVay";
 import { packages, utilityTools, getPackage, tiers, trangTienIchDat } from "@/lib/packages";
 import { getBilling, getQuyDinhGia, getBaoCaoThiTruong } from "@/lib/siteContent";
 import BaoCaoThiTruong from "@/components/BaoCaoThiTruong";
-import { VUNG_BAO_CAO, soLieuVung } from "@/lib/baoCaoThiTruong";
+import { VUNG_BAO_CAO, soLieuVung, quyVuaXong } from "@/lib/baoCaoThiTruong";
 import { bangTheoMucDich } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 
@@ -58,7 +58,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
   const quyDinh = await getQuyDinhGia();
   // ĐIỂM TIN THỊ TRƯỜNG (anh 13/11/2026): menu "Báo cáo thị trường" vào thẳng báo cáo quý 3 vùng — số Cowork lọc, nạp ở Admin
   const baoCao = slug === "bao-cao-thi-truong-bds" ? await getBaoCaoThiTruong() : null;
-  const soVung = baoCao ? VUNG_BAO_CAO.map((v) => soLieuVung(v, baoCao, baoCao.quyBaoCao)) : [];
+  const soVung = VUNG_BAO_CAO.map((v) => soLieuVung(v, baoCao, baoCao?.quyBaoCao || quyVuaXong()));
 
   return (
     <>
@@ -97,6 +97,8 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
 
           {/* Tiêu đề gói. Trang tiện ích: tiêu đề cùng cỡ, cùng vị trí như Tin tức, So sánh, Chuyên gia (điện thoại 24 · máy tính 30),
               không ô biểu tượng phía trên (25/10/2026) */}
+          {/* Điểm tin thị trường: tiêu đề chính (H1) nằm trong báo cáo — bỏ đầu trang chung để không hai tiêu đề (anh 13/11/2026) */}
+          {slug !== "bao-cao-thi-truong-bds" && (
           <header className="max-w-2xl">
             {p.kind !== "tool" && (
               <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-cvr-surface text-cvr-ink ring-1 ring-inset ring-cvr-line">
@@ -106,9 +108,10 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
             <h1 className={`font-semibold leading-tight tracking-tight text-cvr-ink ${p.kind === "tool" ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"}`}>{p.title}</h1>
             <p className="mt-3 text-base leading-relaxed text-cvr-muted">{p.description}</p>
           </header>
+          )}
 
           {p.kind === "tool" ? (
-            <section className="mt-8">
+            <section className={slug === "bao-cao-thi-truong-bds" ? "" : "mt-8"}>
               {/* Công cụ đặt thẳng dưới tiêu đề — bỏ khung viền và tiêu đề lặp lại lần 2 (25/10/2026) */}
               <div>
                 {/* Giá đất Nhà nước có công cụ tra cứu thật; các tiện ích còn lại

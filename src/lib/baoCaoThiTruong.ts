@@ -8,12 +8,10 @@
 export type VungBaoCao = { id: string; ten: string; nut: string; phu: string; tinh: string[] };
 // 3 VÙNG (anh 13/11/2026). Tên tỉnh cũ của nguồn (Quảng Nam, Bình Định, Phú Yên, Bình Thuận…) cũng nhận về đúng vùng.
 export const VUNG_BAO_CAO: VungBaoCao[] = [
-  { id: "da-nang", ten: "Đà Nẵng và phụ cận", nut: "Đà Nẵng", phu: "Huế · Quảng Trị · Quảng Ngãi",
-    tinh: ["Đà Nẵng", "Quảng Nam", "Huế", "Thừa Thiên Huế", "Quảng Trị", "Quảng Bình", "Quảng Ngãi", "Kon Tum"] },
-  { id: "quy-nhon", ten: "Quy Nhơn – Gia Lai – Phú Yên", nut: "Quy Nhơn", phu: "Gia Lai · Phú Yên",
-    tinh: ["Gia Lai", "Bình Định", "Quy Nhơn", "Phú Yên", "Đắk Lắk"] },
-  { id: "nha-trang", ten: "Nha Trang – Phan Thiết – Lâm Đồng", nut: "Nha Trang", phu: "Phan Thiết · Lâm Đồng",
-    tinh: ["Khánh Hòa", "Nha Trang", "Ninh Thuận", "Lâm Đồng", "Bình Thuận", "Phan Thiết", "Đắk Nông"] },
+  // SỐ LIỆU THEO TỈNH THÀNH MỚI (anh 13/11/2026): tab + tiêu đề gọi theo tỉnh mới; tinh = tỉnh mới của vùng
+  { id: "da-nang", ten: "Đà Nẵng – Huế – Quảng Trị – Quảng Ngãi", nut: "Đà Nẵng", phu: "Huế · Quảng Trị · Quảng Ngãi", tinh: ["Đà Nẵng", "Huế", "Quảng Trị", "Quảng Ngãi"] },
+  { id: "quy-nhon", ten: "Gia Lai – Đắk Lắk", nut: "Gia Lai", phu: "Đắk Lắk", tinh: ["Gia Lai", "Đắk Lắk"] },
+  { id: "nha-trang", ten: "Khánh Hòa – Lâm Đồng", nut: "Khánh Hòa", phu: "Lâm Đồng", tinh: ["Khánh Hòa", "Lâm Đồng"] },
 ];
 
 // Phân khúc như DKRA — chỉ đúng các tên này (bảng mẫu cột phan_khuc)
@@ -26,9 +24,18 @@ export const TEN_PHAN_KHUC: Record<PhanKhuc, string> = {
 };
 export const DON_VI_SP: Record<PhanKhuc, string> = { "Đất nền": "nền", "Căn hộ": "căn", "Nhà phố / Biệt thự": "căn", "Biệt thự nghỉ dưỡng": "căn", "Shophouse nghỉ dưỡng": "căn", Condotel: "căn" };
 
+// Tỉnh CŨ / thành phố nguồn hay dùng → tỉnh MỚI (bảng sáp nhập 2025, chỉ các tỉnh thuộc 3 vùng — khớp provinceMergers ở
+// src/lib/locations.ts; không nhập bộ địa danh nặng vào trang báo cáo). Không có trong bảng → giữ nguyên.
+const TINH_MOI: Record<string, string> = {
+  "quang nam": "Đà Nẵng", "hoi an": "Đà Nẵng", "tam ky": "Đà Nẵng", "thua thien hue": "Huế", "quang binh": "Quảng Trị", "dong hoi": "Quảng Trị",
+  "dong ha": "Quảng Trị", "kon tum": "Quảng Ngãi", "binh dinh": "Gia Lai", "quy nhon": "Gia Lai", "pleiku": "Gia Lai", "phu yen": "Đắk Lắk",
+  "tuy hoa": "Đắk Lắk", "buon ma thuot": "Đắk Lắk", "ninh thuan": "Khánh Hòa", "nha trang": "Khánh Hòa", "cam ranh": "Khánh Hòa", "phan rang": "Khánh Hòa",
+  "phan rang thap cham": "Khánh Hòa", "binh thuan": "Lâm Đồng", "phan thiet": "Lâm Đồng", "mui ne": "Lâm Đồng", "da lat": "Lâm Đồng", "bao loc": "Lâm Đồng", "dak nong": "Lâm Đồng",
+};
+export const tinhMoi = (t: string) => TINH_MOI[bo(t)] ?? t.trim();
 const bo = (s: string) => (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 export function vungCua(vung: string, tinh: string): string | null {
-  const t = bo(tinh), v = bo(vung);
+  const t = bo(tinhMoi(tinh)), v = bo(vung);
   const theoTinh = t ? VUNG_BAO_CAO.find((x) => x.tinh.some((n) => bo(n) === t)) : undefined;
   if (theoTinh) return theoTinh.id;
   return VUNG_BAO_CAO.find((x) => x.id === v.replace(/ /g, "-") || [x.nut, x.ten, ...x.tinh].some((n) => v.includes(bo(n))))?.id ?? null;
@@ -109,19 +116,19 @@ export function docBangBaoCao(sheet: (ten: string) => string[][] | null): KetQua
     if (!q) { loi.push(`THI-TRUONG dòng ${d}: quý "${g("quy")}" không đọc được (ghi Q3/2026)`); return null; }
     if (!v) { loi.push(`THI-TRUONG dòng ${d}: tỉnh "${g("tinh")}" không thuộc 3 vùng`); return null; }
     if (!g("nguon")) loi.push(`THI-TRUONG dòng ${d}: thiếu nguồn`);
-    return { vung: v, tinh: g("tinh"), khuVuc: g("khu_vuc"), phanKhuc: pk, quy: q, soDuAn: so(g("so_du_an")), nguonCung: so(g("nguon_cung_so_cap")),
+    return { vung: v, tinh: tinhMoi(g("tinh")), khuVuc: g("khu_vuc"), phanKhuc: pk, quy: q, soDuAn: so(g("so_du_an")), nguonCung: so(g("nguon_cung_so_cap")),
       cungMoi: so(g("nguon_cung_moi")), tieuThu: so(g("tieu_thu")), tyLe: so(g("ty_le_tieu_thu")), giaThap: so(g("gia_thap")), giaTB: so(g("gia_tb")),
       giaCao: so(g("gia_cao")), donViGia: g("don_vi_gia") || "triệu/m²", bdSoCap: so(g("bien_dong_so_cap")), bdThuCap: so(g("bien_dong_thu_cap")),
-      nguon: g("nguon"), link: g("link"), ngay: g("ngay_cong_bo"), ghiChu: g("ghi_chu") };
+      nguon: g("nguon"), link: g("link"), ngay: g("ngay_cong_bo"), ghiChu: [g("ghi_chu"), bo(g("tinh")) !== bo(tinhMoi(g("tinh"))) ? `tỉnh cũ: ${g("tinh")}` : ""].filter(Boolean).join(" · ") };
   });
-  const kinhTe = doc<ChiSoKinhTe>("KINH-TE", (g) => { const v = vungCua(g("vung"), g("tinh")); return v && g("chi_so") ? { vung: v, tinh: g("tinh"), chiSo: g("chi_so"), ky: g("ky"), giaTri: g("gia_tri_tinh"), donVi: g("don_vi"), caNuoc: g("gia_tri_ca_nuoc"), soCungKy: g("so_cung_ky"), nguon: g("nguon"), link: g("link") } : null; });
-  const chinhSach = doc<VanBan>("CHINH-SACH", (g) => { const v = vungCua(g("vung"), g("tinh")); return v && g("so_hieu") ? { vung: v, tinh: g("tinh"), soHieu: g("so_hieu"), ngay: g("ngay_ban_hanh"), coQuan: g("co_quan"), noiDung: g("noi_dung"), hieuLuc: g("hieu_luc"), link: g("link") } : null; });
-  const haTang = doc<CongTrinh>("HA-TANG", (g) => { const v = vungCua(g("vung"), g("tinh")); return v && g("cong_trinh") ? { vung: v, tinh: g("tinh"), ten: g("cong_trinh"), moc: g("moc"), ngay: g("ngay"), von: g("von"), noiDung: g("noi_dung"), toaDo: g("toa_do"), anh: g("anh"), nguon: g("nguon"), link: g("link") } : null; });
+  const kinhTe = doc<ChiSoKinhTe>("KINH-TE", (g) => { const v = vungCua(g("vung"), g("tinh")); return v && g("chi_so") ? { vung: v, tinh: tinhMoi(g("tinh")), chiSo: g("chi_so"), ky: g("ky"), giaTri: g("gia_tri_tinh"), donVi: g("don_vi"), caNuoc: g("gia_tri_ca_nuoc"), soCungKy: g("so_cung_ky"), nguon: g("nguon"), link: g("link") } : null; });
+  const chinhSach = doc<VanBan>("CHINH-SACH", (g) => { const v = vungCua(g("vung"), g("tinh")); return v && g("so_hieu") ? { vung: v, tinh: tinhMoi(g("tinh")), soHieu: g("so_hieu"), ngay: g("ngay_ban_hanh"), coQuan: g("co_quan"), noiDung: g("noi_dung"), hieuLuc: g("hieu_luc"), link: g("link") } : null; });
+  const haTang = doc<CongTrinh>("HA-TANG", (g) => { const v = vungCua(g("vung"), g("tinh")); return v && g("cong_trinh") ? { vung: v, tinh: tinhMoi(g("tinh")), ten: g("cong_trinh"), moc: g("moc"), ngay: g("ngay"), von: g("von"), noiDung: g("noi_dung"), toaDo: g("toa_do"), anh: g("anh"), nguon: g("nguon"), link: g("link") } : null; });
   const duAn = doc<DuAnMoBan>("DU-AN-MO-BAN", (g, d) => {
     if (!g("du_an")) return null;
     const v = vungCua(g("vung"), g("tinh")), pk = phanKhucChuan(g("phan_khuc")), q = quyChuan(g("quy"));
     if (!v || !pk || !q) { loi.push(`DU-AN-MO-BAN dòng ${d}: thiếu / sai vùng, phân khúc hoặc quý`); return null; }
-    return { vung: v, tinh: g("tinh"), khuVuc: g("khu_vuc"), phanKhuc: pk, quy: q, ten: g("du_an"), chuDauTu: g("chu_dau_tu"), soDangChao: so(g("so_dang_chao")),
+    return { vung: v, tinh: tinhMoi(g("tinh")), khuVuc: g("khu_vuc"), phanKhuc: pk, quy: q, ten: g("du_an"), chuDauTu: g("chu_dau_tu"), soDangChao: so(g("so_dang_chao")),
       moBanMoi: so(g("mo_ban_moi")), daBan: so(g("da_ban")), giaThap: so(g("gia_thap")), giaTB: so(g("gia_tb")), giaCao: so(g("gia_cao")), donViGia: g("don_vi_gia") || "triệu/m²",
       chinhSach: g("chinh_sach"), ngay: g("ngay"), nguon: g("nguon"), link: g("link") };
   });
@@ -240,4 +247,10 @@ export function duBaoTuSo(p: SoPhanKhuc, sapMoBan: DuAnMoBan[]): string[] {
   if (t) ra.push(`Sức cầu ${t === "đi ngang" ? "dự kiến ổn định" : t === "tăng" ? "dự kiến tiếp tục cải thiện" : "dự kiến chưa phục hồi"}, theo xu hướng tiêu thụ ${q.length} quý gần nhất.`);
   if (p.bdSoCap != null) ra.push(`Mặt bằng giá sơ cấp ${Math.abs(p.bdSoCap) < 2 ? "dự kiến ít biến động" : p.bdSoCap > 0 ? "dự kiến giữ đà tăng" : "dự kiến còn điều chỉnh"}.`);
   return ra;
+}
+
+// Quý VỪA KẾT THÚC (báo cáo chỉ làm quý đã xong — anh 13/11/2026), dạng "2026-Q3" — dùng khi Admin chưa nạp bảng
+export function quyVuaXong(d = new Date()): string {
+  const q = Math.floor(d.getMonth() / 3);
+  return q === 0 ? `${d.getFullYear() - 1}-Q4` : `${d.getFullYear()}-Q${q}`;
 }

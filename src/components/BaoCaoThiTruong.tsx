@@ -3,6 +3,8 @@
 // DKRA, thị trường sơ cấp) nạp ở Admin — xem src/lib/baoCaoThiTruong.ts. Bố cục 3 chương như DKRA. Biểu đồ SVG ngay trong trang.
 // Phần chưa có số: trang công khai ẩn; Admin xem trước (xemThu) hiện ô viền vàng để biết còn thiếu gì.
 import { createContext, useContext, useState } from "react";
+import { loiEmail, loiSdt } from "@/lib/kiemNhap";
+import { napSupabase } from "@/lib/supabase/nap";
 import { TEN_PHAN_KHUC, diemNhan, duBaoTuSo, nhanDinhTuSo, quySau, tenQuy, type SoPhanKhuc, type SoVung } from "@/lib/baoCaoThiTruong";
 
 const XANH = ["#0066cc", "#2997ff", "#86b7ef", "#c4dcf7", "#e3eefb", "#f0f5fc"];
@@ -142,6 +144,70 @@ function PhanKhuc({ p, v }: { p: SoPhanKhuc; v: SoVung }) {
   );
 }
 
+// TẢI BẢN PDF (anh 13/11/2026: "muốn tải thì nhập email, số điện thoại"): bấm → bảng nhập Email + Số điện thoại → lưu khách vào
+// customer_requests (Admin → Yêu cầu khách hàng, cùng chỗ form nhận báo giá) → tải: có tệp PDF ở Admin thì mở tệp, chưa có thì
+// "Lưu thành PDF" chỉ phần báo cáo (@media print). Đã nhập một lần trên máy này thì lần sau tải ngay.
+const KHOA_DA_NHAP = "cvr-diem-tin-da-nhap";
+function NutTaiPdf({ pdf, noiDung }: { pdf?: string; noiDung: string }) {
+  const [mo, setMo] = useState(false);
+  const [email, setEmail] = useState("");
+  const [sdt, setSdt] = useState("");
+  const [loi, setLoi] = useState("");
+  const [dangGui, setDangGui] = useState(false);
+  const tai = () => { if (pdf) window.open(pdf, "_blank", "noopener"); else window.print(); };
+  const bam = () => {
+    let da = false;
+    try { da = !!localStorage.getItem(KHOA_DA_NHAP); } catch { /* trình duyệt chặn bộ nhớ */ }
+    if (da) tai(); else setMo(true);
+  };
+  const gui = async () => {
+    setLoi("");
+    if (loiEmail(email, true)) return setLoi(loiEmail(email, true));
+    if (loiSdt(sdt)) return setLoi(loiSdt(sdt));
+    setDangGui(true);
+    try {
+      const supabase = await napSupabase();
+      const { error } = await supabase.from("customer_requests").insert({ loai: "khac", ten: "Khách tải Điểm tin thị trường", dien_thoai: sdt.trim(), email: email.trim(), noi_dung: noiDung });
+      if (error) throw error;
+      try { localStorage.setItem(KHOA_DA_NHAP, "1"); } catch { /* bỏ qua */ }
+      setMo(false);
+      tai();
+    } catch {
+      setLoi("Chưa gửi được, vui lòng thử lại.");
+    }
+    setDangGui(false);
+  };
+  const o = "h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-base text-cvr-ink outline-none placeholder-cvr-faint focus:border-cvr-line focus:bg-white sm:text-sm";
+  return (
+    <>
+      <button type="button" onClick={bam} className="press flex h-9 items-center justify-center gap-1.5 rounded-lg bg-cvr-gold px-4 text-[13px] font-semibold text-white sm:h-auto">
+        <svg aria-hidden className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" /></svg>
+        Tải bản PDF
+      </button>
+      {mo && (
+        <div role="dialog" aria-modal="true" aria-label="Tải bản PDF" className="fixed inset-0 z-[150] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={(e) => { if (e.target === e.currentTarget) setMo(false); }}>
+          <div className="w-full max-w-sm rounded-t-2xl bg-white p-5 pb-[max(20px,env(safe-area-inset-bottom))] shadow-xl sm:rounded-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-base font-semibold text-cvr-ink">Tải bản PDF</p>
+              <button type="button" aria-label="Đóng" onClick={() => setMo(false)} className="flex h-8 w-8 items-center justify-center rounded-full text-cvr-muted hover:bg-cvr-surface">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="grid gap-2">
+              <input type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email *" aria-label="Email" className={o} />
+              <input type="tel" inputMode="tel" autoComplete="tel" value={sdt} onChange={(e) => setSdt(e.target.value)} placeholder="Số điện thoại *" aria-label="Số điện thoại" className={o} />
+            </div>
+            {loi && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{loi}</p>}
+            <button type="button" onClick={gui} disabled={dangGui} className="btn-dangtin mt-3 flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold text-white disabled:opacity-50">
+              {dangGui ? "Đang gửi…" : "Tải bản PDF"}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function TieuDeChuong({ so, ten }: { so: string; ten: string }) {
   return (
     <header className="mb-4 flex items-baseline gap-3">
@@ -152,10 +218,11 @@ function TieuDeChuong({ so, ten }: { so: string; ten: string }) {
 }
 
 export default function BaoCaoThiTruong({ vung, xemThu = false }: { vung: SoVung[]; xemThu?: boolean }) {
-  const coSo = vung.filter((x) => x.phanKhuc.length || xemThu);
-  const [chon, setChon] = useState((coSo[0] ?? vung[0]).vung.id);
-  if (!coSo.length) return <p className="text-base text-cvr-muted">Báo cáo đang được cập nhật.</p>;
+  // LUÔN ĐỦ 3 TAB KHU VỰC (anh 13/11/2026: "sao thấy có 1 cái") — khu vực chưa có số thì bấm vào ghi "đang được cập nhật"
+  const coSo = vung;
+  const [chon, setChon] = useState((vung.find((x) => x.phanKhuc.length) ?? vung[0]).vung.id);
   const v = coSo.find((x) => x.vung.id === chon) ?? coSo[0];
+  const chuaCo = !v.phanKhuc.length && !xemThu;
   const q = tenQuy(v.quy), qSau = tenQuy(quySau(v.quy));
   const dn = diemNhan(v);
   const nguon = [...new Set(v.phanKhuc.flatMap((p) => p.nguon))];
@@ -163,34 +230,29 @@ export default function BaoCaoThiTruong({ vung, xemThu = false }: { vung: SoVung
     <XemThu.Provider value={xemThu}>
     <div className="bao-cao">
       {/* MENU 3 KHU VỰC (anh 13/11/2026: "cấu trúc hiển thị rõ hơn, CTA, màu khi bấm vào mỗi tab") */}
-      <div className="grid grid-cols-1 gap-2.5 print:hidden sm:grid-cols-[1fr_auto]">
-        <div role="tablist" aria-label="Chọn khu vực" className="grid gap-1.5 rounded-2xl bg-cvr-surface p-1" style={{ gridTemplateColumns: `repeat(${coSo.length}, minmax(0, 1fr))` }}>
+      <div className="grid grid-cols-1 gap-2 print:hidden sm:grid-cols-[1fr_auto]">
+        <div role="tablist" aria-label="Chọn khu vực" className="grid gap-1 rounded-xl bg-cvr-surface p-1" style={{ gridTemplateColumns: `repeat(${coSo.length}, minmax(0, 1fr))` }}>
           {coSo.map((x) => { const on = x.vung.id === v.vung.id; return (
             <button key={x.vung.id} type="button" role="tab" aria-selected={on} onClick={() => setChon(x.vung.id)}
-              className={`press relative grid min-w-0 gap-0.5 rounded-xl px-3 pb-3 pt-2.5 text-left transition ${on ? "bg-cvr-ink shadow-[0_4px_14px_rgba(0,0,0,0.18)]" : "hover:bg-white"}`}>
-              <span className={`text-[15px] font-bold leading-tight ${on ? "text-white" : "text-cvr-ink"}`}>{x.vung.nut}</span>
-              <span className={`text-[11.5px] leading-snug ${on ? "text-white/70" : "text-cvr-muted"}`}>{x.vung.phu}</span>
-              {on && <span aria-hidden className="absolute inset-x-3 bottom-1.5 h-[3px] rounded-full bg-cvr-gold" />}
+              className={`press grid min-w-0 rounded-lg px-2.5 py-1.5 text-left transition ${on ? "bg-cvr-ink shadow-[0_4px_14px_rgba(0,0,0,0.18)]" : "hover:bg-white"}`}>
+              <span className={`text-[13.5px] font-bold leading-tight ${on ? "text-white" : "text-cvr-ink"}`}>{x.vung.nut}</span>
+              <span className={`truncate text-[11px] leading-snug ${on ? "text-white/70" : "text-cvr-muted"}`}>{x.vung.phu}</span>
             </button>); })}
         </div>
         {/* TẢI BẢN PDF luôn có (anh 13/11/2026: "muốn tải thì tải như lúc trước"): Admin đã có tệp PDF → tải tệp đó; chưa có → hộp
             "Lưu thành PDF" của trình duyệt, chỉ in phần báo cáo (.bao-cao, xem @media print ở globals.css) */}
-        {v.pdf ? (
-          <a href={v.pdf} target="_blank" rel="noopener" className="press flex h-11 items-center justify-center gap-2 rounded-xl bg-cvr-gold px-5 text-sm font-semibold text-white sm:h-auto">
-            <svg aria-hidden className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" /></svg>
-            Tải bản PDF
-          </a>
-        ) : (
-          <button type="button" onClick={() => window.print()} className="press flex h-11 items-center justify-center gap-2 rounded-xl bg-cvr-gold px-5 text-sm font-semibold text-white sm:h-auto">
-            <svg aria-hidden className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" /></svg>
-            Tải bản PDF
-          </button>
-        )}
+        {!chuaCo && <NutTaiPdf pdf={v.pdf} noiDung={`Tải Điểm tin thị trường ${v.vung.ten} — ${tenQuy(v.quy)}`} />}
       </div>
 
+      {chuaCo ? (
+        <div className="mt-6">
+          <h1 className="text-[26px] font-bold leading-tight tracking-tight text-cvr-ink sm:text-4xl">Điểm tin thị trường {v.vung.ten}</h1>
+          <p className="mt-2 text-base text-cvr-muted">Báo cáo khu vực này đang được cập nhật.</p>
+        </div>
+      ) : (<>
       <div className="mt-6 border-b border-cvr-line pb-5">
         <p className="text-[13px] font-semibold tracking-[0.18em] text-cvr-ink">COASTAL <span className="text-cvr-gold">LAND</span> · ĐIỂM TIN THỊ TRƯỜNG</p>
-        <h2 className="mt-2 text-[26px] font-bold leading-tight tracking-tight text-cvr-ink sm:text-4xl">Điểm tin thị trường {v.vung.ten}</h2>
+        <h1 className="mt-2 text-[26px] font-bold leading-tight tracking-tight text-cvr-ink sm:text-4xl">Điểm tin thị trường {v.vung.ten}</h1>
         <p className="mt-1 text-sm font-medium text-cvr-muted">Quý {q.replace(/^Q/, "")}</p>
         {dn.length > 0 && (
           <div className="mt-4 rounded-2xl bg-cvr-surface p-4 sm:p-5">
@@ -259,6 +321,7 @@ export default function BaoCaoThiTruong({ vung, xemThu = false }: { vung: SoVung
         <p className="font-semibold text-cvr-ink">Nguồn</p>
         <p>Coastal Land tổng hợp{nguon.length ? ` từ ${nguon.join("; ")}` : ""}. Q-o-Q: so với quý trước · Y-o-Y: so với cùng kỳ năm trước.</p>
       </footer>
+      </>)}
     </div>
     </XemThu.Provider>
   );
