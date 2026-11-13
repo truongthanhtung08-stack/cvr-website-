@@ -36,7 +36,7 @@ async function chiAdmin() {
 // + DÒNG ĐẶC ĐIỂM của bảng (13/11/2026): longtail → trang đích. Trang đã có trên web → số tin, đủ chuẩn, index lấy từ web (một luật
 // với sitemap); chưa có trang → số tin trong bảng, trạng thái "Cần mở trang" / "Chưa đủ tin" như cột "Xin index" của bảng.
 type DongTD = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean;
-  loTrinh?: string; tieuDeWeb?: string; longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean; noiToi?: boolean; thieu?: string[] } & TrangThaiIndex;
+  loTrinh?: string; tieuDeWeb?: string; longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string; chon?: boolean; noiToi?: boolean; thieu?: string[]; khuVuc?: string; loiGoc?: string } & TrangThaiIndex;
 async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>, bang: Record<string, unknown>, keHoach: DongKeHoach[] = []) {
   const [con, het, so] = await Promise.all([getListings().catch(() => []), getListingsHetHan().catch(() => []), docSoXinIndex(admin)]);
   const tin = [...con, ...het]; // cùng bộ tin xét trang với sitemap (getTinXetTrang)
@@ -60,6 +60,14 @@ async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>,
     if (!d.duChuan && !tinh) t.push(d.soTin < NGUONG_INDEX ? `Thiếu ${NGUONG_INDEX - d.soTin} tin` : "Trùng bộ tin với trang khác (Google chỉ cần một trang)");
     // khối liên kết chỉ dẫn tới trang đủ chuẩn → trang chưa đủ chuẩn không có link là đúng luật, chỉ báo khi trang đã đủ chuẩn
     if (!tinh && d.duChuan && !noiToi.has(d.trang)) t.push("Chưa có liên kết nội bộ trỏ tới");
+    // ĐỒNG NHẤT FILE ↔ WEB ↔ GOOGLE (anh 13/11/2026): dòng LÕI có trang trên web mà tiêu đề web không chứa chữ lõi của file → Google đọc chữ khác file
+    // Cách gõ cùng nghĩa coi như một (Bất động sản = Nhà đất, Chung cư = Căn hộ, Nhà mặt tiền = Nhà mặt phố); dòng tên cũ / thành phố trỏ
+    // về trang tỉnh là đúng thiết kế (mô tả trang tỉnh đã kèm tên cũ) → không báo
+    if (d.tieuDeWeb && d.tang && !/^Đặc điểm|^Ngoài|tên cũ/.test(d.tang)) {
+      const bo = (x: string) => x.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/^(ban|cho thue|mua ban) /, "").replace(/ thang \d+.*$/, "")
+        .replace(/^bat dong san /, "nha dat ").replace(/^(can ho chung cu|chung cu) /, "can ho ").replace(/^nha mat tien /, "nha mat pho ").replace(/^shophouse, nha pho thuong mai /, "shophouse ").trim();
+      if (!bo(d.tieuDeWeb).includes(bo(d.tuKhoa))) t.push(`Tiêu đề web khác lõi: "${d.tieuDeWeb}"`);
+    }
     if (!d.daIndex) t.push(d.xin ? `Đã xin ${d.xin.split("-").reverse().slice(0, 2).join("/")}, chờ Google` : d.duChuan || tinh ? "Chưa xin index" : "Chưa index");
     return t;
   };
@@ -73,7 +81,7 @@ async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>,
     const trangKhac = !p && /^\/(gia-nha-dat|du-an|bao-cao-thi-truong)\//.test(duong); // trang giá, dự án: luôn mở, không qua cổng pSEO
     const co = !!p || trangKhac;
     if (co) coTrongFile.add(duong);
-    dong.set(`f${i++}`, { trang: co ? duong : "", muc: k.muc, tinh: k.noi, tang: k.tang, loTrinh: k.loTrinh, tuKhoa: k.loi, tieuDeWeb: p ? tieuDe(p.dk) : "", longtail: k.longtail,
+    dong.set(`f${i++}`, { trang: co ? duong : "", muc: k.muc, tinh: k.noi, tang: k.tang, khuVuc: k.khuVuc, loiGoc: k.loiGoc, loTrinh: k.loTrinh, tuKhoa: k.loi, tieuDeWeb: p ? tieuDe(p.dk) : "", longtail: k.longtail,
       dacDiem: k.dacDiem, nhom: k.nhom, google: k.google, soTin: p ? p.n : k.soTin, duChuan: p ? p.index : trangKhac, trongBang: true, coTrang: co, chon: !!k.chon,
       ...(co ? trangThaiIndex(duong, so, gSet) : { daIndex: false, xin: null }) });
   }
