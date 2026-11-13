@@ -78,7 +78,23 @@ export default async function Home() {
               {/* NỀN BỘ LỌC trên điện thoại (chủ dự án 01/11/2026: "cần cái nền, kiểu đơn giản để nhìn là biết ngay bộ lọc, cả 4 phần"): dải nền xám nhạt tràn hết bề ngang bao ô tìm + hàng trường lọc; ô tìm, nút trường lọc trắng nổi trên nền — kiểu Google. Máy tính giữ nguyên. */}
               <div className="khoi-loc-dinh bg-cvr-surface pb-0 pt-1 max-sm:sticky max-sm:top-[calc(var(--hdr)+var(--at))] max-sm:z-20 max-sm:shadow-[0_1px_0_rgba(0,0,0,0.08)] max-sm:has-[[data-man-tim].flex]:z-[90] sm:absolute sm:inset-x-0 sm:top-0 sm:z-20 sm:bg-transparent sm:pb-0 sm:pt-8">
                 {/* Suspense: chạm ô tìm khi trang chưa nạp xong mã → React nạp ô tìm trước, không mất cú chạm đầu */}
-                <Suspense>
+                {/* CHỖ GIỮ Ô TÌM (anh 13/11/2026: "bấm vào ô search giật kinh khủng"): TimTrangChu đọc useSearchParams nên máy chủ
+                    không vẽ nó — trước đây khối này trống (cao 4px) tới khi mã chạy xong, ô tìm chèn vào đẩy ảnh đầu trang + 3 nút
+                    xuống 50px đúng lúc khách chạm. Nay máy chủ vẽ sẵn ô y hệt (cùng cỡ, cùng chữ) + đoạn ghi nhận cú chạm sớm
+                    (data-mo-tim → window.__cvrMoTim, TimTrangChu mở màn tìm khi chạy xong) → không xô, không mất cú chạm. */}
+                <Suspense
+                  fallback={
+                    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                      <div className="pb-1 pt-1.5 sm:hidden">
+                        <script dangerouslySetInnerHTML={{ __html: "document.addEventListener('click',function(e){var t=e.target;if(t&&t.closest&&t.closest('[data-mo-tim]'))window.__cvrMoTim=1},true)" }} />
+                        <button type="button" data-mo-tim className="relative flex h-10 w-full items-center rounded-full bg-white pl-10 pr-4 text-left shadow-[0_1px_4px_rgba(0,0,0,0.12)] ring-1 ring-black/12">
+                          <svg aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
+                          <span className="min-w-0 truncate text-[15px] text-cvr-faint">Tìm nhà đất theo khu vực, dự án…</span>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                >
                   <TimTrangChu goiYTin={goiYTrangChu(tinDu)} tinDem={tinDem(tinDu)} trenAnh />
                 </Suspense>
               </div>
