@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 import { isVideoUrl } from "@/lib/media";
 import { imageMarkerUrl, videoMarkerUrl } from "@/lib/dauNoiDung";
@@ -18,6 +19,16 @@ import { tachDinhDang, thoatChu } from "@/lib/dinhDangMoTa";
 // ![](ảnh) · @[video](link)) nên RichContent và mọi nội dung cũ không phải đổi gì: khung soạn
 // chỉ chuyển qua lại giữa định dạng đó và chữ có định dạng.
 // Dán từ nơi khác (Zalo, Word, web): chỉ lấy CHỮ — không mang định dạng rác vào trang tin.
+
+// Điện thoại (< 640px) — đọc ngay khi chạy, máy chủ coi như máy tính (không lệch HTML)
+const MQ = "(max-width: 639px)";
+function useLaDt(): boolean {
+  return useSyncExternalStore(
+    (cb) => { const m = window.matchMedia(MQ); m.addEventListener("change", cb); return () => m.removeEventListener("change", cb); },
+    () => window.matchMedia(MQ).matches,
+    () => false,
+  );
+}
 
 const thoatHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -129,76 +140,49 @@ export default function ContentEditor({
   chiAnh?: boolean;
 }) {
   const khungRef = useRef<HTMLDivElement>(null);
-  // THANH KÉO MỞ RỘNG TRÊN ĐIỆN THOẠI (anh 12/11/2026: "có chỗ kéo mở rộng") — góc kéo của trình duyệt quá nhỏ cho ngón tay.
+  // ── SOẠN TRÊN ĐIỆN THOẠI THEO CHUẨN (anh 13/11/2026: "hành trình phím trên mobile sai hết, cần CHUẨN, không chắp vá") ─────────────
+  // Như Ghi chú iPhone / Google Docs: ô cao cố định ~8 dòng, chữ cuộn TRONG ô (trình duyệt tự giữ dòng đang gõ trong tầm nhìn);
+  // thanh B · I · canh lề · Chèn ảnh · Xong nằm NGAY TRÊN BÀN PHÍM và chỉ hiện khi đang soạn; thanh kéo dưới ô chỉ để giãn / thu ô.
+  // Bỏ cơ chế cũ tự cuộn trang + thu khung theo bàn phím lúc chạm (làm nút × dời chỗ giữa cú chạm, màn hình giật).
+  const laDt = useLaDt();
+  const [dangSoan, setDangSoan] = useState(false);
   const [caoKeo, setCaoKeo] = useState<number | null>(null);
-  const batDauKeo = (e: React.PointerEvent) => {
-    const el = khungRef.current;
-    if (!el) return;
-    const y0 = e.clientY;
-    const h0 = el.getBoundingClientRect().height;
-    const keo = (ev: PointerEvent) => setCaoKeo(Math.max(120, h0 + ev.clientY - y0));
-    const tha = () => { window.removeEventListener("pointermove", keo); window.removeEventListener("pointerup", tha); window.removeEventListener("pointercancel", tha); };
-    window.addEventListener("pointermove", keo);
-    window.addEventListener("pointerup", tha);
-    window.addEventListener("pointercancel", tha);
-  };
-  // ĐIỆN THOẠI ĐANG GÕ: THANH B / I KHÔNG ĐÈ CHỮ (anh 14:17 12/11/2026, ảnh khoanh: thanh dính cắt ngang dòng đầu). Khi khách gõ,
-  // khung soạn đứng NGAY DƯỚI thanh công cụ và cao vừa phần nhìn thấy phía trên bàn phím — chữ dài thì cuộn TRONG khung, không
-  // trượt xuống dưới thanh. Rời ô là khung trở lại như cũ (tự cao / thanh kéo). Máy tính không đổi.
-  const thanhRef = useRef<HTMLDivElement>(null);
-  const [caoGo, setCaoGo] = useState<number | null>(null);
-  const theoConTroRef = useRef<() => void>(() => {});
-  // CỠ CHUẨN ĐIỆN THOẠI (anh 12/11/2026: "cần chuẩn thôi, vốn đã có kéo giãn, không cần làm quá to"): mặc định 6 dòng, cần thì kéo giãn.
-  const [laDt, setLaDt] = useState(false);
-  useEffect(() => { setLaDt(window.matchMedia("(max-width: 639px)").matches); }, []);
+  const keoRef = useRef<HTMLDivElement>(null);
+  // Thanh kéo: chạm KHÔNG bao giờ bật bàn phím (chặn ngay touchstart — React gắn touch ở chế độ passive nên phải gắn tay)
   useEffect(() => {
-    const el = khungRef.current;
-    if (!el) return;
+    const t = keoRef.current, el = khungRef.current;
+    if (!t || !el) return;
+    let y0 = 0, h0 = 0;
+    const dau = (e: TouchEvent) => { e.preventDefault(); y0 = e.touches[0].clientY; h0 = el.getBoundingClientRect().height; };
+    const keo = (e: TouchEvent) => {
+      e.preventDefault();
+      const toiDa = Math.max(el.scrollHeight + 2, window.innerHeight * 0.75);
+      setCaoKeo(Math.round(Math.min(toiDa, Math.max(120, h0 + e.touches[0].clientY - y0))));
+    };
+    t.addEventListener("touchstart", dau, { passive: false });
+    t.addEventListener("touchmove", keo, { passive: false });
+    return () => { t.removeEventListener("touchstart", dau); t.removeEventListener("touchmove", keo); };
+  }, [laDt]);
+  // Thanh công cụ trên bàn phím: đáy thanh = đỉnh bàn phím (visualViewport); dòng đang gõ không nằm dưới thanh
+  const [dayThanh, setDayThanh] = useState(0);
+  const thanhNoiRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!laDt || !dangSoan) return;
     const vv = window.visualViewport;
     const tinh = () => {
-      const tb = thanhRef.current;
-      if (!tb || document.activeElement !== el || !window.matchMedia("(max-width: 639px)").matches) { setCaoGo(null); return; }
-      // Cuộn trang để thanh công cụ đứng đúng chỗ dính (dưới "‹ Đăng tin") và đầu khung nằm sát dưới thanh — không dòng nào dưới thanh
-      const choDinh = parseFloat(getComputedStyle(tb).top) || 0;
-      const lech = el.getBoundingClientRect().top - tb.getBoundingClientRect().height - choDinh;
-      if (Math.abs(lech) > 2) window.scrollBy({ top: lech, behavior: "instant" });
-      const day = (vv ? vv.offsetTop + vv.height : window.innerHeight) - choDinh - tb.getBoundingClientRect().height - 8;
-      setCaoGo(Math.max(120, Math.floor(day)));
+      setDayThanh(vv ? Math.max(0, window.innerHeight - (vv.offsetTop + vv.height)) : 0);
+      const sel = window.getSelection(), el = khungRef.current, tb = thanhNoiRef.current;
+      if (!sel?.rangeCount || !el || !tb || !el.contains(sel.getRangeAt(0).startContainer)) return;
+      const r = sel.getRangeAt(0).getBoundingClientRect();
+      const tren = tb.getBoundingClientRect().top - 8;
+      if (r.height && r.bottom > tren) window.scrollBy({ top: r.bottom - tren, behavior: "instant" });
     };
-    // DÒNG ĐANG GÕ LUÔN NHÌN THẤY TRONG KHUNG: khung đã thu vừa phần trên bàn phím → con trỏ xuống dưới đáy khung thì khung tự cuộn
-    // theo (dòng trống không có toạ độ → lấy toạ độ của chính dòng chứa con trỏ).
-    const theoConTro = () => {
-      if (document.activeElement !== el) return;
-      const sel = window.getSelection();
-      if (!sel?.rangeCount) return;
-      const rg = sel.getRangeAt(0);
-      if (!el.contains(rg.startContainer)) return;
-      let r = rg.getBoundingClientRect();
-      if (!r.height) {
-        const n = rg.startContainer.nodeType === 1 ? (rg.startContainer as Element) : rg.startContainer.parentElement;
-        if (n && n !== el) r = n.getBoundingClientRect();
-      }
-      if (!r.height) return;
-      const k = el.getBoundingClientRect();
-      if (r.bottom > k.bottom - 8) el.scrollTop += r.bottom - k.bottom + 16;
-      else if (r.top < k.top + 4) el.scrollTop -= k.top - r.top + 16;
-    };
-    theoConTroRef.current = theoConTro;
-    el.addEventListener("input", theoConTro);
-    el.addEventListener("keyup", theoConTro);
-    const roi = () => setCaoGo(null);
-    el.addEventListener("focus", tinh);
-    el.addEventListener("blur", roi);
+    tinh();
     vv?.addEventListener("resize", tinh);
-    window.addEventListener("resize", tinh); // WebView Android (Zalo, Facebook) co cả cửa sổ khi bàn phím bật
-    return () => {
-      el.removeEventListener("focus", tinh); el.removeEventListener("blur", roi); vv?.removeEventListener("resize", tinh); window.removeEventListener("resize", tinh);
-      el.removeEventListener("input", theoConTro); el.removeEventListener("keyup", theoConTro);
-    };
-  }, []);
-  // Khung vừa thu theo bàn phím (caoGo đổi) → SAU khi khung đổi cỡ mới đưa dòng con trỏ vào phần nhìn thấy (quay lại sửa giữa bài:
-  // chạm dòng 15 mà khung thu còn 6 dòng — trước cuộn trước khi khung đổi cỡ nên dòng đang sửa bị che, anh 12/11/2026).
-  useLayoutEffect(() => { if (caoGo) theoConTroRef.current(); }, [caoGo]);
+    vv?.addEventListener("scroll", tinh);
+    document.addEventListener("selectionchange", tinh);
+    return () => { vv?.removeEventListener("resize", tinh); vv?.removeEventListener("scroll", tinh); document.removeEventListener("selectionchange", tinh); };
+  }, [laDt, dangSoan]);
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
@@ -343,52 +327,45 @@ export default function ContentEditor({
     setShowLink(false);
   }
 
-  const giuChon = (e: React.MouseEvent) => e.preventDefault(); // bấm nút không làm mất vùng bôi đen
+  const giuChon = (e: React.MouseEvent | React.PointerEvent) => e.preventDefault(); // bấm nút không làm rời ô, không mất vùng bôi đen
+
+  // B · I · canh lề — dùng chung cho thanh máy tính và thanh trên bàn phím điện thoại
+  const nutDinhDang = (
+    <>
+      <ToolBtn label="In đậm" onClick={() => lenh("bold")}><span className="text-[13px] font-bold">B</span></ToolBtn>
+      <ToolBtn label="In nghiêng" onClick={() => lenh("italic")}><span className="font-serif text-[13px] italic">I</span></ToolBtn>
+      <span className="mx-1 h-5 w-px shrink-0 bg-cvr-line" />
+      <ToolBtn label="Canh trái" onClick={() => lenh("justifyLeft")}><AlignIcon lines={[16, 10, 16, 10]} /></ToolBtn>
+      <ToolBtn label="Canh giữa" onClick={() => lenh("justifyCenter")}><AlignIcon lines={[16, 10, 16, 10]} center /></ToolBtn>
+      <ToolBtn label="Canh phải" onClick={() => lenh("justifyRight")}><AlignIcon lines={[16, 10, 16, 10]} right /></ToolBtn>
+      <ToolBtn label="Canh đều 2 bên" onClick={() => lenh("justifyFull")}><AlignIcon lines={[16, 16, 16, 16]} /></ToolBtn>
+    </>
+  );
+  const bieuTuongAnh = <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z" /></svg>;
 
   return (
     <div className="space-y-2">
-      {/* THANH CÔNG CỤ DÍNH TRÊN ĐẦU KHUNG khi cuộn trong lúc soạn (anh 12/11/2026, ảnh 8:54: bôi chữ để định dạng thì thanh B / I đã trôi
-          khỏi màn hình, cuộn lên là mất vùng bôi) — điện thoại dính dưới thanh "‹ Đăng tin"; máy tính đứng yên như cũ. */}
-      <div ref={thanhRef} className="sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-10 -mx-1 space-y-2 bg-white px-1 py-1.5 lg:static lg:mx-0 lg:px-0 lg:py-0">
-      {/* Thanh định dạng: đậm · nghiêng · canh lề — hiện kết quả NGAY trong khung soạn */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <ToolBtn label="In đậm" onMouseDown={giuChon} onClick={() => lenh("bold")}>
-          <span className="text-[13px] font-bold">B</span>
-        </ToolBtn>
-        <ToolBtn label="In nghiêng" onMouseDown={giuChon} onClick={() => lenh("italic")}>
-          <span className="font-serif text-[13px] italic">I</span>
-        </ToolBtn>
-        <span className="mx-1 h-5 w-px bg-cvr-line" />
-        <ToolBtn label="Canh trái" onMouseDown={giuChon} onClick={() => lenh("justifyLeft")}>
-          <AlignIcon lines={[16, 10, 16, 10]} />
-        </ToolBtn>
-        <ToolBtn label="Canh giữa" onMouseDown={giuChon} onClick={() => lenh("justifyCenter")}>
-          <AlignIcon lines={[16, 10, 16, 10]} center />
-        </ToolBtn>
-        <ToolBtn label="Canh phải" onMouseDown={giuChon} onClick={() => lenh("justifyRight")}>
-          <AlignIcon lines={[16, 10, 16, 10]} right />
-        </ToolBtn>
-        <ToolBtn label="Canh đều 2 bên" onMouseDown={giuChon} onClick={() => lenh("justifyFull")}>
-          <AlignIcon lines={[16, 16, 16, 16]} />
-        </ToolBtn>
-      </div>
+      {/* Máy tính: thanh định dạng đứng yên trên khung như cũ. Điện thoại: thanh định dạng chỉ hiện TRÊN BÀN PHÍM khi đang soạn. */}
+      {!laDt && <div className="flex flex-wrap items-center gap-1.5">{nutDinhDang}</div>}
 
       {/* Thanh công cụ chèn ảnh / video */}
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
+          onPointerDown={giuChon}
           onMouseDown={giuChon}
           onClick={() => imgRef.current?.click()}
           disabled={uploadingImg}
           className="inline-flex items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-1.5 text-xs font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z" /></svg>
+          {bieuTuongAnh}
           {uploadingImg ? "Đang tải ảnh…" : "Chèn ảnh"}
         </button>
         <input ref={imgRef} type="file" accept="image/*" multiple onChange={(e) => handleImages(e.target.files)} className="hidden" />
         {!chiAnh && (<>
         <button
           type="button"
+          onPointerDown={giuChon}
           onMouseDown={giuChon}
           onClick={() => videoRef.current?.click()}
           disabled={uploadingVideo}
@@ -401,13 +378,13 @@ export default function ContentEditor({
         </>)}
         <button
           type="button"
+          onPointerDown={giuChon}
           onMouseDown={giuChon}
           onClick={() => setShowLink((v) => !v)}
           className="text-xs font-medium text-cvr-muted transition hover:text-cvr-ink"
         >
           {chiAnh ? "hoặc dán link ảnh" : "hoặc dán link ảnh / video"}
         </button>
-      </div>
       </div>
       {showLink && (
         <div className="flex items-center gap-2">
@@ -438,11 +415,16 @@ export default function ContentEditor({
           role="textbox"
           aria-multiline="true"
           aria-label={placeholder}
+          onFocus={() => setDangSoan(true)}
           onInput={() => { phat(); nhoKhoi(); }}
           onKeyUp={nhoKhoi}
           onMouseUp={nhoKhoi}
           onTouchEnd={nhoKhoi}
-          onBlur={() => { nhoKhoi(); phat(); }}
+          onBlur={() => {
+            nhoKhoi(); phat();
+            // Bấm nút trên thanh không làm rời ô (giuChon); rời ô thật (chạm ra ngoài, bấm Xong) mới ẩn thanh
+            window.setTimeout(() => setDangSoan(document.activeElement === khungRef.current), 0);
+          }}
           onPaste={(e) => {
             // Chỉ lấy CHỮ — bỏ định dạng rác của nơi khác (màu, cỡ chữ, bảng…).
             e.preventDefault();
@@ -450,30 +432,49 @@ export default function ContentEditor({
             document.execCommand("insertText", false, chu);
             phat();
           }}
-          onClick={(e) => {
+          // NÚT × BỎ ẢNH / VIDEO: xử lý NGAY lúc chạm (không chờ click, không bật bàn phím, không để ô nhận con trỏ)
+          onPointerDown={(e) => {
             const nut = (e.target as HTMLElement).closest("[data-xoa]");
             if (!nut) return;
+            e.preventDefault();
             nut.closest("[data-anh],[data-video]")?.remove();
             phat();
           }}
-          // Khung tự cao theo nội dung. Điện thoại: thanh kéo to bên dưới, chữ 16px (iPhone không tự phóng); máy tính KÉO GÓC DƯỚI (12/11/2026).
-          style={(() => {
-            const coSo = caoKeo ? `${caoKeo}px` : `${(laDt ? 6 : Math.max(rows, 7)) * 1.6}rem`;
-            return caoGo ? { minHeight: `min(${caoGo}px, ${coSo})`, maxHeight: `${caoGo}px`, overflowY: "auto" as const } : { minHeight: coSo };
-          })()}
+          // Điện thoại: ô cao cố định (mặc định ~8 dòng, kéo thanh dưới để giãn / thu), chữ cuộn trong ô. Máy tính: tự cao + kéo góc dưới.
+          style={laDt ? { height: caoKeo ?? 224, overflowY: "auto" } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
           className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
           <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-[16px] leading-relaxed text-cvr-faint sm:text-sm">{placeholder}</p>
         )}
-        {/* Thanh kéo TÁCH khỏi khung (mt-2) + vùng chạm cao 40px; chạm vào KHÔNG bật bàn phím (preventDefault, không đổi ô đang chọn) — anh 12/11/2026 */}
-        <div onPointerDown={(e) => { e.preventDefault(); batDauKeo(e); }} role="separator" aria-label="Kéo để mở rộng khung soạn" className="mt-2 flex h-10 touch-none cursor-ns-resize select-none items-center justify-center sm:hidden">
-          <span className="h-1.5 w-14 rounded-full bg-cvr-muted/50" />
-        </div>
+        {/* Thanh kéo giãn / thu ô (điện thoại): chỉ kéo, không bao giờ bật bàn phím (chặn touchstart ở useEffect) */}
+        {laDt && (
+          <div ref={keoRef} role="separator" aria-label="Kéo để giãn hoặc thu khung soạn" className="flex h-9 touch-none select-none items-center justify-center">
+            <span className="h-1.5 w-12 rounded-full bg-cvr-faint/60" />
+          </div>
+        )}
       </div>
 
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
+      )}
+
+      {/* THANH TRÊN BÀN PHÍM (điện thoại, chỉ khi đang soạn): B · I · canh lề · chèn ảnh · Xong (cất bàn phím) */}
+      {laDt && dangSoan && createPortal(
+        <div
+          ref={thanhNoiRef}
+          onPointerDown={giuChon}
+          onMouseDown={giuChon}
+          style={{ bottom: dayThanh }}
+          className="fixed inset-x-0 z-[120] border-t border-cvr-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+        >
+          <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto px-3 py-1.5">
+            {nutDinhDang}
+            <ToolBtn label="Chèn ảnh" onClick={() => imgRef.current?.click()}>{bieuTuongAnh}</ToolBtn>
+            <button type="button" onClick={() => khungRef.current?.blur()} className="ml-auto shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold text-cvr-blue-ink">Xong</button>
+          </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
