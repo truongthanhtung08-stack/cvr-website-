@@ -941,3 +941,5 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 
 /* Dòng dự án dưới tiêu đề tin (như web) */
 .dong-du-an { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 14px; color: var(--cl-ink); }
+/* Nhu cầu 4 ô (Cần bán · Cần mua · Cho thuê · Cần thuê) xếp 2 × 2 cho khổ điện thoại */
+.tab-md.bon { display: grid; grid-template-columns: 1fr 1fr; }

@@ -22,8 +22,14 @@ const { Option } = Select;
 // Mini App chỉ mở GÓI TIN THƯỜNG (Basic); gói VIP / thanh toán cần Checkout SDK của Zalo (chưa bật).
 
 const KHAC = "__khac"; // dòng "Khác — tự ghi" của ô chọn (như web ChonHoacGhi)
-const PHAP_LY = ["Sổ đỏ / Sổ hồng", "Hợp đồng mua bán", "Đang chờ sổ"];
-const HUONG = ["Đông", "Đông Nam", "Nam", "Tây Nam", "Tây", "Tây Bắc", "Bắc", "Đông Bắc"];
+// Danh sách CHÉP ĐÚNG web (src/lib/listingSpec.ts legalOptions · directions · furnishLevels) — 14/11/2026 "web một nẻo, đây một nẻo"
+const PHAP_LY = ["Sổ đỏ chính chủ", "Sổ hồng chính chủ", "Hợp đồng mua bán", "Hợp đồng góp vốn", "Đang chờ sổ", "Sổ chung / vi bằng", "Giấy tờ tay", "Đang cập nhật"];
+const HUONG = ["Đông", "Tây", "Nam", "Bắc", "Đông Bắc", "Đông Nam", "Tây Bắc", "Tây Nam"];
+const NOI_THAT = ["Không nội thất", "Bàn giao thô", "Nội thất cơ bản", "Nội thất đầy đủ", "Nội thất cao cấp"];
+// Ô "Thuộc dự án" như web: danh sách = /api/du-an/ten (dự án có hồ sơ + dự án khách đã ghi), lọc theo tỉnh; "Khác — tự ghi" → slug từ tên (web slugify)
+const boDau = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
+const gonTinh = (x: string) => boDau(x.replace(/^(Thành phố|Tỉnh)s+/i, "")).trim();
+const slugTen = (x: string) => boDau(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 const TOI_DA_ANH = 15; // web: mọi tin 15 ảnh (mức chung hiện hành)
 const VAT = 0.08; // src/lib/thue.ts — giá niêm yết chưa gồm GTGT
 
@@ -44,7 +50,17 @@ export default function DangTin() {
   const [thamSo] = useSearchParams();
   const { phien, san, nguoiDung } = usePhien();
 
-  const [md, setMd] = useState<"ban" | "thue">(thamSo.get("md") === "thue" ? "thue" : "ban");
+  // NHU CẦU như web (demandTypes): Cần bán · Cần mua · Cho thuê · Cần thuê → purpose ban · mua · thue · can-thue.
+  // Thị trường (loại hình, bảng giá, đơn vị giá) chỉ có hai: mua bán (ban · mua) và cho thuê (thue · can-thue) — như web laTinThue.
+  type NhuCau = "ban" | "mua" | "thue" | "can-thue";
+  const [nhuCau, setNhuCau] = useState<NhuCau>(thamSo.get("md") === "thue" ? "thue" : "ban");
+  const md: "ban" | "thue" = nhuCau === "thue" || nhuCau === "can-thue" ? "thue" : "ban";
+  const laTinTim = nhuCau === "mua" || nhuCau === "can-thue"; // tin người mua / người thuê: không bắt ảnh (web 05/11/2026)
+  const doiNhuCau = (n: NhuCau) => {
+    const thiTruong = n === "thue" || n === "can-thue" ? "thue" : "ban";
+    setNhuCau(n);
+    if (thiTruong !== md) { setLoai(""); setLoaiCon(""); setConTuGhi(false); }
+  };
   const [loai, setLoai] = useState("");
   const [loaiCon, setLoaiCon] = useState(""); // loại con tuỳ chọn (Loại căn hộ, Loại đất…) — lưu details.specs[ô loại con] như web 12/11/2026
   const [conTuGhi, setConTuGhi] = useState(false); // đang ở dòng "Khác — tự ghi"
@@ -62,6 +78,10 @@ export default function DangTin() {
   const [soTang, setSoTang] = useState("");
   const [phapLy, setPhapLy] = useState("");
   const [huong, setHuong] = useState("");
+  const [noiThat, setNoiThat] = useState(""); // details.furnish như web
+  const [duAnSlug, setDuAnSlug] = useState(""); // details.project
+  const [duAnTen, setDuAnTen] = useState(""); // details.projectName
+  const [duAnTuGhi, setDuAnTuGhi] = useState(false);
   const [anh, setAnh] = useState<string[]>([]);
   const [dangTaiAnh, setDangTaiAnh] = useState(false);
   const [video, setVideo] = useState(""); // link YouTube — như web, video không lưu kho, chỉ gắn link
@@ -90,10 +110,10 @@ export default function DangTin() {
       const d = (r.details ?? {}) as Record<string, any>;
       const sp = (d.specs ?? {}) as Record<string, any>;
       setTinSua({ status: r.status, details: d });
-      setMd(r.purpose === "thue" ? "thue" : "ban");
+      setNhuCau((["ban", "mua", "thue", "can-thue"].includes(r.purpose) ? r.purpose : "ban") as NhuCau);
       const maLoai = sp.landType === "Đất nền dự án" ? `${r.type}::Đất nền dự án` : r.type ?? "";
       setLoai(maLoai);
-      const oConCu = DS_LOAI[r.purpose === "thue" ? "thue" : "ban"].find((l) => l.ma === maLoai)?.con;
+      const oConCu = DS_LOAI[r.purpose === "thue" || r.purpose === "can-thue" ? "thue" : "ban"].find((l) => l.ma === maLoai)?.con;
       const vCon = oConCu ? String(sp[oConCu.key] ?? "") : "";
       setLoaiCon(vCon);
       setConTuGhi(!!vCon && !oConCu!.options.includes(vCon));
@@ -115,6 +135,9 @@ export default function DangTin() {
       setSoTang(sp.floors ? String(sp.floors) : "");
       setPhapLy(d.legal ?? "");
       setHuong(d.direction ?? "");
+      setNoiThat(d.furnish ?? "");
+      setDuAnSlug(d.project ?? "");
+      setDuAnTen(d.projectName ?? "");
       const ds = (r.images ?? []) as string[];
       setAnh(tachAnh(ds));
       setVideo(ds.find(laVideo) ?? "");
@@ -172,6 +195,19 @@ export default function DangTin() {
   }, [goi, soNgay, bangGia.data, hoSo.data]);
 
   const dsPhuong = provincesNew.find((p) => p.name === tinh)?.wards ?? [];
+  const dsDuAn = useTai(async () => {
+    const r = await fetch("https://coastalland.vn/api/du-an/ten").catch(() => null);
+    return ((await r?.json().catch(() => null)) ?? []) as { ten: string; slug: string; tinh: string }[];
+  }, [], [] as { ten: string; slug: string; tinh: string }[]);
+  const duAnTrongTinh = dsDuAn.data.filter((d) => !tinh || gonTinh(d.tinh ?? "") === gonTinh(tinh)).sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
+  // Tin sửa có dự án không nằm trong danh sách tỉnh → coi như tự ghi
+  useEffect(() => { if (duAnTen && !duAnSlug) setDuAnTuGhi(true); }, [duAnTen, duAnSlug]);
+  const duAnLuu = () => {
+    const ten = duAnTen.trim();
+    if (!ten) return {};
+    const co = dsDuAn.data.find((d) => d.slug === duAnSlug) ?? dsDuAn.data.find((d) => boDau(d.ten) === boDau(ten));
+    return { project: co?.slug ?? slugTen(ten), projectName: co?.ten ?? ten };
+  };
 
   const themAnh = async () => {
     setLoi(undefined);
@@ -244,6 +280,7 @@ export default function DangTin() {
     if (!tinh) return setLoi("Chưa chọn Tỉnh/Thành.");
     if (!tieuDe.trim()) return setLoi("Chưa nhập tiêu đề tin.");
     if (Number.isNaN(so(dienTich))) return setLoi("Chưa nhập diện tích.");
+    if (!anh.length && !laTinTim) return setLoi("Chưa thêm ảnh — tin cần ít nhất 1 ảnh."); // như web: đăng tin bắt ít nhất 1 ảnh
     if (!tinSua && (!daXacMinh || !sdt.trim())) return setLoi("Xác minh số điện thoại trước khi đăng tin.");
     if (!ten.trim()) return setLoi("Tài khoản chưa có họ tên — vào Cá nhân để đặt tên.");
     if (!daDang && !soNgay) return setLoi("Chưa chọn thời hạn đăng tin.");
@@ -287,13 +324,17 @@ export default function DangTin() {
           specs: specsSua(goc.specs ?? {}),
           legal: phapLy || undefined,
           direction: huong || undefined,
+          furnish: noiThat || undefined,
+          project: undefined,
+          projectName: undefined,
+          ...duAnLuu(),
           addressDetail: diaChi.trim() || undefined,
           contact: { ...(goc.contact ?? {}), name: ten.trim() },
           plan: daDang ? goc.plan : { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien },
         };
         const capNhat: Record<string, unknown> = daDang
           ? { ...noiDung, details }
-          : { ...noiDung, purpose: md, details, tier: goi?.tierId ?? "basic" };
+          : { ...noiDung, purpose: nhuCau, details, tier: goi?.tierId ?? "basic" };
         const { error } = await supabase.from("listings").update(capNhat).eq("id", maSua);
         setDangGui(false);
         if (error && /VI_KHONG_DU/.test(error.message)) return setLoi("Ví không đủ tiền cho gói đã chọn.");
@@ -315,7 +356,7 @@ export default function DangTin() {
     if (matTien.trim()) specs.frontage = matTien.trim();
     if (soTang.trim()) specs.floors = soTang.trim();
     const { error } = await supabase.from("listings").insert({
-      purpose: md,
+      purpose: nhuCau,
       type: loaiLuu,
       title: tieuDe.trim(),
       description: moTa.trim() || null,
@@ -332,6 +373,8 @@ export default function DangTin() {
         specs,
         legal: phapLy || undefined,
         direction: huong || undefined,
+        furnish: noiThat || undefined,
+        ...duAnLuu(),
         addressDetail: diaChi.trim() || undefined,
         plan: { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien },
         contact: { name: ten.trim(), phone: sdt.replace(/\D/g, "") },
@@ -396,10 +439,13 @@ export default function DangTin() {
 
       {maSua && loiNap && <Box p={4}><Text size="small" style={{ color: "#d70018" }}>Không tìm thấy tin.</Text></Box>}
 
-      <Nhom tieuDe={daDang ? "Loại hình" : "Nhu cầu & loại hình"}>
-        {!daDang && <div className="tab-md">
-          <button className={md === "ban" ? "bat" : ""} onClick={() => { setMd("ban"); setLoai(""); setLoaiCon(""); setConTuGhi(false); }}>Cần bán</button>
-          <button className={md === "thue" ? "bat" : ""} onClick={() => { setMd("thue"); setLoai(""); setLoaiCon(""); setConTuGhi(false); }}>Cho thuê</button>
+      {/* THỨ TỰ 7 MỤC = FORM WEB (PostListingForm, 14/11/2026 "web một nẻo, đây một nẻo"): 1 Loại hình & địa chỉ · 2 Thông tin chính ·
+          3 Đặc điểm & tiện ích · 4 Tiêu đề & mô tả · 5 Gói tin — thanh toán · 6 Hình ảnh & video · 7 Thông tin liên hệ. Nhãn chép theo web. */}
+      <Nhom tieuDe="1. Loại hình & địa chỉ">
+        {!daDang && <div className="tab-md bon">
+          {([["ban", "Cần bán"], ["mua", "Cần mua"], ["thue", "Cho thuê"], ["can-thue", "Cần thuê"]] as [NhuCau, string][]).map(([k, t]) => (
+            <button key={k} className={nhuCau === k ? "bat" : ""} onClick={() => doiNhuCau(k)}>{t}</button>
+          ))}
         </div>}
         <Select label="Loại hình *" placeholder="Chọn loại hình" value={loai} onChange={(v) => { if (String(v) === loai) return; setLoai(String(v)); setLoaiCon(""); setConTuGhi(false); }} closeOnSelect>
           {DS_LOAI[md].map((l) => <Option key={l.ma} value={l.ma} title={l.ten} />)}
@@ -411,25 +457,27 @@ export default function DangTin() {
           </Select>
         )}
         {oCon && conTuGhi && <Input placeholder={oCon.label} value={loaiCon} onChange={(e) => setLoaiCon(e.target.value)} maxLength={60} />}
-      </Nhom>
-
-      <Nhom tieuDe="Vị trí">
         <Button size="small" variant="secondary" loading={dangViTri} onClick={dungViTri}>Dùng vị trí hiện tại</Button>
-        <Select label="Tỉnh/Thành" placeholder="Chọn tỉnh/thành" value={tinh} onChange={(v) => { setTinh(String(v)); setPhuong(""); }} closeOnSelect>
+        <Select label="Tỉnh / Thành *" placeholder="Chọn tỉnh/thành" value={tinh} onChange={(v) => { setTinh(String(v)); setPhuong(""); }} closeOnSelect>
           {provincesNew.map((p) => <Option key={p.name} value={p.name} title={p.name} />)}
         </Select>
-        <Select label="Phường/Xã" placeholder={tinh ? "Chọn phường/xã" : "Chọn tỉnh/thành trước"} value={phuong} disabled={!tinh} onChange={(v) => setPhuong(String(v))} closeOnSelect>
+        <Select label="Phường / Xã" placeholder={tinh ? "Chọn phường/xã" : "Chọn tỉnh/thành trước"} value={phuong} disabled={!tinh} onChange={(v) => setPhuong(String(v))} closeOnSelect>
           {dsPhuong.map((w) => <Option key={w} value={w} title={w} />)}
         </Select>
-        <Input label="Số nhà, tên đường" placeholder="VD: 220 Nguyễn Mậu Tài" value={diaChi} onChange={(e) => setDiaChi(e.target.value)} />
+        <Input label="Số nhà, tên đường" placeholder="VD: 123 Võ Nguyên Giáp · Lô A12…" value={diaChi} onChange={(e) => setDiaChi(e.target.value)} />
+        <Select label="Thuộc dự án" placeholder="Chọn dự án" value={duAnTuGhi ? KHAC : duAnSlug} onChange={(v) => { const k = String(v) === KHAC; setDuAnTuGhi(k); if (k) { setDuAnSlug(""); setDuAnTen(""); } else { const d = dsDuAn.data.find((x) => x.slug === String(v)); setDuAnSlug(d?.slug ?? ""); setDuAnTen(d?.ten ?? ""); } }} closeOnSelect>
+          <Option value="" title="Không thuộc dự án" />
+          {duAnTrongTinh.map((d) => <Option key={d.slug} value={d.slug} title={d.ten} />)}
+          <Option value={KHAC} title="Khác — tự ghi" />
+        </Select>
+        {duAnTuGhi && <Input placeholder="Tên dự án" value={duAnTen} onChange={(e) => setDuAnTen(e.target.value)} maxLength={80} />}
       </Nhom>
 
-      <Nhom tieuDe="Thông tin chính">
-        <Input label="Tiêu đề" placeholder="VD: Bán nhà 3 tầng mặt tiền Hòa Xuân, Đà Nẵng" value={tieuDe} onChange={(e) => setTieuDe(e.target.value)} maxLength={120} showCount />
-        <Input.TextArea label="Mô tả" placeholder="Vị trí, pháp lý, tiện ích, hướng nhà…" value={moTa} onChange={(e) => setMoTa(e.target.value)} />
+      <Nhom tieuDe="2. Thông tin chính">
+        <Input label="Diện tích (m²) *" inputMode="decimal" value={dienTich} onChange={(e) => setDienTich(e.target.value)} />
         <Box flex style={{ gap: 8, alignItems: "flex-end" }}>
           <div style={{ flex: 1 }}>
-            <Input label={md === "thue" ? "Giá (triệu/tháng)" : "Giá"} placeholder="Trống = Thỏa thuận" inputMode="decimal" value={gia} onChange={(e) => setGia(e.target.value)} />
+            <Input label={md === "thue" ? "Giá (triệu/tháng)" : "Mức giá"} placeholder="Trống = Thỏa thuận" inputMode="decimal" value={gia} onChange={(e) => setGia(e.target.value)} />
           </div>
           {md === "ban" && (
             <div className="tab-md" style={{ width: 130 }}>
@@ -438,55 +486,34 @@ export default function DangTin() {
             </div>
           )}
         </Box>
-        <Input label="Diện tích (m²)" inputMode="decimal" value={dienTich} onChange={(e) => setDienTich(e.target.value)} />
+      </Nhom>
+
+      <Nhom tieuDe="3. Đặc điểm & tiện ích">
         <Box flex style={{ gap: 8 }}>
-          <div style={{ flex: 1 }}><Input label="Phòng ngủ" inputMode="numeric" value={ngu} onChange={(e) => setNgu(e.target.value.replace(/\D/g, ""))} /></div>
-          <div style={{ flex: 1 }}><Input label="Phòng tắm" inputMode="numeric" value={tam} onChange={(e) => setTam(e.target.value.replace(/\D/g, ""))} /></div>
+          <div style={{ flex: 1 }}><Input label="Số phòng ngủ" inputMode="numeric" value={ngu} onChange={(e) => setNgu(e.target.value.replace(/D/g, ""))} /></div>
+          <div style={{ flex: 1 }}><Input label="Số phòng tắm" inputMode="numeric" value={tam} onChange={(e) => setTam(e.target.value.replace(/D/g, ""))} /></div>
         </Box>
         <Box flex style={{ gap: 8 }}>
           <div style={{ flex: 1 }}><Input label="Mặt tiền (m)" inputMode="decimal" value={matTien} onChange={(e) => setMatTien(e.target.value)} /></div>
           <div style={{ flex: 1 }}><Input label="Số tầng" inputMode="decimal" value={soTang} onChange={(e) => setSoTang(e.target.value)} /></div>
         </Box>
-        <Select label="Pháp lý" placeholder="Chọn pháp lý" value={phapLy} onChange={(v) => setPhapLy(String(v))} closeOnSelect>
-          {PHAP_LY.map((p) => <Option key={p} value={p} title={p} />)}
-        </Select>
-        <Select label="Hướng nhà" placeholder="Chọn hướng" value={huong} onChange={(v) => setHuong(String(v))} closeOnSelect>
+        <Select label="Hướng nhà / đất" placeholder="Chọn hướng" value={huong} onChange={(v) => setHuong(String(v))} closeOnSelect>
           {HUONG.map((h) => <Option key={h} value={h} title={h} />)}
         </Select>
+        <Select label="Tình trạng pháp lý" placeholder="Chọn pháp lý" value={phapLy} onChange={(v) => setPhapLy(String(v))} closeOnSelect>
+          {PHAP_LY.map((p) => <Option key={p} value={p} title={p} />)}
+        </Select>
+        <Select label="Tình trạng nội thất" placeholder="Chọn nội thất" value={noiThat} onChange={(v) => setNoiThat(String(v))} closeOnSelect>
+          {NOI_THAT.map((p) => <Option key={p} value={p} title={p} />)}
+        </Select>
       </Nhom>
 
-      <Nhom tieuDe={`Hình ảnh (${anh.length}/${TOI_DA_ANH})`}>
-        <div className="luoi-anh">
-          {anh.map((u, i) => (
-            <div key={u} className="o-anh">
-              <img src={u} alt="" />
-              <button onClick={() => setAnh((cu) => cu.filter((_, j) => j !== i))} aria-label="Bỏ ảnh">×</button>
-            </div>
-          ))}
-          {anh.length < TOI_DA_ANH && (
-            <button className="o-anh them" onClick={themAnh} disabled={dangTaiAnh}>
-              {dangTaiAnh ? <Spinner /> : <><BieuTuongWeb ten="anh" co={24} /><span>Thêm ảnh</span></>}
-            </button>
-          )}
-        </div>
-        <Input label="Video YouTube (nếu có)" placeholder="https://youtu.be/…" value={video} onChange={(e) => setVideo(e.target.value)} />
-        {video.trim() && !laVideo(video.trim()) && <Text size="xSmall" style={{ color: "#d70018" }}>Link chưa đúng — dán link YouTube của video.</Text>}
+      <Nhom tieuDe="4. Tiêu đề & mô tả">
+        <Input label="Tiêu đề tin đăng *" placeholder="VD: Bán nhà 3 tầng mặt tiền Hòa Xuân, Đà Nẵng" value={tieuDe} onChange={(e) => setTieuDe(e.target.value)} maxLength={120} showCount />
+        <Input.TextArea label="Mô tả chi tiết" placeholder="Vị trí, pháp lý, tiện ích, hướng nhà…" value={moTa} onChange={(e) => setMoTa(e.target.value)} />
       </Nhom>
 
-      <Nhom tieuDe="Liên hệ">
-        {daXacMinh || tinSua ? (
-          <Text size="small">{ten || "—"} · {sdt}</Text>
-        ) : (
-          <XacMinhSo
-            dangTin
-            nutZalo="Dùng số điện thoại Zalo để đăng tin"
-            chuaDangNhap={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`)}
-            xong={(so) => { setSdt(so); setDaXmXong(true); }}
-          />
-        )}
-      </Nhom>
-
-      {!daDang && <Nhom tieuDe="Gói tin">
+      {!daDang && <Nhom tieuDe="5. Gói tin — thanh toán *">
         {/* BẢNG GIÁ MA TRẬN như web — bấm ô = chọn hạng + số ngày. Giá từ admin, đã gồm VAT. */}
         {dsGoi.length ? (
           <BangGiaMaTran
@@ -514,6 +541,38 @@ export default function DangTin() {
         )}
 
       </Nhom>}
+
+
+      <Nhom tieuDe={`6. Hình ảnh & video${laTinTim ? "" : " *"} (${anh.length}/${TOI_DA_ANH})`}>
+        <div className="luoi-anh">
+          {anh.map((u, i) => (
+            <div key={u} className="o-anh">
+              <img src={u} alt="" />
+              <button onClick={() => setAnh((cu) => cu.filter((_, j) => j !== i))} aria-label="Bỏ ảnh">×</button>
+            </div>
+          ))}
+          {anh.length < TOI_DA_ANH && (
+            <button className="o-anh them" onClick={themAnh} disabled={dangTaiAnh}>
+              {dangTaiAnh ? <Spinner /> : <><BieuTuongWeb ten="anh" co={24} /><span>Thêm ảnh</span></>}
+            </button>
+          )}
+        </div>
+        <Input label="Video YouTube (nếu có)" placeholder="https://youtu.be/…" value={video} onChange={(e) => setVideo(e.target.value)} />
+        {video.trim() && !laVideo(video.trim()) && <Text size="xSmall" style={{ color: "#d70018" }}>Link chưa đúng — dán link YouTube của video.</Text>}
+      </Nhom>
+
+      <Nhom tieuDe="7. Thông tin liên hệ">
+        {daXacMinh || tinSua ? (
+          <Text size="small">{ten || "—"} · {sdt}</Text>
+        ) : (
+          <XacMinhSo
+            dangTin
+            nutZalo="Dùng số điện thoại Zalo để đăng tin"
+            chuaDangNhap={() => dieuHuong(`/dang-nhap?tiep=${encodeURIComponent(maSua ? `/dang-tin?id=${maSua}` : "/dang-tin")}`)}
+            xong={(so) => { setSdt(so); setDaXmXong(true); }}
+          />
+        )}
+      </Nhom>
 
       {loi && <Box p={4}><Text size="small" style={{ color: "#d70018" }}>{loi}</Text></Box>}
 

@@ -47,7 +47,6 @@ export default function TaiKhoan() {
       { ten: "Hóa đơn", icon: "hoaDon", app: "/hoa-don" },
       { ten: "Gói hội viên", icon: "hoiVien", app: "/hoi-vien" },
       { ten: "Bảng giá dịch vụ", icon: "baoGia", app: "/bang-gia" },
-      { ten: "Dự án của tôi", icon: "duAn", app: "/du-an-cua-toi" },
       { ten: "Tin đã lưu", icon: "tim", app: "/da-luu" },
       { ten: "Tìm kiếm đã lưu", icon: "thongBao", app: "/tim-kiem-luu" },
       { ten: "Cài đặt", icon: "caiDat", app: "/cai-dat" },

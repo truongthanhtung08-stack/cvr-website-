@@ -29,7 +29,6 @@ const GoiTin = cham(() => import("./pages/GoiTin"));
 const HoaDon = cham(() => import("./pages/HoaDon"));
 const KhachHang = cham(() => import("./pages/KhachHang"));
 const CaiDat = cham(() => import("./pages/CaiDat"));
-const DuAnCuaToi = cham(() => import("./pages/DuAnCuaToi"));
 const HoiVien = cham(() => import("./pages/HoiVien"));
 const TimKiemLuu = cham(() => import("./pages/TimKiemLuu"));
 const TrangTinh = cham(() => import("./pages/TrangTinh"));
@@ -101,7 +100,6 @@ export default function UngDung() {
             <Route path="/cai-dat" element={<CaiDat />} />
             <Route path="/tim-kiem-luu" element={<TimKiemLuu />} />
             <Route path="/hoi-vien" element={<HoiVien />} />
-            <Route path="/du-an-cua-toi" element={<DuAnCuaToi />} />
             <Route path="/thong-tin/:duong" element={<TrangTinh />} />
             <Route path="/nap-tien" element={<NapTien />} />
           </AnimationRoutes>
