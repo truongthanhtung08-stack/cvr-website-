@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from "react";
 import { AnimationRoutes, App, BottomNavigation, Route, SnackbarProvider, ZMPRouter, useLocation, useNavigate } from "zmp-ui";
-import IconCL from "./components/IconCL";
+import BieuTuongWeb from "./components/BieuTuongWeb";
 import { tuVaoBangZalo } from "./lib/lienKet";
 import { canBanPhim } from "./lib/banPhim";
 import { datChoVao } from "./lib/supabase";
@@ -46,9 +46,9 @@ const NapTien = cham(() => import("./pages/NapTien"));
 // 12/11/2026 — CÙNG thanh dưới web điện thoại (MobileTabBar: Home · Lưu · Đăng tin · Tin nhắn · Hồ sơ), giữ 4 nút theo Zalo:
 // Tin nhắn (chat Zalo OA) nằm ở Hồ sơ; Mua bán · Cho thuê · Dự án vào từ 3 ô dưới ảnh đầu Trang chủ (như web).
 const TAB = [
-  { duong: "/", nhan: "Home", icon: "home" },
-  { duong: "/da-luu", nhan: "Lưu", icon: "daLuu" },
-  { duong: "/dang-tin", nhan: "Đăng tin", icon: "cong" },
+  { duong: "/", nhan: "Home", icon: "trangChu" },
+  { duong: "/da-luu", nhan: "Lưu", icon: "tim" },
+  { duong: "/dang-tin", nhan: "Đăng tin", icon: "dangTin" },
   { duong: "/tai-khoan", nhan: "Hồ sơ", icon: "taiKhoan" },
 ] as const;
 const tabCua = (p: string) => p;
@@ -67,7 +67,8 @@ function ThanhDuoi() {
           itemKey={t.duong}
           label={t.nhan}
           // Đăng tin = vòng xanh dấu + như web (MobileTabBar)
-          icon={t.duong === "/dang-tin" ? <span className="tab-dang-tin"><IconCL ten="cong" co={20} net={2.4} /></span> : <IconCL ten={t.icon} />}
+          // Cùng bộ biểu tượng thanh dưới web (MobileTabBar → BieuTuong Phosphor): thường = nét, đang chọn = tô đặc
+          icon={t.duong === "/dang-tin" ? <span className="tab-dang-tin"><BieuTuongWeb ten="dangTin" co={22} /></span> : <BieuTuongWeb ten={t.icon} co={24} dac={tab === t.duong} />}
           onClick={() => dieuHuong(t.duong)}
         />
       ))}

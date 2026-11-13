@@ -1,6 +1,7 @@
 import React from "react";
 import { Button, Icon, Page, useNavigate } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
+import BieuTuongWeb from "../components/BieuTuongWeb";
 import { goiHotline, nhanCoastalLand, quanTamOA } from "../lib/zalo";
 import { createShortcut, favoriteApp, requestSendNotification } from "zmp-sdk";
 import { useTai } from "../lib/useTai";
@@ -37,36 +38,36 @@ export default function TaiKhoan() {
   // Thứ tự Quản lý + Tài khoản = menu tài khoản web (src/lib/menuTaiKhoan.ts, tai-khoan/layout.tsx)
   const NHOM: { ten: string; muc: Muc[] }[] = [
     { ten: "Quản lý", muc: [
-      { ten: "Tin đăng", icon: "zi-list-1", app: "/tin-cua-toi" },
-      { ten: "Khách hàng", icon: "zi-group", app: "/khach-hang" },
-      { ten: "Đăng tin", icon: "zi-plus-circle", app: "/dang-tin" },
+      { ten: "Tin đăng", icon: "tinDang", app: "/tin-cua-toi" },
+      { ten: "Khách hàng", icon: "khachHang", app: "/khach-hang" },
+      { ten: "Đăng tin", icon: "dangTin", app: "/dang-tin" },
     ] },
     { ten: "Tài khoản", muc: [
-      { ten: "Ví & nạp tiền", icon: "zi-poll", app: "/nap-tien", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
-      { ten: "Hóa đơn", icon: "zi-note", app: "/hoa-don" },
-      { ten: "Gói hội viên", icon: "zi-star", app: "/hoi-vien" },
-      { ten: "Bảng giá dịch vụ", icon: "zi-more-diamond-solid", app: "/bang-gia" },
-      { ten: "Dự án của tôi", icon: "zi-home", app: "/du-an-cua-toi" },
-      { ten: "Tin đã lưu", icon: "zi-heart", app: "/da-luu" },
-      { ten: "Tìm kiếm đã lưu", icon: "zi-notif", app: "/tim-kiem-luu" },
-      { ten: "Cài đặt", icon: "zi-setting", app: "/cai-dat" },
+      { ten: "Ví & nạp tiền", icon: "vi", app: "/nap-tien", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
+      { ten: "Hóa đơn", icon: "hoaDon", app: "/hoa-don" },
+      { ten: "Gói hội viên", icon: "hoiVien", app: "/hoi-vien" },
+      { ten: "Bảng giá dịch vụ", icon: "baoGia", app: "/bang-gia" },
+      { ten: "Dự án của tôi", icon: "duAn", app: "/du-an-cua-toi" },
+      { ten: "Tin đã lưu", icon: "tim", app: "/da-luu" },
+      { ten: "Tìm kiếm đã lưu", icon: "thongBao", app: "/tim-kiem-luu" },
+      { ten: "Cài đặt", icon: "caiDat", app: "/cai-dat" },
     ] },
     { ten: "Khám phá", muc: [
-      { ten: "Danh bạ chuyên gia", icon: "zi-group", app: "/chuyen-gia" },
-      { ten: "So sánh bất động sản", icon: "zi-more-grid", app: "/so-sanh" },
-      { ten: "Tin tức", icon: "zi-note", app: "/tin-tuc" },
+      { ten: "Danh bạ chuyên gia", icon: "khachHang", app: "/chuyen-gia" },
+      { ten: "So sánh bất động sản", icon: "tongQuan", app: "/so-sanh" },
+      { ten: "Tin tức", icon: "tinTuc", app: "/tin-tuc" },
     ] },
     { ten: "Hỗ trợ", muc: [
-      { ten: "Nhắn Zalo Coastal Land", icon: "zi-chat", bam: () => nhanCoastalLand() },
-      { ten: "Gọi 0377 985 036", icon: "zi-call", bam: () => goiHotline() },
-      { ten: "Quan tâm Zalo OA", icon: "zi-add-user", bam: () => quanTamOA() },
+      { ten: "Nhắn Zalo Coastal Land", icon: "chat", bam: () => nhanCoastalLand() },
+      { ten: "Gọi 0377 985 036", icon: "goi", bam: () => goiHotline() },
+      { ten: "Quan tâm Zalo OA", icon: "quanTam", bam: () => quanTamOA() },
     ] },
     // CHỨC NĂNG NỀN TẢNG ZALO (anh 14/11/2026: "đủ các chức năng nó có trên nền tảng này với người dùng") — quyền 66 · 120 đã cấp.
     // Mỗi nút gọi hộp chuẩn của Zalo, khách tự xác nhận trong hộp đó.
     { ten: "Zalo", muc: [
-      { ten: "Thêm vào màn hình chính", icon: "zi-add-photo", bam: () => { createShortcut().catch(() => {}); } },
-      { ten: "Thêm vào Mini App yêu thích", icon: "zi-heart", bam: () => { favoriteApp().catch(() => {}); } },
-      { ten: "Nhận thông báo từ Coastal Land", icon: "zi-notif", bam: () => { requestSendNotification().catch(() => {}); } },
+      { ten: "Thêm vào màn hình chính", icon: "manHinh", bam: () => { createShortcut().catch(() => {}); } },
+      { ten: "Thêm vào Mini App yêu thích", icon: "tim", bam: () => { favoriteApp().catch(() => {}); } },
+      { ten: "Nhận thông báo từ Coastal Land", icon: "thongBao", bam: () => { requestSendNotification().catch(() => {}); } },
     ] },
   ];
   const mo = (m: Muc) => {
@@ -103,7 +104,7 @@ export default function TaiKhoan() {
           <h3>{n.ten}</h3>
           {n.muc.map((m) => (
             <button key={m.ten} className="tk-muc" onClick={() => mo(m)}>
-              <Icon icon={m.icon as never} />
+              <span className="tk-bt"><BieuTuongWeb ten={m.icon} /></span>
               <span className="tk-muc-ten">{m.ten}</span>
               {m.phu && <span className="tk-muc-phu">{m.phu}</span>}
               <Icon icon="zi-chevron-right" />
@@ -114,7 +115,7 @@ export default function TaiKhoan() {
       {nguoiDung && (
         <section className="tk-nhom">
           <button className="tk-muc tk-dang-xuat" onClick={() => { try { localStorage.setItem(DA_DANG_XUAT, "1"); } catch { /* bỏ qua */ } void supabase.auth.signOut(); }}>
-            <Icon icon="zi-leave" />
+            <span className="tk-bt"><BieuTuongWeb ten="dangXuat" /></span>
             <span className="tk-muc-ten">Đăng xuất</span>
           </button>
         </section>

@@ -935,3 +935,6 @@ html.xem-thu .hang-app { padding-right: 0; }
 .ba-muc button { flex-direction: row; gap: 0; padding: 12px 0; }
 /* ĐANG GÕ (src/lib/banPhim.ts): ẩn thanh nút đáy, thanh tab dưới, nút nổi — không đè ô khách đang gõ khi bàn phím bật (14/11/2026) */
 html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut-dang-tin { display: none !important; }
+
+/* Biểu tượng menu Hồ sơ = bộ Phosphor của menu tài khoản web (BieuTuongWeb, 14/11/2026) */
+.tk-bt { display: inline-flex; width: 20px; height: 20px; flex: none; color: var(--cl-ink); }
