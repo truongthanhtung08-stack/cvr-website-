@@ -4,7 +4,7 @@ import TieuDe from "../components/TieuDe";
 import { goiHotline, nhanCoastalLand, quanTamOA } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
 import { soVN, supabase, usePhien } from "../lib/supabase";
-import { lienKetZalo } from "../lib/lienKet";
+import { DA_DANG_XUAT, lienKetZalo } from "../lib/lienKet";
 
 // ============================================================================
 // CÁ NHÂN — GỌN NHƯNG ĐỦ (chủ dự án 06/11/2026). Mục = ĐÚNG menu Tài khoản của web (src/app/tai-khoan/layout.tsx MUC_CHINH +
@@ -98,7 +98,7 @@ export default function TaiKhoan() {
       ))}
       {nguoiDung && (
         <section className="tk-nhom">
-          <button className="tk-muc tk-dang-xuat" onClick={() => supabase.auth.signOut()}>
+          <button className="tk-muc tk-dang-xuat" onClick={() => { try { localStorage.setItem(DA_DANG_XUAT, "1"); } catch { /* bỏ qua */ } void supabase.auth.signOut(); }}>
             <Icon icon="zi-leave" />
             <span className="tk-muc-ten">Đăng xuất</span>
           </button>
