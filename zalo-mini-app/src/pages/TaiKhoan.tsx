@@ -53,7 +53,6 @@ export default function TaiKhoan() {
       { ten: "Cài đặt", icon: "caiDat", app: "/cai-dat" },
     ] },
     { ten: "Khám phá", muc: [
-      { ten: "Danh bạ chuyên gia", icon: "khachHang", app: "/chuyen-gia" },
       { ten: "So sánh bất động sản", icon: "tongQuan", app: "/so-sanh" },
       { ten: "Tin tức", icon: "tinTuc", app: "/tin-tuc" },
     ] },
