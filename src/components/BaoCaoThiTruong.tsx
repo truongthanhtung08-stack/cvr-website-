@@ -28,8 +28,8 @@ function Doi({ v }: { v?: number }) {
 function The({ nhan, giaTri, donVi, chinh, phu }: { nhan: string; giaTri: string; donVi?: string; chinh?: boolean; phu?: React.ReactNode }) {
   return (
     <div className={`rounded-xl p-4 ${chinh ? "bg-cvr-ink text-white" : "bg-cvr-surface"}`}>
-      <p className={`text-[13px] ${chinh ? "text-white/70" : "text-cvr-muted"}`}>{nhan}</p>
-      <p className={`mt-0.5 text-[28px] font-bold leading-tight tabular-nums ${chinh ? "text-white" : "text-cvr-ink"}`}>
+      <p className={`text-[12.5px] ${chinh ? "text-white/70" : "text-cvr-muted"}`}>{nhan}</p>
+      <p className={`mt-1 text-[26px] font-bold leading-tight tabular-nums ${chinh ? "text-white" : "text-cvr-ink"}`}>
         {giaTri}{donVi && <span className={`ml-1 text-[13px] font-medium ${chinh ? "text-white/70" : "text-cvr-muted"}`}>{donVi}</span>}
       </p>
       {phu}
@@ -105,15 +105,15 @@ function GiaKhuVuc({ d }: { d: SoPhanKhuc["giaKhuVuc"] }) {
 function PhanKhuc({ p, v }: { p: SoPhanKhuc; v: SoVung }) {
   const nd = v.nhanDinh[p.phanKhuc]?.length ? v.nhanDinh[p.phanKhuc] : nhanDinhTuSo(p);
   return (
-    <section className="border-t border-cvr-line py-6 [break-inside:avoid-page]">
-      <h3 className="mb-3 text-xl font-semibold text-cvr-ink">{TEN_PHAN_KHUC[p.phanKhuc]}</h3>
-      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+    <section className="border-t border-cvr-line pb-6 pt-6 first-of-type:border-t-0 first-of-type:pt-0 [break-inside:avoid-page]">
+      <h3 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink">{TEN_PHAN_KHUC[p.phanKhuc]}</h3>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <The nhan="Thị trường sơ cấp" giaTri={vn(p.soDuAn, 0)} donVi="dự án" chinh />
         <The nhan="Nguồn cung sơ cấp" giaTri={vn(p.nguonCung, 0)} donVi={p.donVi} phu={<Doi v={p.doiCung} />} />
         <The nhan="Tiêu thụ sơ cấp" giaTri={vn(p.tieuThu, 0)} donVi={p.donVi} phu={<Doi v={p.doiTieuThu} />} />
         <The nhan="Tỷ lệ tiêu thụ" giaTri={p.tyLe == null ? "—" : `${vn(p.tyLe)}%`} />
       </div>
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:[&>*:last-child:nth-child(odd)]:col-span-2">
         {p.theoQuy.filter((x) => x.nguonCung != null).length >= 2 ? (
           <KhungBieuDo tieuDe="Nguồn cung và tiêu thụ sơ cấp theo quý" dvt={`Đvt: ${p.donVi}`}>
             <CungTieuThu d={p.theoQuy} /><ChuGiai ds={[[XANH[0], "Nguồn cung"], [VANG, "Tiêu thụ"]]} />
@@ -135,8 +135,8 @@ function PhanKhuc({ p, v }: { p: SoPhanKhuc; v: SoVung }) {
         ) : <OCho tieuDe="Dự án chào bán trong quý">Chưa có số liệu.</OCho>}
       </div>
       {nd.length > 0 && (
-        <div className="mt-4">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-cvr-ink">Nhận định thị trường</p>
+        <div className="mt-5 rounded-xl bg-cvr-surface p-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cvr-ink">Nhận định thị trường</p>
           <ul className="grid max-w-[72ch] list-disc gap-1.5 pl-5 text-[15px] leading-relaxed text-cvr-body marker:text-cvr-gold">{nd.map((x) => <li key={x}>{x}</li>)}</ul>
         </div>
       )}
@@ -210,9 +210,9 @@ function NutTaiPdf({ pdf, noiDung }: { pdf?: string; noiDung: string }) {
 
 function TieuDeChuong({ so, ten }: { so: string; ten: string }) {
   return (
-    <header className="mb-4 flex items-baseline gap-3">
-      <span className="text-[28px] font-bold leading-none text-cvr-gold tabular-nums">{so}</span>
-      <h2 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-[28px]">{ten}</h2>
+    <header className="mb-5 flex items-baseline gap-2.5 border-b border-cvr-line pb-3">
+      <span className="text-[22px] font-bold leading-none text-cvr-gold tabular-nums sm:text-[26px]">{so}</span>
+      <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-cvr-ink sm:text-[26px]">{ten}</h2>
     </header>
   );
 }
@@ -254,13 +254,13 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
 
       {chuaCo ? (
         <div className="mt-6">
-          <h1 className="text-[26px] font-bold leading-tight tracking-tight text-cvr-ink sm:text-4xl">Điểm tin thị trường {v.vung.ten}</h1>
+          <h1 className="text-[26px] font-bold leading-tight tracking-tight text-cvr-ink sm:text-[32px]">Điểm tin thị trường {v.vung.ten}</h1>
           <p className="mt-2 text-base text-cvr-muted">Báo cáo khu vực này đang được cập nhật.</p>
         </div>
       ) : (<>
       <div className="mt-6 border-b border-cvr-line pb-5">
         <p className="text-[13px] font-semibold tracking-[0.18em] text-cvr-ink">COASTAL <span className="text-cvr-gold">LAND</span> · ĐIỂM TIN THỊ TRƯỜNG</p>
-        <h1 className="mt-2 text-[26px] font-bold leading-tight tracking-tight text-cvr-ink sm:text-4xl">Điểm tin thị trường {v.vung.ten}</h1>
+        <h1 className="mt-2 text-[26px] font-bold leading-tight tracking-tight text-cvr-ink sm:text-[32px]">Điểm tin thị trường {v.vung.ten}</h1>
         <p className="mt-1 text-sm font-medium text-cvr-muted">Quý {q.replace(/^Q/, "")}</p>
         {dn.length > 0 && (
           <div className="mt-4 rounded-2xl bg-cvr-surface p-4 sm:p-5">
@@ -273,14 +273,14 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
         </nav>
       </div>
 
-      {soCua("kinh-te") && <section id="kinh-te" className="scroll-mt-24 py-7">
+      {soCua("kinh-te") && <section id="kinh-te" className="scroll-mt-24 pt-9 pb-2">
         <TieuDeChuong so={soCua("kinh-te")!.so} ten={soCua("kinh-te")!.ten} />
-        <h3 className="mb-2 text-lg font-semibold text-cvr-ink">Chỉ số kinh tế</h3>
+        <h3 className="mb-2.5 text-[17px] font-semibold text-cvr-ink">Chỉ số kinh tế</h3>
         {v.kinhTe.length ? (
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">{v.kinhTe.map((k) => (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">{v.kinhTe.map((k) => (
             <div key={k.tinh + k.chiSo} className="rounded-xl bg-cvr-surface p-4">
               <p className="text-sm font-semibold text-cvr-ink">{k.chiSo} <span className="font-normal text-cvr-muted">· {k.tinh}</span></p>
-              <p className="mt-1 text-[26px] font-bold tabular-nums text-cvr-blue-ink">{k.giaTri}<span className="ml-1 text-[13px] font-medium text-cvr-muted">{k.donVi}</span></p>
+              <p className="mt-1 text-[26px] font-bold leading-tight tabular-nums text-cvr-ink">{k.giaTri}<span className="ml-1 text-[13px] font-medium text-cvr-muted">{k.donVi}</span></p>
               {k.caNuoc && <p className="text-[13px] text-cvr-muted">Cả nước: {k.caNuoc}</p>}
               {k.soCungKy && <p className="text-[13px] text-cvr-body">{k.soCungKy} Y-o-Y</p>}
               <p className="mt-1 text-[11px] text-cvr-faint">{k.ky} · Nguồn: {k.nguon}</p>
@@ -288,14 +288,14 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
         ) : <OCho tieuDe="Chưa có số liệu">GRDP · FDI · CPI · du lịch.</OCho>}
         <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
           <div>
-            <h3 className="mb-2 text-lg font-semibold text-cvr-ink">Chính sách – Pháp lý</h3>
+            <h3 className="mb-2.5 text-[17px] font-semibold text-cvr-ink">Chính sách – Pháp lý</h3>
             {v.chinhSach.length ? <ol className="grid gap-3 text-sm">{v.chinhSach.map((b) => (
               <li key={b.soHieu} className="rounded-xl border border-cvr-line p-3"><b className="text-cvr-ink">{b.soHieu}</b> <span className="text-cvr-muted">· {b.ngay}{b.coQuan ? ` · ${b.coQuan}` : ""}</span>
                 <span className="block text-cvr-body">{b.noiDung}{b.hieuLuc ? ` Hiệu lực ${b.hieuLuc}.` : ""}</span></li>))}</ol>
               : <OCho tieuDe="Chưa có số liệu">Văn bản ban hành trong quý.</OCho>}
           </div>
           <div>
-            <h3 className="mb-2 text-lg font-semibold text-cvr-ink">Hạ tầng giao thông</h3>
+            <h3 className="mb-2.5 text-[17px] font-semibold text-cvr-ink">Hạ tầng giao thông</h3>
             {v.haTang.length ? <ol className="grid gap-3 text-sm">{v.haTang.map((h) => (
               <li key={h.ten} className="rounded-xl border border-cvr-line p-3"><b className="text-cvr-ink">{h.ten}</b> <span className="text-cvr-muted">· {h.moc}{h.ngay ? ` ${h.ngay}` : ""}{h.von ? ` · ${h.von}` : ""}</span>
                 <span className="block text-cvr-body">{h.noiDung}</span></li>))}</ol>
@@ -304,13 +304,13 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
         </div>
       </section>}
 
-      {soCua("dien-bien") && <section id="dien-bien" className="scroll-mt-24 py-7">
+      {soCua("dien-bien") && <section id="dien-bien" className="scroll-mt-24 pt-9 pb-2">
         <TieuDeChuong so={soCua("dien-bien")!.so} ten={soCua("dien-bien")!.ten} />
         {v.phanKhuc.length ? v.phanKhuc.map((p) => <PhanKhuc key={p.phanKhuc} p={p} v={v} />)
           : <OCho tieuDe="Chưa có số liệu">Nguồn cung, tiêu thụ, giá sơ cấp theo phân khúc.</OCho>}
       </section>}
 
-      {soCua("du-bao") && <section id="du-bao" className="scroll-mt-24 py-7">
+      {soCua("du-bao") && <section id="du-bao" className="scroll-mt-24 pt-9 pb-2">
         <TieuDeChuong so={soCua("du-bao")!.so} ten={soCua("du-bao")!.ten} />
         <div className="grid gap-4">{v.phanKhuc.map((p) => {
           const cuaAnh = v.duBao.filter((d) => !d.phanKhuc || d.phanKhuc === p.phanKhuc || TEN_PHAN_KHUC[p.phanKhuc].includes(d.phanKhuc)).map((d) => d.noiDung);
