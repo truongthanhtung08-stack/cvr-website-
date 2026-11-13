@@ -217,10 +217,11 @@ function TieuDeChuong({ so, ten }: { so: string; ten: string }) {
   );
 }
 
-export default function BaoCaoThiTruong({ vung, xemThu = false }: { vung: SoVung[]; xemThu?: boolean }) {
-  // LUÔN ĐỦ 3 TAB KHU VỰC (anh 13/11/2026: "sao thấy có 1 cái") — khu vực chưa có số thì bấm vào ghi "đang được cập nhật"
-  const coSo = vung;
-  const [chon, setChon] = useState((vung.find((x) => x.phanKhuc.length) ?? vung[0]).vung.id);
+export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vung: SoVung[]; xemThu?: boolean; vungDau?: string }) {
+  // KHU VỰC NÀO ĐỦ SỐ THÌ HIỆN (anh 13/11/2026) — trang công khai chỉ có tab khu vực đủ số; Admin xem trước hiện đủ 3 khu vực
+  const coSo = xemThu ? vung : vung.filter((x) => x.du);
+  const [chon, setChon] = useState(vungDau ?? (coSo.find((x) => x.du) ?? coSo[0] ?? vung[0]).vung.id);
+  if (!coSo.length) return <p className="text-base text-cvr-muted">Báo cáo đang được cập nhật.</p>;
   const v = coSo.find((x) => x.vung.id === chon) ?? coSo[0];
   const chuaCo = !v.phanKhuc.length && !xemThu;
   const q = tenQuy(v.quy), qSau = tenQuy(quySau(v.quy));

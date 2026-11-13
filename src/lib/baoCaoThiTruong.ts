@@ -150,7 +150,7 @@ export type SoPhanKhuc = {
   duAn: DuAnMoBan[]; nguon: string[];
 };
 export type SoVung = {
-  vung: VungBaoCao; quy: string; phanKhuc: SoPhanKhuc[]; tongCung?: number; tongTieuThu?: number;
+  vung: VungBaoCao; quy: string; phanKhuc: SoPhanKhuc[]; tongCung?: number; tongTieuThu?: number; du: boolean;
   kinhTe: ChiSoKinhTe[]; chinhSach: VanBan[]; haTang: CongTrinh[]; duBao: DuBao[]; pdf?: string; nhanDinh: Record<string, string[]>;
 };
 
@@ -196,6 +196,8 @@ export function soLieuVung(vung: VungBaoCao, bang: BaoCaoNhap | null, quy: strin
   for (const [k, v] of Object.entries(bang?.nhanDinh ?? {})) if (k.startsWith(vung.id + "|")) nhanDinh[k.slice(vung.id.length + 1)] = v;
   return {
     vung, quy, phanKhuc, tongCung: cong(phanKhuc.map((p) => p.nguonCung)), tongTieuThu: cong(phanKhuc.map((p) => p.tieuThu)),
+    // KHU VỰC ĐỦ SỐ (anh 13/11/2026: "khu vực nào đủ thì hiển thị"): có nguồn cung + giá sơ cấp của Đất nền hoặc Căn hộ
+    du: phanKhuc.some((p) => (p.phanKhuc === "Đất nền" || p.phanKhuc === "Căn hộ") && p.nguonCung != null && (p.giaTB != null || p.giaKhuVuc.length > 0)),
     kinhTe: (bang?.kinhTe ?? []).filter((x) => x.vung === vung.id), chinhSach: (bang?.chinhSach ?? []).filter((x) => x.vung === vung.id),
     haTang: (bang?.haTang ?? []).filter((x) => x.vung === vung.id), duBao: (bang?.duBao ?? []).filter((x) => x.vung === vung.id),
     pdf: bang?.pdf?.[`${vung.id}|${quy}`], nhanDinh,
