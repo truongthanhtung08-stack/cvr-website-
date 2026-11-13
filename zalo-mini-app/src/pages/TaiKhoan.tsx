@@ -52,10 +52,6 @@ export default function TaiKhoan() {
       { ten: "Tìm kiếm đã lưu", icon: "thongBao", app: "/tim-kiem-luu" },
       { ten: "Cài đặt", icon: "caiDat", app: "/cai-dat" },
     ] },
-    { ten: "Khám phá", muc: [
-      { ten: "So sánh bất động sản", icon: "tongQuan", app: "/so-sanh" },
-      { ten: "Tin tức", icon: "tinTuc", app: "/tin-tuc" },
-    ] },
     { ten: "Hỗ trợ", muc: [
       { ten: "Nhắn Zalo Coastal Land", icon: "chat", bam: () => nhanCoastalLand() },
       { ten: "Gọi 0377 985 036", icon: "goi", bam: () => goiHotline() },
