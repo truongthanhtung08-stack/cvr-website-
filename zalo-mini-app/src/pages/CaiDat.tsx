@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Box, Button, Input, Page, Spinner, Switch, Text } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
 import { supabase, usePhien } from "../lib/supabase";
+import CanDangNhap from "../components/CanDangNhap";
 
 // CÀI ĐẶT — cùng hồ sơ + cùng cách lưu với web (src/app/tai-khoan/cai-dat/page.tsx): họ tên (khách tự đặt → giữ khi gộp / đăng nhập
 // lại: tu_dat, tu_dat_ten), tên trên tin đổi theo (/api/tai-khoan/dong-bo-ten-anh) · thông tin xuất hóa đơn công ty.
 const WEB = "https://coastalland.vn";
 
 export default function CaiDat() {
-  const { nguoiDung } = usePhien();
+  const { san, nguoiDung } = usePhien();
   const [hs, setHs] = useState<Record<string, any> | null>(null);
   const [ten, setTen] = useState("");
   const [hd, setHd] = useState({ bat: false, cty: "", mst: "", diaChi: "", email: "" });
@@ -55,6 +56,7 @@ export default function CaiDat() {
     setBao(error ? `Lưu thất bại: ${error.message}` : "Đã lưu");
   };
 
+  if (san && !nguoiDung) return <CanDangNhap tieuDe="Cài đặt" />; // chưa vào tài khoản: cùng màn như Gói hội viên
   if (!hs) return <Page><TieuDe title="Cài đặt" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
   return (
     <Page style={{ paddingBottom: 24 }}>

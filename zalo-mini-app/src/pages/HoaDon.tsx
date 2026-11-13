@@ -3,6 +3,7 @@ import { Box, Page, Spinner, Text } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
 import { supabase, usePhien } from "../lib/supabase";
 import { useTai } from "../lib/useTai";
+import CanDangNhap from "../components/CanDangNhap";
 
 // HÓA ĐƠN — cùng bảng doanh_thu với web (src/app/tai-khoan/hoa-don/page.tsx): mỗi khoản phí đã trả · số hóa đơn khi đã xuất.
 type Dong = { id: number; ngay_ghi_nhan: string; mo_ta: string | null; tong_tra: number; hoa_don_so: string | null; hoa_don_trang_thai: string | null };
@@ -10,7 +11,7 @@ const vnd = (n: number) => `${Math.round(n).toLocaleString("vi-VN")} đ`;
 const ngay = (s: string) => new Date(s).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 
 export default function HoaDon() {
-  const { nguoiDung } = usePhien();
+  const { san, nguoiDung } = usePhien();
   const ds = useTai(
     async () =>
       nguoiDung
@@ -20,6 +21,7 @@ export default function HoaDon() {
     [] as Dong[],
   );
   const tong = ds.data.reduce((s, d) => s + Number(d.tong_tra || 0), 0);
+  if (san && !nguoiDung) return <CanDangNhap tieuDe="Hóa đơn" />; // chưa vào tài khoản: cùng màn như Gói hội viên
   return (
     <Page>
       <TieuDe title="Hóa đơn" />

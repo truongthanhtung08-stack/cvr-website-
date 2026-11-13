@@ -4,6 +4,7 @@ import { openPhone } from "zmp-sdk";
 import TieuDe from "../components/TieuDe";
 import { soVN, supabase, usePhien } from "../lib/supabase";
 import { useTai } from "../lib/useTai";
+import CanDangNhap from "../components/CanDangNhap";
 
 // KHÁCH HÀNG — người đã xem số / để lại liên hệ trên tin của mình (bảng listing_leads, cùng nguồn web
 // src/app/tai-khoan/khach-hang/page.tsx). Bấm số là gọi.
@@ -11,7 +12,7 @@ type Lead = { id: number; listing_id: string; viewer_name: string | null; viewer
 const luc = (s: string) => new Date(s).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
 
 export default function KhachHang() {
-  const { nguoiDung } = usePhien();
+  const { san, nguoiDung } = usePhien();
   const ds = useTai(
     async () => {
       if (!nguoiDung) return { lead: [] as Lead[], ten: {} as Record<string, string> };
@@ -24,6 +25,7 @@ export default function KhachHang() {
     [nguoiDung?.id],
     { lead: [] as Lead[], ten: {} as Record<string, string> },
   );
+  if (san && !nguoiDung) return <CanDangNhap tieuDe="Khách hàng" />; // chưa vào tài khoản: cùng màn như Gói hội viên
   return (
     <Page>
       <TieuDe title="Khách hàng" />
