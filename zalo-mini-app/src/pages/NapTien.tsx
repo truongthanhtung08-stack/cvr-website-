@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box, Button, Input, Page, Text, useNavigate } from "zmp-ui";
+import { useSearchParams } from "react-router-dom";
 import { Payment } from "zmp-sdk/apis";
 import TieuDe from "../components/TieuDe";
 import XacMinhSo from "../components/XacMinhSo";
@@ -17,7 +18,10 @@ const CHO_TOI_DA = 10 * 60_000; // đọc số dư tối đa 10 phút sau khi kh
 export default function NapTien() {
   const dieuHuong = useNavigate();
   const { phien, nguoiDung, san } = usePhien();
-  const [soTien, setSoTien] = useState<number>(500_000);
+  const [thamSo] = useSearchParams();
+  const can = Number(thamSo.get("can")) || 0; // nạp thêm để đăng tin: số còn thiếu
+  const [soTien, setSoTien] = useState<number>(can > 0 ? Math.max(10_000, Math.ceil(can / 1000) * 1000) : 500_000);
+  const [chonNut, setChonNut] = useState(can <= 0); // có ?can= thì không nút mệnh giá nào sáng sẵn
   const [dang, setDang] = useState(false);
   const [canSo, setCanSo] = useState(false);
   const [cho, setCho] = useState(false);
@@ -114,14 +118,15 @@ export default function NapTien() {
             <Text.Title size="small">Chọn số tiền</Text.Title>
             <div className="luoi-muc-nap">
               {MUC.map((m) => (
-                <button key={m} className={m === soTien ? "bat" : ""} onClick={() => setSoTien(m)}>{vnd(m)}</button>
+                <button key={m} className={chonNut && m === soTien ? "bat" : ""} onClick={() => { setChonNut(true); setSoTien(m); }}>{vnd(m)}</button>
               ))}
             </div>
             <Input
               label="Hoặc nhập số khác (đ)"
               inputMode="numeric"
               value={soTien ? soTien.toLocaleString("vi-VN") : ""}
-              onChange={(e) => setSoTien(Number(e.target.value.replace(/\D/g, "")) || 0)}
+              onChange={(e) => { setChonNut(false); setSoTien(Number(e.target.value.replace(/[^0-9]/g, "")) || 0); }}
+              autoFocus={can > 0}
             />
             <Button fullWidth loading={dang || cho} disabled={soTien < 10_000} onClick={nap}>Nạp {vnd(soTien)}</Button>
           </>

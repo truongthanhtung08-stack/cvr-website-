@@ -131,7 +131,8 @@ export default function DangTin() {
   }, []);
   useEffect(() => { document.querySelector(".thanh-buoc .bat")?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); }, [buoc]); // bước đang xem luôn nằm trong thanh
   const [xemTruoc, setXemTruoc] = useState(false); // nút Xem trước như web: thẻ tin đúng như sẽ hiện
-  const [luuNhap, setLuuNhap] = useState(false); // bấm Lưu nháp (như web: ghi được tới đâu lưu tới đó, không gửi duyệt)
+  const [luuNhap, setLuuNhap] = useState(false);
+  const [conThieu, setConThieu] = useState(0); // số tiền còn thiếu để đăng (đã gồm VAT) — nút "Nạp thêm" mang theo, như web ?can= // bấm Lưu nháp (như web: ghi được tới đâu lưu tới đó, không gửi duyệt)
   const [dangGui, setDangGui] = useState(false);
   const [loi, setLoi] = useState<string>();
   const [xong, setXong] = useState<"pending" | "draft" | "sua" | null>(null);
@@ -461,7 +462,7 @@ export default function DangTin() {
     const specs: Record<string, string> = {};
     const loaiLuu = loai.split("::")[0];
     Object.assign(specs, specLoai(), oLoaiLuu());
-    const { error } = await supabase.from("listings").insert({
+    const { data: tinMoi, error } = await supabase.from("listings").insert({
       purpose: nhuCau,
       type: loaiLuu,
       title: tieuDe.trim(),
@@ -493,15 +494,26 @@ export default function DangTin() {
       owner_id: nguoiDung.id,
       tier: goi?.tierId ?? "basic", // như web: hạng khách chọn; tiền chỉ trừ khi admin duyệt
       published_at: null,
-    });
+    }).select("id").single();
     setDangGui(false);
     if (error && /VI_KHONG_DU/.test(error.message)) {
       const m = error.message.match(/(\d+)\s*đ/);
+      if (m) setConThieu(Number(m[1]));
       return setLoi(m ? `Nạp thêm ${Number(m[1]).toLocaleString("vi-VN")} đ để đăng tin.` : "Ví không đủ tiền để đăng tin.");
     }
     if (error) return setLoi(/BDS_KHAC/.test(error.message) ? error.message.replace(/^.*BDS_KHAC:\s*/, "") : `Gửi tin thất bại: ${error.message}`);
     // Gửi duyệt từ tin nháp: tin chờ duyệt đã tạo → xoá nháp cũ (như web, không để tin trùng).
     if (maSua && (tinSua?.status === "draft" || tinSua?.status === "rejected") && !viThieu) await supabase.from("listings").delete().eq("id", maSua);
+    // THIẾU TIỀN (quy trình ⑤ CLAUDE.md, như web): ghi "chờ nạp" cho tin nháp này — nạp đủ là máy chủ tự gửi đi duyệt đúng gói + báo khách
+    if (viThieu && tinMoi?.id) {
+      setConThieu(Math.max(0, tien.tongTra - khaDung));
+      const { data: ss } = await supabase.auth.getSession();
+      await fetch("https://coastalland.vn/api/tin-dang/up", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${ss.session?.access_token}` },
+        body: JSON.stringify({ id: tinMoi.id, tier: goi?.tierId ?? "basic", soNgay }),
+      }).catch(() => {});
+    }
     setXong(viThieu ? "draft" : "pending");
     // Tin vào hàng chờ duyệt → nhờ máy chủ web báo khách "đã nhận tin" (máy chủ tự kiểm, không báo trùng).
     if (!viThieu) {
@@ -537,7 +549,7 @@ export default function DangTin() {
               ? "Coastal Land sẽ báo kết quả duyệt qua Zalo."
               : luuNhap ? "" : `Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn. Tin đã lưu nháp nguyên vẹn — nạp tiền xong là đăng tiếp.`}
           </Text>}
-          {xong === "draft" && !luuNhap && <Button fullWidth onClick={() => dieuHuong("/nap-tien")}>Nạp tiền để đăng tin</Button>}
+          {xong === "draft" && !luuNhap && <Button fullWidth onClick={() => dieuHuong(`/nap-tien?can=${conThieu || tien.tongTra}`)}>Nạp tiền để đăng tin</Button>}
           <Button fullWidth variant={xong === "draft" ? "secondary" : "primary"} onClick={() => dieuHuong("/tin-cua-toi", { replace: true })}>Xem tin của tôi</Button>
           <Button fullWidth variant="secondary" onClick={() => dieuHuong("/", { replace: true })}>Về trang chủ</Button>
         </Box>
@@ -722,7 +734,10 @@ export default function DangTin() {
         )}
       </Nhom>
 
-      {loi && <Box p={4}><Text size="small" style={{ color: "#d70018" }}>{loi}</Text></Box>}
+      {loi && <Box p={4} style={{ display: "grid", gap: 8 }}>
+        <Text size="small" style={{ color: "#d70018" }}>{loi}</Text>
+        {conThieu > 0 && <Button size="small" onClick={() => dieuHuong(`/nap-tien?can=${conThieu}`)}>Nạp thêm</Button>}
+      </Box>}
 
       <Sheet visible={xemTruoc} onClose={() => setXemTruoc(false)} autoHeight mask handler swipeToClose>
         <Box p={4} style={{ maxHeight: "80vh", overflowY: "auto" }}>
