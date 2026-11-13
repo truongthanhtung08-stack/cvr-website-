@@ -33,7 +33,7 @@ export default function TinCuaToi() {
   const { data, dangTai } = useTai<Dong[]>(
     async () =>
       nguoiDung
-        ? (((await supabase.from("listings").select("id,title,status,images,created_at,tier_expires_at,details").eq("owner_id", nguoiDung.id).order("created_at", { ascending: false }).limit(200)).data ?? []) as Dong[])
+        ? (((await supabase.from("listings").select("id,title,status,images,created_at,tier_expires_at,details").eq("owner_id", nguoiDung.id).neq("status", "deleted").order("created_at", { ascending: false }).limit(200)).data ?? []) as Dong[])
         : [],
     [nguoiDung?.id],
     [],

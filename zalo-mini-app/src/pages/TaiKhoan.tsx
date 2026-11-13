@@ -5,7 +5,7 @@ import { goiHotline, nhanCoastalLand, quanTamOA } from "../lib/zalo";
 import { createShortcut, favoriteApp, requestSendNotification } from "zmp-sdk";
 import { useTai } from "../lib/useTai";
 import { soVN, supabase, usePhien } from "../lib/supabase";
-import { lienKetZalo, vaoNgay } from "../lib/lienKet";
+import { DA_DANG_XUAT, lienKetZalo, vaoNgay } from "../lib/lienKet";
 
 // ============================================================================
 // CÁ NHÂN — GỌN NHƯNG ĐỦ (chủ dự án 06/11/2026). Mục = ĐÚNG menu Tài khoản của web (src/app/tai-khoan/layout.tsx MUC_CHINH +
@@ -18,6 +18,9 @@ const vnd = (n: number) => `${n.toLocaleString("vi-VN")} đ`;
 const emailThat = (e?: string | null) => (e && !/@users.coastalland.vn$/i.test(e) ? e : "");
 
 type Muc = { ten: string; icon: string; app?: string; bam?: () => void; phu?: string };
+
+// Đã bấm Đăng xuất thì nút vào lại ghi "Đăng nhập bằng Zalo" (mở app không tự vào lại — lib/lienKet tuVaoBangZalo)
+function daDangXuat() { try { return localStorage.getItem(DA_DANG_XUAT) === "1"; } catch { return false; } }
 
 export default function TaiKhoan() {
   const dieuHuong = useNavigate();
@@ -90,7 +93,7 @@ export default function TaiKhoan() {
         ) : (
           // Mở app là vào bằng Zalo (lib/lienKet). Chỉ khi lần vào ngầm hỏng (mạng) mới có nút này — bấm là vào lại bằng Zalo.
           <div className="tk-lien-ket">
-            <Button fullWidth loading={dangLk} onClick={async () => { setDangLk(true); await vaoNgay(); setDangLk(false); }}>Thử lại</Button>
+            <Button fullWidth loading={dangLk} onClick={async () => { setDangLk(true); await vaoNgay(); setDangLk(false); }}>{daDangXuat() ? "Đăng nhập bằng Zalo" : "Thử lại"}</Button>
           </div>
         )}
       </div>
@@ -107,6 +110,14 @@ export default function TaiKhoan() {
           ))}
         </section>
       ))}
+      {nguoiDung && (
+        <section className="tk-nhom">
+          <button className="tk-muc tk-dang-xuat" onClick={() => { try { localStorage.setItem(DA_DANG_XUAT, "1"); } catch { /* bỏ qua */ } void supabase.auth.signOut(); }}>
+            <Icon icon="zi-leave" />
+            <span className="tk-muc-ten">Đăng xuất</span>
+          </button>
+        </section>
+      )}
     </Page>
   );
 }

@@ -34,8 +34,8 @@ export async function lienKetZalo(): Promise<boolean> {
 }
 
 // MỞ APP LÀ VÀO BẰNG ZALO CÁ NHÂN — KHÔNG CÓ BƯỚC LIÊN KẾT NÀO (anh 14/11/2026: "không có liên kết cái gì cả"): chưa có phiên → vào ngầm
-// bằng mã Zalo; khách mới thì web tự tạo tài khoản theo Zalo. Không có Đăng xuất (Mini App sống trong Zalo của chính khách).
-export const DA_DANG_XUAT = "cl-da-dang-xuat"; // khoá cũ (bản có nút Đăng xuất) — xoá khi vào được
+// bằng mã Zalo; khách mới thì web tự tạo tài khoản theo Zalo. Khách bấm Đăng xuất (Hồ sơ) thì không tự vào lại tới khi bấm "Đăng nhập bằng Zalo".
+export const DA_DANG_XUAT = "cl-da-dang-xuat"; // dấu đã đăng xuất — xoá khi vào được
 export async function vaoNgay(): Promise<boolean> {
   try {
     return await vaoBangToken();
@@ -46,6 +46,7 @@ export async function vaoNgay(): Promise<boolean> {
 export async function tuVaoBangZalo(): Promise<void> {
   try {
     if ((await supabase.auth.getSession()).data.session) return;
+    if (localStorage.getItem(DA_DANG_XUAT) === "1") return; // khách đã bấm Đăng xuất: không tự vào lại
     await vaoBangToken();
   } catch {
     /* ngoài Zalo (khung thử trên máy) không có getAccessToken — bỏ qua, khách vẫn xem tin được */
