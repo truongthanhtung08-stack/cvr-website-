@@ -34,18 +34,19 @@ export default function TaiKhoan() {
   const h = hoSo.data;
   const [dangLk, setDangLk] = React.useState(false);
 
+  // Thứ tự Quản lý + Tài khoản = menu tài khoản web (src/lib/menuTaiKhoan.ts, tai-khoan/layout.tsx)
   const NHOM: { ten: string; muc: Muc[] }[] = [
     { ten: "Quản lý", muc: [
       { ten: "Tin đăng", icon: "zi-list-1", app: "/tin-cua-toi" },
       { ten: "Khách hàng", icon: "zi-group", app: "/khach-hang" },
       { ten: "Đăng tin", icon: "zi-plus-circle", app: "/dang-tin" },
-      { ten: "Dự án của tôi", icon: "zi-home", app: "/du-an-cua-toi" },
     ] },
     { ten: "Tài khoản", muc: [
       { ten: "Ví & nạp tiền", icon: "zi-poll", app: "/nap-tien", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
       { ten: "Hóa đơn", icon: "zi-note", app: "/hoa-don" },
       { ten: "Gói hội viên", icon: "zi-star", app: "/hoi-vien" },
       { ten: "Bảng giá dịch vụ", icon: "zi-more-diamond-solid", app: "/bang-gia" },
+      { ten: "Dự án của tôi", icon: "zi-home", app: "/du-an-cua-toi" },
       { ten: "Tin đã lưu", icon: "zi-heart", app: "/da-luu" },
       { ten: "Tìm kiếm đã lưu", icon: "zi-notif", app: "/tim-kiem-luu" },
       { ten: "Cài đặt", icon: "zi-setting", app: "/cai-dat" },
