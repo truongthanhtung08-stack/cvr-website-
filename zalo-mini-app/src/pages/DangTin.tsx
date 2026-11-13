@@ -66,6 +66,11 @@ export default function DangTin() {
   const [loai, setLoai] = useState("");
   const [loaiCon, setLoaiCon] = useState(""); // loại con tuỳ chọn (Loại căn hộ, Loại đất…) — lưu details.specs[ô loại con] như web 12/11/2026
   const [conTuGhi, setConTuGhi] = useState(false); // đang ở dòng "Khác — tự ghi"
+  // HAI HỆ ĐỊA CHỈ như form web (nút "Địa chỉ mới / Địa chỉ cũ"): mới = Tỉnh → Phường/Xã (34 tỉnh) · cũ = Tỉnh → Quận/Huyện → Phường/Xã
+  // (63 tỉnh trước sáp nhập, bảng provincesOld chép từ web, nạp khi khách gạt sang cũ). Lưu đúng như web: tên theo hệ khách chọn.
+  const [he, setHe] = useState<"moi" | "cu">("moi");
+  const [dsCu, setDsCu] = useState<import("../lib/provincesOld").ProvinceOld[]>([]);
+  const [quan, setQuan] = useState("");
   const [tinh, setTinh] = useState("");
   const [phuong, setPhuong] = useState("");
   const [diaChi, setDiaChi] = useState("");
@@ -122,6 +127,7 @@ export default function DangTin() {
       setConTuGhi(!!vCon && !oConCu!.options.includes(vCon));
       setTinh(r.province ?? "");
       setPhuong(r.ward ?? "");
+      if (r.district || (r.province && !provincesNew.some((p) => p.name === r.province))) { setHe("cu"); setQuan(r.district ?? ""); }
       setDiaChi(d.addressDetail ?? "");
       setTieuDe(r.title ?? "");
       setMoTa(r.description ?? "");
@@ -197,12 +203,19 @@ export default function DangTin() {
     return { mienPhi, thanhTien, soNgayThat, tongTra: thanhTien + Math.round(thanhTien * VAT), viCo: Number(hoSo.data?.balance ?? 0) };
   }, [goi, soNgay, bangGia.data, hoSo.data]);
 
-  const dsPhuong = provincesNew.find((p) => p.name === tinh)?.wards ?? [];
+  useEffect(() => { if (he === "cu" && !dsCu.length) import("../lib/provincesOld").then((m) => setDsCu(m.provincesOld)); }, [he]); // eslint-disable-line react-hooks/exhaustive-deps
+  const tinhCu = dsCu.find((p) => p.name === tinh);
+  const dsQuan = he === "cu" ? tinhCu?.districts.map((d) => d.name) ?? [] : [];
+  const dsPhuong = he === "moi"
+    ? provincesNew.find((p) => p.name === tinh)?.wards ?? []
+    : tinhCu?.districts.find((d) => d.name === quan)?.wards ?? [];
+  const tinhMoi = he === "cu" ? tinhCu?.newName ?? tinh : tinh; // dự án lọc theo tỉnh hiện hành
+  const doiHe = (h: "moi" | "cu") => { if (h === he) return; setHe(h); setTinh(""); setQuan(""); setPhuong(""); };
   const dsDuAn = useTai(async () => {
     const r = await fetch("https://coastalland.vn/api/du-an/ten").catch(() => null);
     return ((await r?.json().catch(() => null)) ?? []) as { ten: string; slug: string; tinh: string }[];
   }, [], [] as { ten: string; slug: string; tinh: string }[]);
-  const duAnTrongTinh = dsDuAn.data.filter((d) => !tinh || gonTinh(d.tinh ?? "") === gonTinh(tinh)).sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
+  const duAnTrongTinh = dsDuAn.data.filter((d) => !tinhMoi || gonTinh(d.tinh ?? "") === gonTinh(tinhMoi)).sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
   // Tin sửa có dự án không nằm trong danh sách tỉnh → coi như tự ghi
   useEffect(() => { if (duAnTen && !duAnSlug) setDuAnTuGhi(true); }, [duAnTen, duAnSlug]);
   const duAnLuu = () => {
@@ -268,6 +281,7 @@ export default function DangTin() {
       if (!j.ok) return setLoi(j.loi || "Chưa lấy được vị trí.");
       const t = provincesNew.find((x) => boDauVT(x.name) === boDauVT(j.tinh ?? ""));
       if (!t) return setLoi("Chưa nhận ra tỉnh/thành từ vị trí này.");
+      setHe("moi"); setQuan(""); // vị trí Zalo trả địa chỉ hệ mới
       setTinh(t.name);
       setPhuong(t.wards.find((w) => boDauVT(w) === boDauVT(j.phuong ?? "")) ?? "");
       if (j.duong && !diaChi.trim()) setDiaChi(j.duong);
@@ -318,6 +332,7 @@ export default function DangTin() {
       beds: ngu.trim() ? parseInt(ngu, 10) : null,
       baths: tam.trim() ? parseInt(tam, 10) : null,
       ward: phuong || null,
+      district: he === "cu" ? quan || null : null,
       province: tinh,
       images: laVideo(video.trim()) ? [video.trim(), ...anh] : anh,
     };
@@ -380,7 +395,7 @@ export default function DangTin() {
       beds: ngu.trim() ? parseInt(ngu, 10) : null,
       baths: tam.trim() ? parseInt(tam, 10) : null,
       ward: phuong || null,
-      district: null,
+      district: he === "cu" ? quan || null : null,
       province: tinh,
       // Video (link YouTube) ĐỨNG ĐẦU mảng images — đúng cách web lưu và hiện video đầu dãy.
       images: laVideo(video.trim()) ? [video.trim(), ...anh] : anh,
@@ -471,8 +486,15 @@ export default function DangTin() {
         )}
         {oCon && conTuGhi && <Input placeholder={oCon.label} value={loaiCon} onChange={(e) => setLoaiCon(e.target.value)} maxLength={60} />}
         <Button size="small" variant="secondary" loading={dangViTri} onClick={dungViTri}>Dùng vị trí hiện tại</Button>
-        <ChonCoTim nhan="Tỉnh / Thành *" giuCho="Chọn tỉnh/thành" giaTri={tinh} ds={provincesNew.map((p) => ({ gt: p.name, nhan: p.name }))} onChon={(v) => { if (v !== tinh) { setTinh(v); setPhuong(""); } }} />
-        <ChonCoTim nhan="Phường / Xã" giuCho={tinh ? "Chọn phường/xã" : "Chọn tỉnh/thành trước"} giaTri={phuong} tat={!tinh} ds={dsPhuong.map((w) => ({ gt: w, nhan: w }))} onChon={setPhuong} />
+        <div className="tab-md">
+          <button className={he === "moi" ? "bat" : ""} onClick={() => doiHe("moi")}>Địa chỉ mới</button>
+          <button className={he === "cu" ? "bat" : ""} onClick={() => doiHe("cu")}>Địa chỉ cũ</button>
+        </div>
+        <ChonCoTim nhan="Tỉnh / Thành *" giuCho="Chọn tỉnh/thành" giaTri={tinh}
+          ds={(he === "moi" ? provincesNew.map((p) => p.name) : dsCu.map((p) => p.name)).map((n) => ({ gt: n, nhan: n }))}
+          onChon={(v) => { if (v !== tinh) { setTinh(v); setQuan(""); setPhuong(""); } }} />
+        {he === "cu" && <ChonCoTim nhan="Quận / Huyện" giuCho={tinh ? "Chọn quận/huyện" : "Chọn tỉnh/thành trước"} giaTri={quan} tat={!tinh} ds={dsQuan.map((q) => ({ gt: q, nhan: q }))} onChon={(v) => { if (v !== quan) { setQuan(v); setPhuong(""); } }} />}
+        <ChonCoTim nhan="Phường / Xã" giuCho={he === "cu" ? (quan ? "Chọn phường/xã" : "Chọn quận/huyện trước") : tinh ? "Chọn phường/xã" : "Chọn tỉnh/thành trước"} giaTri={phuong} tat={he === "cu" ? !quan : !tinh} ds={dsPhuong.map((w) => ({ gt: w, nhan: w }))} onChon={setPhuong} />
         <Input label="Số nhà, tên đường" placeholder="VD: 123 Võ Nguyên Giáp · Lô A12…" value={diaChi} onChange={(e) => setDiaChi(e.target.value)} />
         <ChonCoTim nhan="Thuộc dự án" giuCho="Chọn dự án" giaTri={duAnTuGhi ? KHAC : duAnSlug}
           ds={[{ gt: "__khong", nhan: "Không thuộc dự án" }, ...duAnTrongTinh.map((d) => ({ gt: d.slug, nhan: d.ten })), { gt: KHAC, nhan: "Khác — tự ghi" }]}
