@@ -221,7 +221,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // → máy chưa bật bàn phím mà màn đã mất tiêu đề và thẻ (ảnh chủ dự án 17/10/2026).
   const [phimMo, setPhimMo] = useState(false);
   const [dangDong, setDangDong] = useState(false); // màn tìm / bảng xổ đang khép lại (chạy chuyển động đóng)
-  const dongNoi = () => { setDangDong(true); setTimeout(() => { setMo(false); setDangDong(false); }, 200); };
+  const dongNoi = () => { setDangDong(true); setTimeout(() => { setMo(false); setDangDong(false); window.dispatchEvent(new CustomEvent("cvr-man-tim", { detail: false })); }, 200); };
   // NÚT QUAY LẠI CỦA ĐIỆN THOẠI (chủ dự án 17/10/2026): mở màn tìm là thêm một bước vào lịch sử → bấm ← chỉ
   // ĐÓNG màn tìm, khách vẫn ở trang chủ (không văng khỏi trang như trước). Nút X cũng đi đường này.
   // MÀN GÕ RIÊNG đúng Airbnb (đo airbnb.com 17/10/2026): chạm thanh tìm → màn có menu + thẻ tìm, CHƯA bật bàn phím;
@@ -253,6 +253,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const dauMo = useRef(0);
   const moMo = () => {
     (window as Window & { __cvrMoTim?: number }).__cvrMoTim = 0;
+    window.dispatchEvent(new CustomEvent("cvr-man-tim", { detail: true })); // ảnh đầu trang tạm dừng ngay trong cú chạm (Hero.tsx)
     // MỞ TỨC THÌ KIỂU GOOGLE (chủ dự án 01/11/2026: "bấm vào ô search vẫn giật"): màn tìm đã dựng sẵn (ẩn) → HIỆN NGAY bằng cách bỏ lớp
     // ẩn + đặt con trỏ vào ô gõ trong chính cú chạm (bàn phím bật ngay), phần cập nhật trạng thái làm SAU (startTransition), không chặn
     // cú chạm. Trước đây flushSync vẽ lại cả khối tìm (kể cả bản PC đang ẩn) ~40 ms ở máy tính, 0,2 s ở điện thoại → khựng.

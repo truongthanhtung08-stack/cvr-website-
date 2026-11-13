@@ -507,6 +507,7 @@ export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   return m;
 }
 
+const laTinhGia = (dk: DieuKien) => !dk.cat && !!dk.giaDuoi; // cha tổng + mức giá — trang mới, nhường trang cũ khi trùng tin
 function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const m = new Map<string, TrangPseo>();
   for (const l of tinConHan) {
@@ -550,7 +551,8 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   for (const ds of theoCha.values()) {
     const chon: TrangPseo[] = [];
     // Cụ thể trước (ít tin hơn) — trang rộng hơn chỉ được giữ khi khác rõ các trang đã chọn
-    for (const p of ds.sort((a, b) => a.n - b.n)) {
+    // TRANG MỚI "Nhà đất <tỉnh> dưới X" (13/11/2026) xếp SAU mọi trang đã có: trùng tin thì trang cũ (đang được Google index) giữ
+    for (const p of ds.sort((a, b) => Number(laTinhGia(a.dk)) - Number(laTinhGia(b.dk)) || a.n - b.n)) {
       if (chon.some((q) => giong(p.ids, q.ids) && !capDat(p.dk, q.dk))) continue;
       p.index = true;
       chon.push(p);
@@ -563,7 +565,7 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
     .filter((p) => p.index)
     // Cùng số tin: trang lõi anh đánh x trong bảng từ khoá (laLoiUuTien) đứng trước trang con của nó (anh 09/11/2026: "Bán đất Khánh Hòa"
     // trùng hệt "Bán đất Nha Trang" → giữ trang lõi) → rồi trang thành phố → rồi danh mục rộng hơn
-    .sort((a, b) => b.n - a.n || Number(laLoiUuTien(b.path)) - Number(laLoiUuTien(a.path)) || Number(!!b.dk.thanhPho) - Number(!!a.dk.thanhPho) || (b.dk.cat?.types.length ?? 0) - (a.dk.cat?.types.length ?? 0));
+    .sort((a, b) => Number(laTinhGia(a.dk)) - Number(laTinhGia(b.dk)) || b.n - a.n || Number(laLoiUuTien(b.path)) - Number(laLoiUuTien(a.path)) || Number(!!b.dk.thanhPho) - Number(!!a.dk.thanhPho) || (b.dk.cat?.types.length ?? 0) - (a.dk.cat?.types.length ?? 0));
   const giu: TrangPseo[] = [];
   for (const p of daIndex) {
     if (giu.some((q) => q.dk.muc === p.dk.muc && q.dk.tinh.slug === p.dk.tinh.slug && giong(p.ids, q.ids))) p.index = false;

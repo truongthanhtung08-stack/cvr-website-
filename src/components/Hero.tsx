@@ -40,6 +40,15 @@ export default function Hero({
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [tick, setTick] = useState(0);
+  // MÀN TÌM ĐIỆN THOẠI MỞ (13/11/2026, anh: "bấm ô search giật lag"): màn tìm phủ kín mà ảnh phía sau vẫn tự chuyển + thanh tiến độ chạy →
+  // máy vẫn vẽ phần bị che, đo khung giả lập chỉ còn ~30 hình/giây. Tạm dừng tới khi đóng màn tìm (không đổi lựa chọn Dừng/Chạy của khách).
+  const [anTim, setAnTim] = useState(false);
+  useEffect(() => {
+    const nghe = (e: Event) => setAnTim(!!(e as CustomEvent<boolean>).detail);
+    window.addEventListener("cvr-man-tim", nghe);
+    return () => window.removeEventListener("cvr-man-tim", nghe);
+  }, []);
+  const chay = playing && !anTim;
   const cur = banners[active];
   // ẢNH ĐẦU TRANG CHỦ TẢI TRƯỚC, ƯU TIÊN CAO (tốc độ điện thoại, đo 21/10/2026): ảnh nằm trong <picture> nên trình duyệt chỉ thấy
   // khi đọc tới nó, và các ảnh khác được tải trước giành đường truyền. Khai sẵn trong <head> đúng ảnh của từng máy.
@@ -57,14 +66,14 @@ export default function Hero({
   }
 
   useEffect(() => {
-    if (banners.length <= 1 || !playing) return;
+    if (banners.length <= 1 || !chay) return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     const id = setTimeout(() => {
       setActive((i) => (i + 1) % banners.length);
       setTick((t) => t + 1);
     }, DURATION);
     return () => clearTimeout(id);
-  }, [active, playing, banners.length]);
+  }, [active, chay, banners.length]);
 
   // Kéo/vuốt bằng chuột hoặc chạm
   const startX = useRef<number | null>(null);
@@ -194,6 +203,7 @@ export default function Hero({
                       animation: playing
                         ? `banner-progress ${DURATION}ms linear forwards`
                         : "none",
+                      animationPlayState: anTim ? "paused" : undefined,
                       width: playing ? undefined : "60%",
                     }}
                   />
