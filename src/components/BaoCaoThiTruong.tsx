@@ -173,11 +173,18 @@ export default function BaoCaoThiTruong({ vung, xemThu = false }: { vung: SoVung
               {on && <span aria-hidden className="absolute inset-x-3 bottom-1.5 h-[3px] rounded-full bg-cvr-gold" />}
             </button>); })}
         </div>
-        {v.pdf && (
+        {/* TẢI BẢN PDF luôn có (anh 13/11/2026: "muốn tải thì tải như lúc trước"): Admin đã có tệp PDF → tải tệp đó; chưa có → hộp
+            "Lưu thành PDF" của trình duyệt, chỉ in phần báo cáo (.bao-cao, xem @media print ở globals.css) */}
+        {v.pdf ? (
           <a href={v.pdf} target="_blank" rel="noopener" className="press flex h-11 items-center justify-center gap-2 rounded-xl bg-cvr-gold px-5 text-sm font-semibold text-white sm:h-auto">
             <svg aria-hidden className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" /></svg>
             Tải bản PDF
           </a>
+        ) : (
+          <button type="button" onClick={() => window.print()} className="press flex h-11 items-center justify-center gap-2 rounded-xl bg-cvr-gold px-5 text-sm font-semibold text-white sm:h-auto">
+            <svg aria-hidden className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" /></svg>
+            Tải bản PDF
+          </button>
         )}
       </div>
 

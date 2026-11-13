@@ -1009,3 +1009,13 @@ nextjs-portal { display: none !important; }
 .menu-trang-vao { animation: menu-trang-vao 320ms cubic-bezier(0.4, 0, 0.6, 1) both; }
 .menu-trang-ve { animation: menu-trang-ve 320ms cubic-bezier(0.4, 0, 0.6, 1) both; }
 @media (prefers-reduced-motion: reduce) { .menu-trang-vao, .menu-trang-ve { animation: none; } }
+
+/* ĐIỂM TIN THỊ TRƯỜNG — nút "Tải bản PDF" khi chưa có tệp PDF: in (Lưu thành PDF) CHỈ phần báo cáo, bỏ đầu trang / menu / chân trang
+   (anh 13/11/2026). Biểu đồ SVG giữ màu khi in. */
+@media print {
+  @page { size: A4; margin: 12mm; }
+  body * { visibility: hidden !important; }
+  .bao-cao, .bao-cao * { visibility: visible !important; }
+  .bao-cao { position: absolute; inset: 0 auto auto 0; width: 100%; }
+  .bao-cao * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
