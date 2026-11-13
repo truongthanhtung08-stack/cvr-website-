@@ -961,3 +961,6 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 /* Ô ngày bắt đầu hiển thị (như web): hiện ngày kiểu Việt, ô lịch của máy phủ trong suốt */
 .o-ngay { position: relative; display: flex; align-items: center; height: 48px; padding: 0 12px; border: 1px solid var(--cl-line); border-radius: 8px; background: #fff; font-size: 15px; }
 .o-ngay input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+/* Hàng nút đáy form đăng tin: Xem trước · Lưu nháp · Đăng tin — 3 cột bằng nhau, không tràn (đo 14/11) */
+.hang-nut { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.hang-nut .zaui-btn { min-width: 0; padding-left: 6px !important; padding-right: 6px !important; font-size: 14px !important; }

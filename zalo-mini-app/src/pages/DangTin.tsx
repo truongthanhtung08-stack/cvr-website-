@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button, Input, Page, Select, Sheet, Spinner, Text, useNavigate } from "zmp-ui";
+import { Box, Button, Input, Page, Sheet, Spinner, Text, useNavigate } from "zmp-ui";
 import TheTinDoc from "../components/TheTinDoc";
 import type { Tin } from "../lib/tin";
 import TieuDe from "../components/TieuDe";
@@ -20,7 +20,6 @@ import ChonCoTim from "../components/ChonCoTim";
 import { DS_LOAI, O_LOAI_CON } from "../lib/loaiHinh";
 import { coDienTichXayDung, coNoiThat, coPhongNgu, coPhongTam, fieldsSplit, nhanDienTich, noiThatCho, phapLyCho, thieuMucBatBuoc, tienIchCho, type Field } from "../lib/listingSpec";
 
-const { Option } = Select;
 
 // ĐĂNG TIN — ghi thẳng vào bảng listings như form web (src/components/PostListingForm.tsx):
 // status "pending" chờ admin duyệt, details.plan = gói + số tiền đã báo (giaBao, chưa VAT).
@@ -536,10 +535,9 @@ export default function DangTin() {
         </div>}
         <ChonCoTim nhan="Loại hình *" giuCho="Chọn loại hình" giaTri={loai} ds={DS_LOAI[md].map((l) => ({ gt: l.ma, nhan: l.ten }))} onChon={(v) => { if (v === loai) return; setLoai(v); setLoaiCon(""); setConTuGhi(false); }} />
         {oCon && (
-          <Select label={oCon.label} placeholder={`Chọn ${oCon.label.toLowerCase()}`} value={conTuGhi ? KHAC : loaiCon} onChange={(v) => { const k = String(v) === KHAC; setConTuGhi(k); setLoaiCon(k ? "" : String(v)); }} closeOnSelect>
-            {oCon.options.map((o) => <Option key={o} value={o} title={o} />)}
-            <Option value={KHAC} title="Khác — tự ghi" />
-          </Select>
+          <ChonCoTim nhan={oCon.label} giuCho={`Chọn ${oCon.label.toLowerCase()}`} giaTri={conTuGhi ? KHAC : loaiCon}
+            ds={[...oCon.options.map((o) => ({ gt: o, nhan: o })), { gt: KHAC, nhan: "Khác — tự ghi" }]}
+            onChon={(v) => { const k = v === KHAC; setConTuGhi(k); setLoaiCon(k ? "" : v); }} />
         )}
         {oCon && conTuGhi && <Input placeholder={oCon.label} value={loaiCon} onChange={(e) => setLoaiCon(e.target.value)} maxLength={60} />}
         <Button size="small" variant="secondary" loading={dangViTri} onClick={dungViTri}>Dùng vị trí hiện tại</Button>
@@ -584,16 +582,10 @@ export default function DangTin() {
           </Box>
         )}
         {truong.dacDiem.filter(boLoaiCon).map(oTruong)}
-        <Select label="Hướng nhà / đất" placeholder="Chọn hướng" value={huong} onChange={(v) => setHuong(String(v))} closeOnSelect>
-          {HUONG.map((h) => <Option key={h} value={h} title={h} />)}
-        </Select>
-        <Select label="Tình trạng pháp lý" placeholder="Chọn pháp lý" value={phapLy} onChange={(v) => setPhapLy(String(v))} closeOnSelect>
-          {phapLyCho(loaiGoc || undefined).map((p) => <Option key={p} value={p} title={p} />)}
-        </Select>
+        <ChonCoTim nhan="Hướng nhà / đất" giuCho="Chọn hướng" giaTri={huong} ds={HUONG.map((h) => ({ gt: h, nhan: h }))} onChon={setHuong} />
+        <ChonCoTim nhan="Tình trạng pháp lý" giuCho="Chọn pháp lý" giaTri={phapLy} ds={phapLyCho(loaiGoc || undefined).map((p) => ({ gt: p, nhan: p }))} onChon={setPhapLy} />
         {(!loaiGoc || coNoiThat(loaiGoc)) && (
-          <Select label="Tình trạng nội thất" placeholder="Chọn nội thất" value={noiThat} onChange={(v) => setNoiThat(String(v))} closeOnSelect>
-            {NOI_THAT.map((p) => <Option key={p} value={p} title={p} />)}
-          </Select>
+          <ChonCoTim nhan="Tình trạng nội thất" giuCho="Chọn nội thất" giaTri={noiThat} ds={NOI_THAT.map((p) => ({ gt: p, nhan: p }))} onChon={setNoiThat} />
         )}
         {/* Danh sách nội thất như web: có nội thất (không phải "Không nội thất" / "Bàn giao thô") mới bày */}
         {loaiGoc && coNoiThat(loaiGoc) && !!noiThat && !/^(Không nội thất|Bàn giao thô)$/.test(noiThat) && (
@@ -717,13 +709,13 @@ export default function DangTin() {
       </Sheet>
 
       <div className="nut-chinh">
-        <Box flex style={{ gap: 8 }}>
-          <Button variant="tertiary" style={{ flex: 1 }} onClick={() => setXemTruoc(true)}>Xem trước</Button>
+        <div className="hang-nut">
+          <Button variant="tertiary" onClick={() => setXemTruoc(true)}>Xem trước</Button>
           {!daDang && tinSua?.status !== "pending" && (
-            <Button variant="secondary" style={{ flex: 1 }} loading={dangGui && luuNhap} disabled={dangGui || dangTaiAnh || tienDoVideo !== null} onClick={() => gui(true)}>Lưu nháp</Button>
+            <Button variant="secondary" loading={dangGui && luuNhap} disabled={dangGui || dangTaiAnh || tienDoVideo !== null} onClick={() => gui(true)}>Lưu nháp</Button>
           )}
-          <Button style={{ flex: 1 }} loading={dangGui && !luuNhap} disabled={dangGui || dangTaiAnh || tienDoVideo !== null} onClick={() => gui(false)}>{daDang || tinSua?.status === "pending" ? "Cập nhật" : "Đăng tin"}</Button>
-        </Box>
+          <Button loading={dangGui && !luuNhap} disabled={dangGui || dangTaiAnh || tienDoVideo !== null} onClick={() => gui(false)}>{daDang || tinSua?.status === "pending" ? "Cập nhật" : "Đăng tin"}</Button>
+        </div>
       </div>
     </Page>
   );
