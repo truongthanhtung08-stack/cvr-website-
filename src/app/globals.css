@@ -1018,4 +1018,9 @@ nextjs-portal { display: none !important; }
   .bao-cao, .bao-cao * { visibility: visible !important; }
   .bao-cao { position: absolute; inset: 0 auto auto 0; width: 100%; }
   .bao-cao * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* Bản PDF A4: thu cả trang 88% để bố cục 2 cột như máy tính vừa khổ giấy (chữ đặt cỡ px nên dùng zoom, không dùng font-size) */
+  .bao-cao { zoom: 0.88; }
+  /* Hiệu ứng hiện khi cuộn (main section h2, article) gắn vào thanh cuộn: khi in, phần chưa cuộn tới còn trong suốt → mất tiêu đề
+     chương trong PDF. In thì tắt hiệu ứng, hiện đủ. */
+  main article, main section h2 { animation: none !important; opacity: 1 !important; transform: none !important; }
 }
