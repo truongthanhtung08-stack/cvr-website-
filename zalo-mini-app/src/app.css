@@ -943,3 +943,7 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 .dong-du-an { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 14px; color: var(--cl-ink); }
 /* Nhu cầu 4 ô (Cần bán · Cần mua · Cho thuê · Cần thuê) xếp 2 × 2 cho khổ điện thoại */
 .tab-md.bon { display: grid; grid-template-columns: 1fr 1fr; }
+/* Video tin đã tải lên (như web): khung xem + nút bỏ */
+.o-video { position: relative; border-radius: 12px; overflow: hidden; background: #000; }
+.o-video video { display: block; width: 100%; max-height: 260px; }
+.o-video button { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 18px; line-height: 28px; }

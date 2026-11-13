@@ -6,6 +6,7 @@ import { provincesNew } from "../lib/provincesNew";
 import { layBangGia } from "../lib/tin";
 import { soVN, supabase, usePhien } from "../lib/supabase";
 import { chonAnh, taiAnhLen } from "../lib/taiAnh";
+import { chonVideo, taiVideoLen } from "../lib/taiVideo";
 import { laVideo, tachAnh } from "../lib/media";
 import { useTai } from "../lib/useTai";
 import { layNguoiZalo } from "../lib/zalo";
@@ -84,7 +85,8 @@ export default function DangTin() {
   const [duAnTuGhi, setDuAnTuGhi] = useState(false);
   const [anh, setAnh] = useState<string[]>([]);
   const [dangTaiAnh, setDangTaiAnh] = useState(false);
-  const [video, setVideo] = useState(""); // link YouTube — như web, video không lưu kho, chỉ gắn link
+  const [video, setVideo] = useState(""); // tệp MP4 đã tải lên kho (như web) hoặc link YouTube
+  const [tienDoVideo, setTienDoVideo] = useState<number | null>(null); // null = không đang tải video
   const [ten, setTen] = useState("");
   const [sdt, setSdt] = useState("");
   // XÁC MINH SỐ KHI ĐĂNG TIN (luật tài khoản 06/11/2026): liên hệ trong tin = tài khoản (tên · số), không gõ tay; tài khoản chưa có
@@ -225,6 +227,18 @@ export default function DangTin() {
       setLoi((e as Error).message);
     }
     setDangTaiAnh(false);
+  };
+
+  // THÊM VIDEO như web (ImagePicker → uploadVideoFile): chọn tệp → chuyển MP4 H.264 trên máy → tải lên kho. Mỗi tin 1 video.
+  const themVideo = async () => {
+    setLoi(undefined);
+    const tep = await chonVideo();
+    if (!tep) return;
+    setTienDoVideo(0);
+    const kq = await taiVideoLen(tep, (p) => setTienDoVideo(p));
+    setTienDoVideo(null);
+    if (kq.loi) return setLoi(kq.loi);
+    if (kq.url) setVideo(kq.url);
   };
 
   const giaVnd = () => {
@@ -557,8 +571,20 @@ export default function DangTin() {
             </button>
           )}
         </div>
-        <Input label="Video YouTube (nếu có)" placeholder="https://youtu.be/…" value={video} onChange={(e) => setVideo(e.target.value)} />
-        {video.trim() && !laVideo(video.trim()) && <Text size="xSmall" style={{ color: "#d70018" }}>Link chưa đúng — dán link YouTube của video.</Text>}
+        {laVideo(video) && !/youtube.com|youtu.be|vimeo.com/i.test(video) ? (
+          <div className="o-video">
+            <video src={video} controls playsInline preload="metadata" />
+            <button onClick={() => setVideo("")} aria-label="Bỏ video">×</button>
+          </div>
+        ) : (
+          <>
+            <Button size="small" variant="secondary" disabled={tienDoVideo !== null || dangTaiAnh} onClick={themVideo}>
+              {tienDoVideo !== null ? `Đang tải video…${tienDoVideo ? ` ${tienDoVideo}%` : ""}` : "Thêm video"}
+            </Button>
+            <Input label="Hoặc link YouTube" placeholder="https://youtu.be/…" value={video} onChange={(e) => setVideo(e.target.value)} />
+            {video.trim() && !laVideo(video.trim()) && <Text size="xSmall" style={{ color: "#d70018" }}>Link chưa đúng — dán link YouTube của video.</Text>}
+          </>
+        )}
       </Nhom>
 
       <Nhom tieuDe="7. Thông tin liên hệ">
@@ -577,7 +603,7 @@ export default function DangTin() {
       {loi && <Box p={4}><Text size="small" style={{ color: "#d70018" }}>{loi}</Text></Box>}
 
       <div className="nut-chinh">
-        <Button fullWidth loading={dangGui} disabled={dangTaiAnh} onClick={gui}>{daDang || tinSua?.status === "pending" ? "Cập nhật" : "Gửi tin chờ duyệt"}</Button>
+        <Button fullWidth loading={dangGui} disabled={dangTaiAnh || tienDoVideo !== null} onClick={gui}>{daDang || tinSua?.status === "pending" ? "Cập nhật" : "Gửi tin chờ duyệt"}</Button>
       </div>
     </Page>
   );
