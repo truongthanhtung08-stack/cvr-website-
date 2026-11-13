@@ -22,6 +22,7 @@ Bài học 10/11: tin khách 1e3be917 lên web với video chỉ có tiếng (n�
 ## ⛔⛔⛔ KHÔNG GỘP TÀI KHOẢN — KỂ CẢ ĐĂNG HỘ (anh chốt 14/11/2026)
 **Từ giờ KHÔNG GỘP TÀI KHOẢN gì cả, kể cả tin đăng hộ. Tài khoản nào lấy tài khoản đó** — tin của tài khoản nào thì nằm ở tài khoản đó,
 đăng nhập bằng tài khoản nào thì làm việc trên tài khoản đó. Không tự gộp, không chuyển tin sang tài khoản khác, không gộp theo số / Zalo / email.
+Tài khoản **đã gộp trước đây thì thôi** — để nguyên, không tách lại, không sửa.
 Duyệt tin: khách bấm gửi duyệt mới vào **Chờ duyệt**; tin nháp khách đang soạn KHÔNG đưa vào Admin; tin đăng hộ chỉ ở mục **Tin chờ duyệt**
 (nạp file), không vào chỗ của khách (một luật: `src/lib/choDuyet.ts`, commit 47d5d3b7). Cờ gộp đang tắt: `WEB_TU_GOP` (xac-minh-sdt) +
 `TU_GAN` (gopTaiKhoan.ts) — CẤM bật lại.
