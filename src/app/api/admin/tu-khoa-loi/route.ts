@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { docBangTuKhoaLoi, docThuongHieu } from "@/lib/tuKhoaLoiDoc";
+import { docBangTuKhoaLoi, docThuongHieu, type DongKeHoach } from "@/lib/tuKhoaLoiDoc";
 import { getTinXetTrang } from "@/lib/listingsDb";
 import { tatCaTrang, tieuDe, NGUONG_INDEX } from "@/lib/pseo";
 import { docSoXinIndex, trangThaiIndex, type TrangThaiIndex } from "@/lib/xinIndex";
@@ -33,11 +33,24 @@ async function chiAdmin() {
 // BẢNG THEO DÕI TRANG LÕI (anh 12/11/2026: "mở trang thấy rất lộn xộn — cái nào index rồi, chưa index, đủ thông tin, chưa đủ; tôi không
 // theo dõi được"): mỗi trang lõi MỘT dòng — tầng tỉnh · loại hình + tỉnh · thành phố — số tin, đủ chuẩn index chưa (cùng cổng với
 // sitemap), Đã index / Chưa index (+ ngày đã xin) — cùng luật với Admin → Xin index (src/lib/xinIndex.ts). Chỉ chạy khi anh mở trang này.
-async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>, bang: Record<string, unknown>) {
+// + DÒNG ĐẶC ĐIỂM của bảng (13/11/2026): longtail → trang đích. Trang đã có trên web → số tin, đủ chuẩn, index lấy từ web (một luật
+// với sitemap); chưa có trang → số tin trong bảng, trạng thái "Cần mở trang" / "Chưa đủ tin" như cột "Xin index" của bảng.
+type DongTD = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean;
+  longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; ghiChu?: string } & TrangThaiIndex;
+async function theoDoi(admin: NonNullable<ReturnType<typeof createAdminClient>>, bang: Record<string, unknown>, keHoach: DongKeHoach[] = []) {
   const [tin, so] = await Promise.all([getTinXetTrang().catch(() => []), docSoXinIndex(admin)]);
   const gSet = new Set(so.google?.ds ?? []);
-  const dong = new Map<string, { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean } & TrangThaiIndex>();
-  for (const p of tatCaTrang(tin).values()) {
+  const dong = new Map<string, DongTD>();
+  const moiTrang = tatCaTrang(tin);
+  for (const k of keHoach) {
+    const duong = k.trang.replace(/\s*\(chưa có\)$/, "");
+    const p = duong.startsWith("/") ? moiTrang.get(duong) : undefined;
+    const khoa = `dd|${k.muc}|${k.longtail}`;
+    if (dong.has(khoa)) continue;
+    dong.set(khoa, { trang: p ? duong : "", muc: k.muc, tinh: k.noi, tang: "Đặc điểm", tuKhoa: k.loi, longtail: k.longtail, dacDiem: k.dacDiem, nhom: k.nhom, google: k.google,
+      soTin: p ? p.n : k.soTin, duChuan: p ? p.index : false, trongBang: true, coTrang: !!p, ghiChu: p ? "" : k.xin, ...(p ? trangThaiIndex(duong, so, gSet) : { daIndex: false, xin: null }) });
+  }
+  for (const p of moiTrang.values()) {
     const d = p.dk;
     if (d.phuong || d.duong || d.huong || d.phapLy || d.kiet || d.phongNgu || d.giaDuoi) continue;
     if (d.thanhPho && d.cat) continue; // thành phố: chỉ tầng nhà đất
@@ -55,8 +68,9 @@ export async function GET() {
   const { admin, err } = await chiAdmin();
   if (err) return err;
   const { data } = await admin.from("site_content").select("data").eq("key", "tu_khoa_loi").limit(1);
-  const hienTai = (data?.[0]?.data ?? null) as { trang?: Record<string, unknown> } | null;
-  return NextResponse.json({ ok: true, hienTai, theoDoi: await theoDoi(admin, hienTai?.trang ?? {}) });
+  const hienTai = (data?.[0]?.data ?? null) as { trang?: Record<string, unknown>; keHoach?: DongKeHoach[] } | null;
+  const { keHoach, ...gon } = hienTai ?? {};
+  return NextResponse.json({ ok: true, hienTai: hienTai ? gon : null, theoDoi: await theoDoi(admin, hienTai?.trang ?? {}, keHoach ?? []) });
 }
 
 export async function POST(req: Request) {
@@ -80,7 +94,7 @@ export async function POST(req: Request) {
   // Không có sheet Thương hiệu trong tệp → giữ bản thương hiệu đã nạp lần trước (không xoá mất)
   const { data: cu } = await admin.from("site_content").select("data").eq("key", "tu_khoa_loi").limit(1);
   const thuongHieu = th.thuongHieu ?? (cu?.[0]?.data as { thuongHieu?: unknown } | undefined)?.thuongHieu ?? null;
-  const data = { trang: kq.trang, doi: kq.doi, giu: kq.giu, soDong: kq.soDong, tenTep: tep.name, capNhat: new Date().toISOString(), thuongHieu };
+  const data = { trang: kq.trang, doi: kq.doi, giu: kq.giu, soDong: kq.soDong, keHoach: kq.keHoach, tenTep: tep.name, capNhat: new Date().toISOString(), thuongHieu };
   const { error } = await admin.from("site_content").upsert({ key: "tu_khoa_loi", data });
   if (error) return loi(`Không lưu được: ${error.message}`, 500);
   // Tiêu đề, H1, mô tả trang lõi + trang con đổi theo → làm mới trang đọc nội dung Admin + trang danh sách
