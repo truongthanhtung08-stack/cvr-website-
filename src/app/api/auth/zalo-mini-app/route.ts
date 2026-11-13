@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hoiZaloMe, taiKhoanTheoZalo, type ZaloMe } from "@/lib/taiKhoanZalo";
+import { emailKyThuat } from "@/lib/zalo";
 import { moPhienTaiKhoan } from "@/lib/gopTaiKhoan";
 
 // ============================================================================
@@ -37,7 +38,9 @@ export async function POST(req: Request) {
 const loi = (ma: string, status = 400) => NextResponse.json({ ok: false, loi: ma }, { status });
 
 async function xuLy(req: Request) {
-  const { accessToken } = (await req.json().catch(() => ({}))) as { accessToken?: string };
+  // chiCoSan (anh 14/11/2026: "chỉ áp dụng cho chính khách đăng nhập bằng Zalo"): Mini App mở là tự vào CHỈ khi mã Zalo này đã có
+  // tài khoản (khách từng đăng nhập bằng Zalo) — không tạo tài khoản mới; khách dùng số / email / Google tự chọn cách liên kết.
+  const { accessToken, chiCoSan } = (await req.json().catch(() => ({}))) as { accessToken?: string; chiCoSan?: boolean };
   if (!accessToken) return loi("thieu_token");
   const admin = createAdminClient();
   if (!admin) return loi("chua_cau_hinh", 503);
@@ -54,6 +57,10 @@ async function xuLy(req: Request) {
     return loi("zalo_tu_choi", 502);
   }
 
+  if (chiCoSan) {
+    const { data: daCo } = await admin.from("profiles").select("id").or(`zalo_id.eq.${me.id},email.eq.${emailKyThuat(me.id)}`).limit(1);
+    if (!daCo?.length) return loi("chua_co_tai_khoan_zalo", 404);
+  }
   const tk = await taiKhoanTheoZalo(admin, { ...me, id: me.id });
   if (!tk) return loi("khong_tao_duoc_tai_khoan", 500);
   const phien = await moPhienTaiKhoan(admin, tk.uid, tk.email);
