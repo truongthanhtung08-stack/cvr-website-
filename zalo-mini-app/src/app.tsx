@@ -31,8 +31,6 @@ const GoiTin = cham(() => import("./pages/GoiTin"));
 const HoaDon = cham(() => import("./pages/HoaDon"));
 const KhachHang = cham(() => import("./pages/KhachHang"));
 const CaiDat = cham(() => import("./pages/CaiDat"));
-const DanhBaChuyenGia = cham(() => import("./pages/ChuyenGia").then((m) => ({ default: m.DanhBaChuyenGia })));
-const HoSoChuyenGia = cham(() => import("./pages/ChuyenGia"));
 const DuAnCuaToi = cham(() => import("./pages/DuAnCuaToi"));
 const SoSanh = cham(() => import("./pages/SoSanh"));
 const HoiVien = cham(() => import("./pages/HoiVien"));
@@ -110,8 +108,6 @@ export default function UngDung() {
             <Route path="/hoi-vien" element={<HoiVien />} />
             <Route path="/so-sanh" element={<SoSanh />} />
             <Route path="/du-an-cua-toi" element={<DuAnCuaToi />} />
-            <Route path="/chuyen-gia" element={<DanhBaChuyenGia />} />
-            <Route path="/chuyen-gia/:slug" element={<HoSoChuyenGia />} />
             <Route path="/thong-tin/:duong" element={<TrangTinh />} />
             <Route path="/nap-tien" element={<NapTien />} />
           </AnimationRoutes>
