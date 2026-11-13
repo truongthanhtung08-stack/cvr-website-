@@ -57,10 +57,10 @@ export default function CaiDat() {
   };
 
   if (san && !nguoiDung) return <CanDangNhap tieuDe="Cài đặt" />; // chưa vào tài khoản: cùng màn như Gói hội viên
-  if (!hs) return <Page><TieuDe title="Cài đặt" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
+  if (!hs) return <Page><TieuDe title="Cài đặt tài khoản" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
   return (
     <Page style={{ paddingBottom: 24 }}>
-      <TieuDe title="Cài đặt" />
+      <TieuDe title="Cài đặt tài khoản" />
       <Box mt={2} p={4} style={{ background: "#fff", display: "grid", gap: 12 }}>
         <Text.Title size="small">Họ tên</Text.Title>
         <Input value={ten} onChange={(e) => setTen(e.target.value)} maxLength={60} />

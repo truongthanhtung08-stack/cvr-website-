@@ -13,7 +13,6 @@ function cham(nap: () => Promise<{ default: React.ComponentType }>) {
 }
 import TrangChu from "./pages/TrangChu";
 const TimKiem = cham(() => import("./pages/TimKiem"));
-const DichVu = cham(() => import("./pages/DichVu"));
 import TaiKhoan from "./pages/TaiKhoan";
 import DanhSach from "./pages/DanhSach";
 import ChiTietTin from "./pages/ChiTietTin";
@@ -23,7 +22,6 @@ const TinTucDs = cham(() => import("./pages/TinTucDs"));
 const BaiVietChiTiet = cham(() => import("./pages/BaiVietChiTiet"));
 const BangGia = cham(() => import("./pages/BangGia"));
 const DaLuu = cham(() => import("./pages/DaLuu"));
-const DaXem = cham(() => import("./pages/DaXem"));
 const DangNhap = cham(() => import("./pages/DangNhap"));
 const DangTin = cham(() => import("./pages/DangTin"));
 const TinCuaToi = cham(() => import("./pages/TinCuaToi"));
@@ -32,7 +30,6 @@ const HoaDon = cham(() => import("./pages/HoaDon"));
 const KhachHang = cham(() => import("./pages/KhachHang"));
 const CaiDat = cham(() => import("./pages/CaiDat"));
 const DuAnCuaToi = cham(() => import("./pages/DuAnCuaToi"));
-const SoSanh = cham(() => import("./pages/SoSanh"));
 const HoiVien = cham(() => import("./pages/HoiVien"));
 const TimKiemLuu = cham(() => import("./pages/TimKiemLuu"));
 const TrangTinh = cham(() => import("./pages/TrangTinh"));
@@ -86,7 +83,6 @@ export default function UngDung() {
           <AnimationRoutes>
             <Route path="/" element={<TrangChu />} />
             <Route path="/tim-kiem" element={<TimKiem />} />
-            <Route path="/dich-vu" element={<DichVu />} />
             <Route path="/tai-khoan" element={<TaiKhoan />} />
             <Route path="/ds/:md" element={<DanhSach />} />
             <Route path="/tin/:id" element={<ChiTietTin />} />
@@ -96,7 +92,6 @@ export default function UngDung() {
             <Route path="/tin-tuc/:slug" element={<BaiVietChiTiet />} />
             <Route path="/bang-gia" element={<BangGia />} />
             <Route path="/da-luu" element={<DaLuu />} />
-            <Route path="/da-xem" element={<DaXem />} />
             <Route path="/dang-nhap" element={<DangNhap />} />
             <Route path="/dang-tin" element={<DangTin />} />
             <Route path="/tin-cua-toi" element={<TinCuaToi />} />
@@ -106,7 +101,6 @@ export default function UngDung() {
             <Route path="/cai-dat" element={<CaiDat />} />
             <Route path="/tim-kiem-luu" element={<TimKiemLuu />} />
             <Route path="/hoi-vien" element={<HoiVien />} />
-            <Route path="/so-sanh" element={<SoSanh />} />
             <Route path="/du-an-cua-toi" element={<DuAnCuaToi />} />
             <Route path="/thong-tin/:duong" element={<TrangTinh />} />
             <Route path="/nap-tien" element={<NapTien />} />

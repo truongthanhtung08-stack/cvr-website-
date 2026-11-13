@@ -13,11 +13,12 @@ import logoTron from "../assets/logo-tron.svg";
 
 // THẺ TIN TO — trang chủ, ĐÚNG thẻ web điện thoại (src/components/TheTinMobile.tsx, 12/11/2026): ảnh lớn tràn bề ngang · hàng 3 ảnh nhỏ
 // (Diamond, Gold) · tiêu đề · giá · diện tích đỏ · địa chỉ · mô tả theo cấp · người đăng + Làm mới · tim · chia sẻ · [Zalo] [số ẩn đuôi + mắt].
-// Luật cấp giống thẻ nhỏ (TheTin): Diamond 3 dòng mô tả, viết hoa · Gold 2 dòng, viết hoa · Silver 1 dòng · Basic không mô tả.
+// Luật cấp = web TheTinMobile (14/11/2026): mô tả Diamond 3 · Gold 3 · Silver 2 · Basic 2 dòng; Zalo + số chỉ tin Diamond · Gold · Silver;
+// ngày "Đăng …" / "Làm mới …"; giá trống "Giá thỏa thuận".
 const HANG: Record<string, { ten: string; mau: string; hoa: boolean; dong: number; anhNho: boolean }> = {
   diamond: { ten: "DIAMOND", mau: "#c1121f", hoa: true, dong: 3, anhNho: true },
-  gold: { ten: "GOLD", mau: "#b8860b", hoa: true, dong: 2, anhNho: true },
-  silver: { ten: "SILVER", mau: "#2f5d84", hoa: false, dong: 1, anhNho: false },
+  gold: { ten: "GOLD", mau: "#b8860b", hoa: true, dong: 3, anhNho: true },
+  silver: { ten: "SILVER", mau: "#2f5d84", hoa: false, dong: 2, anhNho: false },
 };
 const anDuoi = (s: string) => { const d = s.replace(/\D/g, ""); return `${d.slice(0, 4)} ${d.slice(4, 7)} ***`; };
 const chuCai = (ten: string) => ten.trim().split(/\s+/).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
@@ -63,14 +64,14 @@ export default function TheTinDoc({ tin }: { tin: Tin }) {
       <div className="the-to-than">
         <h3 className={h?.hoa ? "hoa" : ""}>{tin.title}</h3>
         <div className="the-to-gia">
-          <span>{gia(tin)}</span>
+          <span>{gia(tin) === "Thỏa thuận" ? "Giá thỏa thuận" : gia(tin)}</span>
           {dienTich(tin) && <><i>·</i><span>{dienTich(tin)}</span></>}
         </div>
         <div className="the-to-dc"><BieuTuongWeb ten="viTri" co={16} /> {diaChi(tin)}</div>
-        {h && moTa && <p className="the-to-mota" style={{ WebkitLineClamp: h.dong }}>{moTa}</p>}
+        {moTa && <p className="the-to-mota" style={{ WebkitLineClamp: h?.dong ?? 2 }}>{moTa}</p>}
         <div className="the-to-nguoi">
           <span className="the-to-avt">{chuCai(ten)}</span>
-          <div><b>{ten}</b><small>{luc(tin)}</small></div>
+          <div><b>{ten}</b><small>{/^Làm mới/.test(luc(tin)) ? luc(tin) : luc(tin) && `Đăng ${luc(tin).replace(/^Hôm qua$/, "hôm qua")}`}</small></div>
           <button aria-label="Lưu tin" onClick={(e) => { dung(e); setLuu(doiLuu(tin.id)); }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill={luu ? "#e11d48" : "none"} stroke={luu ? "#e11d48" : "currentColor"} strokeWidth="1.8"><path d="M12 20.3s-7.5-4.6-9.2-9.4C1.6 7.4 4 4.2 7.4 4.2c2 0 3.5 1.1 4.6 2.6 1.1-1.5 2.6-2.6 4.6-2.6 3.4 0 5.8 3.2 4.6 6.7-1.7 4.8-9.2 9.4-9.2 9.4Z" /></svg>
           </button>
@@ -78,7 +79,7 @@ export default function TheTinDoc({ tin }: { tin: Tin }) {
             <BieuTuongWeb ten="chiaSe" co={22} />
           </button>
         </div>
-        {tin.sdt && (
+        {h && tin.sdt && (
           <div className="the-to-lienhe">
             <button className="the-to-zalo" onClick={nhanZalo}>Zalo</button>
             <button className="the-to-goi" onClick={moSo}><BieuTuongWeb ten="dienThoai" co={18} /> {hienSo ? `Gọi ${tin.sdt}` : anDuoi(tin.sdt)}{!hienSo && <BieuTuongWeb ten="mat" co={18} />}</button>

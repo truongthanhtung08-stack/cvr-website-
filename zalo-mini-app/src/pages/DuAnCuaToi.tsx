@@ -53,10 +53,10 @@ export default function DuAnCuaToi() {
   };
 
   if (san && !nguoiDung) return <CanDangNhap tieuDe="Dự án của tôi" />;
-  if (!hs) return <Page><TieuDe title="Dự án của tôi" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
+  if (!hs) return <Page><TieuDe title="Dự án của bạn" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
   return (
     <Page style={{ paddingBottom: 24 }}>
-      <TieuDe title="Dự án của tôi" />
+      <TieuDe title="Dự án của bạn" />
       {hs.can_post_project ? (
         <>
           {ds.length ? (

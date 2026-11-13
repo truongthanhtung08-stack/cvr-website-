@@ -30,9 +30,9 @@ export default function ThanhLoc({ md, boLoc, doi, dsTinh }: { md: MucDich; boLo
   }, []);
 
   const luaChon: Record<O, { tieuDe: string; ds: string[] }> = {
-    tinh: { tieuDe: "Khu vực", ds: dsTinh },
-    loai: { tieuDe: "Loại hình", ds: loaiTheo(md).map((l) => l.nhan) },
-    gia: { tieuDe: "Mức giá", ds: giaTheo(md).map((g) => g.nhan) },
+    tinh: { tieuDe: "Toàn quốc", ds: dsTinh },
+    loai: { tieuDe: "Loại BĐS", ds: loaiTheo(md).map((l) => l.nhan) },
+    gia: { tieuDe: "Khoảng giá", ds: giaTheo(md).map((g) => g.nhan) },
     dienTich: { tieuDe: "Diện tích", ds: dtTheo(md).map((d) => d.nhan) },
     sapXep: { tieuDe: "Sắp xếp", ds: SAP_XEP.map((s) => s.nhan) },
   };

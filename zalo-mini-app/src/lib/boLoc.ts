@@ -74,8 +74,8 @@ export const dtTheo = (md: MucDich) => (md === "thue" ? DT_THUE : DT_BAN);
 
 export const SAP_XEP: { gt: BoLoc["sapXep"]; nhan: string }[] = [
   { gt: "moi", nhan: "Mới nhất" },
-  { gt: "gia-tang", nhan: "Giá thấp đến cao" },
-  { gt: "gia-giam", nhan: "Giá cao đến thấp" },
+  { gt: "gia-tang", nhan: "Giá thấp → cao" },
+  { gt: "gia-giam", nhan: "Giá cao → thấp" },
   { gt: "dt-giam", nhan: "Diện tích lớn nhất" },
 ];
 

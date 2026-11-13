@@ -84,7 +84,7 @@ export default function NapTien() {
   if (san && !nguoiDung)
     return (
       <Page style={{ background: "#fff" }}>
-        <TieuDe title="Nạp tiền" />
+        <TieuDe title="Nạp tiền vào tài khoản" />
         <Box p={4} style={{ display: "grid", gap: 12 }}>
           <Button fullWidth onClick={() => dieuHuong("/dang-nhap?tiep=/nap-tien")}>Thử lại</Button>
         </Box>
@@ -93,7 +93,7 @@ export default function NapTien() {
 
   return (
     <Page style={{ background: "#fff" }}>
-      <TieuDe title="Nạp tiền" />
+      <TieuDe title="Nạp tiền vào tài khoản" />
       <Box p={4} style={{ display: "grid", gap: 14 }}>
         <div className="khung-vi">
           <span>Số dư ví</span>

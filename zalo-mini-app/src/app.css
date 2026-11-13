@@ -938,3 +938,6 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 
 /* Biểu tượng menu Hồ sơ = bộ Phosphor của menu tài khoản web (BieuTuongWeb, 14/11/2026) */
 .tk-bt { display: inline-flex; width: 20px; height: 20px; flex: none; color: var(--cl-ink); }
+
+/* Dòng dự án dưới tiêu đề tin (như web) */
+.dong-du-an { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 14px; color: var(--cl-ink); }

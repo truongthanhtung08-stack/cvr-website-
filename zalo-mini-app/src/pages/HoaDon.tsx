@@ -24,7 +24,7 @@ export default function HoaDon() {
   if (san && !nguoiDung) return <CanDangNhap tieuDe="Hóa đơn" />; // chưa vào tài khoản: cùng màn như Gói hội viên
   return (
     <Page>
-      <TieuDe title="Hóa đơn" />
+      <TieuDe title="Hóa đơn của tôi" />
       {ds.dangTai ? (
         <Box flex justifyContent="center" p={6}><Spinner /></Box>
       ) : !ds.data.length ? (

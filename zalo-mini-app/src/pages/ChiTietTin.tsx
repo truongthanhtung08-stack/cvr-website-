@@ -168,7 +168,7 @@ export default function ChiTietTin() {
 
   // KHUNG THÔNG SỐ 2 CỘT = khung đầu tin trên web: Mức giá · Diện tích · Giá/m² · PN · WC · các ô đặc điểm · Hướng · Nội thất.
   const chinh: [string, string][] = [
-    ["Mức giá", gia(tin)],
+    [tin.purpose === "thue" ? "Giá thuê" : "Mức giá", gia(tin)], // nhãn giá như web
     ...(dienTich(tin) ? [[laDat(tin) ? "Diện tích đất" : "Diện tích", dienTich(tin)!] as [string, string]] : []),
     ...(dg ? [["Giá / m²", dg] as [string, string]] : []),
     ...(tin.beds ? [["Phòng ngủ", `${tin.beds} PN`] as [string, string]] : []),
@@ -216,6 +216,12 @@ export default function ChiTietTin() {
           </p>
         )}
         <h1 className="tieu-de-tin">{tin.title}</h1>
+        {/* Dòng dự án ngay dưới tiêu đề như trang tin web: toà nhà + tên dự án đậm + › */}
+        {tin.du_an && (
+          <p className="dong-du-an" onClick={() => tin.du_an_slug && dieuHuong(`/du-an/${tin.du_an_slug}`)}>
+            <BieuTuongWeb ten="duAn" co={16} /><strong>{tin.du_an}</strong>{tin.du_an_slug && <Icon icon="zi-chevron-right" size={16} />}
+          </p>
+        )}
         <p className="dong-dc">
           <BieuTuongWeb ten="viTri" co={16} />
           <span>
@@ -225,7 +231,7 @@ export default function ChiTietTin() {
         </p>
         <dl className="luoi-tt">
           {chinh.map(([k, v]) => (
-            <div key={k}><dt>{k}</dt><dd className={k === "Mức giá" ? "gia-o" : undefined}>{v}</dd></div>
+            <div key={k}><dt>{k}</dt><dd className={k === "Mức giá" || k === "Giá thuê" ? "gia-o" : undefined}>{v}</dd></div>
           ))}
         </dl>
       </section>
@@ -273,22 +279,6 @@ export default function ChiTietTin() {
         </button>
       </section>
 
-      {(tin.du_an || tin.nguoi_dang) && (
-        <section className="khoi-ct dong-ds dong-bam">
-          {tin.du_an && (
-            <div onClick={() => tin.du_an_slug && dieuHuong(`/du-an/${tin.du_an_slug}`)}>
-              <span>Dự án</span>
-              <strong>{tin.du_an}{tin.du_an_slug && <Icon icon="zi-chevron-right" size={18} />}</strong>
-            </div>
-          )}
-          {tin.nguoi_dang && (
-            <div>
-              <span>Người đăng</span>
-              <strong>{tin.nguoi_dang}</strong>
-            </div>
-          )}
-        </section>
-      )}
 
 
       {/* XÁC THỰC THÔNG TIN — chép nguyên web (câu chữ chủ dự án duyệt 21/10/2026). Pháp lý "Thoả thuận" / trống → bỏ dòng. */}
@@ -357,7 +347,7 @@ function MoTa({ noiDung }: { noiDung: string }) {
   xa("cuoi");
   return (
     <section className="khoi-ct" data-thu-gon="mo-ta">
-      <h2 className="muc-tin">Mô tả</h2>
+      <h2 className="muc-tin">Thông tin mô tả</h2>
       {khoi}
     </section>
   );
