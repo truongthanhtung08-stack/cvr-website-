@@ -226,6 +226,13 @@ export default function BaoCaoThiTruong({ vung, xemThu = false }: { vung: SoVung
   const q = tenQuy(v.quy), qSau = tenQuy(quySau(v.quy));
   const dn = diemNhan(v);
   const nguon = [...new Set(v.phanKhuc.flatMap((p) => p.nguon))];
+  // CHƯƠNG NÀO CÓ SỐ MỚI HIỆN (anh 13/11/2026: "cái nào có số liệu thì hiện") — đánh số lại theo chương đang hiện
+  const chuong = [
+    { id: "kinh-te", ten: `Kinh tế – Xã hội ${q}`, co: xemThu || !!(v.kinhTe.length || v.chinhSach.length || v.haTang.length) },
+    { id: "dien-bien", ten: `Diễn biến thị trường ${q}`, co: xemThu || v.phanKhuc.length > 0 },
+    { id: "du-bao", ten: `Dự báo thị trường ${qSau}`, co: v.phanKhuc.length > 0 },
+  ].filter((c) => c.co).map((c, i) => ({ ...c, so: String(i + 1).padStart(2, "0") + "." }));
+  const soCua = (id: string) => chuong.find((c) => c.id === id);
   return (
     <XemThu.Provider value={xemThu}>
     <div className="bao-cao">
@@ -261,14 +268,12 @@ export default function BaoCaoThiTruong({ vung, xemThu = false }: { vung: SoVung
           </div>
         )}
         <nav aria-label="Mục lục" className="mt-4 grid gap-1 text-sm sm:grid-cols-3">
-          <a href="#kinh-te" className="text-cvr-ink"><b className="text-cvr-gold">01.</b> Kinh tế – Xã hội {q}</a>
-          <a href="#dien-bien" className="text-cvr-ink"><b className="text-cvr-gold">02.</b> Diễn biến thị trường {q}</a>
-          <a href="#du-bao" className="text-cvr-ink"><b className="text-cvr-gold">03.</b> Dự báo thị trường {qSau}</a>
+          {chuong.map((c) => <a key={c.id} href={`#${c.id}`} className="text-cvr-ink"><b className="text-cvr-gold">{c.so}</b> {c.ten}</a>)}
         </nav>
       </div>
 
-      <section id="kinh-te" className="scroll-mt-24 py-7">
-        <TieuDeChuong so="01." ten={`Kinh tế – Xã hội ${q}`} />
+      {soCua("kinh-te") && <section id="kinh-te" className="scroll-mt-24 py-7">
+        <TieuDeChuong so={soCua("kinh-te")!.so} ten={soCua("kinh-te")!.ten} />
         <h3 className="mb-2 text-lg font-semibold text-cvr-ink">Chỉ số kinh tế</h3>
         {v.kinhTe.length ? (
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">{v.kinhTe.map((k) => (
@@ -296,16 +301,16 @@ export default function BaoCaoThiTruong({ vung, xemThu = false }: { vung: SoVung
               : <OCho tieuDe="Chưa có số liệu">Công trình khởi công, thông xe, khánh thành trong quý.</OCho>}
           </div>
         </div>
-      </section>
+      </section>}
 
-      <section id="dien-bien" className="scroll-mt-24 py-7">
-        <TieuDeChuong so="02." ten={`Diễn biến thị trường ${q}`} />
+      {soCua("dien-bien") && <section id="dien-bien" className="scroll-mt-24 py-7">
+        <TieuDeChuong so={soCua("dien-bien")!.so} ten={soCua("dien-bien")!.ten} />
         {v.phanKhuc.length ? v.phanKhuc.map((p) => <PhanKhuc key={p.phanKhuc} p={p} v={v} />)
           : <OCho tieuDe="Chưa có số liệu">Nguồn cung, tiêu thụ, giá sơ cấp theo phân khúc.</OCho>}
-      </section>
+      </section>}
 
-      <section id="du-bao" className="scroll-mt-24 py-7">
-        <TieuDeChuong so="03." ten={`Dự báo thị trường ${qSau}`} />
+      {soCua("du-bao") && <section id="du-bao" className="scroll-mt-24 py-7">
+        <TieuDeChuong so={soCua("du-bao")!.so} ten={soCua("du-bao")!.ten} />
         <div className="grid gap-4">{v.phanKhuc.map((p) => {
           const cuaAnh = v.duBao.filter((d) => !d.phanKhuc || d.phanKhuc === p.phanKhuc || TEN_PHAN_KHUC[p.phanKhuc].includes(d.phanKhuc)).map((d) => d.noiDung);
           const ds = cuaAnh.length ? cuaAnh : duBaoTuSo(p, []);
@@ -315,7 +320,7 @@ export default function BaoCaoThiTruong({ vung, xemThu = false }: { vung: SoVung
               <ul className="grid max-w-[72ch] list-disc gap-1.5 pl-5 text-[15px] leading-relaxed text-cvr-body marker:text-cvr-gold">{ds.map((x) => <li key={x}>{x}</li>)}</ul>
             </div>
           ) : null; })}</div>
-      </section>
+      </section>}
 
       <footer className="mt-4 grid max-w-[80ch] gap-1.5 border-t border-cvr-line pt-4 text-[13px] text-cvr-muted">
         <p className="font-semibold text-cvr-ink">Nguồn</p>
