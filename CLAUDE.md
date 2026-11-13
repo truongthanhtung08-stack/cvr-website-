@@ -39,6 +39,22 @@ báo anh MỘT dòng trước khi sửa, không bắt anh tự mò. Không dùng
 ③ báo về Điều phối: đã sửa gì (commit) · đã kiểm gì, ở đâu · chưa kiểm gì · ④ đụng quy trình khách (bảng trên) → thử lại ①→⑥ khổ 375 + máy
 tính trước khi báo · ⑤ ghi chú dài để ở thư mục ghi chú chung của nhóm phiên, không dán vào tin nhắn · ⑥ phiên bị cấm (đầu tệp) không được giao.
 
+## 🔁 QUY TRÌNH: ANH SỬA TỪ KHOÁ → LÊN WEB → XIN INDEX (anh chốt 14/11/2026: "khi tôi chỉnh từ khoá, nạp lên web và index theo trình tự")
+Anh nhắn "đã sửa từ khoá" (hoặc "nạp từ khoá") → Claude làm đủ 4 bước, không hỏi lại:
+1. **Nạp:** Chrome của anh → `coastalland.vn/admin/tu-khoa-loi` → chọn `D:\Coastal Land\SEO\Plan SEO - pSEO\HE-THONG-TU-KHOA.xlsx` → **Xem trước**.
+   Danh sách "Đổi chữ lõi" là so với chữ MẶC ĐỊNH của mã (không phải chữ đang hiện). Trước khi bấm, curl tiêu đề các trang trong danh sách:
+   trang nào sẽ đổi chữ THẬT mà đã index / đã xin / `TRANG_TOP` → dừng, báo anh (trang đã index đứng yên). Không có → **Đưa lên web**.
+2. **Kiểm:** curl lại `<title>` các trang vừa đổi + 3 trang top (`/mua-ban/da-nang`, `/cho-thue/can-ho-chung-cu/da-nang`, `/mua-ban/nha/da-nang`) — trang top không đổi.
+3. **Xin index ~10 trang/ngày** theo đúng thứ tự bảng Admin → Từ khoá lõi, lọc "Chưa index (có trang)": Mua bán trước Cho thuê · CHA trước CON ·
+   ≥ 5 tin · bỏ dòng "Trùng bộ tin với trang khác" và "Thiếu tin". Mỗi trang: curl 200 + không noindex + canonical đúng → Search Console
+   (`search.google.com/u/0/search-console?resource_id=https%3A%2F%2Fcoastalland.vn%2F` → URL inspection → dán link → REQUEST INDEXING →
+   "Indexing requested"). Trang báo "URL is on Google" → không xin, ghi `da-co`.
+4. **Ghi sổ:** trên tab Admin chạy `POST /api/admin/xin-index {duong, kq:"da-xin"}` (hoặc `"da-co"`) cho từng trang → bảng Admin + sheet cùng số.
+   Báo anh 1 dòng: đã nạp · đã xin N trang (danh sách) · trang nào đã có trên Google.
+**14/11 đã làm theo quy trình:** nạp bảng 00:50 (chữ trên web không đổi) · xin 10 trang: /mua-ban/da-nang/gia-duoi-5-ty · -3-ty · -2-ty · /mua-ban/hue/gia-duoi-5-ty ·
+-3-ty · /mua-ban/dat/da-nang/gia-duoi-10-ty · /mua-ban/khanh-hoa/gia-duoi-5-ty · -3-ty · /mua-ban/da-nang/phuong-hoa-xuan · /mua-ban/lam-dong/gia-duoi-5-ty ·
+đã có trên Google: /mua-ban/nha-rieng/khanh-hoa. Ngày mai xin tiếp từ dòng kế trong bảng.
+
 ## ⏳ BÀN GIAO 13/11/2026 TỐI (phiên 18419c5a, anh: "lưu trên file, nghỉ mai làm tiếp") — TỪ KHOÁ LONGTAIL + ĐẶC ĐIỂM
 **Luật anh chốt 13/11:** từ khoá KHÔNG có mục đích (mua/bán/thuê nằm ở đường dẫn web) · lõi = Loại hình + Địa điểm (gồm mọi ý định) ·
 longtail = lõi + ĐẶC ĐIỂM = chi tiết khớp đúng ý định người tìm, theo gợi ý Google + trang top · mỗi loại hình, mỗi địa điểm một mức giá
