@@ -31,6 +31,7 @@ const navGroups: { group: string; items: { label: string; href: string; icon: st
       { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
       { label: "Bảng giá", href: "/admin/gia-chuan", icon: "tag" },
       { label: "Lịch sử giá", href: "/admin/chi-so-gia", icon: "tag" },
+      { label: "Điểm tin thị trường", href: "/admin/diem-tin-thi-truong", icon: "upload" },
       { label: "Giá đất Nhà nước", href: "/admin/gia-dat", icon: "tag" },
       { label: "Thanh toán", href: "/admin/thanh-toan", icon: "card" },
       { label: "Hóa đơn & thuế", href: "/admin/hoa-don-thue", icon: "card" },

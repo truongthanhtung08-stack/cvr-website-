@@ -68,4 +68,5 @@ sao-luu-anh-truoc-khi-go-*.json
 .tam-miniapp/
 tools/zalo-proxy-vn/ma-bi-mat.php
 .next-kiem/
+.next-*/
 public/khung-web.html

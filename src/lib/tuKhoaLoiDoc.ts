@@ -36,7 +36,7 @@ function moZip(buf: Buffer): Map<string, Buffer> {
 }
 const giaiXml = (s: string) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
 
-function docSheet(buf: Buffer, tenSheet: string): string[][] {
+export function docSheet(buf: Buffer, tenSheet: string): string[][] {
   const zip = moZip(buf);
   const doc = (n: string) => zip.get(n)?.toString("utf8") ?? "";
   const chung = [...doc("xl/sharedStrings.xml").matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) => giaiXml([...m[1].matchAll(/<t[^>]*>([^<]*)<\/t>/g)].map((t) => t[1]).join("")));

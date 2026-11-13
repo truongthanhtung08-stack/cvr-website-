@@ -6,6 +6,7 @@
 
 import { ghepQuyDinh, KHOA_QUY_DINH_GIA, type QuyDinhGia } from "@/lib/quyDinhGia";
 import type { ChiSoGiaData } from "@/lib/chiSoGia";
+import type { BaoCaoNhap } from "@/lib/baoCaoThiTruong";
 import { asset } from "@/lib/asset";
 import { FOOTER_DEFAULT, type FooterData } from "@/lib/footerMacDinh";
 import { HOME_AREAS_DEFAULT, type AreaCard } from "@/lib/khuVucMacDinh";
@@ -263,4 +264,11 @@ export async function getBilling(): Promise<BillingData> {
 // không vẽ biểu đồ xu hướng, chỉ còn mặt bằng giá tính từ tin trên web.
 export async function getChiSoGia(): Promise<ChiSoGiaData | null> {
   return fetchBlock<ChiSoGiaData>("chi_so_gia");
+}
+
+// ── BÁO CÁO THỊ TRƯỜNG (anh 13/11/2026) ─────────────────────────────────────
+// Key "bao_cao_tt": phần số liệu ngoài web Cowork lọc (kinh tế, chính sách, hạ tầng, dự án mở bán, dự báo, nhận định đã duyệt, PDF)
+// theo từng vùng — xem src/lib/baoCaoThiTruong.ts. Chưa nạp → null, trang hiện ô "chưa có số liệu".
+export async function getBaoCaoThiTruong(): Promise<BaoCaoNhap | null> {
+  return fetchBlock<BaoCaoNhap>("bao_cao_tt");
 }

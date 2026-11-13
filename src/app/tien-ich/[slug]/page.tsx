@@ -8,7 +8,9 @@ import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
 import TinhLaiVay from "@/components/TinhLaiVay";
 import { packages, utilityTools, getPackage, tiers, trangTienIchDat } from "@/lib/packages";
-import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
+import { getBilling, getQuyDinhGia, getBaoCaoThiTruong } from "@/lib/siteContent";
+import BaoCaoThiTruong from "@/components/BaoCaoThiTruong";
+import { VUNG_BAO_CAO, soLieuVung } from "@/lib/baoCaoThiTruong";
 import { bangTheoMucDich } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 
@@ -54,6 +56,9 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
   // Giá từng cấp: CÙNG NGUỒN với trang Bảng giá (admin) — không viết số ở đây.
   const bangBan = bangTheoMucDich(await getBilling(), "ban");
   const quyDinh = await getQuyDinhGia();
+  // ĐIỂM TIN THỊ TRƯỜNG (anh 13/11/2026): menu "Báo cáo thị trường" vào thẳng báo cáo quý 3 vùng — số Cowork lọc, nạp ở Admin
+  const baoCao = slug === "bao-cao-thi-truong-bds" ? await getBaoCaoThiTruong() : null;
+  const soVung = baoCao ? VUNG_BAO_CAO.map((v) => soLieuVung(v, baoCao, baoCao.quyBaoCao)) : [];
 
   return (
     <>
@@ -112,6 +117,8 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                   <div>
                     <TraCuuGiaDat />
                   </div>
+                ) : slug === "bao-cao-thi-truong-bds" ? (
+                  <BaoCaoThiTruong vung={soVung} />
                 ) : slug === "tinh-lai-suat-vay" ? (
                   <div>
                     <TinhLaiVay />
