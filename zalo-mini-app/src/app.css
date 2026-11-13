@@ -947,3 +947,10 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 .o-video { position: relative; border-radius: 12px; overflow: hidden; background: #000; }
 .o-video video { display: block; width: 100%; max-height: 260px; }
 .o-video button { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 18px; line-height: 28px; }
+/* Ô chọn có tìm (ChonCoTim) — cùng dáng ô nhập zmp-ui */
+.o-chon-tim { display: grid; gap: 6px; }
+.o-chon-tim label { font-size: 14px; font-weight: 500; color: var(--cl-ink); }
+.o-chon-tim button { display: flex; align-items: center; justify-content: space-between; height: 48px; padding: 0 12px; border: 1px solid var(--cl-line); border-radius: 8px; background: #fff; font-size: 15px; color: var(--cl-ink); text-align: left; }
+.o-chon-tim button.trong span { color: var(--cl-faint); }
+.o-chon-tim button:disabled { background: var(--cl-surface); }
+.o-tim-bang { height: 44px; padding: 0 12px; border: 1px solid var(--cl-line); border-radius: 8px; font-size: 16px; }

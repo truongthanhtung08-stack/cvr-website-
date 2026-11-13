@@ -14,6 +14,7 @@ import { getAccessToken, getLocation } from "zmp-sdk";
 import XacMinhSo from "../components/XacMinhSo";
 import BangGiaMaTran, { TEN_HANG } from "../components/BangGiaMaTran";
 import BieuTuongWeb from "../components/BieuTuongWeb";
+import ChonCoTim from "../components/ChonCoTim";
 import { DS_LOAI, O_LOAI_CON } from "../lib/loaiHinh";
 
 const { Option } = Select;
@@ -461,9 +462,7 @@ export default function DangTin() {
             <button key={k} className={nhuCau === k ? "bat" : ""} onClick={() => doiNhuCau(k)}>{t}</button>
           ))}
         </div>}
-        <Select label="Loại hình *" placeholder="Chọn loại hình" value={loai} onChange={(v) => { if (String(v) === loai) return; setLoai(String(v)); setLoaiCon(""); setConTuGhi(false); }} closeOnSelect>
-          {DS_LOAI[md].map((l) => <Option key={l.ma} value={l.ma} title={l.ten} />)}
-        </Select>
+        <ChonCoTim nhan="Loại hình *" giuCho="Chọn loại hình" giaTri={loai} ds={DS_LOAI[md].map((l) => ({ gt: l.ma, nhan: l.ten }))} onChon={(v) => { if (v === loai) return; setLoai(v); setLoaiCon(""); setConTuGhi(false); }} />
         {oCon && (
           <Select label={oCon.label} placeholder={`Chọn ${oCon.label.toLowerCase()}`} value={conTuGhi ? KHAC : loaiCon} onChange={(v) => { const k = String(v) === KHAC; setConTuGhi(k); setLoaiCon(k ? "" : String(v)); }} closeOnSelect>
             {oCon.options.map((o) => <Option key={o} value={o} title={o} />)}
@@ -472,18 +471,12 @@ export default function DangTin() {
         )}
         {oCon && conTuGhi && <Input placeholder={oCon.label} value={loaiCon} onChange={(e) => setLoaiCon(e.target.value)} maxLength={60} />}
         <Button size="small" variant="secondary" loading={dangViTri} onClick={dungViTri}>Dùng vị trí hiện tại</Button>
-        <Select label="Tỉnh / Thành *" placeholder="Chọn tỉnh/thành" value={tinh} onChange={(v) => { setTinh(String(v)); setPhuong(""); }} closeOnSelect>
-          {provincesNew.map((p) => <Option key={p.name} value={p.name} title={p.name} />)}
-        </Select>
-        <Select label="Phường / Xã" placeholder={tinh ? "Chọn phường/xã" : "Chọn tỉnh/thành trước"} value={phuong} disabled={!tinh} onChange={(v) => setPhuong(String(v))} closeOnSelect>
-          {dsPhuong.map((w) => <Option key={w} value={w} title={w} />)}
-        </Select>
+        <ChonCoTim nhan="Tỉnh / Thành *" giuCho="Chọn tỉnh/thành" giaTri={tinh} ds={provincesNew.map((p) => ({ gt: p.name, nhan: p.name }))} onChon={(v) => { if (v !== tinh) { setTinh(v); setPhuong(""); } }} />
+        <ChonCoTim nhan="Phường / Xã" giuCho={tinh ? "Chọn phường/xã" : "Chọn tỉnh/thành trước"} giaTri={phuong} tat={!tinh} ds={dsPhuong.map((w) => ({ gt: w, nhan: w }))} onChon={setPhuong} />
         <Input label="Số nhà, tên đường" placeholder="VD: 123 Võ Nguyên Giáp · Lô A12…" value={diaChi} onChange={(e) => setDiaChi(e.target.value)} />
-        <Select label="Thuộc dự án" placeholder="Chọn dự án" value={duAnTuGhi ? KHAC : duAnSlug} onChange={(v) => { const k = String(v) === KHAC; setDuAnTuGhi(k); if (k) { setDuAnSlug(""); setDuAnTen(""); } else { const d = dsDuAn.data.find((x) => x.slug === String(v)); setDuAnSlug(d?.slug ?? ""); setDuAnTen(d?.ten ?? ""); } }} closeOnSelect>
-          <Option value="" title="Không thuộc dự án" />
-          {duAnTrongTinh.map((d) => <Option key={d.slug} value={d.slug} title={d.ten} />)}
-          <Option value={KHAC} title="Khác — tự ghi" />
-        </Select>
+        <ChonCoTim nhan="Thuộc dự án" giuCho="Chọn dự án" giaTri={duAnTuGhi ? KHAC : duAnSlug}
+          ds={[{ gt: "__khong", nhan: "Không thuộc dự án" }, ...duAnTrongTinh.map((d) => ({ gt: d.slug, nhan: d.ten })), { gt: KHAC, nhan: "Khác — tự ghi" }]}
+          onChon={(v) => { const k = v === KHAC; setDuAnTuGhi(k); if (k || v === "__khong") { setDuAnSlug(""); setDuAnTen(""); } else { const d = dsDuAn.data.find((x) => x.slug === v); setDuAnSlug(d?.slug ?? ""); setDuAnTen(d?.ten ?? ""); } }} />
         {duAnTuGhi && <Input placeholder="Tên dự án" value={duAnTen} onChange={(e) => setDuAnTen(e.target.value)} maxLength={80} />}
       </Nhom>
 
