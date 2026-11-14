@@ -57,6 +57,15 @@ báo anh MỘT dòng trước khi sửa, không bắt anh tự mò. Không dùng
 ③ báo về Điều phối: đã sửa gì (commit) · đã kiểm gì, ở đâu · chưa kiểm gì · ④ đụng quy trình khách (bảng trên) → thử lại ①→⑥ khổ 375 + máy
 tính trước khi báo · ⑤ ghi chú dài để ở thư mục ghi chú chung của nhóm phiên, không dán vào tin nhắn · ⑥ phiên bị cấm (đầu tệp) không được giao.
 
+## 🔁 VIỆC SEO HẰNG NGÀY (anh 14/11/2026 tối: "sửa đổi từ khoá trong bảng theo tình trạng hiện có trên Google Search Console – up lên Admin – index Google")
+Mỗi ngày Claude tự làm, không chờ nhắc: ① Search Console 28 ngày → câu nào đang hạng ≤ 15 / có lượt hiện → câu dài (Loại hình + Địa điểm + Đặc
+điểm, đặc điểm theo gợi ý Google) chưa có trong `HE-THONG-TU-KHOA.xlsx` thì BỔ SUNG dòng (không x "Lên web" — chữ trang không đổi), cập nhật
+cột Tin = tin CÒN HẠN, Index theo Search Console · ② nạp Admin → Từ khoá lõi (so trước: 0 trang đổi chữ ngoài ý muốn) · ③ xin index TỐI ĐA
+lượt Google cho phép mỗi ngày (trang 200, không noindex, canonical đúng, ≥ 5 tin còn hạn) → ghi da-xin / da-co vào Admin · ④ trang đang có
+hạng mà thiếu tin (bị noindex) → giao Cowork lọc tin GẤP. Thứ tự lên top: câu dài lên top trước, sau đó mới dồn về LÕI.
+14/11 tối: đã bổ sung 18 dòng câu dài (Nha Trang, Bắc Nha Trang, Thanh Khê, kho Quy Nhơn), nạp Admin 0 đổi chữ; 11 trang chưa index đều
+không đủ ≥ 5 tin còn hạn → không xin được; kho xưởng Quy Nhơn đang hạng 5,8 mà 0 tin còn hạn (noindex) → giao Cowork gấp.
+
 ## 🔁 QUY TRÌNH: ANH SỬA TỪ KHOÁ → LÊN WEB → XIN INDEX (anh chốt 14/11/2026: "khi tôi chỉnh từ khoá, nạp lên web và index theo trình tự")
 Anh nhắn "đã sửa từ khoá" (hoặc "nạp từ khoá") → Claude làm đủ 4 bước, không hỏi lại:
 1. **Nạp:** Chrome của anh → `coastalland.vn/admin/tu-khoa-loi` → chọn `D:\Coastal Land\SEO\Plan SEO - pSEO\HE-THONG-TU-KHOA.xlsx` → **Xem trước**.
