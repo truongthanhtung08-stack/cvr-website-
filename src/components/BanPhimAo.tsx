@@ -115,8 +115,8 @@ export default function BanPhimAo() {
       const r = el.getBoundingClientRect();
       const tren = vvTop() + cheTren(el) + 8;
       const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
-      // KHUNG SOẠN Ô MÔ TẢ trên điện thoại (cao cố định, chữ cuộn trong ô): cả ô phải nằm trọn dưới thanh B / I — không để thanh đè mép trên
-      if (laKhungSoan(el)) return r.top >= tren - 1 && r.top <= tren + 60;
+      // KHUNG SOẠN Ô MÔ TẢ trên điện thoại = [thanh B / I][chữ cuộn trong khung]: mép trên CẢ KHUNG nằm ngay dưới các thanh dính đầu trang
+      if (laKhungSoan(el)) { const k = el.closest("[data-co-thanh]")!.getBoundingClientRect(); return k.top >= tren - 1 && k.top <= tren + 60; }
       const c = conTro(el);
       if (c) return c.top >= tren && c.bottom <= duoi;
       if (r.height > vvCao() * 0.6) return r.top < duoi - 40 && r.bottom > tren + 40; // ô cao (mô tả): thấy một phần là đủ
@@ -182,7 +182,7 @@ export default function BanPhimAo() {
           const tren = vvTop() + cheTren(el) + 8;
           const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
           const c = conTro(el);
-          const dich = laKhungSoan(el) ? r.top - tren : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
+          const dich = laKhungSoan(el) ? el.closest("[data-co-thanh]")!.getBoundingClientRect().top - tren : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
           window.scrollBy({ top: dich, behavior: "smooth" });
         }
       }

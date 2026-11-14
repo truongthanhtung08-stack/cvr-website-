@@ -309,15 +309,15 @@ export default function ContentEditor({
   const bieuTuongAnh = <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z" /></svg>;
 
   return (
-    <div data-co-thanh="" className="group/soan space-y-2">
+    <div data-co-thanh="" className="group/soan space-y-2 max-sm:space-y-0 max-sm:overflow-hidden max-sm:rounded-lg max-sm:border max-sm:border-cvr-line max-sm:bg-white max-sm:focus-within:border-cvr-ink">
       {/* Thanh định dạng trên đầu ô (máy tính + điện thoại). Chạm nút không làm rời ô — bàn phím điện thoại không tắt, không mất vùng bôi đen. */}
-      {/* Điện thoại, CHỈ KHI ĐANG GÕ trong ô (focus-within): thanh DÍNH ngay dưới đầu trang + thanh Quay lại khi cuộn; không gõ thì đứng yên, không đè thanh bước — bàn phím bật (màn còn nửa) thanh không bị thanh bước
-          đè / đẩy khuất; Samsung không báo bàn phím nên không dựa vào lớp ban-phim-mo. z-[21] trên thanh bước (z-20). Máy tính đứng yên. */}
+      {/* ĐIỆN THOẠI: thanh nằm TRONG KHUNG Ô, đầu khung, KHÔNG dính / không chồng lên chữ (anh 14/11/2026, ảnh iPhone 22:53 + 23:15: thanh
+          dính đè mép trên ô, dòng đang gõ bị che — iPhone tự cuộn theo con trỏ không biết thanh dính). Khung = [thanh][chữ cuộn bên dưới]. */}
       <div
         data-thanh-dinh=""
         onPointerDown={giuChon}
         onMouseDown={giuChon}
-        className="-mx-1 flex flex-nowrap items-center gap-1 bg-white px-1 py-1 sm:flex-wrap max-sm:group-focus-within/soan:sticky max-sm:group-focus-within/soan:top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] max-sm:group-focus-within/soan:z-[21] sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
+        className="-mx-1 flex flex-nowrap items-center gap-1 bg-white px-1 py-1 sm:flex-wrap max-sm:mx-0 max-sm:border-b max-sm:border-cvr-line max-sm:px-2 max-sm:py-1.5 sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
       >
         {nutDinhDang}
         <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
@@ -383,7 +383,7 @@ export default function ContentEditor({
           }}
           // Điện thoại: ô cao cố định (mặc định ~8 dòng, kéo thanh dưới để giãn / thu), chữ cuộn trong ô. Máy tính: tự cao + kéo góc dưới.
           style={laDt ? { height: caoKeo ?? 224, overflowY: "auto" } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
-          className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
+          className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line max-sm:rounded-none max-sm:border-0 bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
           <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-[16px] leading-relaxed text-cvr-faint sm:text-sm">{placeholder}</p>
