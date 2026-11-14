@@ -118,7 +118,13 @@ export default function BanPhimAo() {
       // KHUNG SOẠN Ô MÔ TẢ trên điện thoại = [thanh B / I][chữ cuộn trong khung]: mép trên CẢ KHUNG nằm ngay dưới các thanh dính đầu trang
       // → dòng đang gõ thấy được thì KHÔNG kéo trang (anh 14/11/2026: "bấm là nó nhảy giật lên thì sao mà chỉnh sửa"); chỉ khi trình duyệt tự cuộn
       // làm dòng con trỏ chui dưới thanh "‹ Đăng tin" (Samsung, ảnh Phone Link 23:49) mới đẩy dòng đó ra ngay dưới thanh.
-      if (laKhungSoan(el)) { const c = conTro(el); return !c || (c.top >= tren - 4 && c.bottom <= duoi + 4); }
+      // + thanh B / I (đầu khung) bị khuất dưới thanh trên mà kéo xuống vẫn giữ được dòng con trỏ trên bàn phím → coi là chưa đủ (để lộ thanh, ảnh Phone Link 0:09)
+      if (laKhungSoan(el)) {
+        const c = conTro(el);
+        if (c && !(c.top >= tren - 4 && c.bottom <= duoi + 4)) return false;
+        const k = el.closest("[data-co-thanh]")!.getBoundingClientRect();
+        return !(k.top < tren - 4 && c && c.bottom + (tren - k.top) <= duoi);
+      }
       const c = conTro(el);
       if (c) return c.top >= tren && c.bottom <= duoi;
       if (r.height > vvCao() * 0.6) return r.top < duoi - 40 && r.bottom > tren + 40; // ô cao (mô tả): thấy một phần là đủ
@@ -185,7 +191,10 @@ export default function BanPhimAo() {
           const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
           const c = conTro(el);
           // khung soạn: đẩy VỪA ĐỦ — con trỏ dưới bàn phím thì lên sát trên bàn phím, chui dưới thanh trên thì xuống sát dưới thanh (giữ chữ phía trên trong tầm nhìn)
-          const dich = c && laKhungSoan(el) ? (c.bottom > duoi ? c.bottom - (duoi - 16) : c.top - (tren + 8)) : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
+          const kTop = laKhungSoan(el) ? el.closest("[data-co-thanh]")!.getBoundingClientRect().top : 0;
+          const dich = c && laKhungSoan(el)
+            ? (c.bottom > duoi ? c.bottom - (duoi - 16) : c.top < tren - 4 ? c.top - (tren + 8) : kTop - tren) // con trỏ bị che → đưa ra; còn lại: để lộ thanh B / I
+            : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
           window.scrollBy({ top: dich, behavior: "smooth" });
         }
       }
