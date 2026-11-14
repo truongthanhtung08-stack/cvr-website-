@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { VUNG_BAO_CAO } from "@/lib/baoCaoThiTruong";
+import { soVungDiemTin } from "@/components/TrangDiemTin";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
@@ -40,6 +42,8 @@ export default async function GiaNhaDatTinh({ params }: { params: Promise<{ tinh
   if (!kv) notFound();
   const t = trangGiaNhaDat(kv, await getTinXetTrang()) /* cổng đếm cả tin hết hạn (29/10/2026) */;
   if (!t.ban.length && !t.thue.length) notFound();
+  const kvBc = VUNG_BAO_CAO.find((v) => v.tinh.includes(kv.name));
+  const diemTin = kvBc && (await soVungDiemTin()).some((x) => x.vung.id === kvBc.id && x.du) ? kvBc : null;
   return (
     <>
       <Header />
@@ -56,6 +60,8 @@ export default async function GiaNhaDatTinh({ params }: { params: Promise<{ tinh
           <Link href={`/mua-ban/${kv.slug}`} className="text-[15px] font-medium text-cvr-ink underline underline-offset-4">Xem nhà đất bán {kv.name}</Link>
           <span className="mx-2 text-cvr-faint">·</span>
           <Link href={`/cho-thue/${kv.slug}`} className="text-[15px] font-medium text-cvr-ink underline underline-offset-4">Xem nhà đất cho thuê {kv.name}</Link>
+          {/* MỘT THỰC THỂ (14/11/2026): trang giá của tỉnh nối tới Điểm tin thị trường khu vực chứa tỉnh (chỉ khu vực đủ số) */}
+          {diemTin && (<><span className="mx-2 text-cvr-faint">·</span><Link href={`/diem-tin-thi-truong/${diemTin.id}`} className="text-[15px] font-medium text-cvr-ink underline underline-offset-4">Điểm tin thị trường {diemTin.ten}</Link></>)}
         </div>
       </main>
       <Footer />
