@@ -34,7 +34,12 @@ function moZip(buf: Buffer): Map<string, Buffer> {
   }
   return out;
 }
-const giaiXml = (s: string) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+// Mã số ký tự (&#272; / &#x110;) cũng giải — tệp Cowork 14/11/2026 ghi chữ tiếng Việt dạng này ("&#272;&#7845;t n&#7873;n" = "Đất nền"),
+// trước đây đọc ra nguyên mã → phân khúc / tỉnh không khớp danh sách, cả bảng bị từ chối.
+const giaiXml = (s: string) =>
+  s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&")
+    .replace(/&#x([0-9a-f]+);/gi, (_, h: string) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d: string) => String.fromCodePoint(Number(d)));
 
 export function docSheet(buf: Buffer, tenSheet: string): string[][] {
   const zip = moZip(buf);
