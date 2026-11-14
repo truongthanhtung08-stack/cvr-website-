@@ -116,7 +116,9 @@ export type ThongTinGoi = {
 };
 
 export function thongTinGoi(r: ListingRow): ThongTinGoi {
-  const daDuyet = r.status === "approved";
+  // Đã duyệt = đang hiện, hoặc đã từng duyệt (có ngày đăng) rồi bị ẩn / hết hạn — trước đây tin ẩn / hết hạn ghi nhầm
+  // "chờ duyệt mới bắt đầu tính" và không hiện câu "Đã hết hạn… bấm Đăng lại" (điện thoại thật 15/11/2026).
+  const daDuyet = r.status === "approved" || ((r.status === "hidden" || r.status === "expired") && !!r.published_at);
   const capDangKy = (r.tier_yeu_cau ?? (r.details?.plan?.tier as ListingTier | undefined) ?? r.tier) as ListingTier;
   const cap = daDuyet ? r.tier : capDangKy;
   const hetHan = r.tier_expires_at ? new Date(r.tier_expires_at) : null;

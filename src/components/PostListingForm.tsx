@@ -362,13 +362,23 @@ export default function PostListingForm() {
         const d = JSON.parse(localStorage.getItem(khoaNhap(userId)) ?? "null") as Record<string, unknown> | null;
         // Vừa huỷ thanh toán quay về → mở lại ngay bản đang soạn, không hỏi "tiếp tục bản nháp?"
         const veLai = veThanhToan("moi");
-        if (d) {
+        const xet = (d: Record<string, unknown>) => {
           // Có bất cứ gì khách đã điền / đã chọn (kể cả chỉ chọn gói, up ảnh) → hỏi Soạn tiếp / Đăng tin mới (chủ dự án 29/10/2026)
           const coNoiDung = ["title", "category", "province", "priceValue", "area", "description", "addressDetail", "planTier"]
             .some((k) => typeof d[k] === "string" && (d[k] as string).trim()) || (Array.isArray(d.images) && d.images.length > 0);
           if (coNoiDung && !veLai) setNhapCho(d);
           else apDungNhap(d);
-        }
+        };
+        if (d && typeof d.maNhap === "string" && d.maNhap) {
+          // Bản nhớ gắn một tin nháp → chỉ dùng khi tin đó CÒN LÀ NHÁP; đã gửi duyệt / đã duyệt / đã xoá thì bỏ bản nhớ, ra form
+          // trống (điện thoại thật 15/11/2026: bấm "+ Đăng tin mới" mở thẳng form SỬA tin vừa đăng xong).
+          const k = khoaNhap(userId);
+          void createClient().from("listings").select("status").eq("id", d.maNhap).maybeSingle().then(({ data }) => {
+            if (data?.status === "draft") xet(d);
+            else try { localStorage.removeItem(k); } catch {}
+          }, () => {}).then(() => setDaNapNhap(true)); // tự lưu chờ xét xong, khỏi ghi đè bản nhớ lúc đang xét
+          return;
+        } else if (d) xet(d);
       } catch {}
     }
     setDaNapNhap(true);
