@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import ListingBrowser from "@/components/ListingBrowser";
 import { goiNheBaiViet } from "@/lib/goiNhe";
 import { ketQuaTrangDau } from "@/lib/ketQuaDau";
@@ -39,6 +40,8 @@ export default async function MuaBanPage() {
   return (
     <>
       <ListingListJsonLd items={tinBan} heading={`Mua bán nhà đất ${thangHienTai()}`} path="/mua-ban" />
+      {/* BreadcrumbList cho Google (14/11/2026, một thực thể) — chỉ dữ liệu, không hiện gì; cùng tên cấp với /mua-ban/<loại>, giống /cho-thue */}
+      <BreadcrumbJsonLd items={[{ name: "Nhà đất bán", href: "/mua-ban" }]} />
       <Header />
       <main className="flex-1 bg-white">
         {/* Trang 1 máy chủ dựng sẵn (lib/ketQuaDau, 21/10/2026): HTML có tin thật khách nhìn thấy — thay khung chờ + danh
