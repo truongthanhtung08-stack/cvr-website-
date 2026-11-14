@@ -224,16 +224,19 @@ export default function BanPhimAo() {
     document.addEventListener("focusin", vaoO);
     document.addEventListener("focusout", roiO);
     document.addEventListener("input", dangGo);
-    vv?.addEventListener("resize", henCapNhat);
+    // Bàn phím đổi kích thước lúc đang ở khung soạn (Chrome điện thoại cuộn theo bàn phím muộn hơn các lần đo ở vaoO — Phone Link 15/11/2026):
+    // đo lại, chỉ đẩy khi dòng con trỏ bị che / thanh B · I khuất (dangNhin)
+    const doiCoPhim = () => { const a = document.activeElement; if (a instanceof HTMLElement && laKhungSoan(a)) canCuon = true; henCapNhat(); };
+    vv?.addEventListener("resize", doiCoPhim);
     vv?.addEventListener("scroll", henCapNhat);
-    window.addEventListener("resize", henCapNhat); // WebView Android (Zalo, Facebook) co cửa sổ khi bật bàn phím
+    window.addEventListener("resize", doiCoPhim); // WebView Android (Zalo, Facebook) co cửa sổ khi bật bàn phím
     return () => {
       document.removeEventListener("focusin", vaoO);
       document.removeEventListener("focusout", roiO);
       document.removeEventListener("input", dangGo);
-      vv?.removeEventListener("resize", henCapNhat);
+      vv?.removeEventListener("resize", doiCoPhim);
       vv?.removeEventListener("scroll", henCapNhat);
-      window.removeEventListener("resize", henCapNhat);
+      window.removeEventListener("resize", doiCoPhim);
       if (raf) cancelAnimationFrame(raf);
       traLopPhu();
       html.classList.remove("ban-phim-mo");

@@ -305,7 +305,7 @@ export default function ContentEditor({
   const bieuTuongAnh = <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z" /></svg>;
 
   return (
-    <div data-co-thanh="" className="group/soan space-y-2 max-sm:space-y-0 max-sm:overflow-hidden max-sm:rounded-lg max-sm:border max-sm:border-cvr-line max-sm:bg-white max-sm:focus-within:border-cvr-ink">
+    <div data-co-thanh="" className="group/soan space-y-2 max-sm:space-y-0 max-sm:overflow-clip max-sm:rounded-lg max-sm:border max-sm:border-cvr-line max-sm:bg-white max-sm:focus-within:border-cvr-ink">
       {/* Thanh định dạng trên đầu ô (máy tính + điện thoại). Chạm nút không làm rời ô — bàn phím điện thoại không tắt, không mất vùng bôi đen. */}
       {/* ĐIỆN THOẠI: thanh nằm TRONG KHUNG Ô, đầu khung, KHÔNG dính / không chồng lên chữ (anh 14/11/2026, ảnh iPhone 22:53 + 23:15: thanh
           dính đè mép trên ô, dòng đang gõ bị che — iPhone tự cuộn theo con trỏ không biết thanh dính). Khung = [thanh][chữ cuộn bên dưới]. */}
