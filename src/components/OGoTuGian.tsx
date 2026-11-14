@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 // Ô GÕ TỰ GIÃN (chủ dự án 10/10/2026): khách ghi ngắn thì một dòng; ghi dài thì ô tự cao
 // thêm, xuống dòng được (Enter), không cắt chữ, không cuộn ngang. Dùng cho ô "Khác — tự ghi"
@@ -27,6 +27,24 @@ export default function OGoTuGian({
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight + 2}px`;
   }, [value]);
+  // CHỌN "Khác — tự ghi" (14/11/2026, đo khung 375: ô ghi mở ra nằm DƯỚI mép màn hình — bảng chọn đang khoá cuộn trang lúc ô nhận
+  // con trỏ nên trình duyệt không kéo ô lên). Bảng đóng xong mà ô còn ngoài phần nhìn thấy → đưa ô vào giữa màn hình, giữ con trỏ.
+  useEffect(() => {
+    if (!autoFocus) return;
+    const t = window.setTimeout(() => {
+      const el = ref.current;
+      if (!el) return;
+      const vv = window.visualViewport;
+      const tren = vv?.offsetTop ?? 0;
+      const duoi = tren + (vv?.height ?? window.innerHeight);
+      const r = el.getBoundingClientRect();
+      if (r.top < tren + 120 || r.bottom > duoi - 16) el.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (document.activeElement !== el) el.focus({ preventScroll: true });
+    }, 350);
+    return () => window.clearTimeout(t);
+    // chỉ lúc ô vừa hiện (chọn "Khác — tự ghi")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <textarea
       ref={ref}

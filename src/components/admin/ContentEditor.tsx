@@ -309,15 +309,15 @@ export default function ContentEditor({
   const bieuTuongAnh = <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z" /></svg>;
 
   return (
-    <div data-co-thanh="" className="space-y-2">
+    <div data-co-thanh="" className="group/soan space-y-2">
       {/* Thanh định dạng trên đầu ô (máy tính + điện thoại). Chạm nút không làm rời ô — bàn phím điện thoại không tắt, không mất vùng bôi đen. */}
-      {/* Điện thoại: thanh DÍNH ngay dưới đầu trang + thanh Quay lại khi cuộn — bàn phím bật (màn còn nửa) thanh không bị thanh bước
+      {/* Điện thoại, CHỈ KHI ĐANG GÕ trong ô (focus-within): thanh DÍNH ngay dưới đầu trang + thanh Quay lại khi cuộn; không gõ thì đứng yên, không đè thanh bước — bàn phím bật (màn còn nửa) thanh không bị thanh bước
           đè / đẩy khuất; Samsung không báo bàn phím nên không dựa vào lớp ban-phim-mo. z-[21] trên thanh bước (z-20). Máy tính đứng yên. */}
       <div
         data-thanh-dinh=""
         onPointerDown={giuChon}
         onMouseDown={giuChon}
-        className="sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-[21] -mx-1 flex flex-wrap items-center gap-1 bg-white sm:gap-1.5 px-1 py-1 sm:static sm:z-auto sm:mx-0 sm:px-0 sm:py-0"
+        className="-mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:group-focus-within/soan:sticky max-sm:group-focus-within/soan:top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] max-sm:group-focus-within/soan:z-[21] sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
       >
         {nutDinhDang}
         <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
