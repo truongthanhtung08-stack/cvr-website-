@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 import { isVideoUrl } from "@/lib/media";
 import { imageMarkerUrl, videoMarkerUrl } from "@/lib/dauNoiDung";
@@ -142,10 +141,10 @@ export default function ContentEditor({
   const khungRef = useRef<HTMLDivElement>(null);
   // ── SOẠN TRÊN ĐIỆN THOẠI THEO CHUẨN (anh 13/11/2026: "hành trình phím trên mobile sai hết, cần CHUẨN, không chắp vá") ─────────────
   // Như Ghi chú iPhone / Google Docs: ô cao cố định ~8 dòng, chữ cuộn TRONG ô (trình duyệt tự giữ dòng đang gõ trong tầm nhìn);
-  // thanh B · I · canh lề · Chèn ảnh · Xong nằm NGAY TRÊN BÀN PHÍM và chỉ hiện khi đang soạn; thanh kéo dưới ô chỉ để giãn / thu ô.
+  // thanh B · I · canh lề nằm TRÊN ĐẦU Ô như máy tính (anh 14/11/2026: đưa xuống trên bàn phím là sai — bàn phím bật lên đã chiếm
+  // nhiều diện tích, thêm thanh dưới càng chật); thanh kéo dưới ô chỉ để giãn / thu ô.
   // Bỏ cơ chế cũ tự cuộn trang + thu khung theo bàn phím lúc chạm (làm nút × dời chỗ giữa cú chạm, màn hình giật).
   const laDt = useLaDt();
-  const [dangSoan, setDangSoan] = useState(false);
   const [caoKeo, setCaoKeo] = useState<number | null>(null);
   const keoRef = useRef<HTMLDivElement>(null);
   // Thanh kéo: chạm KHÔNG bao giờ bật bàn phím (chặn ngay touchstart — React gắn touch ở chế độ passive nên phải gắn tay)
@@ -163,26 +162,6 @@ export default function ContentEditor({
     t.addEventListener("touchmove", keo, { passive: false });
     return () => { t.removeEventListener("touchstart", dau); t.removeEventListener("touchmove", keo); };
   }, [laDt]);
-  // Thanh công cụ trên bàn phím: đáy thanh = đỉnh bàn phím (visualViewport); dòng đang gõ không nằm dưới thanh
-  const [dayThanh, setDayThanh] = useState(0);
-  const thanhNoiRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!laDt || !dangSoan) return;
-    const vv = window.visualViewport;
-    const tinh = () => {
-      setDayThanh(vv ? Math.max(0, window.innerHeight - (vv.offsetTop + vv.height)) : 0);
-      const sel = window.getSelection(), el = khungRef.current, tb = thanhNoiRef.current;
-      if (!sel?.rangeCount || !el || !tb || !el.contains(sel.getRangeAt(0).startContainer)) return;
-      const r = sel.getRangeAt(0).getBoundingClientRect();
-      const tren = tb.getBoundingClientRect().top - 8;
-      if (r.height && r.bottom > tren) window.scrollBy({ top: r.bottom - tren, behavior: "instant" });
-    };
-    tinh();
-    vv?.addEventListener("resize", tinh);
-    vv?.addEventListener("scroll", tinh);
-    document.addEventListener("selectionchange", tinh);
-    return () => { vv?.removeEventListener("resize", tinh); vv?.removeEventListener("scroll", tinh); document.removeEventListener("selectionchange", tinh); };
-  }, [laDt, dangSoan]);
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
@@ -329,7 +308,7 @@ export default function ContentEditor({
 
   const giuChon = (e: React.MouseEvent | React.PointerEvent) => e.preventDefault(); // bấm nút không làm rời ô, không mất vùng bôi đen
 
-  // B · I · canh lề — dùng chung cho thanh máy tính và thanh trên bàn phím điện thoại
+  // B · I · canh lề — một thanh trên đầu ô cho cả máy tính lẫn điện thoại
   const nutDinhDang = (
     <>
       <ToolBtn label="In đậm" onClick={() => lenh("bold")}><span className="text-[13px] font-bold">B</span></ToolBtn>
@@ -345,8 +324,8 @@ export default function ContentEditor({
 
   return (
     <div className="space-y-2">
-      {/* Máy tính: thanh định dạng đứng yên trên khung như cũ. Điện thoại: thanh định dạng chỉ hiện TRÊN BÀN PHÍM khi đang soạn. */}
-      {!laDt && <div className="flex flex-wrap items-center gap-1.5">{nutDinhDang}</div>}
+      {/* Thanh định dạng trên đầu ô (máy tính + điện thoại). Chạm nút không làm rời ô — bàn phím điện thoại không tắt, không mất vùng bôi đen. */}
+      <div onPointerDown={giuChon} onMouseDown={giuChon} className="flex flex-wrap items-center gap-1.5">{nutDinhDang}</div>
 
       {/* Thanh công cụ chèn ảnh / video */}
       <div className="flex flex-wrap items-center gap-2">
@@ -415,16 +394,11 @@ export default function ContentEditor({
           role="textbox"
           aria-multiline="true"
           aria-label={placeholder}
-          onFocus={() => setDangSoan(true)}
           onInput={() => { phat(); nhoKhoi(); }}
           onKeyUp={nhoKhoi}
           onMouseUp={nhoKhoi}
           onTouchEnd={nhoKhoi}
-          onBlur={() => {
-            nhoKhoi(); phat();
-            // Bấm nút trên thanh không làm rời ô (giuChon); rời ô thật (chạm ra ngoài, bấm Xong) mới ẩn thanh
-            window.setTimeout(() => setDangSoan(document.activeElement === khungRef.current), 0);
-          }}
+          onBlur={() => { nhoKhoi(); phat(); }}
           onPaste={(e) => {
             // Chỉ lấy CHỮ — bỏ định dạng rác của nơi khác (màu, cỡ chữ, bảng…).
             e.preventDefault();
@@ -459,23 +433,6 @@ export default function ContentEditor({
         <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
 
-      {/* THANH TRÊN BÀN PHÍM (điện thoại, chỉ khi đang soạn): B · I · canh lề · chèn ảnh · Xong (cất bàn phím) */}
-      {laDt && dangSoan && createPortal(
-        <div
-          ref={thanhNoiRef}
-          onPointerDown={giuChon}
-          onMouseDown={giuChon}
-          style={{ bottom: dayThanh }}
-          className="fixed inset-x-0 z-[120] border-t border-cvr-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
-        >
-          <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto px-3 py-1.5">
-            {nutDinhDang}
-            <ToolBtn label="Chèn ảnh" onClick={() => imgRef.current?.click()}>{bieuTuongAnh}</ToolBtn>
-            <button type="button" onClick={() => khungRef.current?.blur()} className="ml-auto shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold text-cvr-blue-ink">Xong</button>
-          </div>
-        </div>,
-        document.body,
-      )}
     </div>
   );
 }
