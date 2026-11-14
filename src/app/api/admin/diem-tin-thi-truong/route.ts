@@ -37,7 +37,7 @@ async function banDangChay(admin: Admin): Promise<BaoCaoNhap | null> {
 async function ghi(admin: Admin, bang: BaoCaoNhap) {
   const { error } = await admin.from("site_content").upsert({ key: KHOA, data: bang });
   if (error) return loi("Không lưu được: " + error.message, 500);
-  revalidateTag("noi-dung", "max"); // trang /tien-ich/bao-cao-thi-truong-bds đọc site_content qua thẻ "noi-dung"
+  revalidateTag("noi-dung", "max"); // trang /diem-tin-thi-truong đọc site_content qua thẻ "noi-dung"
   return null;
 }
 

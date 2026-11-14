@@ -272,12 +272,18 @@ function TieuDeChuong({ so, ten }: { so: string; ten: string }) {
 export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vung: SoVung[]; xemThu?: boolean; vungDau?: string }) {
   // KHU VỰC NÀO ĐỦ SỐ THÌ HIỆN (anh 13/11/2026) — trang công khai chỉ có tab khu vực đủ số; Admin xem trước hiện đủ 3 khu vực
   const coSo = xemThu ? vung : vung.filter((x) => x.du);
-  const [chon, setChon] = useState(vungDau ?? (coSo.find((x) => x.du) ?? coSo[0] ?? vung[0]).vung.id);
+  const [chon, setChonGoc] = useState(vungDau ?? (coSo.find((x) => x.du) ?? coSo[0] ?? vung[0]).vung.id);
+  // Trang công khai: mỗi khu vực một địa chỉ /diem-tin-thi-truong/<khu vực> (anh 14/11/2026) — bấm tab đổi địa chỉ theo, bấm menu sang trang khác thì tab theo
+  useEffect(() => { if (vungDau) setChonGoc(vungDau); }, [vungDau]);
+  const setChon = (id: string) => {
+    setChonGoc(id);
+    if (!xemThu && location.pathname.startsWith("/diem-tin-thi-truong")) history.pushState(null, "", `/diem-tin-thi-truong/${id}`);
+  };
   // MENU "Điểm tin thị trường" → mục con khu vực (…#da-nang): mở đúng tab. Đọc # lúc mở trang + lúc bấm mục menu khi đang ở trang này
   // (chuyển trang trong Next không phát sự kiện hashchange nên bắt cú bấm liên kết có #<khu vực>).
   useEffect(() => {
     const ids = coSo.map((x) => x.vung.id);
-    const theoHash = (h: string) => { const id = h.replace(/^#/, ""); if (ids.includes(id)) { setChon(id); return true; } return false; };
+    const theoHash = (h: string) => { const id = h.replace(/^#/, ""); if (ids.includes(id)) { setChonGoc(id); if (!xemThu && location.pathname.startsWith("/diem-tin-thi-truong")) history.replaceState(null, "", `/diem-tin-thi-truong/${id}`); return true; } return false; };
     theoHash(location.hash);
     const bam = (e: MouseEvent) => {
       const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
@@ -291,7 +297,6 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
   const chuaCo = !v.phanKhuc.length && !xemThu;
   const q = tenQuy(v.quy), qSau = tenQuy(quySau(v.quy));
   const dn = diemNhan(v);
-  const nguon = [...new Set(v.phanKhuc.flatMap((p) => p.nguon))];
   // CHƯƠNG NÀO CÓ SỐ MỚI HIỆN (anh 13/11/2026: "cái nào có số liệu thì hiện") — đánh số lại theo chương đang hiện
   const chuong = [
     { id: "kinh-te", ten: `Kinh tế – Xã hội ${q}`, co: xemThu || !!(v.kinhTe.length || v.chinhSach.length || v.haTang.length) },
@@ -349,7 +354,7 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
               <p className="mt-1 text-[26px] font-bold leading-tight tabular-nums text-cvr-ink">{k.giaTri}<span className="ml-1 text-[13px] font-medium text-cvr-muted">{k.donVi}</span></p>
               {k.caNuoc && <p className="text-[13px] text-cvr-muted">Cả nước: {k.caNuoc}</p>}
               {k.soCungKy && <p className="text-[13px] text-cvr-body">{k.soCungKy} Y-o-Y</p>}
-              <p className="mt-1 text-[11px] text-cvr-faint">{k.ky} · Nguồn: {k.nguon}</p>
+              <p className="mt-1 text-[11px] text-cvr-faint">{k.ky}</p>
             </div>))}</div>
         ) : <OCho tieuDe="Chưa có số liệu">GRDP · FDI · CPI · du lịch.</OCho>}
         <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2 print:grid-cols-2">
@@ -395,7 +400,8 @@ export default function BaoCaoThiTruong({ vung, xemThu = false, vungDau }: { vun
 
       <footer className="mt-4 grid max-w-[80ch] gap-1.5 border-t border-cvr-line pt-4 text-[13px] text-cvr-muted">
         <p className="font-semibold text-cvr-ink">Nguồn</p>
-        <p>Coastal Land tổng hợp{nguon.length ? ` từ ${nguon.join("; ")}` : ""}. Q-o-Q: so với quý trước · Y-o-Y: so với cùng kỳ năm trước.</p>
+        {/* Nguồn: Coastal Land (anh 14/11/2026: không ghi tên đơn vị khác) */}
+        <p>Coastal Land tổng hợp và báo cáo. Q-o-Q: so với quý trước · Y-o-Y: so với cùng kỳ năm trước.</p>
       </footer>
       </>)}
     </div>

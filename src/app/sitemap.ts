@@ -10,6 +10,7 @@ import { banGocCua, tinDatChuan, trangIndex } from "@/lib/pseo";
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
 import { duongDanTin } from "@/lib/duongDanTin";
 import { dauThang } from "@/lib/thang";
+import { soVungDiemTin } from "@/components/TrangDiemTin";
 
 // TỰ LÀM MỚI MỖI GIỜ. Trước đây để `force-static` (di sản thời GitHub Pages):
 // sitemap chỉ sinh 1 lần lúc build, nên MỌI tin/dự án/bài viết đăng sau lần
@@ -76,6 +77,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const dynamic: MetadataRoute.Sitemap = [];
+  // Điểm tin thị trường — menu riêng, mỗi khu vực ĐỦ SỐ một trang (14/11/2026)
+  try {
+    const diemTin = (await soVungDiemTin()).filter((x) => x.du);
+    if (diemTin.length) dynamic.push(...["/diem-tin-thi-truong", ...diemTin.map((x) => `/diem-tin-thi-truong/${x.vung.id}`)].map((p) => ({
+      url: `${SITE}${p}`, changeFrequency: "monthly" as const, priority: 0.6,
+    })));
+  } catch {}
   try {
     const [projects, articles, listings, chuyenGia, tinHetHan] = await Promise.all([
       getProjects(), getArticles(), getListings(), getChuyenGia(), getListingsHetHan(),

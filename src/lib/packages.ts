@@ -234,7 +234,6 @@ export const CONG_CU_DA_CO_NOI_DUNG: string[] = ["tinh-lai-suat-vay", "gia-nha-d
 // Mục chưa có nội dung: trang vẫn noindex (trangTienIchDat).
 export const TIEN_ICH: { slug: string; label: string; href: string }[] = [
   { slug: "gia-nha-dat", label: "Giá đất", href: "/tien-ich/gia-nha-dat" },
-  { slug: "bao-cao-thi-truong-bds", label: "Báo cáo thị trường Bất động sản", href: "/tien-ich/bao-cao-thi-truong-bds" },
   { slug: "so-sanh-nha-dat", label: "So sánh nhà đất", href: "/so-sanh" },
   { slug: "tinh-lai-suat-vay", label: "Tính lãi suất vay", href: "/tien-ich/tinh-lai-suat-vay" },
   { slug: "thu-vien-phap-luat", label: "Thư viện pháp luật", href: "/tien-ich/thu-vien-phap-luat" },

@@ -64,8 +64,8 @@ const danhMucDuAn: NavChild[] = [
 ];
 // MENU TIỆN ÍCH (chủ dự án duyệt 25/10/2026): một cột, chỉ công cụ dùng được ngay — danh sách ở packages.ts (TIEN_ICH)
 // Báo cáo thị trường TÁCH RA thành mục riêng của menu chính (chủ dự án 07/11/2026) — giữ nguyên đường dẫn trang
-const danhMucDiemTin: NavChild[] = VUNG_BAO_CAO.map((v) => ({ label: v.nut, href: `/tien-ich/bao-cao-thi-truong-bds#${v.id}` })); // cùng tên tab trong trang
-const danhMucTienIch: NavChild[] = TIEN_ICH.filter((t) => t.slug !== "bao-cao-thi-truong-bds").map((t) => ({ label: t.label, href: t.href }));
+const danhMucDiemTin: NavChild[] = VUNG_BAO_CAO.map((v) => ({ label: v.nut, href: `/diem-tin-thi-truong/${v.id}` })); // mỗi khu vực một trang (anh 14/11/2026: link đúng cấu trúc menu)
+const danhMucTienIch: NavChild[] = TIEN_ICH.map((t) => ({ label: t.label, href: t.href }));
 
 // Thứ tự menu (chủ dự án duyệt 22/10/2026 — PC trái → phải, điện thoại trên → dưới): người tìm nhà dùng nhiều nhất
 // trước, phần cho người bán cuối (sát nút Đăng tin): Mua bán · Cho thuê · Dự án · Tin tức · Tiện ích · Báo giá
@@ -79,7 +79,7 @@ const navItems: NavItem[] = [
   { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: "baoGia" as const },
   // cuối cùng (chủ dự án 07/11/2026)
   // Điểm tin thị trường (anh 14/11/2026: đổi tên, mục con theo 3 khu vực — bấm mở đúng tab khu vực đó)
-  { label: "Điểm tin thị trường", href: "/tien-ich/bao-cao-thi-truong-bds", children: danhMucDiemTin, icon: "baoCao" as const },
+  { label: "Điểm tin thị trường", href: "/diem-tin-thi-truong", children: danhMucDiemTin, icon: "baoCao" as const },
 ];
 
 const chevronDown = (

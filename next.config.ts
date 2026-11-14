@@ -100,6 +100,8 @@ const nextConfig: NextConfig = isPages
         // đưa cho "bán khu nghỉ dưỡng đà nẵng", "bán trang trại đà nẵng") chuyển hẳn về trang Khu nghỉ dưỡng, kể cả trang con theo nơi.
         const boTrang = [
           { source: "/dang-tin-mien-phi", destination: "/dang-ky", permanent: true },
+          // 14/11/2026: Điểm tin thị trường là menu riêng (anh: "đây là 1 menu riêng") — địa chỉ cũ dưới Tiện ích chuyển về đây
+          { source: "/tien-ich/bao-cao-thi-truong-bds", destination: "/diem-tin-thi-truong", permanent: true },
           { source: "/mua-ban/trang-trai-nghi-duong", destination: "/mua-ban/khu-nghi-duong", permanent: true },
           { source: "/mua-ban/trang-trai-nghi-duong/:duong*", destination: "/mua-ban/khu-nghi-duong/:duong*", permanent: true },
         ];

@@ -8,15 +8,13 @@ import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
 import TinhLaiVay from "@/components/TinhLaiVay";
 import { packages, utilityTools, getPackage, tiers, trangTienIchDat } from "@/lib/packages";
-import { getBilling, getQuyDinhGia, getBaoCaoThiTruong, getChiSoGia } from "@/lib/siteContent";
-import { soNhapHopLe } from "@/lib/chiSoGia";
-import BaoCaoThiTruong from "@/components/BaoCaoThiTruong";
-import { VUNG_BAO_CAO, soLieuVung, quyVuaXong } from "@/lib/baoCaoThiTruong";
+import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { bangTheoMucDich } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 
 export function generateStaticParams() {
-  return [...packages, ...utilityTools].map((p) => ({ slug: p.slug }));
+  // Điểm tin thị trường là menu riêng /diem-tin-thi-truong (anh 14/11/2026) — địa chỉ cũ chuyển 301 (next.config.ts)
+  return [...packages, ...utilityTools].filter((p) => p.slug !== "bao-cao-thi-truong-bds").map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -57,11 +55,6 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
   // Giá từng cấp: CÙNG NGUỒN với trang Bảng giá (admin) — không viết số ở đây.
   const bangBan = bangTheoMucDich(await getBilling(), "ban");
   const quyDinh = await getQuyDinhGia();
-  // ĐIỂM TIN THỊ TRƯỜNG (anh 13/11/2026): menu "Báo cáo thị trường" vào thẳng báo cáo quý 3 vùng — số Cowork lọc, nạp ở Admin
-  const baoCao = slug === "bao-cao-thi-truong-bds" ? await getBaoCaoThiTruong() : null;
-  // Giá thứ cấp của báo cáo lấy từ Lịch sử giá đã có trên web (anh 13/11/2026: "kể cả dữ liệu đã có trên web")
-  const lichSu = slug === "bao-cao-thi-truong-bds" ? soNhapHopLe((await getChiSoGia())?.items) : [];
-  const soVung = VUNG_BAO_CAO.map((v) => soLieuVung(v, baoCao, baoCao?.quyBaoCao || quyVuaXong(), lichSu));
 
   return (
     <>
@@ -100,8 +93,6 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
 
           {/* Tiêu đề gói. Trang tiện ích: tiêu đề cùng cỡ, cùng vị trí như Tin tức, So sánh, Chuyên gia (điện thoại 24 · máy tính 30),
               không ô biểu tượng phía trên (25/10/2026) */}
-          {/* Điểm tin thị trường: tiêu đề chính (H1) nằm trong báo cáo — bỏ đầu trang chung để không hai tiêu đề (anh 13/11/2026) */}
-          {slug !== "bao-cao-thi-truong-bds" && (
           <header className="max-w-2xl">
             {p.kind !== "tool" && (
               <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-cvr-surface text-cvr-ink ring-1 ring-inset ring-cvr-line">
@@ -111,10 +102,9 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
             <h1 className={`font-semibold leading-tight tracking-tight text-cvr-ink ${p.kind === "tool" ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"}`}>{p.title}</h1>
             <p className="mt-3 text-base leading-relaxed text-cvr-muted">{p.description}</p>
           </header>
-          )}
 
           {p.kind === "tool" ? (
-            <section className={slug === "bao-cao-thi-truong-bds" ? "" : "mt-8"}>
+            <section className="mt-8">
               {/* Công cụ đặt thẳng dưới tiêu đề — bỏ khung viền và tiêu đề lặp lại lần 2 (25/10/2026) */}
               <div>
                 {/* Giá đất Nhà nước có công cụ tra cứu thật; các tiện ích còn lại
@@ -123,8 +113,6 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                   <div>
                     <TraCuuGiaDat />
                   </div>
-                ) : slug === "bao-cao-thi-truong-bds" ? (
-                  <BaoCaoThiTruong vung={soVung} />
                 ) : slug === "tinh-lai-suat-vay" ? (
                   <div>
                     <TinhLaiVay />
