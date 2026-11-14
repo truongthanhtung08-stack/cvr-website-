@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
-import type { ListingRow } from "@/lib/listingAdmin";
-import BangKiemTinSeo from "@/components/admin/BangKiemTinSeo";
+import { type ListingRow, adminPriceText } from "@/lib/listingAdmin";
+import BangKiemTinSeo, { timTinTrung } from "@/components/admin/BangKiemTinSeo";
 import YeuCauNangGoi from "@/components/admin/YeuCauNangGoi";
 import { directions } from "@/lib/listingSpec";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
@@ -44,6 +44,7 @@ export default function DuyetNapPage() {
   // Duyệt xong phải có dấu hiệu, ở lại đúng trang đang làm (chủ dự án 25/10/2026): duyệt ngay tại đây,
   // hoặc bấm lỗi → Sửa tin → lưu xong quay về đây kèm ?daLuu=<id>&kieu=len|nhap
   const [daLuu, setDaLuu] = useState<{ id: string; kieu: string; title: string } | null>(null);
+  const [mo, setMo] = useState<string | null>(null);
   const baoDaLuu = (x: { id: string; kieu: string; title: string }) => { setDaLuu(x); window.scrollTo({ top: 0, behavior: "smooth" }); };
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -59,6 +60,9 @@ export default function DuyetNapPage() {
     createClient()
       .from("listings")
       .select("*")
+      // Cùng luật src/lib/choDuyet.ts laTinDangHoChoDuyet (ẩn + choChuDuyet) với số đỏ menu: tin đã xoá / đã lên web
+      // còn sót cờ cũ thì không hiện ở đây (14/11/2026: 2 bản thừa đã xoá 11/11 vẫn nằm trong trang).
+      .eq("status", "hidden")
       .eq("details->>choChuDuyet", "true")
       .order("created_at", { ascending: true })
       .limit(200)
@@ -91,12 +95,73 @@ export default function DuyetNapPage() {
         </div>
       ))}
       <YeuCauNangGoi rows={nang} onDoi={(m) => setNang((cu) => cu.map((x) => (x.id === m.id ? m : x)))} />
-      <div className="mt-5 space-y-6">
-        {ds?.map((t) => (
-          <TheDuyet key={t.id} tin={t} xong={(title) => { setDs((cu) => cu?.filter((x) => x.id !== t.id) ?? null); baoDaLuu({ id: t.id, kieu: "len", title }); }} />
-        ))}
-      </div>
+      {/* Danh sách gọn như Tin đăng (chủ dự án 14/11/2026: "ra cái danh sách như bình thường, cần thì tao bấm vào");
+          bấm một dòng mới mở khung duyệt của tin đó ngay dưới dòng. */}
+      {ds && ds.length > 0 && (
+        <div className="mt-5 overflow-x-auto rounded-2xl border border-cvr-line bg-white">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead>
+              <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wider text-cvr-faint">
+                <th className="px-4 py-3 font-medium">Tin đăng</th>
+                <th className="px-4 py-3 font-medium">Giá · DT</th>
+                <th className="px-4 py-3 font-medium">Chuẩn SEO</th>
+                <th className="px-4 py-3 font-medium">Ngày nạp</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {ds.map((t) => (
+                <DongDuyet key={t.id} tin={t} mo={mo === t.id} bam={() => setMo(mo === t.id ? null : t.id)}
+                  xong={(title) => { setMo(null); setDs((cu) => cu?.filter((x) => x.id !== t.id) ?? null); baoDaLuu({ id: t.id, kieu: "len", title }); }} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
+  );
+}
+
+function DongDuyet({ tin, mo, bam, xong }: { tin: Tin; mo: boolean; bam: () => void; xong: (title: string) => void }) {
+  const [soTrung, setSoTrung] = useState(0);
+  useEffect(() => {
+    let huy = false;
+    timTinTrung(tin).then((x) => { if (!huy) setSoTrung(x.length); });
+    return () => { huy = true; };
+  }, [tin]);
+  const soLoi = loiTinSeo(tin, soTrung).length;
+  return (
+    <>
+      <tr onClick={bam} className={`cursor-pointer border-b border-cvr-line/70 hover:bg-cvr-surface/60 ${mo ? "bg-cvr-surface/60" : ""}`}>
+        <td className="max-w-[340px] px-4 py-3">
+          <p className="font-medium text-cvr-ink">{tin.title}</p>
+          <p className="mt-0.5 text-xs text-cvr-muted">{[tin.type, tin.ward, tin.province].filter(Boolean).join(" · ")}</p>
+        </td>
+        <td className="whitespace-nowrap px-4 py-3 text-cvr-body">
+          <div>{adminPriceText(tin.price_vnd, tin.purpose)}</div>
+          <div className="text-xs text-cvr-muted">{tin.area_m2 != null ? `${tin.area_m2} m²` : "—"}</div>
+        </td>
+        <td className="whitespace-nowrap px-4 py-3">
+          {soLoi
+            ? <span className="font-medium text-red-600">Chưa đạt · {soLoi} lỗi</span>
+            : <span className="text-green-700">Đạt</span>}
+        </td>
+        <td className="whitespace-nowrap px-4 py-3 text-cvr-muted">
+          {new Date(tin.created_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" })}
+        </td>
+        <td className="whitespace-nowrap px-4 py-3 text-right">
+          <Link href={`/admin/tin-dang/${tin.id}`} onClick={(e) => e.stopPropagation()} className="mr-4 font-medium text-cvr-blue-ink hover:underline">Sửa</Link>
+          <span className="font-medium text-cvr-ink">{mo ? "Đóng" : "Duyệt"}</span>
+        </td>
+      </tr>
+      {mo && (
+        <tr className="border-b border-cvr-line/70">
+          <td colSpan={5} className="bg-cvr-surface/40 p-4">
+            <TheDuyet tin={tin} xong={xong} />
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 

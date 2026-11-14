@@ -14,26 +14,28 @@ import { loiTinSeo, laTinHangLoat } from "@/lib/kiemTinSeo";
 
 const sdt = (s?: string) => (s ?? "").split(/[,;/|]| - /)[0].replace(/\D/g, "").replace(/^84/, "0").slice(0, 10);
 
+// Cùng người đăng + cùng loại + giá + diện tích = cùng một BĐS đăng nhiều tin. Một luật cho bảng kiểm này và
+// danh sách Tin chờ duyệt (đếm lỗi ở dòng danh sách phải khớp bảng kiểm khi mở tin).
+export async function timTinTrung(row: ListingRow): Promise<{ id: string; title: string }[]> {
+  if (row.price_vnd == null || row.area_m2 == null) return [];
+  const { data } = await createClient()
+    .from("listings")
+    .select("id,title,details")
+    .eq("type", row.type)
+    .eq("price_vnd", row.price_vnd)
+    .eq("area_m2", row.area_m2)
+    .neq("id", row.id)
+    .in("status", ["approved", "expired", "pending"]);
+  const so = sdt(row.details?.contact?.phone);
+  return (data ?? []).filter((x) => so && sdt((x.details as ListingRow["details"])?.contact?.phone) === so).map((x) => ({ id: x.id, title: x.title }));
+}
+
 export default function BangKiemTinSeo({ row }: { row: ListingRow }) {
   const [trung, setTrung] = useState<{ id: string; title: string }[]>([]);
 
-  // Cùng người đăng + cùng loại + giá + diện tích + phường = cùng một BĐS đăng nhiều tin
   useEffect(() => {
-    if (row.price_vnd == null || row.area_m2 == null) return;
     let huy = false;
-    createClient()
-      .from("listings")
-      .select("id,title,details")
-      .eq("type", row.type)
-      .eq("price_vnd", row.price_vnd)
-      .eq("area_m2", row.area_m2)
-      .neq("id", row.id)
-      .in("status", ["approved", "expired", "pending"])
-      .then(({ data }) => {
-        if (huy || !data) return;
-        const so = sdt(row.details?.contact?.phone);
-        setTrung(data.filter((x) => so && sdt((x.details as ListingRow["details"])?.contact?.phone) === so).map((x) => ({ id: x.id, title: x.title })));
-      });
+    timTinTrung(row).then((ds) => { if (!huy) setTrung(ds); });
     return () => { huy = true; };
   }, [row]);
 

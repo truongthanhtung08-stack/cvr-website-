@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LOC_CHO_DUYET_KHACH } from "@/lib/choDuyet";
@@ -10,7 +10,7 @@ import { signOut, useRoiKhiMatPhien } from "@/lib/useAuth";
 
 // Điều hướng quản trị — chia NHÓM cho dễ tìm (thay vì 9 mục phẳng):
 //   Tổng quan · Đăng bán (nội dung tin) · Kinh doanh (khách, giá, thu tiền) · Website
-const navGroups: { group: string; items: { label: string; href: string; icon: string }[] }[] = [
+const navGroups: { group: string; items: { label: string; href: string; icon: string; hrefSo?: string }[] }[] = [
   {
     group: "",
     items: [{ label: "Tổng quan", href: "/admin", icon: "grid" }],
@@ -20,7 +20,8 @@ const navGroups: { group: string; items: { label: string; href: string; icon: st
     items: [
       { label: "Tin đăng", href: "/admin/tin-dang", icon: "doc" },
       { label: "Đăng tin mới", href: "/admin/tin-dang/moi", icon: "plus" },
-      { label: "Đăng nhiều tin (file)", href: "/admin/tin-dang/nhap-hang-loat", icon: "upload" },
+      // Số đỏ = tin nạp file chờ duyệt → bấm số mở thẳng Tin chờ duyệt (chủ dự án 14/11/2026: số dẫn sai chỗ)
+      { label: "Đăng nhiều tin (file)", href: "/admin/tin-dang/nhap-hang-loat", icon: "upload", hrefSo: "/admin/tin-dang/duyet-nap" },
       { label: "Dự án", href: "/admin/du-an", icon: "building" },
       { label: "Tin tức", href: "/admin/tin-tuc", icon: "news" },
     ],
@@ -89,15 +90,16 @@ function useSoViec(pathname: string, bat: boolean): Record<string, number> {
   return so;
 }
 
-function ChamDo({ n }: { n?: number }) {
+function ChamDo({ n, toi }: { n?: number; toi?: () => void }) {
   if (!n) return null;
-  return <span className="ml-auto min-w-[20px] rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white">{n > 99 ? "99+" : n}</span>;
+  return <span onClick={toi ? (e) => { e.preventDefault(); e.stopPropagation(); toi(); } : undefined} className="ml-auto min-w-[20px] rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white">{n > 99 ? "99+" : n}</span>;
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useProfile();
   useRoiKhiMatPhien(); // đăng xuất / mất phiên khi đang mở trang → về Đăng nhập ngay
   const pathname = usePathname();
+  const router = useRouter();
   const soViec = useSoViec(pathname, !loading && profile?.role === "admin");
 
   // Gác phía client (lớp 2, cùng với middleware): không phải admin → về trang chủ.
@@ -157,7 +159,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     >
                       <NavIcon name={item.icon} />
                       {item.label}
-                      <ChamDo n={soViec[item.href]} />
+                      <ChamDo n={soViec[item.href]} toi={item.hrefSo ? () => router.push(item.hrefSo!) : undefined} />
                     </Link>
                   );
                 })}
