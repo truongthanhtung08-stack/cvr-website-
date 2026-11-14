@@ -123,6 +123,8 @@ const nextConfig: NextConfig = isPages
             // /dang-tin?mau=2..5 (14/11/2026): ảnh đại diện chia sẻ mẫu 2..5 — trang dựng sẵn src/app/dang-tin/mau/[n]; ?mau lạ ở lại /dang-tin (mẫu 1).
             // Phải ở beforeFiles: /dang-tin là trang có sẵn, afterFiles không bao giờ tới.
             { source: "/dang-tin", has: [{ type: "query" as const, key: "mau", value: "^(?<n>[2-5])$" }], destination: "/dang-tin/mau/:n" },
+            // Link sạch gửi khách (anh 14/11/2026: "gửi cho khách, không phải nội bộ để MẪU") — mỗi ảnh một link /dang-tin-1..5 (anh chọn tên), không utm.
+            { source: "/dang-tin-:n(1|2|3|4|5)", destination: "/dang-tin/mau/:n" },
           ],
           // /favicon.ico 404 (Search Console 24/10/2026: Google + trình duyệt gọi địa chỉ này) → trỏ về biểu tượng sẵn có src/app/icon.png
           afterFiles: [
