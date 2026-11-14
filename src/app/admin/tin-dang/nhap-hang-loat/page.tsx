@@ -458,9 +458,10 @@ export default function NhapHangLoatPage() {
       // Báo web bỏ cache → tin vừa đăng hiện NGAY (trước đây chờ lượt làm mới tự động).
       await lamMoiWeb("listings");
       setKetQua(
-        `Đã đăng ${xong} tin mới` +
+        // Tin nạp CHƯA lên web — chờ anh duyệt từng tin ở Tin chờ duyệt (14/11/2026: câu cũ "Đã đăng" làm anh tưởng tin đã lên)
+        `Đã nạp ${xong} tin mới` +
           (capNhat ? ` · bổ sung ảnh/video và cập nhật nội dung cho ${capNhat} tin đã đăng` : "") +
-          ". Tin đang chờ duyệt (Admin → Tin đăng)." +
+          ". Tin chưa lên web — duyệt từng tin ở Admin → Tin chờ duyệt." +
           (kqDuAn.moi.length ? ` Dự án: ${kqDuAn.moi.length} hồ sơ chờ duyệt (Admin → Dự án).` : "") +
           (kqDuAn.capNhat.length ? ` Điền thêm ô trống cho hồ sơ dự án đã có: ${kqDuAn.capNhat.join(", ")}.` : "") +
           (kqDuAn.loi.length ? ` Dự án lỗi: ${kqDuAn.loi.join(" · ")}.` : "") +
@@ -595,7 +596,7 @@ export default function NhapHangLoatPage() {
         </p>
       )}
       {ketQua && (
-        <p className={`rounded-lg px-4 py-2.5 text-sm ${ketQua.startsWith("Đã đăng") && !ketQua.includes("lỗi") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+        <p className={`rounded-lg px-4 py-2.5 text-sm ${ketQua.startsWith("Đã nạp") && !ketQua.includes("lỗi") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
           {ketQua}
         </p>
       )}
