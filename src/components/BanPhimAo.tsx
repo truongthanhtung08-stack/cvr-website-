@@ -88,6 +88,13 @@ export default function BanPhimAo() {
       // Mọi thanh dính bắt đầu trong 40% trên màn hình đều tính là che — không đòi nối sát nhau (10/11/2026: thanh bước đăng tin hở
       // 16px dưới thanh Quay lại / máy chữ to → không được tính → ô đang gõ bị đẩy xuống dưới thanh bước, khách không gõ được).
       for (const r of ds) if (r.top - vvTop() < vvCao() * 0.4) day = Math.max(day, r.bottom - vvTop());
+      // THANH ĐỊNH DẠNG CỦA KHUNG SOẠN (data-thanh-dinh, ô Mô tả 14/11/2026): lúc chạm chưa dính nên chưa tính ở trên, nhưng cuộn xong nó
+      // dính ngay dưới các thanh trên đầu → cộng trước chiều cao của nó, dòng đang gõ không chui xuống dưới thanh B · I.
+      const tb = el.closest("[data-co-thanh]")?.querySelector<HTMLElement>("[data-thanh-dinh]");
+      if (tb && !tb.contains(el) && getComputedStyle(tb).position === "sticky") {
+        const dinh = parseFloat(getComputedStyle(tb).top);
+        if (!(Number.isFinite(dinh) && Math.abs(tb.getBoundingClientRect().top - dinh) <= 2)) day += tb.getBoundingClientRect().height;
+      }
       return day;
     };
     // DÒNG CON TRỎ trong khung soạn (contenteditable): ô Mô tả cao hơn màn hình — nhìn thấy MỘT PHẦN ô chưa đủ, dòng đang gõ phải

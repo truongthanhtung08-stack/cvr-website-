@@ -2,7 +2,6 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
-import { isVideoUrl } from "@/lib/media";
 import { imageMarkerUrl, videoMarkerUrl } from "@/lib/dauNoiDung";
 import { asset } from "@/lib/asset";
 import { tachDinhDang, thoatChu } from "@/lib/dinhDangMoTa";
@@ -143,7 +142,7 @@ export default function ContentEditor({
   // Như Ghi chú iPhone / Google Docs: ô cao cố định ~8 dòng, chữ cuộn TRONG ô (trình duyệt tự giữ dòng đang gõ trong tầm nhìn);
   // thanh B · I · canh lề nằm TRÊN ĐẦU Ô như máy tính (anh 14/11/2026: đưa xuống trên bàn phím là sai — bàn phím bật lên đã chiếm
   // nhiều diện tích, thêm thanh dưới càng chật); thanh kéo dưới ô chỉ để giãn / thu ô.
-  // Bỏ cơ chế cũ tự cuộn trang + thu khung theo bàn phím lúc chạm (làm nút × dời chỗ giữa cú chạm, màn hình giật).
+  // Đưa dòng đang gõ lên trên bàn phím: để BanPhimAo (chung toàn web) lo — ô không còn dấu data-tu-cuon (14/11/2026).
   const laDt = useLaDt();
   const [caoKeo, setCaoKeo] = useState<number | null>(null);
   const keoRef = useRef<HTMLDivElement>(null);
@@ -194,8 +193,6 @@ export default function ContentEditor({
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [tienDoVideo, setTienDoVideo] = useState(0); // % chuyển + tải video (video HEVC / dài cần vài phút trên điện thoại — 12/11/2026)
-  const [link, setLink] = useState("");
-  const [showLink, setShowLink] = useState(false);
   const [error, setError] = useState("");
 
   // Giá trị đổi TỪ NGOÀI (nạp tin cũ, bản nháp, đăng tin khác) → vẽ lại khung soạn.
@@ -295,17 +292,6 @@ export default function ContentEditor({
     if (videoRef.current) videoRef.current.value = "";
   }
 
-  // Dán link: tự nhận diện video (YouTube/Vimeo/tệp video) hay ảnh.
-  function addLink() {
-    const url = link.trim();
-    if (!url) return;
-    // Ô chỉ ảnh: link video không chèn — video đăng ở mục Hình ảnh & video
-    if (isVideoUrl(url)) { if (chiAnh) { setError("Video đăng ở mục Hình ảnh & video."); return; } insertVideo(url); }
-    else insertImage(url);
-    setLink("");
-    setShowLink(false);
-  }
-
   const giuChon = (e: React.MouseEvent | React.PointerEvent) => e.preventDefault(); // bấm nút không làm rời ô, không mất vùng bôi đen
 
   // B · I · canh lề — một thanh trên đầu ô cho cả máy tính lẫn điện thoại
@@ -313,7 +299,7 @@ export default function ContentEditor({
     <>
       <ToolBtn label="In đậm" onClick={() => lenh("bold")}><span className="text-[13px] font-bold">B</span></ToolBtn>
       <ToolBtn label="In nghiêng" onClick={() => lenh("italic")}><span className="font-serif text-[13px] italic">I</span></ToolBtn>
-      <span className="mx-1 h-5 w-px shrink-0 bg-cvr-line" />
+      <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
       <ToolBtn label="Canh trái" onClick={() => lenh("justifyLeft")}><AlignIcon lines={[16, 10, 16, 10]} /></ToolBtn>
       <ToolBtn label="Canh giữa" onClick={() => lenh("justifyCenter")}><AlignIcon lines={[16, 10, 16, 10]} center /></ToolBtn>
       <ToolBtn label="Canh phải" onClick={() => lenh("justifyRight")}><AlignIcon lines={[16, 10, 16, 10]} right /></ToolBtn>
@@ -323,19 +309,28 @@ export default function ContentEditor({
   const bieuTuongAnh = <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z" /></svg>;
 
   return (
-    <div className="space-y-2">
+    <div data-co-thanh="" className="space-y-2">
       {/* Thanh định dạng trên đầu ô (máy tính + điện thoại). Chạm nút không làm rời ô — bàn phím điện thoại không tắt, không mất vùng bôi đen. */}
-      <div onPointerDown={giuChon} onMouseDown={giuChon} className="flex flex-wrap items-center gap-1.5">{nutDinhDang}</div>
-
-      {/* Thanh công cụ chèn ảnh / video */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Điện thoại: thanh DÍNH ngay dưới đầu trang + thanh Quay lại khi cuộn — bàn phím bật (màn còn nửa) thanh không bị thanh bước
+          đè / đẩy khuất; Samsung không báo bàn phím nên không dựa vào lớp ban-phim-mo. z-[21] trên thanh bước (z-20). Máy tính đứng yên. */}
+      <div
+        data-thanh-dinh=""
+        onPointerDown={giuChon}
+        onMouseDown={giuChon}
+        className="sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-[21] -mx-1 flex flex-wrap items-center gap-1 bg-white sm:gap-1.5 px-1 py-1 sm:static sm:z-auto sm:mx-0 sm:px-0 sm:py-0"
+      >
+        {nutDinhDang}
+        <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
+        {/* Nút Chèn ảnh có chữ rõ (anh 14/11/2026: "biểu tượng chèn ảnh rõ để khách biết mà chèn"); máy hẹp thì xuống hàng */}
         <button
           type="button"
           onPointerDown={giuChon}
           onMouseDown={giuChon}
           onClick={() => imgRef.current?.click()}
           disabled={uploadingImg}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-1.5 text-xs font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+          title="Chèn ảnh"
+          aria-label="Chèn ảnh"
+          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-cvr-ink/40 bg-white px-2.5 text-xs font-semibold text-cvr-ink transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60 sm:px-3"
         >
           {bieuTuongAnh}
           {uploadingImg ? "Đang tải ảnh…" : "Chèn ảnh"}
@@ -355,40 +350,12 @@ export default function ContentEditor({
         </button>
         <input ref={videoRef} type="file" accept="video/*" onChange={(e) => handleVideo(e.target.files)} className="hidden" />
         </>)}
-        <button
-          type="button"
-          onPointerDown={giuChon}
-          onMouseDown={giuChon}
-          onClick={() => setShowLink((v) => !v)}
-          className="text-xs font-medium text-cvr-muted transition hover:text-cvr-ink"
-        >
-          {chiAnh ? "hoặc dán link ảnh" : "hoặc dán link ảnh / video"}
-        </button>
       </div>
-      {showLink && (
-        <div className="flex items-center gap-2">
-          <input
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addLink(); } }}
-            placeholder="Dán link ảnh, hoặc video (YouTube/Vimeo/mp4)…"
-            className="h-9 min-w-[160px] flex-1 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink"
-          />
-          <button
-            type="button"
-            onClick={addLink}
-            className="shrink-0 rounded-lg border border-cvr-line px-3 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
-          >
-            Chèn
-          </button>
-        </div>
-      )}
 
       {/* KHUNG SOẠN — chữ hiện đúng định dạng ngay khi gõ, như trên trang tin */}
       <div className="relative">
         <div
           ref={khungRef}
-          data-tu-cuon=""
           contentEditable
           suppressContentEditableWarning
           role="textbox"
