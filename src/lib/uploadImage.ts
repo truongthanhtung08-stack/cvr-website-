@@ -99,7 +99,9 @@ async function uploadMedia(file: File, kind: "image" | "video", maxMB: number): 
   // một tên, tải lên lần thứ hai là kho nhận ra và dùng lại tấm cũ. Kho không
   // bao giờ chứa hai bản y hệt nữa.
   // (Ảnh đã đăng trước đây giữ nguyên tên cũ — tin cũ không bị ảnh hưởng gì.)
-  const bam = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  // crypto.subtle chỉ có ở trang https — trang http (máy thử mạng nhà, một số WebView cũ) không có → đặt tên ngẫu nhiên thay vì văng lỗi
+  // làm nút kẹt "Đang tải ảnh…" mãi (Phone Link 15/11/2026)
+  const bam = crypto.subtle ? await crypto.subtle.digest("SHA-256", await file.arrayBuffer()) : crypto.getRandomValues(new Uint8Array(12)).buffer;
   const ma = Array.from(new Uint8Array(bam).slice(0, 12), (b) => b.toString(16).padStart(2, "0")).join("");
   const path = `${ma}-${safe}`;
 

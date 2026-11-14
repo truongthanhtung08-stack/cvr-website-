@@ -266,13 +266,16 @@ export default function ContentEditor({
     if (!files || files.length === 0) return;
     setError("");
     setUploadingImg(true);
-    for (const file of Array.from(files)) {
-      const { url, error: e } = await uploadImageFile(file);
-      if (e) setError(e);
-      else if (url) insertImage(url);
+    try {
+      for (const file of Array.from(files)) {
+        const { url, error: e } = await uploadImageFile(file);
+        if (e) setError(e);
+        else if (url) insertImage(url);
+      }
+    } finally {
+      setUploadingImg(false); // lỗi bất ngờ cũng không để nút kẹt "Đang tải ảnh…"
+      if (imgRef.current) imgRef.current.value = "";
     }
-    setUploadingImg(false);
-    if (imgRef.current) imgRef.current.value = "";
   }
 
   async function handleVideo(files: FileList | null) {
