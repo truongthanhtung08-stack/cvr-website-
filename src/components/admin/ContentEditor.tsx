@@ -317,7 +317,7 @@ export default function ContentEditor({
         data-thanh-dinh=""
         onPointerDown={giuChon}
         onMouseDown={giuChon}
-        className="-mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:group-focus-within/soan:sticky max-sm:group-focus-within/soan:top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] max-sm:group-focus-within/soan:z-[21] sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
+        className="-mx-1 flex flex-nowrap items-center gap-1 bg-white px-1 py-1 sm:flex-wrap max-sm:group-focus-within/soan:sticky max-sm:group-focus-within/soan:top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] max-sm:group-focus-within/soan:z-[21] sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
       >
         {nutDinhDang}
         <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
@@ -330,7 +330,7 @@ export default function ContentEditor({
           disabled={uploadingImg}
           title="Chèn ảnh"
           aria-label="Chèn ảnh"
-          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-cvr-ink/40 bg-white px-2.5 text-xs font-semibold text-cvr-ink transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60 sm:px-3"
+          className="inline-flex h-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-cvr-ink/40 bg-white px-2 text-xs font-semibold text-cvr-ink transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60 sm:gap-1.5 sm:px-3"
         >
           {bieuTuongAnh}
           {uploadingImg ? "Đang tải ảnh…" : "Chèn ảnh"}
@@ -413,7 +413,7 @@ function ToolBtn({ label, onClick, onMouseDown, children }: { label: string; onC
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border border-cvr-line bg-white text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+      className="flex h-8 w-7 shrink-0 items-center justify-center rounded-lg border border-cvr-line bg-white text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink sm:w-8"
     >
       {children}
     </button>

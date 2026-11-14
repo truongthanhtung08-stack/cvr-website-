@@ -29,6 +29,15 @@ Luật cảnh báo một chỗ `src/lib/kiemTinSeo.ts` (tin khách chỉ báo th
 Bài học 14/11: tin "Lâm Đông · Phường Mủi Né" lên web (máy nạp không chuẩn tên tỉnh) · đợt 13/11 lấy lại 2 tin Chợ Tốt đã có (máy nạp so nguyên
 chuỗi link, nay so MÃ tin — gặp lại tin cũ thì ĐÈ vào tin đang hiện) · Tin chờ duyệt đưa cả bản đã xoá ra duyệt → sống lại thành tin trùng.
 
+## ⛔⛔⛔ Ô MÔ TẢ ĐIỆN THOẠI — LỖI SỬA NHIỀU LẦN, CẤM TÁI PHẠM (anh 14/11/2026 khuya, ảnh iPhone 22:53: "sửa bao nhiêu lần rồi, cứ lỗi hoài")
+Lỗi: chạm ô Mô tả → thanh B / I / Chèn ảnh (2 dòng) DÍNH trên đầu, ĐÈ mép trên ô, con trỏ gõ nằm khuất sau nút "Chèn ảnh"; ảnh đã chèn chỉ hiện
+chữ "▣ Ảnh" (khách không biết ảnh gì). **Gốc:** `BanPhimAo` đo thanh che bằng `.sticky` — thanh B / I dính bằng lớp có tiền tố (`max-sm:…:sticky`)
+nên không bắt được → máy tưởng ô đang nhìn thấy, không đẩy ô xuống. **Đã sửa (đẩy 14/11 khuya):** `BanPhimAo` tính cả `[data-thanh-dinh]`, khung
+soạn điện thoại (cao cố định, chữ cuộn trong ô) đặt mép trên NGAY DƯỚI thanh · thanh B / I gọn MỘT dòng (nút 28px, không xuống hàng) · ảnh trong ô
+hiện ẢNH THU NHỎ thật (cao 64px) + nút ×. Đo `scripts/do-o-bi-che.mjs <url> 470` (kiểu Android): ô Mô tả 0 che (bộ đo phải bỏ thanh `visibility:hidden`
+— thanh bước tự ẩn khi bàn phím bật). **Mọi lần đụng ContentEditor / BanPhimAo / thanh dính form đăng tin:** đo cả ô Mô tả với thanh B / I đang
+dính, xem ảnh chụp khổ 375 có thanh đè ô không, RỒI mới báo. Máy thật (iPhone Safari, Samsung, Zalo) anh xác nhận.
+
 ## ⛔⛔⛔ KHÔNG GỘP TÀI KHOẢN — KỂ CẢ ĐĂNG HỘ (anh chốt 14/11/2026)
 **Từ giờ KHÔNG GỘP TÀI KHOẢN gì cả, kể cả tin đăng hộ. Tài khoản nào lấy tài khoản đó** — tin của tài khoản nào thì nằm ở tài khoản đó,
 đăng nhập bằng tài khoản nào thì làm việc trên tài khoản đó. Không tự gộp, không chuyển tin sang tài khoản khác, không gộp theo số / Zalo / email.

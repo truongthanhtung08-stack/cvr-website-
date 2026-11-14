@@ -68,7 +68,9 @@ export default function BanPhimAo() {
     const cheTren = (el: HTMLElement) => {
       if (timLopPhu(el)) return 0;
       let day = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-      const ds = Array.from(document.querySelectorAll<HTMLElement>("header, .sticky, .fixed"))
+      // [data-thanh-dinh]: thanh B / I của ô Mô tả dính bằng lớp có tiền tố (max-sm:…:sticky) — ".sticky" không bắt được, thanh đang
+      // dính bị bỏ sót → ô Mô tả chui dưới thanh, dòng đang gõ bị che (anh 14/11/2026, ảnh 22:53 iPhone)
+      const ds = Array.from(document.querySelectorAll<HTMLElement>("header, .sticky, .fixed, [data-thanh-dinh]"))
         .filter((n) => {
           if (n.contains(el)) return false;
           const cs = getComputedStyle(n);
@@ -107,10 +109,14 @@ export default function BanPhimAo() {
       const c = rg.getClientRects()[0] ?? (rg.startContainer instanceof Element ? rg.startContainer.getBoundingClientRect() : rg.startContainer.parentElement?.getBoundingClientRect());
       return c && c.height > 0 ? c : null;
     };
+    const laKhungSoan = (el: HTMLElement) =>
+      el.isContentEditable && !!el.closest("[data-co-thanh]") && getComputedStyle(el).overflowY === "auto" && window.matchMedia("(max-width: 639px)").matches;
     const dangNhin = (el: HTMLElement, giaDinh: boolean) => {
       const r = el.getBoundingClientRect();
       const tren = vvTop() + cheTren(el) + 8;
       const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
+      // KHUNG SOẠN Ô MÔ TẢ trên điện thoại (cao cố định, chữ cuộn trong ô): cả ô phải nằm trọn dưới thanh B / I — không để thanh đè mép trên
+      if (laKhungSoan(el)) return r.top >= tren - 1 && r.top <= tren + 60;
       const c = conTro(el);
       if (c) return c.top >= tren && c.bottom <= duoi;
       if (r.height > vvCao() * 0.6) return r.top < duoi - 40 && r.bottom > tren + 40; // ô cao (mô tả): thấy một phần là đủ
@@ -176,7 +182,7 @@ export default function BanPhimAo() {
           const tren = vvTop() + cheTren(el) + 8;
           const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
           const c = conTro(el);
-          const dich = c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
+          const dich = laKhungSoan(el) ? r.top - tren : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
           window.scrollBy({ top: dich, behavior: "smooth" });
         }
       }
