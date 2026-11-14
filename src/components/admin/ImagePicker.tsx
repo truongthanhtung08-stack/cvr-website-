@@ -192,6 +192,11 @@ export default function ImagePicker({
   const [broken, setBroken] = useState<string[]>([]);
   // Đang mở bảng ba lối chọn ảnh hay chưa (bảng của mình, không phải của máy).
   const [moChon, setMoChon] = useState(false);
+  // Mở bảng xong đưa trọn bảng (kể cả Huỷ) vào màn hình — điện thoại thật 15/11/2026: bảng mở ra khuất nửa dưới.
+  const bangRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (moChon) bangRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [moChon]);
 
   // Điện thoại và máy tính bảng: đủ BA lối. Máy tính bàn/laptop: HAI lối.
   // Thuộc tính `capture` chỉ có tác dụng trên máy có máy ảnh cầm tay; để dòng
@@ -450,7 +455,7 @@ export default function ImagePicker({
             {uploadingImg ? "Đang tải ảnh…" : uploadingVideo ? `Đang tải video…${tienDoVideo ? ` ${tienDoVideo}%` : ""}` : "Thêm ảnh/Video"}
           </button>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]">
+          <div ref={bangRef} className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]">
             <style>{"@keyframes xoBang{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}"}</style>
             {/* ⛔ ĐỪNG QUAY VỀ KIỂU <label> BỌC Ô CHỌN TỆP.
                 Kiểu đó dựa vào việc trình duyệt tự chuyển cú bấm từ nhãn xuống ô

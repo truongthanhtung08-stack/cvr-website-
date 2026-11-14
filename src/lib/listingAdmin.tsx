@@ -80,7 +80,7 @@ export function purposeLabel(p: ListingPurpose): string {
 }
 
 export function tierLabel(t: ListingTier): string {
-  return { diamond: "Diamond", gold: "Gold", silver: "Silver", basic: "Thường" }[t];
+  return { diamond: "Diamond", gold: "Gold", silver: "Silver", basic: "Basic" }[t]; // một tên gói với Bảng giá / form: "CVR Basic" (15/11/2026)
 }
 
 // Huy hiệu hạng tin — màu đồng bộ 4 cấp CVR (packages.ts)
