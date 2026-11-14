@@ -316,7 +316,10 @@ export default function ContentEditor({
         data-thanh-dinh=""
         onPointerDown={giuChon}
         onMouseDown={giuChon}
-        className="-mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:mx-0 max-sm:gap-0.5 max-sm:border-b max-sm:border-cvr-line max-sm:px-1 max-sm:py-1.5 sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
+        // ĐANG SOẠN (điện thoại): nội dung dài cuộn qua thì thanh dính ngay dưới thanh "‹ Đăng tin" — trước đó thanh trôi khuất, muốn
+        // bôi đậm phải cuộn lên tìm rồi cuộn xuống lại (điện thoại thật 15/11/2026, 30 dòng). Dòng đang gõ không chui dưới thanh:
+        // BanPhimAo tính thanh [data-thanh-dinh] cả lúc chưa dính lẫn đã dính, và đo lại mỗi lần gõ.
+        className="-mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:mx-0 max-sm:gap-0.5 max-sm:border-b max-sm:border-cvr-line max-sm:px-1 max-sm:py-1.5 max-sm:group-focus-within/soan:sticky max-sm:group-focus-within/soan:top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] max-sm:group-focus-within/soan:z-[21] sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
       >
         {nutDinhDang}
         <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />

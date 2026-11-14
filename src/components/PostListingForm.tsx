@@ -1670,7 +1670,7 @@ export default function PostListingForm() {
                   Dùng text, không ép bàn phím số: khách gõ được mọi ký tự (chủ dự án 10/10/2026). */}
               {donVi === KHAC_GIA
                 ? <OGoTuGian value={giaTuGhi} onChange={setGiaTuGhi} className={inputCls} />
-                : <input type="text" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={donVi === "Thoả thuận"} placeholder={goiYGia(donVi)} className={inputCls + " disabled:opacity-50"} />}
+                : <input type="text" inputMode="decimal" value={priceValue} onChange={(e) => setPriceValue(e.target.value.replace(/[^\d.,]/g, ""))} disabled={donVi === "Thoả thuận"} placeholder={goiYGia(donVi)} className={inputCls + " disabled:opacity-50"} />}
               <ChonCoTim value={donVi} onChange={setPriceUnit} options={donViGia} placeholder="Đơn vị" timPlaceholder="" khongTim className={inputCls} />
             </div>
             {laThue && (donVi === "triệu/6 tháng" || donVi === "triệu/năm") && priceValue.trim() && (
