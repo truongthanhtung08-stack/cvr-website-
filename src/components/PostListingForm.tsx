@@ -367,6 +367,9 @@ export default function PostListingForm() {
           const coNoiDung = ["title", "category", "province", "priceValue", "area", "description", "addressDetail", "planTier"]
             .some((k) => typeof d[k] === "string" && (d[k] as string).trim()) || (Array.isArray(d.images) && d.images.length > 0);
           if (coNoiDung && !veLai) setNhapCho(d);
+          // Bản nhớ chỉ còn mã tin nháp, không nội dung → KHÔNG tự nhảy vào tin nháp (điện thoại thật 15/11/2026: Lưu nháp xong bấm
+          // "+ Đăng tin mới" bị mở thẳng tin nháp vừa lưu). Tin nháp vẫn ở Tin đăng của tôi. Riêng vừa nạp tiền quay về thì mở lại.
+          else if (!veLai && typeof d.maNhap === "string" && d.maNhap) { try { localStorage.removeItem(khoaNhap(userId)); } catch {} }
           else apDungNhap(d);
         };
         if (d && typeof d.maNhap === "string" && d.maNhap) {
