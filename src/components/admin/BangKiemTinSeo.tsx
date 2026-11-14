@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { ListingRow } from "@/lib/listingAdmin";
-import { loiTinSeo, laTinHangLoat } from "@/lib/kiemTinSeo";
+import { loiTinSeo } from "@/lib/kiemTinSeo";
 
 // ============================================================================
 // BẢNG KIỂM CHUẨN SEO CỦA MỘT TIN — trang duyệt/sửa tin trong admin (tự động hoá D3, 15/10/2026)
@@ -70,8 +70,7 @@ export default function BangKiemTinSeo({ row }: { row: ListingRow }) {
     return () => clearInterval(t);
   }, []);
 
-  // Tin khách tự đăng: không kiểm, không hiện bảng kiểm (chủ dự án 25/10/2026)
-  if (!laTinHangLoat(row)) return null;
+  // MỌI TIN đều hiện bảng kiểm — tin khách tự đăng cũng qua bước kiểm duyệt, xác thực trước khi lên web (anh 14/11/2026; trước đó 25/10 ẩn với tin khách)
   return (
     <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
       <p className="text-sm font-semibold text-cvr-ink">

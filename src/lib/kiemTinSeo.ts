@@ -1,7 +1,9 @@
 // LUẬT KIỂM TIN DÙNG CHUNG — một chỗ cho cả ba khâu: lọc tin (nạp hàng loạt `csvTin.ts`), kiểm đợt
 // (`scripts/kiem-noi-dung-dot.mjs`) và cảnh báo trong admin (`BangKiemTinSeo.tsx`). Quy định: docs/CHUAN-TIN-DANG-SEO.md mục 5b.
 // Chủ dự án 25/10/2026: khách không ghi thì không phải lỗi, không báo — chỉ báo khi khách CÓ ghi mà ô còn trống.
-// CHỈ KIỂM TIN ĐĂNG HÀNG LOẠT (chủ up sau khi đã lọc + Claude kiểm). Tin khách tự đăng: chỉ kiểm tỉnh / phường đúng danh mục (14/11/2026).
+// KIỂM MỌI TIN trước khi lên web — tin nạp file lẫn tin khách tự đăng (anh 14/11/2026: "đây là một bước kiểm duyệt và xác thực thông tin
+// trước khi lên web"; trước đó 25/10 chỉ kiểm tin hàng loạt). Tin khách: chỉ lỗi thông tin sai, không đòi chuẩn SEO. Cảnh báo hiện ở chỗ
+// anh duyệt (khách gửi duyệt → Chờ duyệt); sửa hay không, bấm Duyệt vẫn lên.
 // Hướng nhà / Hướng ban công là ô không bắt buộc → KHÔNG phải lỗi chuẩn SEO, không cảnh báo (thiếu là lỗi khâu Claude kiểm đợt).
 
 // Tên đường khách ghi làm ĐỊA CHỈ trong mô tả: "đường / kiệt / hẻm / ngõ" + tên viết hoa chữ đầu (vd "kiệt 109 Minh Mạng"
@@ -86,7 +88,7 @@ export const laTinHangLoat = (r: TinKiem) => {
 export function loiTinSeo(r: TinKiem, soTinTrung = 0): LoiTin[] {
   const d = (r.details ?? {}) as { addressDetail?: string; seoChapNhan?: string[] };
   const loiViTri: LoiTin[] = [];
-  // TỈNH / PHƯỜNG PHẢI ĐÚNG DANH MỤC hệ mới — kiểm MỌI tin (nạp file lẫn khách tự đăng), cảnh báo hiện ở chỗ anh duyệt, TRƯỚC khi lên web;
+  // TỈNH / PHƯỜNG PHẢI ĐÚNG DANH MỤC hệ mới — cảnh báo hiện ở chỗ anh duyệt, TRƯỚC khi lên web;
   // anh sửa hay không thì bấm Duyệt vẫn lên (anh 14/11/2026, sau tin nạp "Lâm Đông · Phường Mủi Né" lên web không vào trang Lâm Đồng).
   // Trình duyệt chưa nạp danh mục thì gọi nạp, lượt vẽ sau mới kiểm; máy chủ (API duyệt) luôn có sẵn.
   if (!provincesNew.length) void napDiaDanh();
@@ -95,20 +97,22 @@ export function loiTinSeo(r: TinKiem, soTinTrung = 0): LoiTin[] {
     if (!tinh) loiViTri.push({ ma: "tinh", ten: `Tỉnh "${r.province}" không đúng tên 34 tỉnh/thành — chọn lại ở ô Tỉnh / Thành`, cho: "phần Vị trí · ô Tỉnh / Thành", o: "o-diachi" });
     else if (r.ward && !tinh.wards.includes(r.ward)) loiViTri.push({ ma: "phuong", ten: `Phường/xã "${r.ward}" không có trong ${tinh.name} — chọn lại ở ô Phường / Xã`, cho: "phần Vị trí · ô Phường / Xã", o: "o-diachi" });
   }
-  if (!laTinHangLoat(r)) return loiViTri.filter((x) => !(d.seoChapNhan ?? []).includes(x.ma));
   const moTa = (r.description ?? "").trim();
   const anh = (r.images ?? []).filter((s) => !laVideo(s)).length;
   const loi: LoiTin[] = [...loiViTri];
   // Mỗi cảnh báo ghi đủ: lỗi gì · sửa thế nào · bấm vào nhảy đúng ô (chủ dự án 25/10/2026)
   // Tin người mua / người thuê thường không có ảnh — không cảnh báo ảnh (05/11/2026)
-  if (anh < 3 && r.purpose !== "mua" && r.purpose !== "can-thue") loi.push({ ma: "anh", ten: `Có ${anh} ảnh thật, cần ít nhất 3 — thêm ${3 - anh} ảnh`, cho: "phần Ảnh tin đăng", o: "o-anh" });
-  if (moTa.length < 100) loi.push({ ma: "mota", ten: `Mô tả có ${moTa.length} ký tự, cần ít nhất 100 — viết thêm ${100 - moTa.length} ký tự`, cho: "phần Nội dung · ô Mô tả", o: "o-mota" });
+  // TIN KHÁCH TỰ ĐĂNG — không quá khắt khe (anh 14/11/2026): chỉ báo thông tin SAI (tỉnh / phường, diện tích, giá lệch chữ, trùng tin);
+  // ảnh ≥ 3, mô tả ≥ 100 ký tự, tên đường là chuẩn SEO chỉ đòi tin nạp hàng loạt.
+  const hangLoat = laTinHangLoat(r);
+  if (hangLoat && anh < 3 && r.purpose !== "mua" && r.purpose !== "can-thue") loi.push({ ma: "anh", ten: `Có ${anh} ảnh thật, cần ít nhất 3 — thêm ${3 - anh} ảnh`, cho: "phần Ảnh tin đăng", o: "o-anh" });
+  if (hangLoat && moTa.length < 100) loi.push({ ma: "mota", ten: `Mô tả có ${moTa.length} ký tự, cần ít nhất 100 — viết thêm ${100 - moTa.length} ký tự`, cho: "phần Nội dung · ô Mô tả", o: "o-mota" });
   if (soTinTrung > 0) loi.push({ ma: "trung", ten: "Trùng tin khác (cùng người · loại · giá · diện tích)", cho: "xem tin trùng ghi bên dưới", o: "o-trung" });
   // Giá để trống = "Thỏa thuận" — chuẩn cho phép (N3), không phải lỗi; diện tích thì bắt buộc
   if (r.area_m2 == null) loi.push({ ma: "dientich", ten: "Thiếu diện tích — ghi số m² vào ô Diện tích", cho: "phần Giá & thông số", o: "o-giathongso" });
   const lechGia = giaLechChu(r.title ?? "", moTa, Number(r.price_vnd) || 0, r.purpose ?? undefined);
   if (lechGia) loi.push({ ma: "gia", ten: `${lechGia.charAt(0).toUpperCase() + lechGia.slice(1)} — sửa ô Giá cho đúng giá khách ghi`, cho: "phần Giá & thông số · ô Giá", o: "o-gia" });
-  if (thieuTenDuong(moTa, d.addressDetail ?? ""))
+  if (hangLoat && thieuTenDuong(moTa, d.addressDetail ?? ""))
     loi.push({ ma: "duong", ten: `Mô tả ghi đường "${duongTrongMoTa(moTa)}" mà ô Địa chỉ cụ thể chưa có — ghi thêm "${duongTrongMoTa(moTa)}" vào ô`, cho: "phần Vị trí · ô Địa chỉ cụ thể", o: "o-diachi" });
   const daChapNhan = d.seoChapNhan ?? [];
   return loi.filter((x) => !daChapNhan.includes(x.ma));
