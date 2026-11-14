@@ -143,6 +143,20 @@ export default function ContentEditor({
   // trong ô, không tự kéo trang — trình duyệt tự giữ dòng đang gõ trên bàn phím. Thanh B · I · canh lề · Chèn ảnh nằm TRONG KHUNG, đầu ô
   // (không dính / không chồng lên chữ).
   const laDt = useLaDt();
+  // THANH KÉO GIÃN dưới ô (điện thoại, anh 14/11/2026: "thanh kéo giãn đâu" — giữ): kéo xuống ô cao ra, kéo lên thu lại (đổi chiều cao tối thiểu)
+  const [caoKeo, setCaoKeo] = useState<number | null>(null);
+  const keoRef = useRef<HTMLDivElement>(null);
+  // Chạm thanh kéo KHÔNG bao giờ bật bàn phím (chặn ngay touchstart — React gắn touch ở chế độ passive nên phải gắn tay)
+  useEffect(() => {
+    const t = keoRef.current, el = khungRef.current;
+    if (!t || !el) return;
+    let y0 = 0, h0 = 0;
+    const dau = (e: TouchEvent) => { e.preventDefault(); y0 = e.touches[0].clientY; h0 = el.getBoundingClientRect().height; };
+    const keo = (e: TouchEvent) => { e.preventDefault(); setCaoKeo(Math.round(Math.max(120, h0 + e.touches[0].clientY - y0))); };
+    t.addEventListener("touchstart", dau, { passive: false });
+    t.addEventListener("touchmove", keo, { passive: false });
+    return () => { t.removeEventListener("touchstart", dau); t.removeEventListener("touchmove", keo); };
+  }, [laDt]);
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
@@ -299,7 +313,7 @@ export default function ContentEditor({
         data-thanh-dinh=""
         onPointerDown={giuChon}
         onMouseDown={giuChon}
-        className="-mx-1 flex flex-nowrap items-center gap-1 bg-white px-1 py-1 sm:flex-wrap max-sm:mx-0 max-sm:border-b max-sm:border-cvr-line max-sm:px-2 max-sm:py-1.5 sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
+        className="-mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:mx-0 max-sm:gap-0.5 max-sm:border-b max-sm:border-cvr-line max-sm:px-1.5 max-sm:py-1.5 sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
       >
         {nutDinhDang}
         <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
@@ -312,7 +326,7 @@ export default function ContentEditor({
           disabled={uploadingImg}
           title="Chèn ảnh"
           aria-label="Chèn ảnh"
-          className="inline-flex h-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-cvr-ink/40 bg-white px-2 text-xs font-semibold text-cvr-ink transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60 sm:gap-1.5 sm:px-3"
+          className="inline-flex h-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-cvr-ink/40 bg-white px-1.5 text-xs font-semibold text-cvr-ink transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60 sm:gap-1.5 sm:px-3"
         >
           {bieuTuongAnh}
           {uploadingImg ? "Đang tải ảnh…" : "Chèn ảnh"}
@@ -365,11 +379,17 @@ export default function ContentEditor({
           }}
           // Điện thoại: ô TỰ CAO THEO CHỮ như ô gõ chuẩn (anh 14/11/2026: "bấm vào dòng nào thì chỉ hiện bàn phím, không che, không nhảy giật")
           // — không cuộn bên trong ô (cuộn trong ô + trình duyệt cuộn trang theo con trỏ = hai lớp cuộn chồng nhau → che / giật). Máy tính: tự cao + kéo góc dưới.
-          style={laDt ? { minHeight: 224 } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
+          style={laDt ? { minHeight: caoKeo ?? 224 } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
           className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line max-sm:rounded-none max-sm:border-0 bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
           <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-[16px] leading-relaxed text-cvr-faint sm:text-sm">{placeholder}</p>
+        )}
+        {/* Thanh kéo giãn / thu ô (điện thoại): chỉ kéo, không bao giờ bật bàn phím (chặn touchstart ở useEffect) */}
+        {laDt && (
+          <div ref={keoRef} role="separator" aria-label="Kéo để giãn hoặc thu khung soạn" className="flex h-9 touch-none select-none items-center justify-center">
+            <span className="h-1.5 w-12 rounded-full bg-cvr-faint/60" />
+          </div>
         )}
       </div>
 

@@ -116,8 +116,9 @@ export default function BanPhimAo() {
       const tren = vvTop() + cheTren(el) + 8;
       const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
       // KHUNG SOẠN Ô MÔ TẢ trên điện thoại = [thanh B / I][chữ cuộn trong khung]: mép trên CẢ KHUNG nằm ngay dưới các thanh dính đầu trang
-      // → KHÔNG tự kéo trang (anh 14/11/2026: "bấm là nó nhảy giật lên thì sao mà chỉnh sửa") — trình duyệt tự giữ dòng đang gõ trên bàn phím như ô gõ chuẩn
-      if (laKhungSoan(el)) return true;
+      // → dòng đang gõ thấy được thì KHÔNG kéo trang (anh 14/11/2026: "bấm là nó nhảy giật lên thì sao mà chỉnh sửa"); chỉ khi trình duyệt tự cuộn
+      // làm dòng con trỏ chui dưới thanh "‹ Đăng tin" (Samsung, ảnh Phone Link 23:49) mới đẩy dòng đó ra ngay dưới thanh.
+      if (laKhungSoan(el)) { const c = conTro(el); return !c || (c.top >= tren - 4 && c.bottom <= duoi + 4); }
       const c = conTro(el);
       if (c) return c.top >= tren && c.bottom <= duoi;
       if (r.height > vvCao() * 0.6) return r.top < duoi - 40 && r.bottom > tren + 40; // ô cao (mô tả): thấy một phần là đủ
@@ -183,7 +184,8 @@ export default function BanPhimAo() {
           const tren = vvTop() + cheTren(el) + 8;
           const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
           const c = conTro(el);
-          const dich = c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
+          // khung soạn: đẩy VỪA ĐỦ — con trỏ dưới bàn phím thì lên sát trên bàn phím, chui dưới thanh trên thì xuống sát dưới thanh (giữ chữ phía trên trong tầm nhìn)
+          const dich = c && laKhungSoan(el) ? (c.bottom > duoi ? c.bottom - (duoi - 16) : c.top - (tren + 8)) : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
           window.scrollBy({ top: dich, behavior: "smooth" });
         }
       }
@@ -199,6 +201,8 @@ export default function BanPhimAo() {
       henCapNhat();
       // Có máy không báo đổi kích thước (bàn phím đã mở sẵn khi chuyển ô) → đo lại sau khi bàn phím ổn định
       setTimeout(() => { canCuon = true; henCapNhat(); }, 350);
+      // Samsung tự cuộn theo bàn phím xong muộn hơn (~0,6 s) — đo lại lần nữa, chỉ đẩy khi dòng con trỏ thật sự bị che (dangNhin)
+      setTimeout(() => { canCuon = true; henCapNhat(); }, 800);
     };
     const roiO = () => setTimeout(henCapNhat, 120);
     // Ô tự giãn dòng (tiêu đề, mô tả) → dòng đang gõ không được chui xuống dưới bàn phím
