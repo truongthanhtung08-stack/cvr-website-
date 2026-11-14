@@ -110,13 +110,14 @@ export default function BanPhimAo() {
       return c && c.height > 0 ? c : null;
     };
     const laKhungSoan = (el: HTMLElement) =>
-      el.isContentEditable && !!el.closest("[data-co-thanh]") && getComputedStyle(el).overflowY === "auto" && window.matchMedia("(max-width: 639px)").matches;
+      el.isContentEditable && !!el.closest("[data-co-thanh]") && window.matchMedia("(max-width: 639px)").matches;
     const dangNhin = (el: HTMLElement, giaDinh: boolean) => {
       const r = el.getBoundingClientRect();
       const tren = vvTop() + cheTren(el) + 8;
       const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
       // KHUNG SOẠN Ô MÔ TẢ trên điện thoại = [thanh B / I][chữ cuộn trong khung]: mép trên CẢ KHUNG nằm ngay dưới các thanh dính đầu trang
-      if (laKhungSoan(el)) { const k = el.closest("[data-co-thanh]")!.getBoundingClientRect(); return k.top >= tren - 1 && k.top <= tren + 60; }
+      // → KHÔNG tự kéo trang (anh 14/11/2026: "bấm là nó nhảy giật lên thì sao mà chỉnh sửa") — trình duyệt tự giữ dòng đang gõ trên bàn phím như ô gõ chuẩn
+      if (laKhungSoan(el)) return true;
       const c = conTro(el);
       if (c) return c.top >= tren && c.bottom <= duoi;
       if (r.height > vvCao() * 0.6) return r.top < duoi - 40 && r.bottom > tren + 40; // ô cao (mô tả): thấy một phần là đủ
@@ -182,7 +183,7 @@ export default function BanPhimAo() {
           const tren = vvTop() + cheTren(el) + 8;
           const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
           const c = conTro(el);
-          const dich = laKhungSoan(el) ? el.closest("[data-co-thanh]")!.getBoundingClientRect().top - tren : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
+          const dich = c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
           window.scrollBy({ top: dich, behavior: "smooth" });
         }
       }

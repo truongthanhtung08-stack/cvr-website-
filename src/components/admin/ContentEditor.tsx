@@ -139,28 +139,10 @@ export default function ContentEditor({
 }) {
   const khungRef = useRef<HTMLDivElement>(null);
   // ── SOẠN TRÊN ĐIỆN THOẠI THEO CHUẨN (anh 13/11/2026: "hành trình phím trên mobile sai hết, cần CHUẨN, không chắp vá") ─────────────
-  // Như Ghi chú iPhone / Google Docs: ô cao cố định ~8 dòng, chữ cuộn TRONG ô (trình duyệt tự giữ dòng đang gõ trong tầm nhìn);
-  // thanh B · I · canh lề nằm TRÊN ĐẦU Ô như máy tính (anh 14/11/2026: đưa xuống trên bàn phím là sai — bàn phím bật lên đã chiếm
-  // nhiều diện tích, thêm thanh dưới càng chật); thanh kéo dưới ô chỉ để giãn / thu ô.
-  // Đưa dòng đang gõ lên trên bàn phím: để BanPhimAo (chung toàn web) lo — ô không còn dấu data-tu-cuon (14/11/2026).
+  // Như ô gõ chuẩn (anh 14/11/2026 khuya: "bấm vào dòng nào thì chỉ hiện bàn phím, không che, không nhảy giật"): ô TỰ CAO theo chữ, không cuộn
+  // trong ô, không tự kéo trang — trình duyệt tự giữ dòng đang gõ trên bàn phím. Thanh B · I · canh lề · Chèn ảnh nằm TRONG KHUNG, đầu ô
+  // (không dính / không chồng lên chữ).
   const laDt = useLaDt();
-  const [caoKeo, setCaoKeo] = useState<number | null>(null);
-  const keoRef = useRef<HTMLDivElement>(null);
-  // Thanh kéo: chạm KHÔNG bao giờ bật bàn phím (chặn ngay touchstart — React gắn touch ở chế độ passive nên phải gắn tay)
-  useEffect(() => {
-    const t = keoRef.current, el = khungRef.current;
-    if (!t || !el) return;
-    let y0 = 0, h0 = 0;
-    const dau = (e: TouchEvent) => { e.preventDefault(); y0 = e.touches[0].clientY; h0 = el.getBoundingClientRect().height; };
-    const keo = (e: TouchEvent) => {
-      e.preventDefault();
-      const toiDa = Math.max(el.scrollHeight + 2, window.innerHeight * 0.75);
-      setCaoKeo(Math.round(Math.min(toiDa, Math.max(120, h0 + e.touches[0].clientY - y0))));
-    };
-    t.addEventListener("touchstart", dau, { passive: false });
-    t.addEventListener("touchmove", keo, { passive: false });
-    return () => { t.removeEventListener("touchstart", dau); t.removeEventListener("touchmove", keo); };
-  }, [laDt]);
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
@@ -381,18 +363,13 @@ export default function ContentEditor({
             nut.closest("[data-anh],[data-video]")?.remove();
             phat();
           }}
-          // Điện thoại: ô cao cố định (mặc định ~8 dòng, kéo thanh dưới để giãn / thu), chữ cuộn trong ô. Máy tính: tự cao + kéo góc dưới.
-          style={laDt ? { height: caoKeo ?? 224, overflowY: "auto" } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
+          // Điện thoại: ô TỰ CAO THEO CHỮ như ô gõ chuẩn (anh 14/11/2026: "bấm vào dòng nào thì chỉ hiện bàn phím, không che, không nhảy giật")
+          // — không cuộn bên trong ô (cuộn trong ô + trình duyệt cuộn trang theo con trỏ = hai lớp cuộn chồng nhau → che / giật). Máy tính: tự cao + kéo góc dưới.
+          style={laDt ? { minHeight: 224 } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
           className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line max-sm:rounded-none max-sm:border-0 bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
           <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-[16px] leading-relaxed text-cvr-faint sm:text-sm">{placeholder}</p>
-        )}
-        {/* Thanh kéo giãn / thu ô (điện thoại): chỉ kéo, không bao giờ bật bàn phím (chặn touchstart ở useEffect) */}
-        {laDt && (
-          <div ref={keoRef} role="separator" aria-label="Kéo để giãn hoặc thu khung soạn" className="flex h-9 touch-none select-none items-center justify-center">
-            <span className="h-1.5 w-12 rounded-full bg-cvr-faint/60" />
-          </div>
         )}
       </div>
 
