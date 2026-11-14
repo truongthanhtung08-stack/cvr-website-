@@ -321,16 +321,32 @@ export default function NhapHangLoatPage() {
       type TinCu = { id: string; images: string[] };
       const daCo = new Map<string, TinCu>();        // khoá: mã ảnh
       const daCoTheoNguon = new Map<string, TinCu>(); // khoá: link tin gốc
+      // KHOÁ LINK TIN GỐC = MÃ TIN của trang nguồn, không phải nguyên chuỗi link (14/11/2026: đợt 13/11 ghi link Chợ Tốt dạng ngắn
+      // nhatot.com/135273373.htm, đợt 17/10 dạng dài …/mua-ban-nha-dat-…/135273373.htm → không khớp, nạp thành tin trùng). Gặp lại tin
+      // đã có → ĐÈ vào tin đang hiện (anh 14/11/2026). Chợ Tốt / Nhà Tốt: số mã tin; Batdongsan: số sau "-pr"; trang khác: link bỏ http, www,
+      // dấu "/" cuối và phần "?…".
+      const khoaNguon = (u: string) => {
+        const x = (u ?? "").trim().toLowerCase();
+        const ct = /(?:nhatot|chotot)\.com\/(?:.*\/)?(\d{6,})(?:\.htm)?/.exec(x);
+        if (ct) return "chotot:" + ct[1];
+        const bds = /batdongsan\.com\.vn\/.*-pr(\d+)/.exec(x);
+        if (bds) return "bds:" + bds[1];
+        return x.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/[?#].*$/, "").replace(/\/+$/, "");
+      };
       const goi = (x: string) => (x ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
 
       if (nguonTrongFile.length) {
+        // Tìm theo MÃ tin trong link (mọi dạng link của cùng một tin), rồi so lại bằng khoaNguon
+        const maTim = [...new Set(nguonTrongFile.map((u) => khoaNguon(u).replace(/^(chotot|bds):/, "")))];
         const { data } = await supabase
           .from("listings")
           .select("id,images,details->>nguonTin")
-          .in("details->>nguonTin", nguonTrongFile)
+          .or(maTim.map((m) => `details->>nguonTin.ilike.*${m.replace(/[,()*]/g, "")}*`).join(","))
           .neq("status", "deleted"); // xoá đợt nhập nhầm rồi nhập lại → đăng thành tin mới (0066)
-        for (const r of (data ?? []) as { id: string; images: string[] | null; nguonTin: string }[])
-          if (r.nguonTin && !daCoTheoNguon.has(r.nguonTin)) daCoTheoNguon.set(r.nguonTin, { id: r.id, images: r.images ?? [] });
+        for (const r of (data ?? []) as { id: string; images: string[] | null; nguonTin: string }[]) {
+          const k = r.nguonTin ? khoaNguon(r.nguonTin) : "";
+          if (k && !daCoTheoNguon.has(k)) daCoTheoNguon.set(k, { id: r.id, images: r.images ?? [] });
+        }
       }
 
       if (maTrongFile.length) {
@@ -351,7 +367,7 @@ export default function NhapHangLoatPage() {
       // Tin nào trong file đã có trên web → lấy đúng bản ghi cũ của nó.
       const tinCuCua = (r: ParsedRow): TinCu | undefined => {
         const nguon = (r.payload.details as { nguonTin?: string })?.nguonTin;
-        return (nguon ? daCoTheoNguon.get(nguon) : undefined) ?? (r.maAnh ? daCo.get(r.maAnh) : undefined);
+        return (nguon ? daCoTheoNguon.get(khoaNguon(nguon)) : undefined) ?? (r.maAnh ? daCo.get(r.maAnh) : undefined);
       };
       const tinMoi = hopLe.filter((r) => !tinCuCua(r));
       const tinCu = hopLe.filter((r) => tinCuCua(r));

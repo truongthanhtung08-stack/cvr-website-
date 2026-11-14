@@ -19,6 +19,16 @@ Web làm ra để **khách / thành viên tự đăng tin**. Mọi lần cập n
 Đụng mã dùng chung của các bước này (`PostListingForm`, `ImagePicker`, `uploadImage`, `nenVideo`, `ChonCoTim`, gói / ví / thanh toán, đăng nhập) → thử lại trọn ①→⑥ trên điện thoại (khổ 375 + máy thật) và máy tính. Không thử được bước nào → nói rõ bước đó chưa kiểm.
 Bài học 10/11: tin khách 1e3be917 lên web với video chỉ có tiếng (nén bỏ mất phần hình) — không ai kiểm bước ⑤.
 
+## ⛔⛔⛔ WEB ĐÃ THƯƠNG MẠI — LỖI PHẢI BIẾT NGAY Ở ĐÂU, XỬ LÝ DỨT ĐIỂM TỪ GỐC (anh chốt 14/11/2026)
+**Từ giờ: có lỗi là phải BIẾT NGAY lỗi ở đâu và xử lý DỨT ĐIỂM. KHÔNG sửa tay, KHÔNG chắp vá. Không để web như một bãi rác.**
+**Hai luồng tin — cả hai qua anh DUYỆT TAY từng tin:** ① nạp hàng loạt: Cowork lọc → Claude kiểm → anh nạp → hệ thống cảnh báo ở Tin chờ duyệt
+→ anh xem, sửa (hoặc không) → bấm Duyệt là lên web · ② khách tự đăng: nháp chỉ ở tài khoản khách → khách gửi duyệt → Chờ duyệt → anh duyệt
+→ lên web. **Cảnh báo hiện ở chỗ anh duyệt, TRƯỚC khi lên web**; tin đã lên web mà có lỗi thì vào cảnh báo → anh sửa, duyệt → lên lại đúng.
+Luật cảnh báo một chỗ `src/lib/kiemTinSeo.ts` (tin khách chỉ báo thông tin SAI, không đòi chuẩn SEO). Lỗi lọt lên web → tìm KHÂU sinh ra lỗi
+(Cowork lọc · Claude kiểm · máy nạp · máy duyệt), sửa luật ở khâu đó + báo bên làm sai trong `RA\VIEC.md`, rồi mới xử lý tin.
+Bài học 14/11: tin "Lâm Đông · Phường Mủi Né" lên web (máy nạp không chuẩn tên tỉnh) · đợt 13/11 lấy lại 2 tin Chợ Tốt đã có (máy nạp so nguyên
+chuỗi link, nay so MÃ tin — gặp lại tin cũ thì ĐÈ vào tin đang hiện) · Tin chờ duyệt đưa cả bản đã xoá ra duyệt → sống lại thành tin trùng.
+
 ## ⛔⛔⛔ KHÔNG GỘP TÀI KHOẢN — KỂ CẢ ĐĂNG HỘ (anh chốt 14/11/2026)
 **Từ giờ KHÔNG GỘP TÀI KHOẢN gì cả, kể cả tin đăng hộ. Tài khoản nào lấy tài khoản đó** — tin của tài khoản nào thì nằm ở tài khoản đó,
 đăng nhập bằng tài khoản nào thì làm việc trên tài khoản đó. Không tự gộp, không chuyển tin sang tài khoản khác, không gộp theo số / Zalo / email.
