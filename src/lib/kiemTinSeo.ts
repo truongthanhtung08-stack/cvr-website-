@@ -1,12 +1,14 @@
 // LUẬT KIỂM TIN DÙNG CHUNG — một chỗ cho cả ba khâu: lọc tin (nạp hàng loạt `csvTin.ts`), kiểm đợt
 // (`scripts/kiem-noi-dung-dot.mjs`) và cảnh báo trong admin (`BangKiemTinSeo.tsx`). Quy định: docs/CHUAN-TIN-DANG-SEO.md mục 5b.
 // Chủ dự án 25/10/2026: khách không ghi thì không phải lỗi, không báo — chỉ báo khi khách CÓ ghi mà ô còn trống.
-// CHỈ KIỂM TIN ĐĂNG HÀNG LOẠT (chủ up sau khi đã lọc + Claude kiểm). Tin khách tự đăng: không kiểm, không báo.
+// CHỈ KIỂM TIN ĐĂNG HÀNG LOẠT (chủ up sau khi đã lọc + Claude kiểm). Tin khách tự đăng: chỉ kiểm tỉnh / phường đúng danh mục (14/11/2026).
 // Hướng nhà / Hướng ban công là ô không bắt buộc → KHÔNG phải lỗi chuẩn SEO, không cảnh báo (thiếu là lỗi khâu Claude kiểm đợt).
 
 // Tên đường khách ghi làm ĐỊA CHỈ trong mô tả: "đường / kiệt / hẻm / ngõ" + tên viết hoa chữ đầu (vd "kiệt 109 Minh Mạng"
 // → "Minh Mạng"). Bỏ đường chỉ để tả vị trí lân cận ("gần đường…", "cách đường…") và số đo ("đường 5,5m", "đường 28" thì giữ
 // khi ô địa chỉ trống) — đo 25/10 trên 174 tin: luật cũ báo nhầm 27 tin vì "mặt đường 30m", "gần đường Võ Chí Công".
+import { provincesNew, napDiaDanh } from "./diaDanhNguon";
+
 export const duongTrongMoTa = (s: string) => {
   // Chữ viết hoa chữ đầu (tên riêng) — dải À-Ỹ của Unicode có cả chữ thường nên phải so thật
   const hoa = (w: string) => w.charAt(0) !== w.charAt(0).toLowerCase();
@@ -66,6 +68,8 @@ export type TinKiem = {
   beds?: number | null;
   images?: string[] | null;
   details?: Record<string, unknown> | null;
+  province?: string | null;
+  ward?: string | null;
 };
 // ma = khoá cố định của loại lỗi — admin đã thấy, kiểm và vẫn bấm Duyệt thì lưu ma vào details.seoChapNhan, tin đó KHÔNG báo
 // lại lỗi ấy nữa (chủ dự án 25/10/2026); phát sinh lỗi loại khác thì vẫn báo.
@@ -81,10 +85,20 @@ export const laTinHangLoat = (r: TinKiem) => {
 
 export function loiTinSeo(r: TinKiem, soTinTrung = 0): LoiTin[] {
   const d = (r.details ?? {}) as { addressDetail?: string; seoChapNhan?: string[] };
-  if (!laTinHangLoat(r)) return [];
+  const loiViTri: LoiTin[] = [];
+  // TỈNH / PHƯỜNG PHẢI ĐÚNG DANH MỤC hệ mới — kiểm MỌI tin (nạp file lẫn khách tự đăng), cảnh báo hiện ở chỗ anh duyệt, TRƯỚC khi lên web;
+  // anh sửa hay không thì bấm Duyệt vẫn lên (anh 14/11/2026, sau tin nạp "Lâm Đông · Phường Mủi Né" lên web không vào trang Lâm Đồng).
+  // Trình duyệt chưa nạp danh mục thì gọi nạp, lượt vẽ sau mới kiểm; máy chủ (API duyệt) luôn có sẵn.
+  if (!provincesNew.length) void napDiaDanh();
+  else if (r.province) {
+    const tinh = provincesNew.find((p) => p.name === r.province);
+    if (!tinh) loiViTri.push({ ma: "tinh", ten: `Tỉnh "${r.province}" không đúng tên 34 tỉnh/thành — chọn lại ở ô Tỉnh / Thành`, cho: "phần Vị trí · ô Tỉnh / Thành", o: "o-diachi" });
+    else if (r.ward && !tinh.wards.includes(r.ward)) loiViTri.push({ ma: "phuong", ten: `Phường/xã "${r.ward}" không có trong ${tinh.name} — chọn lại ở ô Phường / Xã`, cho: "phần Vị trí · ô Phường / Xã", o: "o-diachi" });
+  }
+  if (!laTinHangLoat(r)) return loiViTri.filter((x) => !(d.seoChapNhan ?? []).includes(x.ma));
   const moTa = (r.description ?? "").trim();
   const anh = (r.images ?? []).filter((s) => !laVideo(s)).length;
-  const loi: LoiTin[] = [];
+  const loi: LoiTin[] = [...loiViTri];
   // Mỗi cảnh báo ghi đủ: lỗi gì · sửa thế nào · bấm vào nhảy đúng ô (chủ dự án 25/10/2026)
   // Tin người mua / người thuê thường không có ảnh — không cảnh báo ảnh (05/11/2026)
   if (anh < 3 && r.purpose !== "mua" && r.purpose !== "can-thue") loi.push({ ma: "anh", ten: `Có ${anh} ảnh thật, cần ít nhất 3 — thêm ${3 - anh} ảnh`, cho: "phần Ảnh tin đăng", o: "o-anh" });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { napDiaDanh } from "@/lib/diaDanhNguon";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
@@ -237,6 +238,8 @@ export default function NhapHangLoatPage() {
     setTenFile(file.name);
     try {
       const laExcel = /\.xlsx$/i.test(file.name);
+      // Danh sách tỉnh / phường phải nạp xong TRƯỚC khi đọc tệp (trình duyệt nạp sau) — chưa có thì tên gõ sai dấu đi thẳng lên web (14/11/2026)
+      await napDiaDanh();
       const { rows: r, loiChung: err, canhBaoChung } = laExcel
         ? docTinTuBang(await docXlsx(await file.arrayBuffer()))
         : docTinTuCsv(await file.text());

@@ -7,12 +7,13 @@
 // ============================================================================
 
 import { loiTinSeo, type TinKiem } from "@/lib/kiemTinSeo";
-import { saleTypeGroups, rentTypeGroups, loaiHinhTheoLoaiCon } from "@/lib/filters";
+import { saleTypeGroups, rentTypeGroups, loaiHinhTheoLoaiCon, normalizeVi } from "@/lib/filters";
 import { nhomChonLoaiHinh, tenLoaiHinhMenu, tachChonLoaiHinh } from "@/lib/categories";
 // Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
 // dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
 import { chuanHoaDiaChiCu } from "@/lib/diaChiHaiHe";
 import { tenPhuongChuan } from "@/lib/tenPhuongChuan";
+import { provincesNew } from "@/lib/diaDanhNguon";
 // Dùng CHUNG hàm tạo slug với form dự án trong admin → tên dự án trong file Excel
 // và slug dự án thật luôn khớp nhau, không bao giờ lệch quy tắc.
 import { slugify } from "@/lib/contentAdmin";
@@ -443,8 +444,13 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // cảnh báo chỉ cho lỗi thật — CHUAN-TIN-DANG-SEO.md mục 5b).
 
 
-  const tinhThanh = lay(COT.tinhThanh);
-  if (!tinhThanh) loi.push("Thiếu tỉnh/thành");
+  // TỈNH = TÊN CHUẨN 34 tỉnh/thành hệ mới (14/11/2026: tin nạp ghi "Lâm Đông" lên web, không vào được trang Lâm Đồng). Gõ sai dấu → tự đổi
+  // đúng tên (không dấu khớp một tỉnh), không phải lỗi; không khớp tỉnh nào → lỗi, chặn dòng. Phường đổi dấu theo tỉnh chuẩn (tenPhuongChuan).
+  const tinhGo = lay(COT.tinhThanh);
+  const tinhKhop = provincesNew.find((p) => normalizeVi(p.name) === normalizeVi(tinhGo))?.name;
+  const tinhThanh = tinhKhop ?? tinhGo;
+  if (!tinhGo) loi.push("Thiếu tỉnh/thành");
+  else if (provincesNew.length && !tinhKhop) loi.push(`tinh_thanh "${tinhGo}" không có trong 34 tỉnh/thành hệ mới — ghi đúng tên tỉnh mới (vd Lâm Đồng, Khánh Hòa, Gia Lai)`);
 
   // Thiếu phường cũ KHÔNG báo: người bán không ghi thì không phải lỗi (chủ dự án 25/10/2026, mục 5b).
 

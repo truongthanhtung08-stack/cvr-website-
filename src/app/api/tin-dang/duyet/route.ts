@@ -71,7 +71,7 @@ export async function POST(request: Request) {
   // ── 2. Lấy tin ────────────────────────────────────────────────────────────
   const { data: tin, error: loiTin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details,tier_expires_at,created_at,description,type,price_vnd,area_m2,images")
+    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details,tier_expires_at,created_at,description,type,price_vnd,area_m2,images,province,ward")
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin", 404);
