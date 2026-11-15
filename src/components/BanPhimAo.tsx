@@ -121,9 +121,9 @@ export default function BanPhimAo() {
       // + thanh B / I (đầu khung) bị khuất dưới thanh trên mà kéo xuống vẫn giữ được dòng con trỏ trên bàn phím → coi là chưa đủ (để lộ thanh, ảnh Phone Link 0:09)
       if (laKhungSoan(el)) {
         const c = conTro(el);
-        if (c && !(c.top >= tren - 4 && c.bottom <= duoi + 4)) return false;
-        const k = el.closest("[data-co-thanh]")!.getBoundingClientRect();
-        return !(k.top < tren - 4 && c && c.bottom + (tren - k.top) <= duoi);
+        // Chỉ đẩy khi DÒNG CON TRỎ bị che — không kéo trang để "lộ thanh B / I" nữa (anh 15/11/2026: "bấm vào là hiện bàn phím, không nhảy,
+        // giật, cuộn"); khung ô giới hạn vừa màn hình nên thanh đầu khung tự nằm trong tầm nhìn.
+        return !(c && !(c.top >= tren - 4 && c.bottom <= duoi + 4));
       }
       const c = conTro(el);
       if (c) return c.top >= tren && c.bottom <= duoi;

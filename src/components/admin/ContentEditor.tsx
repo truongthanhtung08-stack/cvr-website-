@@ -138,12 +138,14 @@ export default function ContentEditor({
   chiAnh?: boolean;
 }) {
   const khungRef = useRef<HTMLDivElement>(null);
-  // ── SOẠN TRÊN ĐIỆN THOẠI THEO CHUẨN (anh 13/11/2026: "hành trình phím trên mobile sai hết, cần CHUẨN, không chắp vá") ─────────────
-  // Như ô gõ chuẩn (anh 14/11/2026 khuya: "bấm vào dòng nào thì chỉ hiện bàn phím, không che, không nhảy giật"): ô TỰ CAO theo chữ, không cuộn
-  // trong ô, không tự kéo trang — trình duyệt tự giữ dòng đang gõ trên bàn phím. Thanh B · I · canh lề · Chèn ảnh nằm TRONG KHUNG, đầu ô
-  // (không dính / không chồng lên chữ).
+  // ── Ô SOẠN TRÊN ĐIỆN THOẠI = CHUẨN Ô VIẾT BÀI / Ô CHAT MẠNG XÃ HỘI (anh chốt 15/11/2026, 8 ý) ─────────────────────────────────────────
+  // ① trình soạn văn bản cơ bản, phải chuẩn · ② mặc định cao 5 dòng · ③ chữ nhiều thì tự giãn · ④ giãn tới mức tối đa vừa màn hình điện
+  // thoại, dài hơn thì CUỘN TRONG KHUNG · ⑤ thanh kéo để thu ô về 5 dòng · ⑥ chạm không nhảy, không bị kéo dịch, không bị che · ⑦ cuộn tới
+  // đâu chạm đâu con trỏ đúng chỗ đó · ⑧ bấm vào chỉ hiện bàn phím, không nhảy / giật / tự cuộn. Thanh B · I · Chèn ảnh nằm yên đầu khung
+  // (khung không cao quá màn hình nên thanh luôn thấy) — không dính trang, không gắn bàn phím.
   const laDt = useLaDt();
-  // THANH KÉO GIÃN dưới ô (điện thoại, anh 14/11/2026: "thanh kéo giãn đâu" — giữ): kéo xuống ô cao ra, kéo lên thu lại (đổi chiều cao tối thiểu)
+  const CAO_5_DONG = 150; // 5 dòng chữ 16px × 1,625 + lề trong
+  // THANH KÉO dưới khung: kéo lên thu ô về 5 dòng, kéo xuống mở lại tới mức tối đa (đổi chiều cao TỐI ĐA của khung)
   const [caoKeo, setCaoKeo] = useState<number | null>(null);
   const keoRef = useRef<HTMLDivElement>(null);
   // Chạm thanh kéo KHÔNG bao giờ bật bàn phím (chặn ngay touchstart — React gắn touch ở chế độ passive nên phải gắn tay)
@@ -152,7 +154,7 @@ export default function ContentEditor({
     if (!t || !el) return;
     let y0 = 0, h0 = 0;
     const dau = (e: TouchEvent) => { e.preventDefault(); y0 = e.touches[0].clientY; h0 = el.getBoundingClientRect().height; };
-    const keo = (e: TouchEvent) => { e.preventDefault(); setCaoKeo(Math.round(Math.max(120, h0 + e.touches[0].clientY - y0))); };
+    const keo = (e: TouchEvent) => { e.preventDefault(); setCaoKeo(Math.round(Math.min(window.innerHeight * 0.45, Math.max(CAO_5_DONG, h0 + e.touches[0].clientY - y0)))); };
     t.addEventListener("touchstart", dau, { passive: false });
     t.addEventListener("touchmove", keo, { passive: false });
     return () => { t.removeEventListener("touchstart", dau); t.removeEventListener("touchmove", keo); };
@@ -316,12 +318,9 @@ export default function ContentEditor({
         data-thanh-dinh=""
         onPointerDown={giuChon}
         onMouseDown={giuChon}
-        // ĐANG SOẠN (điện thoại): nội dung dài cuộn qua thì thanh dính ngay dưới thanh "‹ Đăng tin" — trước đó thanh trôi khuất, muốn
-        // bôi đậm phải cuộn lên tìm rồi cuộn xuống lại (điện thoại thật 15/11/2026, 30 dòng). Dòng đang gõ không chui dưới thanh:
-        // BanPhimAo tính thanh [data-thanh-dinh] cả lúc chưa dính lẫn đã dính, và đo lại mỗi lần gõ.
-        // MỘT DÒNG trên điện thoại kể cả trình duyệt Zalo phóng chữ (ảnh Zalo anh 15/11/2026 8:28: "Chèn ảnh" rớt dòng 2, thanh cao gấp đôi
+        // Thanh nằm YÊN đầu khung (không dính trang — dính thì con trỏ chui dưới thanh, ảnh Samsung anh 15/11/2026 11:49). MỘT DÒNG trên điện thoại kể cả trình duyệt Zalo phóng chữ (ảnh Zalo anh 15/11/2026 8:28: "Chèn ảnh" rớt dòng 2, thanh cao gấp đôi
         // đè lên chữ) — không xuống hàng; máy chữ quá to thì vuốt ngang thanh (chạm nút vẫn giữ vùng bôi đen, vuốt không bị chặn).
-        className="no-scrollbar -mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:mx-0 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:gap-0.5 max-sm:border-b max-sm:border-cvr-line max-sm:px-1 max-sm:py-1.5 max-sm:group-focus-within/soan:sticky max-sm:group-focus-within/soan:top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] max-sm:group-focus-within/soan:z-[21] sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
+        className="no-scrollbar -mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:mx-0 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:gap-0.5 max-sm:border-b max-sm:border-cvr-line max-sm:px-1 max-sm:py-1.5 sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
       >
         {nutDinhDang}
         <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
@@ -385,9 +384,9 @@ export default function ContentEditor({
             nut.closest("[data-anh],[data-video]")?.remove();
             phat();
           }}
-          // Điện thoại: ô TỰ CAO THEO CHỮ như ô gõ chuẩn (anh 14/11/2026: "bấm vào dòng nào thì chỉ hiện bàn phím, không che, không nhảy giật")
-          // — không cuộn bên trong ô (cuộn trong ô + trình duyệt cuộn trang theo con trỏ = hai lớp cuộn chồng nhau → che / giật). Máy tính: tự cao + kéo góc dưới.
-          style={laDt ? { minHeight: caoKeo ?? 224 } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
+          // Máy tính: tự cao + kéo góc dưới.
+          // Điện thoại: 5 dòng → tự giãn theo chữ → tối đa 45% chiều cao màn hình (vừa phần trên bàn phím), dài hơn thì cuộn trong khung
+          style={laDt ? { minHeight: CAO_5_DONG, maxHeight: caoKeo ?? "45svh", overflowY: "auto", overscrollBehavior: "contain" } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
           className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line max-sm:rounded-none max-sm:border-0 bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
