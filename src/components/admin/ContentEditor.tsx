@@ -169,6 +169,20 @@ export default function ContentEditor({
     window.addEventListener("resize", tinh);
     return () => { vv?.removeEventListener("resize", tinh); window.removeEventListener("resize", tinh); };
   }, [laDt]); // eslint-disable-line react-hooks/exhaustive-deps
+  // GIỮ DÒNG CON TRỎ TRONG KHUNG (điện thoại thật 15/11/2026: chạm "Dòng 24" thì chữ trong khung nhảy lên dòng 14–20, con trỏ khuất):
+  // bàn phím bật / tắt làm khung đổi cao → vị trí cuộn trong khung lệch. Khung đổi cao lúc đang soạn → cuộn TRONG khung cho dòng con
+  // trỏ nằm lại trong tầm nhìn (chỉ cuộn khung, không kéo trang).
+  const giuConTro = () => {
+    const ed = khungRef.current, sel = window.getSelection();
+    if (!ed || !sel || !sel.rangeCount || document.activeElement !== ed || !ed.contains(sel.getRangeAt(0).startContainer)) return;
+    const rg = sel.getRangeAt(0);
+    const c = rg.getClientRects()[0] ?? (rg.startContainer instanceof Element ? rg.startContainer : rg.startContainer.parentElement)?.getBoundingClientRect();
+    if (!c) return;
+    const k = ed.getBoundingClientRect();
+    if (c.top < k.top + 4) ed.scrollTop -= k.top + 8 - c.top;
+    else if (c.bottom > k.bottom - 4) ed.scrollTop += c.bottom - k.bottom + 8;
+  };
+  useEffect(() => { requestAnimationFrame(giuConTro); }, [caoToiDa, caoKeo]); // eslint-disable-line react-hooks/exhaustive-deps
   // ĐẶT KHUNG VÀO TẦM NHÌN (một lần, mượt): khung vừa phần màn hình còn thấy mà đầu khung (thanh B · I) khuất dưới thanh trên, hoặc đáy
   // (thanh kéo) nằm dưới bàn phím → cuộn trang cho đầu khung nằm ngay dưới "‹ Đăng tin". Khung đã thấy trọn thì KHÔNG cuộn (không nhảy).
   const datKhung = () => {
@@ -186,13 +200,17 @@ export default function ContentEditor({
   useEffect(() => {
     const t = keoRef.current, el = khungRef.current;
     if (!t || !el) return;
-    let y0 = 0, h0 = 0;
-    const dau = (e: TouchEvent) => { e.preventDefault(); y0 = e.touches[0].clientY; h0 = el.getBoundingClientRect().height; };
-    const keo = (e: TouchEvent) => { e.preventDefault(); setCaoKeo(Math.round(Math.max(CAO_5_DONG, h0 + e.touches[0].clientY - y0))); };
+    // ĐÚNG Ý ANH (15/11/2026, yêu cầu 5): thanh kéo để THU Ô VỀ MẶC ĐỊNH 5 DÒNG — kéo lên = về 5 dòng, kéo xuống = mở ra tối đa
+    // (không co giãn từng chút). Trong lúc kéo ô đi theo ngón tay cho thấy đang kéo, thả tay thì chốt về một trong hai mức.
+    let y0 = 0, h0 = 0, dy = 0;
+    const dau = (e: TouchEvent) => { e.preventDefault(); y0 = e.touches[0].clientY; h0 = el.getBoundingClientRect().height; dy = 0; };
+    const keo = (e: TouchEvent) => { e.preventDefault(); dy = e.touches[0].clientY - y0; setCaoKeo(Math.round(Math.max(CAO_5_DONG, h0 + dy))); };
+    const tha = () => { if (Math.abs(dy) < 8) return; setCaoKeo(dy < 0 ? CAO_5_DONG : null); };
     t.addEventListener("touchstart", dau, { passive: false });
     t.addEventListener("touchmove", keo, { passive: false });
-    return () => { t.removeEventListener("touchstart", dau); t.removeEventListener("touchmove", keo); };
-  }, [laDt]);
+    t.addEventListener("touchend", tha);
+    return () => { t.removeEventListener("touchstart", dau); t.removeEventListener("touchmove", keo); t.removeEventListener("touchend", tha); };
+  }, [laDt]); // eslint-disable-line react-hooks/exhaustive-deps
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
   // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
   // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
@@ -355,7 +373,7 @@ export default function ContentEditor({
         onMouseDown={giuChon}
         // Thanh nằm YÊN đầu khung (không dính trang — dính thì con trỏ chui dưới thanh, ảnh Samsung anh 15/11/2026 11:49). MỘT DÒNG trên điện thoại kể cả trình duyệt Zalo phóng chữ (ảnh Zalo anh 15/11/2026 8:28: "Chèn ảnh" rớt dòng 2, thanh cao gấp đôi
         // đè lên chữ) — không xuống hàng; máy chữ quá to thì vuốt ngang thanh (chạm nút vẫn giữ vùng bôi đen, vuốt không bị chặn).
-        className="no-scrollbar -mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:mx-0 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:gap-0.5 max-sm:border-b max-sm:border-cvr-line max-sm:px-1 max-sm:py-1.5 sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
+        className="no-scrollbar -mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:mx-0 max-sm:flex-nowrap max-sm:justify-between max-sm:overflow-x-auto max-sm:gap-0.5 max-sm:border-b max-sm:border-cvr-line max-sm:px-1 max-sm:py-1.5 sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
       >
         {nutDinhDang}
         <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
