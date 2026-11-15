@@ -555,7 +555,9 @@ select option {
   --backbar-h: 0px;
 }
 @media (max-width: 1023px) {
-  :root { --backbar-h: 53px; }
+  /* Chỉ chừa chỗ khi trang CÓ thanh "‹" — trang không có thanh (vd /dang-tin-1, link chia sẻ trong Zalo) mà vẫn chừa 53px thì
+     thanh bước đăng tin tụt xuống, hở khe lộ bản đồ phía sau (ảnh điện thoại anh 15/11/2026 8:14). */
+  html:has(.thanh-quay-lai) { --backbar-h: 53px; }
 }
 @media (max-width: 1023px) {
   :root {
