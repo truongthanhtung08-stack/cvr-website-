@@ -17,11 +17,11 @@ export default function DangTinPage() {
       <BreadcrumbJsonLd items={[{ name: "Đăng tin", href: "/dang-tin" }]} />
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto w-full max-w-4xl overflow-x-clip px-4 pt-5 pb-footer sm:px-6 sm:pt-8 lg:max-w-6xl lg:px-8">
-          {/* Tiêu đề gọn (chủ dự án 22/10/2026: "Tạo tin đăng", bớt khoảng trắng trên dưới) */}
-          <h1 className="text-center text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tạo tin đăng</h1>
+        <div className="mx-auto w-full max-w-4xl overflow-x-clip px-4 pt-0 pb-footer sm:px-6 sm:pt-8 lg:max-w-6xl lg:px-8">
+          {/* Tiêu đề gọn (chủ dự án 22/10/2026: "Tạo tin đăng", bớt khoảng trắng trên dưới; 15/11/2026 điện thoại BỎ chữ trên màn hình cho cân đối phần soạn tin — giữ thẻ h1 ẩn cho Google, trình đọc màn hình) */}
+          <h1 className="max-sm:sr-only text-center font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tạo tin đăng</h1>
 
-          <div className="mt-4">
+          <div className="sm:mt-4">
             {/* Suspense: form đọc ?id= (chế độ sửa tin) bằng useSearchParams */}
             <Suspense fallback={<p className="py-16 text-center text-sm text-cvr-muted">Đang tải…</p>}>
               <KhungDangTin />

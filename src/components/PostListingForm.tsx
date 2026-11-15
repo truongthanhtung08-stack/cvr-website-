@@ -630,7 +630,7 @@ export default function PostListingForm() {
       <Label>{f.label}{f.unit ? ` (${f.unit})` : ""}{f.batBuoc ? " *" : ""}</Label>
       {f.type === "select" ? (
         // Mọi ô chọn (kể cả Hướng — 8 hướng) đều có dòng "Khác — tự ghi" (chủ dự án 14/10/2026).
-        <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} batBuoc={f.batBuoc} className={inputCls} />
+        <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} batBuoc={f.batBuoc} className={inputCls} nhan={O_LOAI_CON.includes(f.key) ? `Chọn ${f.label.toLowerCase()}` : undefined} />
       ) : (
         <OGoTuGian value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} placeholder={f.placeholder ?? ""} className={inputCls} />
       )}
@@ -1416,7 +1416,7 @@ export default function PostListingForm() {
       className="lg:grid lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:items-start lg:gap-8">
       <MucMoCtx.Provider value={{ moMuc, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
       <ThanhBuoc boQua={goiDangDung && editId ? ["b-goi"] : []} />
-      <div className="mt-6 min-w-0 space-y-6 lg:mt-0">
+      <div className="mt-3 min-w-0 space-y-6 sm:mt-6 lg:mt-0">
       {nhapCho && (() => {
         const chu = (k: string) => (typeof nhapCho[k] === "string" ? (nhapCho[k] as string).trim() : "");
         // Loại hình ghi đúng tên như ô chọn (tenLoaiHinhDayDu, 05/11/2026) — không hiện tên nội bộ "Đất khác"
@@ -1858,8 +1858,8 @@ export default function PostListingForm() {
           <Label>Mô tả chi tiết</Label>
         {/* Cùng bộ công cụ với trang quản trị: in đậm · in nghiêng · canh
             trái/giữa/phải/đều · chèn ảnh, video giữa bài. */}
-        {/* Điện thoại: ô tràn gần sát mép thẻ (anh 15/11/2026: "ô mô tả cho rộng ra") — lề thẻ 20px chỉ chừa 4px */}
-        <div className="max-sm:-mx-4">
+        {/* Điện thoại: ô Mô tả thẳng hàng với ô Tiêu đề (anh 15/11/2026: ô tràn sát mép thẻ trông lệch, không cân đối) */}
+        <div>
         <ContentEditor
           value={description}
           onChange={setDescription}
@@ -2409,7 +2409,7 @@ function ThanhBuoc({ boQua = [] }: { boQua?: string[] }) {
               }`}
             >
               <span className={`absolute bottom-2 left-0 top-2 w-[3px] rounded-r bg-cvr-gold transition-opacity ${o ? "opacity-100" : "opacity-0"}`} />
-              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${o ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-ink"}`}>
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold sm:h-6 sm:w-6 sm:text-[12px] ${o ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-ink"}`}>
                 {i + 1}
               </span>
               {m.ten}
@@ -2423,7 +2423,7 @@ function ThanhBuoc({ boQua = [] }: { boQua?: string[] }) {
       {/* MÁY TÍNH HIỆN ĐỦ MỌI MỤC (chủ dự án 23/10/2026: "trên PC phải làm cho logic như bản mobile — vào đăng tin bấm mục 6 thì
           như thế nào"): điện thoại vuốt ngang được, máy tính dùng chuột thì không → trước đây mục 5–7 khuất ngoài khung, không
           bấm tới được. Máy tính chia đều bề ngang cho các mục, tên dài xuống hai dòng; điện thoại giữ thanh vuốt như cũ. */}
-      <div ref={bocRef} className="flex gap-1.5 overflow-x-auto py-2.5 [scrollbar-width:none] sm:grid sm:auto-cols-fr sm:grid-flow-col sm:gap-1 sm:overflow-visible [&::-webkit-scrollbar]:hidden">
+      <div ref={bocRef} className="flex gap-1.5 overflow-x-auto py-1.5 [scrollbar-width:none] sm:grid sm:py-2.5 sm:auto-cols-fr sm:grid-flow-col sm:gap-1 sm:overflow-visible [&::-webkit-scrollbar]:hidden">
         {MOC_BUOC.map((m, i) => {
           const o = dangO === m.id;
           return (
@@ -2432,7 +2432,7 @@ function ThanhBuoc({ boQua = [] }: { boQua?: string[] }) {
               type="button"
               data-moc={m.id}
               onClick={() => toi(m.id)}
-              className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-[14px] font-semibold transition sm:min-w-0 sm:gap-1.5 sm:rounded-xl sm:px-2 sm:text-left sm:text-[12.5px] sm:leading-tight ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold transition sm:min-w-0 sm:py-2 sm:gap-1.5 sm:rounded-xl sm:px-2 sm:text-left sm:text-[12.5px] sm:leading-tight ${
                 o ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-body active:bg-cvr-line sm:hover:bg-cvr-line"
               }`}
             >
@@ -2471,7 +2471,8 @@ function Card({ id, step, title, children, khoa, chiTieuDe }: { id?: string; ste
     // scroll-mt: CHỈ chừa thanh các bước (61px) + 9px — header + thanh quay lại đã do <html> scroll-padding-top lo
     // (globals.css). Trước đây chừa cả header lần nữa (168px) → bấm mốc xong tiêu đề nằm cách thanh ~120px, đầu màn
     // hình trống (chủ dự án 22/10/2026: "bấm chọn không hiện nội dung ngay đầu trang").
-    <section id={id} data-buoc={step} className={`scroll-mt-[70px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 ${chiTieuDe ? "opacity-50" : ""}`}>
+    // Điện thoại: thanh bước đã gọn (~42px) → chừa đúng chiều cao thanh, bấm số là thẻ mục nằm SÁT ngay dưới thanh (anh 15/11/2026)
+    <section id={id} data-buoc={step} className={`scroll-mt-[42px] sm:scroll-mt-[70px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 ${chiTieuDe ? "opacity-50" : ""}`}>
       {/* chiTieuDe: mục chưa tới lượt (VD Đặc điểm khi chưa chọn loại hình) — chỉ tiêu đề, mờ, giữ đúng số thứ tự mục */}
       <h2 className={`${chiTieuDe ? "" : "mb-5"} flex items-center gap-2.5 text-[19px] font-semibold tracking-tight text-cvr-ink`}>
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>

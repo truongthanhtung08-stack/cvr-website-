@@ -18,12 +18,15 @@ export default function ChonHoacGhi({
   options,
   className,
   batBuoc,
+  nhan = "Chọn",
 }: {
   value: string;
   onChange: (v: string) => void;
   options: string[];
   className: string;
   batBuoc?: boolean;
+  /** Chữ trong ô + tiêu đề bảng chọn (mặc định "Chọn"); ô Loại con ghi rõ "Chọn loại nhà"… (K1/K2, 15/11/2026) */
+  nhan?: string;
 }) {
   const [tuGhi, setTuGhi] = useState(false);
   // MỤC KHÔNG BẮT BUỘC → bảng chọn của web (chủ dự án 16/10/2026: trong Zalo bảng chọn gốc của
@@ -39,7 +42,7 @@ export default function ChonHoacGhi({
           value={dangGhi ? KHAC_NHAN : value}
           onChange={(v) => { setTuGhi(v === KHAC_NHAN); onChange(v === KHAC_NHAN ? "" : v); }}
           options={[...options, KHAC_NHAN]}
-          placeholder="Chọn"
+          placeholder={nhan}
           timPlaceholder="Tìm"
           className={className}
           xoaDuoc

@@ -38,6 +38,46 @@ hiện ẢNH THU NHỎ thật (cao 64px) + nút ×. Đo `scripts/do-o-bi-che.mjs
 — thanh bước tự ẩn khi bàn phím bật). **Mọi lần đụng ContentEditor / BanPhimAo / thanh dính form đăng tin:** đo cả ô Mô tả với thanh B / I đang
 dính, xem ảnh chụp khổ 375 có thanh đè ô không, RỒI mới báo. Máy thật (iPhone Safari, Samsung, Zalo) anh xác nhận.
 
+## ⏳ 15/11/2026 20:30 — Ô MÔ TẢ ĐIỆN THOẠI: TRẠNG THÁI CUỐI (anh: "thôi dừng, ghi vào CLAUDE.md") — CHƯA PUSH
+**Bản đang dùng = commit 490c5d0b (đã duyệt: con trỏ dính đúng chữ đã chạm, cuộn thì đi cùng chữ) + MỘT thay đổi chưa commit: con trỏ màu xanh (`caret-[#1a73e8]`).**
+Đã kiểm trên Chrome điện thoại anh (20:25): chạm dòng nào con trỏ nằm đúng dòng đó · bàn phím bật: nhãn "Mô tả chi tiết" + hàng B · I + chữ gọn trên bàn phím · thanh bước luôn hiện.
+**Còn 1 chỗ chưa xử lý:** chạm DÒNG CUỐI đang thấy → giọt xanh (tay cầm con trỏ) thò xuống dưới mép khung (ô gõ thường của điện thoại cũng vậy).
+**⛔ ĐÃ THỬ VÀ ĐÃ GỠ — CẤM LÀM LẠI (anh: "sửa không được thì để yên, sao phá cái đã fix"):**
+① con trỏ VẼ RIÊNG (ẩn con trỏ máy, vẽ thanh 3px) → chạm cuối dòng thì trình duyệt báo vị trí sang đầu dòng kế → con trỏ hiện SAI dòng ("bấm vào mà nhảy chỗ khác") ·
+② đẩy chữ trong ô lên khi chạm gần đáy (chừa chỗ giọt xanh) → chỗ vừa chạm bị dời ·
+③ con trỏ "đứng yên trên màn hình" khi cuộn (đặt lại con trỏ theo chữ nằm dưới nó) → con trỏ nhảy sang dòng khác — anh chỉ muốn: chạm đâu nằm đó, cuộn thì dính chữ đã chạm ·
+④ scroll-padding-bottom → Chrome cuộn lố, dòng vừa chạm trôi khỏi tầm nhìn khi bàn phím bật.
+**Anh chốt 20:35: BẢN NÀY LÀ CHUẨN — áp cho MỌI trình duyệt điện thoại + trình duyệt trong Zalo / Facebook (mã ô Mô tả một bản dùng chung, không nhánh riêng theo máy). Chỗ giọt xanh ở dòng cuối: LÀM SAU, cập nhật vào đây khi làm.**
+Ý tưởng chưa thử (anh dừng): dải trống ~28px ở đáy khung (dưới chữ) cho giọt xanh rơi vào trong khung — chỉ thêm chỗ, không dời chữ. Muốn làm phải hỏi anh, thử trên máy thật.
+**Thay đổi khác chưa commit cùng đợt (đã xem trên điện thoại):** thanh bước luôn hiện kể cả khi gõ (`globals.css` dòng ~667) · nút 1·2·3 thanh bước nhỏ, form sát dưới "‹ Đăng tin"
+(`PostListingForm.tsx`) · bỏ chữ "Tạo tin đăng" trên điện thoại (`dang-tin/page.tsx`, h1 ẩn) · bảng chọn loại con ghi "Chọn loại nhà" (`ChonHoacGhi.tsx`, phiên con).
+⛔ PostListingForm / ChonCoTim / admin/ListingForm còn hunk của phiên khác — commit LỌC. Bộ ghi tạm phải XOÁ trước commit: dòng "TẠM" trong ContentEditor · `public/_do-cuon.js` · `src/app/api/thu-log/`.
+Kiểm Zalo / Facebook / Samsung Internet / iPhone: CHƯA (mã dùng chung một bản cho mọi trình duyệt; phải mở thử thật).
+
+## ⏳ BÀN GIAO 15/11/2026 18:15 (phiên 18419c5a, anh: "ghi hết lỗi vào CLAUDE.md, bàn giao ngay người khác làm") — Ô MÔ TẢ + FORM ĐĂNG TIN ĐIỆN THOẠI — CHƯA COMMIT, CHƯA PUSH
+**Sổ lỗi đầy đủ (từng lỗi, trạng thái, gốc đã tìm):** `.claude/LOI-O-MO-TA-15-11.md`. **Yêu cầu của anh (chuẩn ô soạn trên điện thoại, như ô viết bài Facebook / ô chat Zalo):**
+① mặc định nhỏ (~4 dòng) cho cân đối trang, gõ thì tự giãn, tối đa ~3/4 màn hình (anh: "cho max ngắn lại chút, tự nhìn mà cân chỉnh" → đang 0,62 màn hình), dài hơn thì chữ cuộn TRONG ô ·
+② thanh kéo: kéo lên → về mặc định; kéo xuống → giãn theo tay tới hết chữ, không quá mức tối đa; ô trống kéo không giãn · ③ chạm ô: chỉ bàn phím bật, KHÔNG nhảy / giật / cuộn,
+khung (nhãn "Mô tả chi tiết" + hàng B · I + chữ + thanh kéo) nằm gọn trên bàn phím, không bị che · ④ chạm dòng nào con trỏ đúng dòng đó · ⑤ vuốt trong ô chỉ cuộn chữ, trang đứng yên ·
+⑥ Enter xuống dòng không nhảy · ⑦ thanh bước form (1 Loại hình · 2 · 3 · 4 Tiêu đề & mô tả…) LUÔN HIỆN, kể cả khi gõ ("thanh này phải để") · ⑧ form sát lên dưới "‹ Đăng tin", nút 1·2·3 nhỏ ·
+⑨ bỏ chữ "Tạo tin đăng" trên điện thoại · ⑩ MỌI trình duyệt điện thoại + trong Zalo / Facebook (KHÔNG làm theo riêng máy anh — anh: "đéo có máy anh gì cả").
+**Đã sửa (trên máy, chưa commit):** `src/components/admin/ContentEditor.tsx` (đặt khung 1 lần theo chiều cao màn hình đo lúc mở trang; chạm lúc bàn phím chưa bật → đưa khung lên ngay để
+Chrome không tự cuộn thêm; bàn phím bật thì ô co vừa phần còn thấy; thanh kéo Pointer Events, vùng chạm 40px) · `src/app/globals.css` dòng 667 (bỏ ẩn thanh bước khi gõ) · `src/components/PostListingForm.tsx`
+(nút thanh bước nhỏ, mt-3) · `src/app/dang-tin/page.tsx` (h1 ẩn trên điện thoại, pt-0). ⛔ PostListingForm / ChonCoTim / admin/ListingForm còn hunk của phiên khác — commit LỌC đúng hunk của mình.
+**CÒN LỖI (anh kiểm 18:13–18:14):** K1/K2 tiêu đề bảng chọn loại con chỉ ghi "Chọn" (chưa rõ đúng ý anh) · K4 xem mục 7 mà thanh bước không sáng mục 7 · K5 ô trống: chữ gợi ý 5 dòng tràn, bị thanh kéo đè ·
+K6 chạm sang Mô tả → bàn phím bật rồi ~1,2 giây TỰ TẮT (nhật ký lặp lại; chưa rõ gốc — KHÔNG phải innerHTML, không có blur) · thanh giãn trên cảm ứng: anh báo khó / không kéo được — đã to vùng chạm, chưa thử bằng ngón tay ·
+giọt nước con trỏ lơ lửng khi cuộn trong ô (đã thử 2 cách đặt lại con trỏ: removeAllRanges nghi làm tắt bàn phím, collapse làm chữ lăn ngược → đều đã gỡ).
+**Môi trường:** máy thử `NEXT_DIST_DIR=.next-dev5 npx next dev -p 3005` (đang chạy) · điện thoại anh qua hotspot: http://10.194.103.234:3005/dang-tin?xem-thu=1 · Phone Link để xem/bấm (chuột Phone Link vuốt = bôi chữ,
+không thay được ngón tay) · ⛔ trang trên điện thoại KHÔNG tự cập nhật bản mới → tải lại trước khi kiểm/báo (bài học: báo XONG khi máy anh chạy bản cũ).
+**Bộ ghi tạm (XOÁ trước khi commit):** `public/_do-cuon.js` + `src/app/api/thu-log/route.ts` + 1 dòng "TẠM" trong ContentEditor nạp script → ghi mọi cuộn / bàn phím / chạm vào `.claude/thu-log.txt` — đây là cách duy nhất biết chuyện gì xảy ra trên máy thật.
+Đo máy giả lập: scratchpad phiên 18419c5a `do-phim-bat.mjs`, `do-keo.mjs`, `do-chuyen-o.mjs` (máy giả lập KHÔNG có bàn phím thật — chỉ phụ).
+**Anh mắng phiên này, ĐỪNG LẶP:** sửa chắp vá từng lỗi rồi sinh lỗi mới ("làm cái này mất cái kia") · báo XONG khi chưa kiểm trên máy thật bản mới · tự sửa mã dùng chung (BanPhimAo) khi anh không bảo · ghi lỗi
+từng mảnh khi anh đã nói hết · hỏi lại nhiều · nói dài. Anh nói "nhìn" = xem màn hình điện thoại (Phone Link) rồi ghi lỗi; anh kiểm, không bấm đè lên khi anh đang dùng điện thoại.
+
+**19:50 15/11 (phiên local_a9ad552b, anh: "bàn giao"):** ô Mô tả điện thoại mặc định 4 dòng (cả khi trống, chữ gợi ý gọn 4 dòng), tối đa 0,58 màn hình. Đã thử đổi sang `<textarea>` cho con trỏ chuẩn → B / I ra dấu "****", anh bác ("phá định dạng") → ĐÃ TRẢ về contenteditable. Gốc giọt nước: Chrome chỉ ẩn/hiện giọt nước theo khung cuộn cho ô gõ thường, contenteditable luôn coi là thấy → CHƯA có cách giữ cả chữ đậm lẫn giọt nước chuẩn; hỏi anh trước khi đổi cơ chế. Chi tiết cuối `.claude/LOI-O-MO-TA-15-11.md`. CHƯA commit, CHƯA push.
+
+**20:00 15/11 (phiên local_470b13ab, anh: "không làm được, commit, bàn giao, cút"):** commit 490c5d0b (chỉ ContentEditor, CHƯA push): ô Mô tả điện thoại `display:flex` cột — gốc trong mã Chrome: chữ nằm thẳng trong ô cuộn thì con trỏ vẽ ở lớp không cuộn → lơ lửng; nay con trỏ cuộn theo chữ, khuất/hiện đúng (anh thử tay, em nhìn 19:55). **CÒN LỖI P1:** con trỏ ở dòng cuối khung → tay cầm thò dưới mép khung, đè thanh địa chỉ. Chi tiết + việc tiếp: cuối `.claude/LOI-O-MO-TA-15-11.md`. Tệp tạm (dòng TẠM, `_do-cuon.js`, `api/thu-log`) còn trên máy, xoá trước Push.
+
 ## ⛔⛔⛔ KHÔNG GỘP TÀI KHOẢN — KỂ CẢ ĐĂNG HỘ (anh chốt 14/11/2026)
 **Từ giờ KHÔNG GỘP TÀI KHOẢN gì cả, kể cả tin đăng hộ. Tài khoản nào lấy tài khoản đó** — tin của tài khoản nào thì nằm ở tài khoản đó,
 đăng nhập bằng tài khoản nào thì làm việc trên tài khoản đó. Không tự gộp, không chuyển tin sang tài khoản khác, không gộp theo số / Zalo / email.
@@ -90,6 +130,12 @@ Anh nhắn "đã sửa từ khoá" (hoặc "nạp từ khoá") → Claude làm �
 **14/11 đã làm theo quy trình:** nạp bảng 00:50 (chữ trên web không đổi) · xin 10 trang: /mua-ban/da-nang/gia-duoi-5-ty · -3-ty · -2-ty · /mua-ban/hue/gia-duoi-5-ty ·
 -3-ty · /mua-ban/dat/da-nang/gia-duoi-10-ty · /mua-ban/khanh-hoa/gia-duoi-5-ty · -3-ty · /mua-ban/da-nang/phuong-hoa-xuan · /mua-ban/lam-dong/gia-duoi-5-ty ·
 đã có trên Google: /mua-ban/nha-rieng/khanh-hoa. Ngày mai xin tiếp từ dòng kế trong bảng.
+**15/11 (trang ĐẶC ĐIỂM theo câu Search Console 28 ngày):** xin 10: /mua-ban/hue/gia-duoi-2-ty · /cho-thue/da-nang/gia-duoi-3-trieu · /mua-ban/da-nang/gia-duoi-1-ty · /mua-ban/khanh-hoa/gia-duoi-2-ty ·
+/mua-ban/lam-dong/gia-duoi-3-ty · -2-ty · /mua-ban/gia-lai/gia-duoi-3-ty · -2-ty · /mua-ban/quang-ngai/gia-duoi-5-ty · -3-ty · đã có trên Google (da-co): /mua-ban/nha/hue/gia-duoi-3-ty ·
+/mua-ban/can-ho-chung-cu/da-nang/2-phong-ngu · …/khanh-hoa/2-phong-ngu · /cho-thue/can-ho-chung-cu/da-nang/2-phong-ngu · /mua-ban/nha-mat-pho/gia-lai · /cho-thue/van-phong-mat-bang/da-nang/gia-duoi-10-trieu ·
+/cho-thue/nha/da-nang · /mua-ban/nha/gia-lai · /mua-ban/nha-rieng/da-nang/2-phong-ngu · /mua-ban/nha-mat-pho/da-nang/gia-duoi-5-ty. Đã ghi sổ Admin (da-xin / da-co, 20 trang, 200).
+Trang đặc điểm có người tìm mà noindex (thiếu tin → giao Cowork): nhà Huế dưới 2 tỷ / 1 tỷ · cho thuê nhà ĐN dưới 3 triệu · cho thuê căn hộ ĐN dưới 3 triệu · NHÀ NHA TRANG (/mua-ban/nha/khanh-hoa/nha-trang) ·
+cho thuê nhà mặt phố Gia Lai · cho thuê kho xưởng Gia Lai. Chưa có trang: "gần biển" (Nha Trang hạng 6–19), "cấp 4" — mở trục mới phải anh duyệt (luật bước 14).
 
 ## ⏳ BÀN GIAO 13/11/2026 TỐI (phiên 18419c5a, anh: "lưu trên file, nghỉ mai làm tiếp") — TỪ KHOÁ LONGTAIL + ĐẶC ĐIỂM
 **Luật anh chốt 13/11:** từ khoá KHÔNG có mục đích (mua/bán/thuê nằm ở đường dẫn web) · lõi = Loại hình + Địa điểm (gồm mọi ý định) ·
