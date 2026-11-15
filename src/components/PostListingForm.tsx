@@ -1858,6 +1858,8 @@ export default function PostListingForm() {
           <Label>Mô tả chi tiết</Label>
         {/* Cùng bộ công cụ với trang quản trị: in đậm · in nghiêng · canh
             trái/giữa/phải/đều · chèn ảnh, video giữa bài. */}
+        {/* Điện thoại: ô tràn gần sát mép thẻ (anh 15/11/2026: "ô mô tả cho rộng ra") — lề thẻ 20px chỉ chừa 4px */}
+        <div className="max-sm:-mx-4">
         <ContentEditor
           value={description}
           onChange={setDescription}
@@ -1865,6 +1867,7 @@ export default function PostListingForm() {
           chiAnh // mô tả tin chỉ chèn ảnh; video ở mục Hình ảnh & video (anh 12/11/2026)
           placeholder={loaiHinh ? goiYMoTa(loaiHinh, laThue) : "Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)"}
         />
+        </div>
         </div>
       </Card>
 

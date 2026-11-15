@@ -147,6 +147,40 @@ export default function ContentEditor({
   const CAO_5_DONG = 150; // 5 dòng chữ 16px × 1,625 + lề trong
   // THANH KÉO dưới khung: kéo lên thu ô về 5 dòng, kéo xuống mở lại tới mức tối đa (đổi chiều cao TỐI ĐA của khung)
   const [caoKeo, setCaoKeo] = useState<number | null>(null);
+  // MỨC TỐI ĐA = PHẦN MÀN HÌNH CÒN THẤY (anh 15/11/2026: "điện thoại đã có màn hình giới hạn"): bàn phím bật thì chỉ còn khoảng giữa thanh
+  // "‹ Đăng tin" và bàn phím — cả khung (thanh B · I + chữ + thanh kéo) phải vừa khoảng đó, không thì thanh B · I trôi khuất, thanh kéo bị che.
+  const [caoToiDa, setCaoToiDa] = useState(380);
+  useEffect(() => {
+    if (!laDt) return;
+    const vv = window.visualViewport;
+    const tinh = () => {
+      const cao = vv ? vv.height : window.innerHeight;
+      const tren = Math.max(document.querySelector("header")?.getBoundingClientRect().bottom ?? 0,
+        document.querySelector(".thanh-quay-lai")?.getBoundingClientRect().bottom ?? 0, 0);
+      // phần khung không phải chữ (thanh B · I + thanh kéo + viền) đo THẬT — máy chữ to / Zalo phóng chữ làm thanh cao hơn
+      const ed = khungRef.current, khung = ed?.closest("[data-co-thanh]");
+      const phu = ed && khung ? khung.getBoundingClientRect().height - ed.getBoundingClientRect().height : 85;
+      setCaoToiDa(Math.max(CAO_5_DONG, Math.round(cao - tren - phu - 24)));
+      // Đang soạn mà bàn phím vừa bật / đổi cỡ → khung co xong thì đặt khung nằm gọn dưới thanh trên
+      if (ed && document.activeElement === ed) setTimeout(datKhung, 80);
+    };
+    tinh();
+    vv?.addEventListener("resize", tinh);
+    window.addEventListener("resize", tinh);
+    return () => { vv?.removeEventListener("resize", tinh); window.removeEventListener("resize", tinh); };
+  }, [laDt]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ĐẶT KHUNG VÀO TẦM NHÌN (một lần, mượt): khung vừa phần màn hình còn thấy mà đầu khung (thanh B · I) khuất dưới thanh trên, hoặc đáy
+  // (thanh kéo) nằm dưới bàn phím → cuộn trang cho đầu khung nằm ngay dưới "‹ Đăng tin". Khung đã thấy trọn thì KHÔNG cuộn (không nhảy).
+  const datKhung = () => {
+    const ed = khungRef.current, khung = ed?.closest("[data-co-thanh]");
+    if (!laDt || !ed || !khung || document.activeElement !== ed) return;
+    const vv = window.visualViewport;
+    const dinh = vv ? vv.offsetTop : 0, day = dinh + (vv ? vv.height : window.innerHeight);
+    const tren = Math.max(document.querySelector("header")?.getBoundingClientRect().bottom ?? 0,
+      document.querySelector(".thanh-quay-lai")?.getBoundingClientRect().bottom ?? 0, dinh);
+    const k = khung.getBoundingClientRect();
+    if (k.height <= day - tren - 4 && (k.top < tren - 2 || k.bottom > day + 2)) window.scrollBy({ top: k.top - tren - 4, behavior: "smooth" });
+  };
   const keoRef = useRef<HTMLDivElement>(null);
   // Chạm thanh kéo KHÔNG bao giờ bật bàn phím (chặn ngay touchstart — React gắn touch ở chế độ passive nên phải gắn tay)
   useEffect(() => {
@@ -154,7 +188,7 @@ export default function ContentEditor({
     if (!t || !el) return;
     let y0 = 0, h0 = 0;
     const dau = (e: TouchEvent) => { e.preventDefault(); y0 = e.touches[0].clientY; h0 = el.getBoundingClientRect().height; };
-    const keo = (e: TouchEvent) => { e.preventDefault(); setCaoKeo(Math.round(Math.min(window.innerHeight * 0.45, Math.max(CAO_5_DONG, h0 + e.touches[0].clientY - y0)))); };
+    const keo = (e: TouchEvent) => { e.preventDefault(); setCaoKeo(Math.round(Math.max(CAO_5_DONG, h0 + e.touches[0].clientY - y0))); };
     t.addEventListener("touchstart", dau, { passive: false });
     t.addEventListener("touchmove", keo, { passive: false });
     return () => { t.removeEventListener("touchstart", dau); t.removeEventListener("touchmove", keo); };
@@ -310,7 +344,8 @@ export default function ContentEditor({
   const bieuTuongAnh = <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z" /></svg>;
 
   return (
-    <div data-co-thanh="" className="group/soan space-y-2 max-sm:space-y-0 max-sm:overflow-clip max-sm:rounded-lg max-sm:border max-sm:border-cvr-line max-sm:bg-white max-sm:focus-within:border-cvr-ink">
+    // data-tu-cuon: ô tự lo vị trí khi soạn (datKhung) — BanPhimAo không kéo trang thêm, hai bên cùng kéo là giật
+    <div data-co-thanh="" data-tu-cuon="" className="group/soan space-y-2 max-sm:space-y-0 max-sm:overflow-clip max-sm:rounded-lg max-sm:border max-sm:border-cvr-line max-sm:bg-white max-sm:focus-within:border-cvr-ink">
       {/* Thanh định dạng trên đầu ô (máy tính + điện thoại). Chạm nút không làm rời ô — bàn phím điện thoại không tắt, không mất vùng bôi đen. */}
       {/* ĐIỆN THOẠI: thanh nằm TRONG KHUNG Ô, đầu khung, KHÔNG dính / không chồng lên chữ (anh 14/11/2026, ảnh iPhone 22:53 + 23:15: thanh
           dính đè mép trên ô, dòng đang gõ bị che — iPhone tự cuộn theo con trỏ không biết thanh dính). Khung = [thanh][chữ cuộn bên dưới]. */}
@@ -368,6 +403,7 @@ export default function ContentEditor({
           onKeyUp={nhoKhoi}
           onMouseUp={nhoKhoi}
           onTouchEnd={nhoKhoi}
+          onFocus={() => { setTimeout(datKhung, 450); setTimeout(datKhung, 900); }}
           onBlur={() => { nhoKhoi(); phat(); }}
           onPaste={(e) => {
             // Chỉ lấy CHỮ — bỏ định dạng rác của nơi khác (màu, cỡ chữ, bảng…).
@@ -385,8 +421,8 @@ export default function ContentEditor({
             phat();
           }}
           // Máy tính: tự cao + kéo góc dưới.
-          // Điện thoại: 5 dòng → tự giãn theo chữ → tối đa 45% chiều cao màn hình (vừa phần trên bàn phím), dài hơn thì cuộn trong khung
-          style={laDt ? { minHeight: CAO_5_DONG, maxHeight: caoKeo ?? "45svh", overflowY: "auto", overscrollBehavior: "contain" } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
+          // Điện thoại: 5 dòng → tự giãn theo chữ → tối đa vừa phần màn hình còn thấy (caoToiDa), dài hơn thì cuộn trong khung
+          style={laDt ? { minHeight: CAO_5_DONG, maxHeight: Math.min(caoKeo ?? caoToiDa, caoToiDa), overflowY: "auto", overscrollBehavior: "contain" } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
           className="soan-thao w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line max-sm:rounded-none max-sm:border-0 bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
@@ -394,8 +430,8 @@ export default function ContentEditor({
         )}
         {/* Thanh kéo giãn / thu ô (điện thoại): chỉ kéo, không bao giờ bật bàn phím (chặn touchstart ở useEffect) */}
         {laDt && (
-          <div ref={keoRef} role="separator" aria-label="Kéo để giãn hoặc thu khung soạn" className="flex h-9 touch-none select-none items-center justify-center">
-            <span className="h-1.5 w-12 rounded-full bg-cvr-faint/60" />
+          <div ref={keoRef} role="separator" aria-label="Kéo để giãn hoặc thu khung soạn" className="flex h-5 touch-none select-none items-center justify-center">
+            <span className="h-1 w-10 rounded-full bg-cvr-faint/70" />
           </div>
         )}
       </div>
