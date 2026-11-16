@@ -205,9 +205,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         {/* Mở trong trình duyệt của Zalo → bỏ khoảng chừa đỉnh máy (xem --at trong globals.css). Chạy trước khi vẽ để không giật.
             CHỈ ZALO (anh 16/11/2026: "cho ô soạn trên Zalo to ra"): Zalo có thanh tiêu đề riêng nên ô Mô tả chỉ còn ~3 dòng khi bàn phím
-            bật → đang gõ ô Mô tả trên điện thoại thì ẩn đầu trang COASTAL LAND (--hdr 0: thanh "‹ Đăng tin", thanh bước dịch lên). Trình
+            bật → đang gõ ô Mô tả (16/11 tối: MỌI ô gõ — đo Zalo thật: thanh trên ít lại thì Zalo tự kéo ô vào là đủ, web không phải kéo ngược = hết giật) trên điện thoại thì ẩn đầu trang COASTAL LAND (--hdr 0: thanh "‹ Đăng tin", thanh bước dịch lên). Trình
             duyệt khác không đổi. Ô Mô tả tự tính lại cao theo các thanh còn lại (ContentEditor trenThanh). */}
-        <script dangerouslySetInnerHTML={{ __html: "if(/Zalo|FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly/i.test(navigator.userAgent)){var s=document.createElement('style');s.textContent=':root{--at:0px}';document.head.appendChild(s)}if(/Zalo/i.test(navigator.userAgent)){var z=document.createElement('style');z.textContent='@media (max-width:639px){html:has(.soan-thao:focus){--hdr:0px}html:has(.soan-thao:focus) header.nav-glass{display:none}}';document.head.appendChild(z)}" }} />
+        <script dangerouslySetInnerHTML={{ __html: "if(/Zalo|FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly/i.test(navigator.userAgent)){document.documentElement.classList.add('trong-app');var s=document.createElement('style');s.textContent=':root{--at:0px}@media (max-width:639px){html:has(input:focus,textarea:focus,[contenteditable=\"true\"]:focus){scroll-behavior:auto}}';document.head.appendChild(s)}if(/Zalo/i.test(navigator.userAgent)){var z=document.createElement('style');var g='.soan-thao:focus,textarea:focus,input:not([type=checkbox]):not([type=radio]):not([type=file]):not([readonly]):focus';z.textContent='@media (max-width:639px){html:has('+g+'){--hdr:0px}html:has('+g+') header.nav-glass{display:none}input,textarea,[contenteditable=true]{scroll-margin-bottom:-1000px}}';document.head.appendChild(z)}" }} />
         <SiteJsonLd />
         {/* Google Analytics 4 — chỉ chạy khi đã cắm NEXT_PUBLIC_GA_ID */}
         <Analytics />

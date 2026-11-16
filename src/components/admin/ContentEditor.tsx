@@ -329,13 +329,26 @@ export default function ContentEditor({
     daPhat.current = value;
   }, [value]);
 
+  // GÕ KHÔNG GIẬT (anh 16/11/2026, Zalo: "RẤT GIẬT LAG"): trước đây MỖI CHỮ gõ đều phat() → onChange → cả form đăng tin
+  // (PostListingForm, rất lớn) vẽ lại theo từng phím — chữ càng dài điện thoại càng giật. Nay gõ thì GOM: ngừng gõ 300 ms
+  // mới báo ra ngoài; rời ô (onBlur), bấm B / I, chèn ảnh, đóng trang → báo ngay (phat) nên không mất chữ.
+  const henPhat = useRef<number | null>(null);
+  const phatSau = () => {
+    if (henPhat.current) clearTimeout(henPhat.current);
+    henPhat.current = window.setTimeout(() => { henPhat.current = null; phatRef.current(); }, 300);
+  };
+  const phatRef = useRef<() => void>(() => {});
   const phat = () => {
+    if (henPhat.current) { clearTimeout(henPhat.current); henPhat.current = null; }
     const el = khungRef.current;
     if (!el) return;
     const v = htmlSangGiaTri(el);
     daPhat.current = v;
     if (v !== value) onChange(v);
   };
+  useEffect(() => { phatRef.current = phat; });
+  // Rời trang khi còn chữ chưa báo → báo nốt (khung soạn còn trong DOM lúc dọn)
+  useEffect(() => () => { if (henPhat.current) phatRef.current(); }, []);
 
   // Lệnh định dạng của trình duyệt — giữ vùng chữ đang bôi đen (nút dùng onMouseDown).
   const lenh = (ten: string) => {
@@ -494,7 +507,7 @@ export default function ContentEditor({
           role="textbox"
           aria-multiline="true"
           aria-label={placeholder}
-          onInput={() => { phat(); nhoKhoi(); }}
+          onInput={() => { phatSau(); nhoKhoi(); }}
           onKeyUp={nhoKhoi}
           onMouseUp={nhoKhoi}
           // Chạm lúc bàn phím CHƯA bật → đưa khung lên NGAY (trước khi bàn phím trượt lên): khung đã nằm trong phần sẽ còn thấy nên Chrome không tự
@@ -504,7 +517,13 @@ export default function ContentEditor({
           // MỌI TRÌNH DUYỆT NHƯ CHROME (anh 16/11/2026: "Chrome chuẩn, tinh chỉnh cho Safari, Samsung Internet, Zalo, Facebook"): Samsung / Zalo /
           // Facebook có khi KHÔNG báo bàn phím đã bật (trang không co) → banPhimBat() luôn sai → trước đây MỖI lần chạm chữ lúc đang gõ lại kéo trang +
           // co khung, rồi ~0,85 giây sau giãn ra = nhảy lặp. Nay giống Chrome: chỉ lần chạm MỞ ô mới đưa khung lên; đang gõ chạm chữ thì không kéo gì.
-          onClick={() => { if (laDt && !banPhimBat() && !dangGoTruoc.current) duBao(); }} // CHỈ khi CHẠM (click) — vuốt cuộn trang rồi nhấc tay thì không kéo trang về (nhật ký 17:51)
+          onClick={() => {
+            if (!laDt || dangGoTruoc.current) return; // CHỈ khi CHẠM (click) — vuốt cuộn trang rồi nhấc tay thì không kéo trang về (nhật ký 17:51)
+            if (!banPhimBat()) duBao();
+            // ĐANG GÕ Ô KHÁC (bàn phím đã bật) RỒI CHẠM SANG MÔ TẢ — trình duyệt trong Zalo / FB (đo 16/11/2026): Zalo tự kéo trang +214px
+            // (trượt) rồi khung soạn kéo về −74px = giật. Đặt khung NGAY lúc chạm → Zalo thấy ô đã nằm trong tầm nhìn, không kéo. Chrome giữ như cũ.
+            else if (document.documentElement.classList.contains("trong-app")) datKhung();
+          }}
           onBlur={() => {
             daDat.current = false; nhoKhoi(); phat();
             // Rời ô ở trình duyệt không báo bàn phím → trả khung về cỡ thường (Chrome: bàn phím tắt tự đổi cỡ, dòng này không làm gì thêm)

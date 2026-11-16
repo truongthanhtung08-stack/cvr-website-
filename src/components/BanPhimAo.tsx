@@ -195,7 +195,10 @@ export default function BanPhimAo() {
           const dich = c && laKhungSoan(el)
             ? (c.bottom > duoi ? c.bottom - (duoi - 16) : c.top < tren - 4 ? c.top - (tren + 8) : kTop - tren) // con trỏ bị che → đưa ra; còn lại: để lộ thanh B / I
             : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
-          window.scrollBy({ top: dich, behavior: "smooth" });
+          // TRÌNH DUYỆT TRONG ZALO / FACEBOOK (html.trong-app, layout.tsx): đo trên Zalo thật 16/11/2026 — bàn phím bật thì Zalo tự kéo
+          // trang (+246px, ô Tiêu đề lên mép trên) rồi lần chỉnh này kéo ngược lại; cả hai trượt êm = trang trượt xuống rồi lên = GIẬT.
+          // Trong app: chỉnh MỘT BƯỚC, không trượt. Chrome / Safari / Samsung giữ trượt êm như bản đã duyệt.
+          window.scrollBy({ top: dich, behavior: document.documentElement.classList.contains("trong-app") ? "instant" : "smooth" });
         }
       }
       canCuon = false;
@@ -204,6 +207,8 @@ export default function BanPhimAo() {
       if (!raf) raf = requestAnimationFrame(capNhat);
     };
 
+    // ⛔ ĐÃ THỬ & GỠ (16/11/2026): "giữ trang đứng yên" 0,45 s sau khi chạm ô trong Zalo (cuộn đi đâu đặt lại) — đo Zalo thật:
+    // lần kéo của Zalo là của chính WebView, scrollTo của web KHÔNG dừng được, hai bên giành nhau từng khung hình → giật thêm.
     const vaoO = (e: FocusEvent) => {
       if (!laOGo(e.target as Element)) return;
       canCuon = true;

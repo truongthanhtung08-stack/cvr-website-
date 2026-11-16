@@ -38,6 +38,25 @@ hiện ẢNH THU NHỎ thật (cao 64px) + nút ×. Đo `scripts/do-o-bi-che.mjs
 — thanh bước tự ẩn khi bàn phím bật). **Mọi lần đụng ContentEditor / BanPhimAo / thanh dính form đăng tin:** đo cả ô Mô tả với thanh B / I đang
 dính, xem ảnh chụp khổ 375 có thanh đè ô không, RỒI mới báo. Máy thật (iPhone Safari, Samsung, Zalo) anh xác nhận.
 
+## ⛔⛔⛔ CẤM GIẬT · NHẢY · LAG KHI CHẠM Ô GÕ VÀ BÀN PHÍM BẬT — MỌI Ô, MỌI TRÌNH DUYỆT, CẢ TRONG ZALO / FACEBOOK (anh chốt 16/11/2026)
+Anh (nguyên văn): "TAO CẤM TÌNH TRẠNG GIẬT LẮC KHI BẤM VÀO Ô GÕ HIỆN BÀN PHÍM KIỂU GIẬT VỚI LAG NÀY — bất kỳ đâu".
+Chạm ô gõ (ô chữ, ô số, ô Mô tả, khung xác minh số…) → chỉ bàn phím bật, ô đứng yên trong tầm nhìn; KHÔNG kéo trang nhiều lần, không nhảy,
+không trễ khi gõ. Gốc phải tìm bằng SỐ ĐO TRÊN MÁY THẬT (bộ ghi tạm `public/_ghi-zalo.js` + `api/thu-log` → `.claude/thu-log-zalo2.txt`,
+xoá trước commit) — không đoán. Đụng `BanPhimAo`, `ContentEditor`, `khoaCuon`, form đăng tin → thử lại chạm từng ô trên điện thoại thật
+(Chrome + trong Zalo) rồi mới báo. Đã biết (16/11): ô Mô tả trước đây báo ra ngoài theo TỪNG PHÍM → cả form đăng tin vẽ lại mỗi chữ → gõ giật
+(đã sửa: gom, ngừng gõ 300 ms mới báo — chưa commit). Sổ lỗi Zalo hôm nay: `.claude/LOI-ZALO-16-11.md`.
+**GỐC GIẬT TRONG ZALO (đo trên điện thoại anh 16/11 chiều, bộ ghi tạm):** bàn phím bật thì Zalo báo màn hình còn 67px trong chớp mắt
+(`vv h=67`) → Zalo tưởng ô bị che, TỰ KÉO TRANG ~200–250px (trượt êm) → rồi BanPhimAo / khung soạn Mô tả (datKhung) kéo ngược về = trang
+đi rồi về = GIẬT. Chrome không bị vì không có chớp 67px. **Đã sửa trên máy, CHỈ cho trình duyệt trong app** (lớp `html.trong-app` đặt ở
+`layout.tsx` theo tên Zalo/FB/Instagram/TikTok — Chrome/Safari/Samsung KHÔNG ĐỔI): ① gõ thì không trượt êm (scroll-behavior:auto)
+② gõ MỌI ô thì ẩn đầu trang COASTAL LAND ③ BanPhimAo chỉnh một bước, không trượt ④ **ô gõ `scroll-margin-bottom:-1000px`** — đo ra Zalo
+kéo sao cho MÉP DƯỚI ô chạm đáy khung 67px chớp nhoáng; khoảng chừa dưới âm làm Zalo thấy ô đã trong tầm nhìn → KHÔNG kéo ⑤ Mô tả: chạm lúc
+bàn phím đang bật (từ ô khác sang) thì đặt khung ngay (datKhung). Đo sau sửa (Zalo, điện thoại anh): Giá / Tiêu đề cao: 0 lần dịch; Mô tả: 1
+(khung soạn tự đặt); ô bị bàn phím che: 1 (Zalo đưa lên) — HẾT đi-rồi-về. ⛔ Đã thử & gỡ: "giữ trang đứng yên" (scrollTo liên tục) — lần kéo
+của Zalo là của WebView, web không dừng được, giành nhau = giật thêm; scroll-margin-top / scroll-padding — Zalo bỏ qua.
+Chưa đo: đang gõ Tiêu đề chạm sang Mô tả (phần chữ Mô tả nằm dưới bàn phím, Phone Link không chạm tới). Anh chưa xác nhận bằng tay.
+Bản thử trên điện thoại: đường hầm anh chạy (`cloudflared … --url http://localhost:3000`, link trong My Documents Zalo, thêm `?xem-thu=1`).
+
 ## ⏳ 15/11/2026 20:30 — Ô MÔ TẢ ĐIỆN THOẠI: TRẠNG THÁI CUỐI (anh: "thôi dừng, ghi vào CLAUDE.md") — CHƯA PUSH
 **Bản đang dùng = commit 490c5d0b (đã duyệt: con trỏ dính đúng chữ đã chạm, cuộn thì đi cùng chữ) + MỘT thay đổi chưa commit: con trỏ màu xanh (`caret-[#1a73e8]`).**
 Đã kiểm trên Chrome điện thoại anh (20:25): chạm dòng nào con trỏ nằm đúng dòng đó · bàn phím bật: nhãn "Mô tả chi tiết" + hàng B · I + chữ gọn trên bàn phím · thanh bước luôn hiện.

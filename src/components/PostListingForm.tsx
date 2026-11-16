@@ -2222,7 +2222,11 @@ export default function PostListingForm() {
                     })}
                   </div>
                 ); })()
-                : <input value={soTaiKhoan} readOnly placeholder="Xác minh khi bấm Đăng" className={oKhoa} />}</div>
+                // Đã có số → ô khoá như cũ. CHƯA có số (vd đăng nhập bằng Zalo — Zalo không đưa số cho web) → ô GÕ ĐƯỢC như mọi form
+                // (anh 16/11/2026: "đéo hiện nhập số đt", "làm CHUẨN"); bấm Đăng → khung xác minh điền sẵn số này, khách bấm Nhận mã Zalo.
+                : soTaiKhoan
+                  ? <input value={soTaiKhoan} readOnly className={oKhoa} />
+                  : <input value={soXacMinh} onChange={(e) => setSoXacMinh(e.target.value)} type="tel" inputMode="tel" autoComplete="tel" placeholder="Số điện thoại của bạn" className={inputCls} />}</div>
               <div id="o-email"><Label>Email</Label><input value={tk.email} readOnly placeholder="—" className={oKhoa} /></div>
             </div>
           </>
