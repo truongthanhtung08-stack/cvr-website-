@@ -255,9 +255,11 @@ export default function ContentEditor({
     // CHẠM BẰNG NGÓN TAY: điện thoại đặt con trỏ SAU lệnh chạm (nhật ký 19:07: chọn chữ đổi sau click 17ms) → lúc này chưa có con trỏ ở dòng vừa
     // chạm; bàn phím bật lên Chrome tự kéo cả trang đi tìm con trỏ = giật. Chờ con trỏ đặt xong (selectionchange) rồi đưa dòng đó vào ô ngay.
     choConTro.current = Date.now() + 500;
-    // Bàn phím không bật (máy có bàn phím rời…) → trả ô về cỡ thường
-    setTimeout(() => { if (!banPhimBat()) setCaoToiDa(tinhCao(window.visualViewport?.height ?? window.innerHeight)); }, 850);
+    // Bàn phím không bật (máy có bàn phím rời…) → trả ô về cỡ thường. Ô còn đang gõ thì GIỮ: Samsung / Zalo / Facebook có bàn phím mà không báo
+    // (trang không co) — trả về là khung giãn ra rồi co lại = giật (16/11/2026). Rời ô thì onBlur trả về.
+    setTimeout(() => { if (!banPhimBat() && document.activeElement !== khungRef.current) setCaoToiDa(tinhCao(window.visualViewport?.height ?? window.innerHeight)); }, 850);
   };
+  const dangGoTruoc = useRef(false); // lúc chạm, ô đã đang gõ chưa (chạm chữ khi đang gõ ≠ chạm mở ô)
   const keoRef = useRef<HTMLDivElement>(null);
   // Chạm thanh kéo KHÔNG bao giờ bật bàn phím (chặn ngay touchstart — React gắn touch ở chế độ passive nên phải gắn tay)
   useEffect(() => {
@@ -499,8 +501,15 @@ export default function ContentEditor({
           // cuộn thêm (nhật ký 15/11/2026: Chrome cuộn trang lúc bàn phím bật rồi lệnh mình kéo lại = nhảy 2 lần). Bàn phím đang bật thì chạm không kéo trang.
           onFocus={() => { daDat.current = false; setTimeout(thuDatKhung, 350); setTimeout(thuDatKhung, 900); }}
           onTouchEnd={nhoKhoi}
-          onClick={() => { if (laDt && !banPhimBat()) duBao(); }} // CHỈ khi CHẠM (click) — vuốt cuộn trang rồi nhấc tay thì không kéo trang về (nhật ký 17:51)
-          onBlur={() => { daDat.current = false; nhoKhoi(); phat(); }}
+          // MỌI TRÌNH DUYỆT NHƯ CHROME (anh 16/11/2026: "Chrome chuẩn, tinh chỉnh cho Safari, Samsung Internet, Zalo, Facebook"): Samsung / Zalo /
+          // Facebook có khi KHÔNG báo bàn phím đã bật (trang không co) → banPhimBat() luôn sai → trước đây MỖI lần chạm chữ lúc đang gõ lại kéo trang +
+          // co khung, rồi ~0,85 giây sau giãn ra = nhảy lặp. Nay giống Chrome: chỉ lần chạm MỞ ô mới đưa khung lên; đang gõ chạm chữ thì không kéo gì.
+          onClick={() => { if (laDt && !banPhimBat() && !dangGoTruoc.current) duBao(); }} // CHỈ khi CHẠM (click) — vuốt cuộn trang rồi nhấc tay thì không kéo trang về (nhật ký 17:51)
+          onBlur={() => {
+            daDat.current = false; nhoKhoi(); phat();
+            // Rời ô ở trình duyệt không báo bàn phím → trả khung về cỡ thường (Chrome: bàn phím tắt tự đổi cỡ, dòng này không làm gì thêm)
+            if (laDt) setTimeout(() => { if (document.activeElement !== khungRef.current && !banPhimBat()) setCaoToiDa(tinhCao(window.visualViewport?.height ?? window.innerHeight)); }, 300);
+          }}
           onPaste={(e) => {
             // Chỉ lấy CHỮ — bỏ định dạng rác của nơi khác (màu, cỡ chữ, bảng…).
             e.preventDefault();
@@ -510,6 +519,7 @@ export default function ContentEditor({
           }}
           // NÚT × BỎ ẢNH / VIDEO: xử lý NGAY lúc chạm (không chờ click, không bật bàn phím, không để ô nhận con trỏ)
           onPointerDown={(e) => {
+            dangGoTruoc.current = document.activeElement === khungRef.current; // chạm chữ lúc đang gõ ≠ chạm mở ô (xem onClick)
             const nut = (e.target as HTMLElement).closest("[data-xoa]");
             if (!nut) return;
             e.preventDefault();
