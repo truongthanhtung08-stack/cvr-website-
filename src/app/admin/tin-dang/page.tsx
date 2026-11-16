@@ -5,7 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import TuKiemTin from "@/components/admin/TuKiemTin";
 import YeuCauNangGoi from "@/components/admin/YeuCauNangGoi";
-import { loiTinSeo, laTinHangLoat } from "@/lib/kiemTinSeo";
+import { loiTinSeo } from "@/lib/kiemTinSeo";
 import { HOP_BAO } from "@/lib/chuThongBao";
 import { tenLoaiHinh } from "@/lib/filters";
 import { hienTrongTinDangAdmin, laChoDuyetKhach, laChuAdminSoan } from "@/lib/choDuyet";
@@ -124,18 +124,9 @@ export default function AdminListingsPage() {
     // DUYỆT phải đi qua máy chủ — ở đó mới trừ ví theo bảng giá, ghi doanh thu
     // và báo cho khách. Sửa thẳng từ trình duyệt là tin lên sóng MIỄN PHÍ.
     if (next === "approved") {
-      // Tin hàng loạt còn lỗi chuẩn SEO: duyệt nhanh từ danh sách là CHƯA mở tin xem → mở tin trước; xem xong
-      // (sửa hay không tuỳ chủ dự án) bấm Duyệt trong tin là lên web (chủ dự án 25/10/2026, tối)
+      // CẢNH BÁO CHỈ ĐỂ ANH XEM (hiện ngay dòng tin), KHÔNG CHẶN: anh sửa hay không thì bấm Duyệt là lên web (anh 16/11/2026).
+      // Máy chủ ghi các lỗi anh đã xem vào details.seoChapNhan để không báo lại.
       const tin = rows.find((x) => x.id === id);
-      const loiSeo = tin ? loiTinSeo(tin) : [];
-      if (loiSeo.length) {
-        const ds = loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ");
-        const moTin = () => window.location.assign(`/admin/tin-dang/${id}${loiSeo[0].o ? `#${loiSeo[0].o}` : ""}`);
-        // Tin hàng loạt: mở tin xem trước (form có nút Duyệt cho tin nạp). Tin KHÁCH: trang Sửa tin không có nút Duyệt tính tiền
-        // (đẩy sang đó là kẹt — tin 160d2c5a 16/11/2026) → anh chọn ngay: vẫn duyệt (máy chủ ghi lỗi đã xem vào seoChapNhan) hoặc mở tin sửa.
-        if (laTinHangLoat(tin!)) { window.alert(HOP_BAO.loiSeo(loiSeo.length, ds)); moTin(); return; }
-        if (!window.confirm(HOP_BAO.loiSeoTinKhach(loiSeo.length, ds))) { moTin(); return; }
-      }
       const r = await fetch("/api/tin-dang/duyet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
