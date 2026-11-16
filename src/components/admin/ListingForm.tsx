@@ -40,6 +40,7 @@ import {
 } from "@/lib/listingAdmin";
 import { homNayVn } from "@/lib/gioVn";
 import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
+import { docSo } from "@/lib/docSo";
 
 // Form Thêm/Sửa tin đăng (admin). Giá nhập theo đơn vị tự nhiên:
 //   Mua bán → TỶ đồng (7.2 = 7,2 tỷ) · Cho thuê → TRIỆU/tháng (18 = 18 triệu/tháng)
@@ -267,10 +268,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     ? null
     : priceUnit.trim() === ""
       ? null
-      : Math.round(parseFloat(priceUnit.replace(",", ".")) * (purpose === "thue" ? 1e6 : 1e9));
+      : Math.round(docSo(priceUnit, { nghin3: false }) * (purpose === "thue" ? 1e6 : 1e9));
 
   // Đơn giá quy đổi cho kho xưởng / kho bãi / văn phòng / mặt bằng cho thuê.
-  const dienTichSo = parseFloat(area.replace(",", "."));
+  const dienTichSo = docSo(area, { nghin3: false });
   const donGiaM2 =
     laGiaTheoM2 && priceVnd != null && !Number.isNaN(priceVnd) && dienTichSo > 0
       ? Math.round(priceVnd / dienTichSo)
@@ -303,14 +304,14 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         return setError(`Mô tả quá ngắn (${description.trim().length}/50 ký tự). Google cần nội dung thật để lập chỉ mục — viết ít nhất 1–2 câu về vị trí, pháp lý, tiện ích.`);
       if (images.filter((s) => s.trim()).length === 0)
         return setError("Chưa có ảnh nào. Tin không ảnh gần như không được Google hiển thị và khách cũng bỏ qua.");
-      if (!area.trim() || Number.isNaN(parseFloat(area.replace(",", "."))))
+      if (!area.trim() || Number.isNaN(docSo(area, { nghin3: false })))
         return setError("Chưa nhập diện tích — thiếu diện tích thì tin bị loại khỏi bộ lọc và thiếu dữ liệu gửi cho Google.");
       if (!negotiable && (priceVnd == null || Number.isNaN(priceVnd)))
         return setError("Giá không hợp lệ — nhập số, hoặc tick \"Giá thỏa thuận\".");
       // CHUẨN SEO (chủ dự án 25/10/2026) — cùng luật với bảng kiểm trên đầu trang và nút Duyệt
       const loiSeo = loiTinSeo({
         title, description, purpose, type,
-        price_vnd: negotiable ? null : priceVnd, area_m2: parseFloat(area.replace(",", ".")),
+        price_vnd: negotiable ? null : priceVnd, area_m2: docSo(area, { nghin3: false }),
         images: images.filter((s) => s.trim()),
         details: { ...(initial?.details ?? {}), addressDetail },
       });
@@ -353,8 +354,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       title: title.trim(),
       description: description.trim() || null,
       price_vnd: priceVnd,
-      area_m2: area.trim() ? parseFloat(area.replace(",", ".")) : null,
-      built_area_m2: builtArea.trim() ? parseFloat(builtArea.replace(",", ".")) : null,
+      area_m2: area.trim() ? docSo(area, { nghin3: false }) : null,
+      built_area_m2: builtArea.trim() ? docSo(builtArea, { nghin3: false }) : null,
       beds: beds.trim() ? parseInt(beds, 10) : null,
       baths: baths.trim() ? parseInt(baths, 10) : null,
       ward: ward.trim() || null,

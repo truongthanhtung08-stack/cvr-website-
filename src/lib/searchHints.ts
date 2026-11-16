@@ -1,4 +1,5 @@
 import type { Listing, Project } from "./data";
+import { docSo } from "@/lib/docSo";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CÂU GỢI Ý CHẠY CHỮ trong ô tìm kiếm
@@ -141,9 +142,8 @@ function tamGiaPhoBien(items: TinGoiY[], purpose: "ban" | "thue"): string | null
           ["trên 10 tỷ", (n) => n >= 10],
         ];
   const so = (giá: string) => {
-    const m = giá.replace(",", ".").match(/[\d.]+/);
-    if (!m) return null;
-    const n = parseFloat(m[0]);
+    const n = docSo(giá);
+    if (Number.isNaN(n)) return null;
     return /tri[eệ]u/i.test(giá) ? n / 1000 : n; // quy về đơn vị tỷ
   };
   const dem = new Map<string, number>();

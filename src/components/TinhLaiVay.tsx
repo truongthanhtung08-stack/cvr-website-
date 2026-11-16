@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { docSo } from "@/lib/docSo";
 
 // ============================================================================
 // CÔNG CỤ TÍNH LÃI VAY MUA NHÀ — đặc tả docs/CONG-CU-TINH-LAI-VAY.md (15/10/2026)
@@ -14,7 +15,7 @@ type Ky = { ky: number; thang: string; duNo: number; goc: number; lai: number; t
 
 const dong = (n: number) => Math.round(n).toLocaleString("vi-VN");
 const soTu = (s: string) => Number(s.replace(/[^\d]/g, "")) || 0;
-const thapPhan = (s: string) => Number(s.replace(",", ".")) || 0;
+const thapPhan = (s: string) => docSo(s, { nghin3: false }) || 0;
 
 function lichTra(soVay: number, soKy: number, laiUuDai: number, kyUuDai: number, laiSau: number, cach: CachTra, batDau: Date): Ky[] {
   const ds: Ky[] = [];

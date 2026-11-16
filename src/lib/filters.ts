@@ -4,6 +4,7 @@
 import { tierRank } from "./packages";
 import { tenTinhTuongDuong, chuanTen, chuanTenCap, newProvinceOf, oldNamesOf, phuongMoiCuaQuan, choCuCua } from "./locations";
 import { dungODienTichXayDung, dienTichSanThat, oLoaiCon } from "./listingSpec";
+import { docSo } from "@/lib/docSo";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LOẠI HÌNH (sản phẩm) PHÂN THEO MỤC ĐÍCH — chuẩn Brief + Kế hoạch V3.
@@ -131,9 +132,8 @@ export function priceRangesFor(purpose: "ban" | "thue"): PriceRange[] {
 
 // Đổi chuỗi giá "28,5 tỷ" → số tỷ. "Thỏa thuận" → null
 export function priceToTy(price: string): number | null {
-  const m = price.replace(",", ".").match(/[\d.]+/);
-  if (!m) return null;
-  const n = parseFloat(m[0]);
+  const n = docSo(price);
+  if (Number.isNaN(n)) return null;
   return price.includes("triệu") ? n / 1000 : n;
 }
 
@@ -193,8 +193,8 @@ const MOI_MUC_DIEN_TICH: AreaRange[] = [...areaRangesThue, ...areaRanges, ...are
 
 // Đổi chuỗi diện tích "1.500 m²" → số m² (dấu "." là phân tách hàng nghìn)
 export function areaToM2(area: string): number | null {
-  const m = area.replace(/\./g, "").match(/\d+/);
-  return m ? parseInt(m[0], 10) : null;
+  const n = docSo(area);
+  return Number.isNaN(n) ? null : n;
 }
 
 // ===== Phòng ngủ & Hướng nhà =====

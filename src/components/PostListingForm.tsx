@@ -57,6 +57,7 @@ import type { xemTruocTin } from "@/lib/listingsDb";
 import { useKhoaCuon } from "@/lib/khoaCuon";
 import { homNayVn } from "@/lib/gioVn";
 import { taiKhiRanh } from "@/lib/taiKhiRanh";
+import { docSo } from "@/lib/docSo";
 // Thẻ tin mẫu (nút "Tin hiển thị" ở mục gói tin) — chỉ tải khi khách bấm, không nặng lúc mở trang đăng tin.
 // ⛔ `loading` BẮT BUỘC (06/11/2026, gốc lỗi "đang chọn gói, xem Mẫu tin / Quy định, tắt là nhảy về đầu trang"): dynamic() không
 // có loading thì KHÔNG có khung chờ riêng → lần đầu tải mã, cả form (khung chờ của trang) bị thay bằng "Đang tải…", trang sụp
@@ -882,9 +883,9 @@ export default function PostListingForm() {
   // Giá → VNĐ. Tin CHO THUÊ quy về VNĐ MỖI THÁNG (trang tin tự thêm chữ "/tháng").
   function priceToVnd(): number | null {
     if (donVi === "Thoả thuận" || donVi === KHAC_GIA || !priceValue.trim()) return null;
-    const n = parseFloat(priceValue.replace(",", "."));
+    const n = docSo(priceValue, { nghin3: false });
     if (Number.isNaN(n)) return null;
-    const a = parseFloat(area.replace(",", "."));
+    const a = docSo(area, { nghin3: false });
     if (donVi === "tỷ") return Math.round(n * 1e9);
     if (donVi === "triệu" || donVi === "triệu/tháng") return Math.round(n * 1e6);
     if (donVi === "triệu/m²") return Number.isNaN(a) ? null : Math.round(n * a * 1e6);
@@ -921,8 +922,8 @@ export default function PostListingForm() {
     title: title.trim(),
     description: description.trim() || null,
     price_vnd: priceToVnd(),
-    area_m2: area.trim() ? parseFloat(area.replace(",", ".")) : null,
-    built_area_m2: builtArea.trim() ? parseFloat(builtArea.replace(",", ".")) : null,
+    area_m2: area.trim() ? docSo(area, { nghin3: false }) : null,
+    built_area_m2: builtArea.trim() ? docSo(builtArea, { nghin3: false }) : null,
     beds: beds.trim() ? parseInt(beds, 10) : null,
     baths: baths.trim() ? parseInt(baths, 10) : null,
     ward: ward || null,
@@ -937,8 +938,8 @@ export default function PostListingForm() {
       legal: legal || undefined,
       giaTuGhi: donVi === KHAC_GIA ? giaTuGhi.trim() || undefined : undefined,
       // Khách TỰ ghi đơn giá thuê (nghìn/m²/tháng) → được hiện trên tin; tự chia từ tổng giá thì không (20/10/2026)
-      ...(donVi === "nghìn/m²/tháng" && Number(priceValue.replace(",", ".")) > 0
-        ? { donGiaThue: Number(priceValue.replace(",", ".")), donGiaThueNhap: true }
+      ...(donVi === "nghìn/m²/tháng" && docSo(priceValue, { nghin3: false }) > 0
+        ? { donGiaThue: docSo(priceValue, { nghin3: false }), donGiaThueNhap: true }
         // Không ghi đơn giá → xoá khoá cũ khi sửa tin (không để đơn giá cũ lệch giá mới — 05/11/2026)
         : { donGiaThue: undefined, donGiaThueNhap: undefined }),
       furnish: furnish || undefined,

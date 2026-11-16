@@ -44,6 +44,7 @@ import { tenLoaiHinhMenu } from "@/lib/categories";
 import { hintsFor, listingHints, pageHints, type HintMode, type TinGoiY } from "@/lib/searchHints";
 import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
 import { cuonToiKetQua } from "@/lib/scroll";
+import { docSo } from "@/lib/docSo";
 
 const RECENT_KEY = "cvr-recent-search"; // lịch sử tìm kiếm (localStorage)
 const GEO_MODE_KEY = "cl-geo-mode"; // hệ đơn vị hành chính đã chọn: "cu" | "moi" (localStorage)
@@ -1954,14 +1955,14 @@ export function RangePanel({
   const [draftMax, setDraftMax] = useState(max == null ? "" : String(max));
 
   const commit = (mn: string, mx: string) => {
-    const a = mn.trim() === "" ? null : Number(mn.replace(",", "."));
-    const b = mx.trim() === "" ? null : Number(mx.replace(",", "."));
+    const a = mn.trim() === "" ? null : docSo(mn, { nghin3: false });
+    const b = mx.trim() === "" ? null : docSo(mx, { nghin3: false });
     onPick(Number.isNaN(a as number) ? null : a, Number.isNaN(b as number) ? null : b);
   };
 
   // Giá trị hiện tại cho thanh trượt (rỗng = 0 / hết mốc)
-  const lo = draftMin.trim() === "" ? 0 : Math.max(0, Number(draftMin.replace(",", ".")) || 0);
-  const hi = draftMax.trim() === "" ? sliderMax : Math.min(sliderMax, Number(draftMax.replace(",", ".")) || sliderMax);
+  const lo = draftMin.trim() === "" ? 0 : Math.max(0, docSo(draftMin, { nghin3: false }) || 0);
+  const hi = draftMax.trim() === "" ? sliderMax : Math.min(sliderMax, docSo(draftMax, { nghin3: false }) || sliderMax);
   const pct = (v: number) => Math.max(0, Math.min(100, (v / sliderMax) * 100));
   const onSlide = (nlo: number, nhi: number) => {
     const a = nlo <= 0 ? "" : String(nlo);

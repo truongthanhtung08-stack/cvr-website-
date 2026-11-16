@@ -43,6 +43,7 @@ import { chuanHoaSdt } from "@/lib/phone";
 import ThuGonTrang from "@/components/ThuGonTrang";
 import RichContent from "@/components/RichContent";
 import { tieuDeGoogle } from "@/lib/thang";
+import { docSo } from "@/lib/docSo";
 
 // TRANG QUAN TRỌNG NHẤT CHO SEO (500 tin). Nay đọc tin qua cache theo thẻ "listings"
 // (xem listingsDb.ts) nên KHÔNG còn cần force-dynamic: trang được dựng sẵn theo yêu
@@ -53,8 +54,8 @@ import { tieuDeGoogle } from "@/lib/thang";
 
 // Chuyển chuỗi giá VN ("33 tỷ", "7,2 tỷ", "15 triệu") → số VNĐ cho Schema. Không parse được → null.
 function parseVnd(s: string): number | null {
-  const t = s.toLowerCase().replace(/\./g, "").replace(",", ".");
-  const num = parseFloat(t);
+  const t = s.toLowerCase();
+  const num = docSo(t);
   if (Number.isNaN(num)) return null;
   if (t.includes("tỷ")) return Math.round(num * 1e9);
   if (t.includes("triệu") || t.includes("tr")) return Math.round(num * 1e6);

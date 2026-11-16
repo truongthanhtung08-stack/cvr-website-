@@ -39,8 +39,9 @@ function dongDauCvr(ctx: CanvasRenderingContext2D, w: number, h: number) {
 }
 
 async function nenAnh(file: File, canhToiDa = CANH_TOI_DA, chatLuong = CHAT_LUONG, dauChim = true): Promise<File> {
-  // Môi trường không có canvas (SSR) hoặc ảnh dạng đặc biệt → giữ nguyên
-  if (typeof document === "undefined" || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
+  // Môi trường không có canvas (SSR), ảnh động GIF, ảnh vẽ SVG → giữ nguyên (trình duyệt nào cũng hiện).
+  // MỌI dạng ảnh khác (JPEG, PNG, WebP, AVIF, BMP, ảnh HEIC đã đổi…) đều vẽ lại thành WebP/JPEG (anh 16/11/2026: "ảnh up dạng nào web cũng phải đọc được").
+  if (typeof document === "undefined" || /^image\/(gif|svg\+xml)$/i.test(file.type)) return file;
   try {
     const bitmap = await createImageBitmap(file);
     const ti = Math.min(1, canhToiDa / Math.max(bitmap.width, bitmap.height));
@@ -126,11 +127,30 @@ async function uploadMedia(file: File, kind: "image" | "video", maxMB: number): 
 // dauChim: false = KHÔNG đóng dấu "COASTAL LAND" — ảnh hero, banner, giới thiệu công ty
 // (chủ dự án 08/10/2026). Ảnh TIN ĐĂNG vẫn đóng dấu như cũ.
 // canh: cạnh dài tối đa của ảnh KHÔNG dấu (mặc định 2880) — ảnh đại diện 512px (05/11/2026), đủ nét cho mọi chỗ hiện, nhẹ.
-export const uploadImageFile = async (file: File, { dauChim = true, canh }: { dauChim?: boolean; canh?: number } = {}) => {
-  if (file.size > 15 * 1024 * 1024)
-    return { error: `Ảnh "${file.name}" quá 15MB — chọn ảnh nhỏ hơn.` };
+// ── ẢNH HEIC / HEIF (ảnh gốc máy Samsung, iPhone) ───────────────────────────
+// Chrome, Edge, Firefox KHÔNG hiển thị được HEIC. Trước đây nenAnh bỏ qua loại này → tệp .heic lên kho nguyên dạng, trang tin
+// hiện "Link ảnh không hiện được" (tin 160d2c5a 16/11/2026: 8/10 ảnh). Nay đổi sang JPEG ngay trên máy khách rồi mới nén,
+// đóng dấu như mọi ảnh. Thư viện giải mã (~3MB) chỉ tải khi gặp ảnh HEIC — trang không nặng thêm với ảnh thường.
+const laHeic = (f: File) => /^image\/hei[cf]/i.test(f.type) || /\.hei[cf]$/i.test(f.name);
+async function doiHeic(file: File): Promise<File> {
+  if (typeof document === "undefined" || !laHeic(file)) return file;
+  try {
+    const { heicTo } = await import("heic-to/next");
+    const blob = await heicTo({ blob: file, type: "image/jpeg", quality: 0.92 });
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
+export const uploadImageFile = async (goc: File, { dauChim = true, canh }: { dauChim?: boolean; canh?: number } = {}) => {
+  if (goc.size > 15 * 1024 * 1024)
+    return { error: `Ảnh "${goc.name}" quá 15MB — chọn ảnh nhỏ hơn.` };
+  const file = await doiHeic(goc);
   // Ảnh trang (hero/banner/giới thiệu): KHÔNG đóng dấu, giữ nét tới 2880px.
   const nen = dauChim ? await nenAnh(file) : await nenAnh(file, canh ?? 2880, CHAT_LUONG, false);
+  // Chỉ đưa lên kho dạng MỌI trình duyệt hiện được. Không giải mã được (tệp hỏng, TIFF, RAW…) → báo, không để tin mang ảnh trắng.
+  if (!/^image\/(jpeg|png|webp|gif|svg\+xml|avif)$/i.test(nen.type)) return { error: `Ảnh "${goc.name}" không đọc được — chọn ảnh khác.` };
   const kq = await uploadMedia(nen, "image", 15);
   // Bản nhỏ làm từ ẢNH GỐC CHƯA ĐÓNG DẤU (chủ dự án 24/10/2026: "ảnh lên là đóng dấu, mở ảnh thì mới có watermark"):
   // thẻ tin dùng bản nhỏ → sạch; dấu chỉ nằm ở ảnh lớn khi khách mở xem.

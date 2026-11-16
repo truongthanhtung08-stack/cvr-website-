@@ -1,5 +1,6 @@
 // Bộ thuộc tính BĐS theo loại hình — dùng chung cho TRANG CHI TIẾT (hiển thị)
 // và FORM ĐĂNG TIN (người bán chọn). Để sẵn đầy đủ mục, sản phẩm nào có thì điền.
+import { docSo } from "@/lib/docSo";
 
 export type Field = {
   key: string;
@@ -695,7 +696,7 @@ export const TEN_VI_TRI: Record<ViTriGia, string> = {
 
 /** Bề rộng đường vào (m) → nhóm vị trí. Không có số thì trả undefined, không đoán. */
 export function viTriTuDuongVao(rong?: string | number | null): ViTriGia | undefined {
-  const n = typeof rong === "number" ? rong : parseFloat(String(rong ?? "").replace(",", "."));
+  const n = typeof rong === "number" ? rong : docSo(rong, { nghin3: false });
   if (!Number.isFinite(n) || n <= 0) return undefined;
   return n >= 10 ? "lon" : n >= 5 ? "nho" : "kiet";
 }

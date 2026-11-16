@@ -10,6 +10,7 @@
 // → "Minh Mạng"). Bỏ đường chỉ để tả vị trí lân cận ("gần đường…", "cách đường…") và số đo ("đường 5,5m", "đường 28" thì giữ
 // khi ô địa chỉ trống) — đo 25/10 trên 174 tin: luật cũ báo nhầm 27 tin vì "mặt đường 30m", "gần đường Võ Chí Công".
 import { provincesNew, napDiaDanh } from "./diaDanhNguon";
+import { docSo } from "@/lib/docSo";
 
 export const duongTrongMoTa = (s: string) => {
   // Chữ viết hoa chữ đầu (tên riêng) — dải À-Ỹ của Unicode có cả chữ thường nên phải so thật
@@ -37,7 +38,7 @@ export const thieuTenDuong = (moTa: string, diaChi: string) => {
 // "tr" phải là chữ đứng riêng — "287 Trần Hưng Đạo" không phải 287 triệu.
 // Dấu chấm chỉ là dấu nghìn khi theo sau đúng 3 chữ số ("1.500 triệu"); còn lại là dấu thập phân như dấu phẩy
 // ("7.9 tỷ" = 7,9 tỷ — tin 160d2c5a 16/11/2026 bị báo nhầm "79 tỷ khác ô giá 7,9 tỷ", anh duyệt không lên).
-const so = (s: string) => Number(/^\d{1,3}(\.\d{3})+$/.test(s) ? s.replace(/\./g, "") : s.replace(",", "."));
+const so = (s: string) => docSo(s);
 const boNgu = (t: string) => t
   .replace(/(\d+(?:[.,]\d+)?)\s*(tỷ|ty|triệu|tr)(?![\p{L}\d])\s*\/\s*(m²|m2)/giu, " ")
   .replace(/(giảm|bớt|cọc|đặt cọc|phí|quản lý|điện|nước|hoa hồng|thu nhập|doanh thu|lợi nhuận|chiết khấu|hỗ trợ|vay|trả trước|thanh toán trước)[^.\n]{0,25}?\d+(?:[.,]\d+)?\s*(tỷ|ty|triệu|tr)(?![\p{L}\d])/giu, " ");

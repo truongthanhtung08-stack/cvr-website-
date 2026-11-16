@@ -9,6 +9,7 @@ import { dongConThieu, COT_MAU, type TinCan, type DongKho } from "@/lib/lichSuGi
 import { docBangXlsx, laXlsx } from "@/lib/docXlsx";
 import { chuanTen, provinceNamesFor } from "@/lib/locations";
 import { taiCsv, homNay } from "@/lib/xuatCsv";
+import { docSo } from "@/lib/docSo";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ — NHẬP SỐ VÀO ĐÂY, TRANG TIN HIỆN NGAY.
@@ -40,7 +41,7 @@ const inputCls =
 
 /** "78,5" → 78500000 đồng/m² */
 function doiSangDong(s: string): number {
-  const v = parseFloat(s.replace(/\./g, "").replace(",", "."));
+  const v = docSo(s, { nghin3: false });
   return Number.isFinite(v) ? Math.round(v * 1_000_000) : 0;
 }
 /** 78500000 → "78,5" */

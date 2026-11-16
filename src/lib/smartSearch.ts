@@ -18,6 +18,7 @@ import { provinces, newProvinceOf, soLaMaCuoi } from "@/lib/locations";
 // Tỉnh khách nói (có thể là tên CŨ: "hội an" → Quảng Nam) có chứa tỉnh của nơi tìm được (tên MỚI: Đà Nẵng) không
 const cungTinh = (tinh: string[], p: string) => tinh.some((t) => t === p || newProvinceOf(t) === p);
 import { daCoDiaDanh, provincesNew, provincesOld } from "@/lib/diaDanhNguon";
+import { docSo } from "@/lib/docSo";
 
 // ── Từ điển nhận diện ───────────────────────────────────────────────────────
 // Mỗi mục: [nhãn chuẩn, các cách viết người dùng hay gõ]
@@ -1030,8 +1031,8 @@ function khopMo(hay: string, tu: string): boolean {
 }
 
 function tyGia(price: string): number | null {
-  const s = normalizeVi(price).replace(/\./g, "").replace(",", ".");
-  const n = parseFloat(s);
+  const s = normalizeVi(price);
+  const n = docSo(s);
   if (Number.isNaN(n)) return null;
   if (s.includes("ty")) return n;
   if (s.includes("trieu")) return n / 1000;
