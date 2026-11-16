@@ -191,7 +191,7 @@ export default function BangGiaGoiTin({
                   // Hệ số tiếp cận X luôn hiện dưới mỗi mức giá (chủ dự án 09/10/2026)
                   const noiDung = (
                     <span className="flex flex-col items-center gap-0.5">
-                      <span className="font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(giaO(p.tierId, ngay, term.price)) : "0 ₫"}</span>
+                      <span className="whitespace-nowrap font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(giaO(p.tierId, ngay, term.price)) : "0 ₫"}</span>
                       {nhanGiam(giamPhanTram(p, ngay, term.price))}
                     </span>
                   );

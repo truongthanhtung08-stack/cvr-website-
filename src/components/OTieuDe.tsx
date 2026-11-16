@@ -60,7 +60,7 @@ export default function OTieuDe({
         // chỗ xuống dòng; chỗ dùng cho Google / thẻ tin thì gộp thành một dòng.
         onChange={(e) => onChange(e.target.value)}
         // py-2.5: lớp ô chung (h-11, chỉ có lề ngang) làm chữ dính sát mép trên — "ô tiêu đề bố trí rất lệch" (chủ dự án 03/11/2026 mục 8)
-        className={`${className.replace(/\bh-11\b/, "min-h-11")} resize-none overflow-hidden py-2.5 leading-snug`}
+        className={`${className.replace(/\bh-11\b/, "min-h-11")} resize-none overflow-hidden py-2.5 leading-snug focus:placeholder:text-transparent`} // chạm vào là chữ gợi ý ẩn (anh 16/11/2026)
       />
       {demKyTu && (
         <p className="mt-1 text-xs text-cvr-faint">

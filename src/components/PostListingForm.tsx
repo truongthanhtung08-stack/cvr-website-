@@ -19,7 +19,7 @@ import ChonHoacGhi from "@/components/ChonHoacGhi";
 import { isVideoUrl } from "@/lib/media";
 import ThemTuGhi from "@/components/ThemTuGhi";
 import OGoTuGian from "@/components/OGoTuGian";
-import { donViGiaNenDung, goiYDienTich, goiYGia, goiYMoTa, goiYTieuDe } from "@/lib/goiYNhapTin";
+import { donViGiaNenDung, goiYDienTich, goiYGia } from "@/lib/goiYNhapTin";
 import { doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import {
   demandTypes, DEMAND_DU_AN,
@@ -1853,7 +1853,7 @@ export default function PostListingForm() {
             đầu tiêu đề trôi mất khỏi khung, người đăng không soát lại được. */}
         <div id="o-tieude">
           <Label>Tiêu đề tin đăng *</Label>
-          <OTieuDe value={title} onChange={setTitle} placeholder={goiYTieuDe(loaiHinh, laThue)} className={inputCls} required />
+          <OTieuDe value={title} onChange={setTitle} placeholder="Nhập tiêu đề bất động sản" className={inputCls} required />
         </div>
         <div>
           <Label>Mô tả chi tiết</Label>
@@ -1866,7 +1866,7 @@ export default function PostListingForm() {
           onChange={setDescription}
           rows={5}
           chiAnh // mô tả tin chỉ chèn ảnh; video ở mục Hình ảnh & video (anh 12/11/2026)
-          placeholder={loaiHinh ? goiYMoTa(loaiHinh, laThue) : "Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)"}
+          placeholder="Nhập nội dung mô tả bất động sản" // anh 16/11/2026: bỏ câu hướng dẫn dài
         />
         </div>
         </div>
@@ -1903,7 +1903,7 @@ export default function PostListingForm() {
                     role="tab"
                     aria-selected={phanDang === id}
                     onClick={() => setPhanGoi(id)}
-                    className={`relative -mb-px flex h-11 items-center justify-center px-3 text-[15px] transition after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-t hover:text-cvr-ink ${phanDang === id ? "font-bold text-cvr-ink after:bg-cvr-gold" : "font-semibold text-cvr-muted after:bg-transparent"}`}
+                    className={`relative -mb-px flex h-11 items-center justify-center whitespace-nowrap px-1 text-[15px] transition after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-t hover:text-cvr-ink ${phanDang === id ? "font-bold text-cvr-ink after:bg-cvr-gold" : "font-semibold text-cvr-muted after:bg-transparent"}`}
                   >
                     {ten}
                   </button>
@@ -2479,7 +2479,7 @@ function Card({ id, step, title, children, khoa, chiTieuDe }: { id?: string; ste
     // Điện thoại: thanh bước đã gọn (~42px) → chừa đúng chiều cao thanh, bấm số là thẻ mục nằm SÁT ngay dưới thanh (anh 15/11/2026)
     <section id={id} data-buoc={step} className={`scroll-mt-[42px] sm:scroll-mt-[70px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 ${chiTieuDe ? "opacity-50" : ""}`}>
       {/* chiTieuDe: mục chưa tới lượt (VD Đặc điểm khi chưa chọn loại hình) — chỉ tiêu đề, mờ, giữ đúng số thứ tự mục */}
-      <h2 className={`${chiTieuDe ? "" : "mb-5"} flex items-center gap-2.5 text-[19px] font-semibold tracking-tight text-cvr-ink`}>
+      <h2 className={`${chiTieuDe ? "" : "mb-5"} flex items-center gap-2.5 text-[19px] max-sm:gap-2 max-sm:text-[17px] font-semibold tracking-tight text-cvr-ink`}>
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>
         {title}
       </h2>

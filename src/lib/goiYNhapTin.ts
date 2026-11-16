@@ -23,40 +23,6 @@ export function donViGiaNenDung(type: string, laThue: boolean): string | null {
   return laKhoXuongVanPhong(type) ? "nghìn/m²/tháng" : null;
 }
 
-// ─── TIÊU ĐỀ ────────────────────────────────────────────────────────────────
-// Mẫu viết theo đúng cách người mua tìm: loại hình + diện tích/số phòng + điểm
-// mạnh + khu vực — cũng chính là cấu trúc tiêu đề tốt cho SEO.
-const TIEU_DE_BAN: [RegExp, string][] = [
-  [/condotel/i, "VD: Bán condotel 45 m² view biển, bàn giao full nội thất, cam kết lợi nhuận"],
-  [/căn hộ|chung cư/i, "VD: Bán căn hộ 2PN 68 m² view sông Hàn, full nội thất"],
-  [/shophouse|nhà phố thương mại/i, "VD: Bán shophouse 5x20m mặt tiền đường 10,5m, kinh doanh sẵn"],
-  [/biệt thự|villa/i, "VD: Bán biệt thự biển 300 m² 4PN, hồ bơi riêng, sổ hồng lâu dài"],
-  [/nhà riêng|nhà mặt phố|liền kề/i, "VD: Bán nhà 3 tầng 90 m² kiệt ô tô Hải Châu, sổ hồng riêng"],
-  [/đất nông nghiệp/i, "VD: Bán 2.000 m² đất nông nghiệp mặt tiền đường bê tông, gần khu dân cư"],
-  [/đất công nghiệp/i, "VD: Bán 5.000 m² đất công nghiệp thuê 50 năm, mặt tiền QL1A"],
-  [/nhà xưởng|kho/i, "VD: Bán nhà xưởng 1.200 m² trong KCN Hoà Khánh, điện 3 pha, PCCC đầy đủ"],
-  [/đất nền|đất/i, "VD: Bán đất nền 100 m² mặt tiền 5m, đường 7,5m Hoà Xuân, sổ đỏ"],
-];
-
-const TIEU_DE_THUE: [RegExp, string][] = [
-  [/căn hộ dịch vụ/i, "VD: Cho thuê căn hộ dịch vụ 40 m² full nội thất, gần biển Mỹ Khê"],
-  [/căn hộ|chung cư/i, "VD: Cho thuê căn hộ 2PN 70 m² full nội thất, gần biển Mỹ Khê"],
-  [/trọ/i, "VD: Cho thuê phòng trọ 25 m² có gác, wc riêng, gần Đại học Duy Tân"],
-  [/văn phòng/i, "VD: Cho thuê văn phòng 120 m² sàn thông, mặt tiền Nguyễn Văn Linh"],
-  [/mặt bằng|cửa hàng/i, "VD: Cho thuê mặt bằng 80 m² mặt tiền 6m, vỉa hè rộng, kinh doanh mọi ngành"],
-  [/nhà xưởng|kho bãi|thuê đất/i, "VD: Cho thuê kho xưởng 1.200 m² container vào tận nơi, PCCC đầy đủ"],
-  [/biệt thự|villa|liền kề/i, "VD: Cho thuê biệt thự 4PN sân vườn, hồ bơi, khu Nam Việt Á"],
-  [/nhà riêng|nhà mặt phố|nhà phố/i, "VD: Cho thuê nhà 3 tầng 4PN mặt tiền Nguyễn Văn Linh, có chỗ đậu ô tô"],
-];
-
-export function goiYTieuDe(type: string, laThue: boolean): string {
-  const bang = laThue ? TIEU_DE_THUE : TIEU_DE_BAN;
-  for (const [re, mau] of bang) if (re.test(type)) return mau;
-  return laThue
-    ? "VD: Cho thuê nhà 3 tầng 4PN mặt tiền Nguyễn Văn Linh, có chỗ đậu ô tô"
-    : "VD: Bán nhà 3 tầng 90 m² kiệt ô tô Hải Châu, sổ hồng riêng";
-}
-
 // ─── GIÁ ────────────────────────────────────────────────────────────────────
 // Gợi ý theo ĐƠN VỊ đang chọn — con số phải hợp lý với đơn vị đó, nếu không
 // người đăng gõ theo gợi ý là sai cả trăm lần (35 triệu/m²/tháng thay vì 35 nghìn).
@@ -87,15 +53,3 @@ export function goiYDienTich(type: string): string {
   return "VD: 100";
 }
 
-// ─── MÔ TẢ ──────────────────────────────────────────────────────────────────
-// Liệt kê ĐÚNG những thứ người mua / người thuê loại hình đó hỏi trước tiên (12/11/2026: anh "cần ví dụ chính xác để khách nhập").
-export function goiYMoTa(type: string, laThue: boolean): string {
-  const cuoi = laThue ? "giá thuê, tiền cọc, thời hạn thuê" : "pháp lý (sổ hồng / sổ đỏ), giá và cách thanh toán";
-  if (/trọ/i.test(type)) return "VD: Diện tích, có gác / wc riêng, nội thất có sẵn, giờ giấc, chỗ để xe, giá điện nước, khoảng cách tới trường / chợ, tiền cọc";
-  if (/căn hộ|chung cư|condotel/i.test(type)) return `VD: Tên toà, tầng, hướng, view, số phòng ngủ / tắm, nội thất có sẵn, tiện ích toà nhà (hồ bơi, gym, bãi xe), ${cuoi}`;
-  if (/nhà xưởng|kho|đất công nghiệp|thuê đất/i.test(type)) return `VD: Vị trí (KCN, đường container), diện tích, kết cấu, chiều cao, công suất điện, PCCC, giấy phép, ${cuoi}`;
-  if (/văn phòng|mặt bằng|cửa hàng|shophouse/i.test(type)) return `VD: Mặt tiền rộng bao nhiêu, vỉa hè, số tầng / sàn, ngành nghề phù hợp, chỗ để xe, ${cuoi}`;
-  if (/đất/i.test(type)) return `VD: Vị trí, mặt tiền và chiều sâu, đường trước đất rộng bao nhiêu, hướng, quy hoạch, khoảng cách tới biển / trung tâm, ${cuoi}`;
-  if (/biệt thự|villa|liền kề|nhà/i.test(type)) return `VD: Vị trí, đường / kiệt rộng bao nhiêu, ô tô vào được không, số tầng, số phòng ngủ / tắm, hướng, nội thất, ${cuoi}`;
-  return `VD: Vị trí, diện tích, kết cấu, tiện ích xung quanh, ${cuoi}`;
-}

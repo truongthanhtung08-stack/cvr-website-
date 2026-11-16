@@ -552,11 +552,11 @@ export default function ContentEditor({
           // trỏ ở lớp KHÔNG cuộn của ô → con trỏ lơ lửng, trôi ra ngoài khung. Chữ nằm trong khối con thì con trỏ vẽ cùng lớp chữ (như ô gõ thường của
           // điện thoại: cuộn khuất thì khuất, cuộn lại thì hiện). flex cột = chữ rời luôn được bọc khối con (không đổi dữ liệu, giữ B / I).
           style={laDt ? { display: "flex", flexDirection: "column", gridArea: "1 / 1", minHeight: caoKeo && value.trim() ? Math.min(Math.max(caoKeo, CAO_5_DONG), caoToiDa) : Math.min(CAO_5_DONG, caoToiDa), maxHeight: caoKeo && value.trim() ? Math.min(Math.max(caoKeo, CAO_5_DONG), caoToiDa) : caoToiDa, overflowY: "auto", overscrollBehavior: "contain" } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
-          className="soan-thao caret-[#1a73e8] w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line max-sm:rounded-none max-sm:border-0 bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
+          className="soan-thao peer caret-[#1a73e8] w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line max-sm:rounded-none max-sm:border-0 bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (laDt
-          ? <p aria-hidden style={{ gridArea: "1 / 1", maxHeight: Math.min(CAO_5_DONG, caoToiDa), display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 4 }} className="pointer-events-none overflow-hidden px-3 py-2.5 text-[16px] leading-relaxed text-cvr-faint">{placeholder}</p>
-          : <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-[16px] leading-relaxed text-cvr-faint sm:text-sm">{placeholder}</p>
+          ? <p aria-hidden style={{ gridArea: "1 / 1", maxHeight: Math.min(CAO_5_DONG, caoToiDa), display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 4 }} className="pointer-events-none overflow-hidden px-3 py-2.5 text-[16px] leading-relaxed text-cvr-faint peer-focus:invisible">{placeholder}</p>
+          : <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-[16px] leading-relaxed text-cvr-faint sm:text-sm peer-focus:invisible">{placeholder}</p>
         )}
         </div>
         {/* GÓC KÉO giãn / thu ô (điện thoại) — đặt ở GÓC DƯỚI BÊN PHẢI ô theo chuẩn ô nhập (anh 15/11/2026: "để qua bên góc, theo chuẩn").
