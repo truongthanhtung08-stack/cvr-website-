@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
@@ -47,6 +47,17 @@ function laSamsungInternet() {
 // Nhưng CHROME thì khai đúng "image/*" lại KHÔNG hỏi app nào — nó tự bung lưới ảnh,
 // trùng y hệt dòng Thư viện ảnh. Nên Chrome phải khai hai loại để rơi về bảng chọn app.
 // ⛔ ĐỪNG GỘP HAI TRƯỜNG HỢP NÀY LÀM MỘT. Gộp kiểu nào cũng hỏng một bên.
+// TRÌNH DUYỆT TRONG ZALO (đo trên máy thật 16/11/2026, Phone Link): ô có accept ảnh (image/*, kể cả "image/*,application/pdf")
+// → Zalo mở BỘ CHỌN ẢNH RIÊNG của nó, chạm 1 ảnh là đóng (bỏ qua multiple) → khách không tải được ảnh hàng loạt.
+// Ô KHÔNG khai accept → Zalo nhường cho bộ chọn của Android (Máy ảnh · Files; Files có Hình ảnh, Bộ sưu tập, Ảnh) và giữ
+// chế độ CHỌN NHIỀU ("Đã chọn N · Chọn"). Nên trong Zalo hai dòng Thư viện ảnh + Thư mục bỏ accept, lọc ảnh ở handleThuMuc.
+// Trình duyệt khác giữ nguyên (đã duyệt).
+function laTrongZalo() {
+  return typeof navigator !== "undefined" && /Zalo/i.test(navigator.userAgent);
+}
+
+const khongDoi = () => () => {}; // tên trình duyệt không đổi trong lúc mở trang
+
 function acceptThuMuc() {
   return laSamsungInternet() ? "image/*" : "image/*,application/pdf";
 }
@@ -192,6 +203,9 @@ export default function ImagePicker({
   const [broken, setBroken] = useState<string[]>([]);
   // Đang mở bảng ba lối chọn ảnh hay chưa (bảng của mình, không phải của máy).
   const [moChon, setMoChon] = useState(false);
+  // Đọc sau khi dựng trang (máy chủ không biết trình duyệt) — tránh lệch thuộc tính accept giữa HTML máy chủ và máy khách.
+  const trongZalo = useSyncExternalStore(khongDoi, laTrongZalo, () => false);
+  const zaloNhieu = (ma: string) => trongZalo && (ma === "thuvien" || ma === "thumuc");
   // Mở bảng xong đưa trọn bảng (kể cả Huỷ) vào màn hình — điện thoại thật 15/11/2026: bảng mở ra khuất nửa dưới.
   const bangRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -511,6 +525,7 @@ export default function ImagePicker({
             }}
             type="file"
             {...(() => {
+              if (zaloNhieu(lo.ma)) return {}; // trong Zalo: không accept → bộ chọn Android, chọn nhiều được (xem laTrongZalo)
               const ac = lo.ma === "thumuc" ? acceptThuMuc() : lo.accept;
               return ac ? { accept: ac } : {};
             })()}
@@ -519,7 +534,7 @@ export default function ImagePicker({
             disabled={lo.ma === "video" ? uploadingVideo || conNhanVideo <= 0 : uploadingImg}
             onChange={(e) => {
               if (lo.ma === "video") handleVideoFile(e.target.files);
-              else if (lo.ma === "thumuc") handleThuMuc(e.target.files);
+              else if (lo.ma === "thumuc" || zaloNhieu(lo.ma)) handleThuMuc(e.target.files);
               else handleImageFiles(e.target.files);
             }}
             className="sr-only"
