@@ -1716,7 +1716,7 @@ export default function PostListingForm() {
           </div>
           <div id="o-dientich">
             <Label>{nhanDienTich(loaiHinh)} *</Label>
-            <input type="text" value={area} onChange={(e) => setArea(e.target.value)} placeholder={goiYDienTich(loaiHinh)} className={inputCls} />
+            <input type="text" inputMode="decimal" value={area} onChange={(e) => setArea(e.target.value)} placeholder={goiYDienTich(loaiHinh)} className={inputCls} />
           </div>
         </div>
         {/* CHỈ HIỆN MỤC THUỘC LOẠI HÌNH ĐANG CHỌN — đất nền không có phòng ngủ,
@@ -1727,19 +1727,19 @@ export default function PostListingForm() {
             coDienTichXayDung(loaiHinh) && (
               <div key="dtxd">
                 <Label>Diện tích sử dụng (m²)</Label>
-                <input type="text" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95" className={inputCls} />
+                <input type="text" inputMode="decimal" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95" className={inputCls} />
               </div>
             ),
             coPhongNgu(loaiHinh) && (
               <div key="pn">
                 <Label>Số phòng ngủ</Label>
-                <input type="text" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
+                <input type="text" inputMode="numeric" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
               </div>
             ),
             coPhongTam(loaiHinh) && (
               <div key="pt">
                 <Label>Số phòng tắm</Label>
-                <input type="text" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
+                <input type="text" inputMode="numeric" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
               </div>
             ),
           ].filter(Boolean);
