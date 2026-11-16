@@ -9,6 +9,7 @@ import { layBangGia } from "../lib/tin";
 import { soVN, supabase, usePhien } from "../lib/supabase";
 import { chonAnh, taiAnhLen } from "../lib/taiAnh";
 import { chonVideo, taiVideoLen } from "../lib/taiVideo";
+import { docSo } from "../lib/docSo";
 import { laVideo, tachAnh } from "../lib/media";
 import { useTai } from "../lib/useTai";
 import { layNguoiZalo } from "../lib/zalo";
@@ -37,7 +38,9 @@ const TOI_DA_ANH = 15; // web: mọi tin 15 ảnh (mức chung hiện hành)
 const VAT = 0.08; // src/lib/thue.ts — giá niêm yết chưa gồm GTGT
 
 const ngayVnSau = (n: number) => new Date(Date.now() + 7 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
-const so = (s: string) => (s.trim() ? Number(s.replace(/\./g, "").replace(",", ".")) : NaN);
+// Đọc số như web (PostListingForm): ô đã ghi rõ đơn vị (tỷ / triệu / m²) → "7,9" = "7.9" = 7,9 (docSo nghin3: false).
+// Trước đây bỏ hết dấu chấm → khách gõ "7.9" tỷ thành 79 tỷ.
+const so = (s: string) => (s.trim() ? docSo(s, { nghin3: false }) : NaN);
 const vnd = (n: number) => `${Math.round(n).toLocaleString("vi-VN")} đ`;
 
 // GIAO DIỆN = FORM WEB ĐIỆN THOẠI (PostListingForm, đo cạnh nhau khổ 375 ngày 14/11/2026 — anh: "như một bãi rác"):
@@ -267,14 +270,17 @@ export default function DangTin() {
     const ds = await chonAnh(conCho);
     if (!ds.length) return;
     setDangTaiAnh(true);
-    try {
-      for (const b of ds) {
+    // Một ảnh hỏng không chặn các ảnh còn lại — tải hết, xong mới báo lỗi (như web: mỗi ảnh một lượt).
+    let loiCuoi: string | undefined;
+    for (const b of ds) {
+      try {
         const url = await taiAnhLen(b);
         setAnh((cu) => [...cu, url]);
+      } catch (e) {
+        loiCuoi = (e as Error).message;
       }
-    } catch (e) {
-      setLoi((e as Error).message);
     }
+    if (loiCuoi) setLoi(loiCuoi);
     setDangTaiAnh(false);
   };
 

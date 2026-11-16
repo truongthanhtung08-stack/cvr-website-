@@ -66,9 +66,33 @@ async function nen(anh: Blob, canh = CANH_TOI_DA, chatLuong = 0.8): Promise<Blob
   }
 }
 
+// ẢNH HEIC / HEIF (ảnh gốc Samsung, iPhone) — như web uploadImage.ts doiHeic (commit 162d73fa, anh 16/11/2026: "ảnh up dạng nào
+// web cũng phải đọc được"): Chrome Android không vẽ được HEIC → trước đây ảnh lên kho nguyên dạng, trang tin không hiện.
+// Đổi sang JPEG trên máy khách rồi mới nén + đóng dấu. Thư viện giải mã ~3MB KHÔNG gói vào Mini App (gói đang ~1MB) — chỉ tải từ
+// jsDelivr khi gặp ảnh HEIC (web cũng lấy lõi ffmpeg từ jsDelivr), cùng bản heic-to 1.6.7 của web.
+// Ảnh chọn qua Zalo (chooseImage → fetch) thường KHÔNG mang loại tệp → nhận HEIC theo 12 byte đầu ("ftyp" + nhãn heic/mif1…).
+const HEIC_TO = "https://cdn.jsdelivr.net/npm/heic-to@1.6.7/dist/heic-to.js";
+async function laHeic(b: Blob): Promise<boolean> {
+  if (/^image\/hei[cf]/i.test(b.type)) return true;
+  const dau = new TextDecoder("latin1").decode(await b.slice(0, 12).arrayBuffer());
+  return dau.slice(4, 8) === "ftyp" && /^(heic|heix|hevc|hevx|heim|heis|mif1|msf1)$/.test(dau.slice(8, 12));
+}
+async function doiHeic(b: Blob): Promise<Blob> {
+  try {
+    if (!(await laHeic(b))) return b;
+    const { heicTo } = (await import(/* @vite-ignore */ HEIC_TO)) as { heicTo: (o: { blob: Blob; type: string; quality: number }) => Promise<Blob> };
+    return await heicTo({ blob: b, type: "image/jpeg", quality: 0.92 });
+  } catch {
+    return b; // không đổi được → bước kiểm dưới báo "không đọc được", không đưa ảnh trắng lên tin
+  }
+}
+
 /** Nén + tải một ảnh lên kho "listings". Trả về đường dẫn công khai. */
-export async function taiAnhLen(anh: Blob): Promise<string> {
+export async function taiAnhLen(goc: Blob): Promise<string> {
+  const anh = await doiHeic(goc);
   const ban = await nen(anh);
+  // Chỉ đưa lên kho dạng MỌI trình duyệt hiện được (như web). Không giải mã được (tệp hỏng, HEIC không đổi được, RAW…) → báo.
+  if (!/^image\/(jpeg|png|webp|gif|avif)$/i.test(ban.type)) throw new Error("Ảnh không đọc được — chọn ảnh khác.");
   const bam = await crypto.subtle.digest("SHA-256", await ban.arrayBuffer());
   const ma = Array.from(new Uint8Array(bam).slice(0, 12), (x) => x.toString(16).padStart(2, "0")).join("");
   const ten = `${ma}-zalo${ban.type === "image/webp" ? ".webp" : ".jpg"}`;
