@@ -215,13 +215,26 @@ export type TinChiTiet = Tin & {
   sdt: string | null; // SĐT người đăng — trong Mini App khách đã đăng nhập Zalo nên bấm là hiện (chủ dự án chốt 27/09)
   sdt_an: string | null;
   ghim: string | null; // toạ độ ghim trên bản đồ (nếu người đăng đã ghim)
+  han_basic?: string | null;
+  khuyen_mai?: boolean | null;
   dia_chi_ct: string | null; // số nhà, tên đường // bản che "0981 234 •••" (chỉ che 3 số cuối) hiện trước khi bấm, như web
 };
 const COT_CHI_TIET =
   `${COT},built_area_m2,dac_diem:details->specs,phap_ly:details->>legal,huong:details->>direction,noi_that:details->>furnish,` +
   "tien_ich:details->amenities,noi_that_ds:details->interior,du_an:details->>projectName," +
   "du_an_slug:details->>project,dia_chi_cu:details->diaChiCu,don_gia_ban:details->donGiaBan,sdt_goc:details->contact->>phone," +
-  "ghim:details->>mapPin,dia_chi_ct:details->>addressDetail";
+  "ghim:details->>mapPin,dia_chi_ct:details->>addressDetail,han_basic:details->>han_basic,khuyen_mai:details->plan->khuyenMai";
+
+// HẾT HẠN CỦA TIN — CHÉP ĐÚNG luật web (src/lib/listingsDb.ts hetHanLuc, CLAUDE.md 0.1): tier_expires_at chỉ là hạn VIP.
+// Khách chọn gói thường (details.plan.khuyenMai === false) → một hạn = tier_expires_at; tin theo chương trình → ngày MUỘN HƠN giữa
+// hạn VIP và hạn Basic (details.han_basic — VIP chạy song song kỳ Basic). Trước đây Mini App hiện thẳng tier_expires_at → ghi sai
+// "Hết hạn" (tin 260d0761: web 09/12/26, Mini App 16/11/26).
+export function hetHanTin(tierHet: string | null | undefined, khuyenMai: unknown, hanBasic: unknown): string | null {
+  const vip = tierHet ?? null;
+  if (khuyenMai === false) return vip;
+  const basic = typeof hanBasic === "string" && hanBasic ? hanBasic : null;
+  return vip && basic ? (Date.parse(basic) > Date.parse(vip) ? basic : vip) : vip ?? basic;
+}
 
 export async function layTinChiTiet(id: string): Promise<TinChiTiet | null> {
   const r = (await rest(`select=${COT_CHI_TIET}&status=eq.approved&id=eq.${encodeURIComponent(id)}&limit=1`)) as (TinChiTiet & { sdt_goc?: string | null })[];

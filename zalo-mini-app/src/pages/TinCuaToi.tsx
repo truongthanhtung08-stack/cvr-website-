@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button, Page, Spinner, Text, useNavigate } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
-import { anh } from "../lib/tin";
+import { anh, hetHanTin } from "../lib/tin";
 import { tachAnh } from "../lib/media";
 import { ngay } from "../lib/dinhDang";
 import { supabase, usePhien } from "../lib/supabase";
@@ -24,7 +24,7 @@ const TRANG_THAI: Record<string, { nhan: string; mau: string }> = {
 };
 const LOC = [["all", "Tất cả"], ["approved", "Đang hiển thị"], ["pending", "Chờ duyệt"], ["draft", "Nháp"], ["rejected", "Cần chỉnh sửa"], ["expired", "Hết hạn"]] as const;
 
-type Dong = { id: string; title: string; status: string; images: string[]; created_at: string; tier_expires_at: string | null; details: { ha_boi?: string } | null };
+type Dong = { id: string; title: string; status: string; images: string[]; created_at: string; tier_expires_at: string | null; details: { ha_boi?: string; han_basic?: string; plan?: { khuyenMai?: boolean } } | null };
 
 export default function TinCuaToi() {
   const dieuHuong = useNavigate();
@@ -72,7 +72,7 @@ export default function TinCuaToi() {
                     <div className="tcm-chu">
                       <p className="tcm-ten">{t.title || "(chưa có tiêu đề)"}</p>
                       <p className="tcm-tt" style={{ color: tt.mau }}>{tt.nhan}</p>
-                      <p className="tcm-ngay">Gửi {ngay(t.created_at)}{t.tier_expires_at ? ` · Hết hạn ${ngay(t.tier_expires_at)}` : ""}</p>
+                      <p className="tcm-ngay">Gửi {ngay(t.created_at)}{((h) => (h ? ` · Hết hạn ${ngay(h)}` : ""))(hetHanTin(t.tier_expires_at, t.details?.plan?.khuyenMai, t.details?.han_basic))}</p>
                     </div>
                   </div>
                   <div className="tcm-nut">

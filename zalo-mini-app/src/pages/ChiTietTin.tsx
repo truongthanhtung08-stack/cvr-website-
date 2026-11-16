@@ -10,7 +10,7 @@ import TruotNgang from "../components/TruotNgang";
 import XemSo from "../components/XemSo";
 import { nhanDienTich } from "../lib/listingSpec";
 import LichSuGia from "../components/LichSuGia";
-import { anh, hangHieuLuc, layNhieuTin, layTinChiTiet, layTinTuongTu, type TinChiTiet } from "../lib/tin";
+import { anh, hangHieuLuc, hetHanTin, layNhieuTin, layTinChiTiet, layTinTuongTu, type TinChiTiet } from "../lib/tin";
 import { gia, dienTich, diaChi, ngay } from "../lib/dinhDang";
 import { NHAN_THONG_SO } from "../lib/nhanThongSo";
 import { dsDaXem, ghiDaXem } from "../lib/daXem";
@@ -163,6 +163,7 @@ export default function ChiTietTin() {
     );
 
   const hang = NHAN_HANG[hangHieuLuc(tin)];
+  const hetHan = hetHanTin(tin.tier_expires_at, tin.khuyen_mai, tin.han_basic); // hạn CỦA TIN như web, không phải hạn VIP
   const cu = tin.dia_chi_cu;
   const diaChiCu = cu ? [cu.phuong, cu.quan, cu.tinh].filter(Boolean).join(", ") : "";
   const dg = giaM2(tin);
@@ -209,11 +210,11 @@ export default function ChiTietTin() {
             </button>
           </div>
         </div>
-        {(tin.published_at || tin.tier_expires_at) && (
+        {(tin.published_at || hetHan) && (
           <p className="hieu-luc">
             {tin.published_at && <>Hiệu lực: {ngayNgan(tin.published_at)}</>}
-            {tin.published_at && tin.tier_expires_at && " · "}
-            {tin.tier_expires_at && <>Hết hạn: {ngayNgan(tin.tier_expires_at)}</>}
+            {tin.published_at && hetHan && " · "}
+            {hetHan && <>Hết hạn: {ngayNgan(hetHan)}</>}
           </p>
         )}
         <h1 className="tieu-de-tin">{tin.title}</h1>
