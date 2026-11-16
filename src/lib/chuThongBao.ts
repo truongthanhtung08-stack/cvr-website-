@@ -116,6 +116,8 @@ export const HOP_BAO = {
   hetPhien: "Chưa lưu được: phiên đăng nhập đã hết. Tải lại trang, đăng nhập rồi bấm lại.",
   chuaDuyet: (loi: string) => `Chưa duyệt được tin: ${loi}`,
   loiSeo: (n: number, ds: string) => `Tin còn ${n} lỗi chuẩn SEO:\n· ${ds}\n\nBấm OK để mở tin sửa, xong bấm Duyệt.`,
+  // Tin KHÁCH tự đăng (16/11/2026): trang Sửa tin không có nút Duyệt tính tiền → không đẩy sang đó, cho chọn ngay tại đây
+  loiSeoTinKhach: (n: number, ds: string) => `Tin còn ${n} cảnh báo:\n· ${ds}\n\nOK = vẫn duyệt lên web · Huỷ = mở tin sửa.`,
   daLenWeb: (daTru: string, soDu: string, hoaDon: string) => `Tin đã lên web.\n\nĐã trừ ví: ${daTru}\nSố dư: ${soDu}\nHoá đơn: ${hoaDon}`,
   hetHanSauDuyet: "Đã duyệt nội dung, nhưng tin đã hết hạn — tin chuyển sang Hết hạn, khách cần bấm Đăng lại.",
   chuaDoiTrangThai: (loi: string) => `Chưa đổi được trạng thái tin: ${loi}`,

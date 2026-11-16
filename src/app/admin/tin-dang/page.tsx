@@ -5,7 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import TuKiemTin from "@/components/admin/TuKiemTin";
 import YeuCauNangGoi from "@/components/admin/YeuCauNangGoi";
-import { loiTinSeo } from "@/lib/kiemTinSeo";
+import { loiTinSeo, laTinHangLoat } from "@/lib/kiemTinSeo";
 import { HOP_BAO } from "@/lib/chuThongBao";
 import { tenLoaiHinh } from "@/lib/filters";
 import { hienTrongTinDangAdmin, laChoDuyetKhach, laChuAdminSoan } from "@/lib/choDuyet";
@@ -129,9 +129,12 @@ export default function AdminListingsPage() {
       const tin = rows.find((x) => x.id === id);
       const loiSeo = tin ? loiTinSeo(tin) : [];
       if (loiSeo.length) {
-        window.alert(HOP_BAO.loiSeo(loiSeo.length, loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")));
-        window.location.assign(`/admin/tin-dang/${id}${loiSeo[0].o ? `#${loiSeo[0].o}` : ""}`);
-        return;
+        const ds = loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ");
+        const moTin = () => window.location.assign(`/admin/tin-dang/${id}${loiSeo[0].o ? `#${loiSeo[0].o}` : ""}`);
+        // Tin hàng loạt: mở tin xem trước (form có nút Duyệt cho tin nạp). Tin KHÁCH: trang Sửa tin không có nút Duyệt tính tiền
+        // (đẩy sang đó là kẹt — tin 160d2c5a 16/11/2026) → anh chọn ngay: vẫn duyệt (máy chủ ghi lỗi đã xem vào seoChapNhan) hoặc mở tin sửa.
+        if (laTinHangLoat(tin!)) { window.alert(HOP_BAO.loiSeo(loiSeo.length, ds)); moTin(); return; }
+        if (!window.confirm(HOP_BAO.loiSeoTinKhach(loiSeo.length, ds))) { moTin(); return; }
       }
       const r = await fetch("/api/tin-dang/duyet", {
         method: "POST",

@@ -35,7 +35,9 @@ export const thieuTenDuong = (moTa: string, diaChi: string) => {
 // GIÁ TRONG CHỮ PHẢI KHỚP Ô GIÁ (chuẩn N8) — chuyển từ máy kiểm đợt sang đây để admin dùng chung (25/10/2026).
 // Bỏ số không phải giá tổng: đơn giá ("120 triệu/m²"), tiền giảm / cọc / phí / hoa hồng / thu nhập (đo 19/10).
 // "tr" phải là chữ đứng riêng — "287 Trần Hưng Đạo" không phải 287 triệu.
-const so = (s: string) => Number(String(s).replace(/\./g, "").replace(",", "."));
+// Dấu chấm chỉ là dấu nghìn khi theo sau đúng 3 chữ số ("1.500 triệu"); còn lại là dấu thập phân như dấu phẩy
+// ("7.9 tỷ" = 7,9 tỷ — tin 160d2c5a 16/11/2026 bị báo nhầm "79 tỷ khác ô giá 7,9 tỷ", anh duyệt không lên).
+const so = (s: string) => Number(/^\d{1,3}(\.\d{3})+$/.test(s) ? s.replace(/\./g, "") : s.replace(",", "."));
 const boNgu = (t: string) => t
   .replace(/(\d+(?:[.,]\d+)?)\s*(tỷ|ty|triệu|tr)(?![\p{L}\d])\s*\/\s*(m²|m2)/giu, " ")
   .replace(/(giảm|bớt|cọc|đặt cọc|phí|quản lý|điện|nước|hoa hồng|thu nhập|doanh thu|lợi nhuận|chiết khấu|hỗ trợ|vay|trả trước|thanh toán trước)[^.\n]{0,25}?\d+(?:[.,]\d+)?\s*(tỷ|ty|triệu|tr)(?![\p{L}\d])/giu, " ");
