@@ -32,7 +32,11 @@ Fluid Memory $0,84 · Function Invocations $0,31 · ISR Reads $0,17 · Function 
   liên quan** (Supabase · Vercel · Cloudflare · YouTube · Resend · Zalo ZBS/OA/Mini App · PayOS · Google): mỗi bên nằm trong gói, cân đối theo số
   hiện tại và tương lai, không để phát sinh.
 
-**⏳ BÀN GIAO 17/11/2026 TỐI (phiên 03f0f418, anh tắt máy: "bật lại để build và commit") — 7 commit CHƯA PUSH, web thật vẫn bản ab55e212:**
+**✅ 17/11/2026 ~22:00 ĐÃ PUSH 0406d9ef (anh: "kiểm và push hết") — web thật chạy bản này.** Đã kiểm web thật: 7 trang chính 200 · ảnh `/anh/*`
+qua Cloudflare, KHÔNG cookie, lần 2 `X-Vercel-Cache: HIT` (trước MISS mọi lượt) · 30/30 ảnh trang chủ 200. Usage Vercel kỳ 14/11–14/12 sau 3 ngày:
+hạ tầng $2,33 / $20 tín dụng (FOT $0,41 · ISR Writes $0,56 · CPU $0,40 · Build $0,31 · Observability $0,24), phí gói $40 = Pro $20 + Flat Rate CDN 10M $20.
+**Việc tiếp:** 19/11 đo lại Usage (FOT phải giảm) · anh quyết giữ/tắt Flat Rate CDN 10M ($20) + Observability · điện thoại thật chưa thử.
+**(lịch sử) BÀN GIAO 17/11/2026 TỐI (phiên 03f0f418) — 7 commit lúc đó chưa push:**
 d4ab08d1 email Admin gửi 1 lần · 5c737808 + 81fe5707 ảnh `/anh/*` qua Cloudflare (Worker `anh-coastalland`, `anh.coastalland.vn` ĐÃ CHẠY) ·
 phiên local_8de36471 gửi sang: 9355d5da nút ‹ › ảnh tin điện thoại · 7390e208 ô Tiêu đề 3 dòng cố định · adc69166 ô Mô tả không tự thu lại ·
 f46212ca chọn gói điện thoại chạm ô là chọn. **Đã kiểm (phiên 03f0f418):** build chung qua (trước 3 commit form) · máy thử 3008 khổ 375 cảm ứng:
