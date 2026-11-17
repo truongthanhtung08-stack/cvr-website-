@@ -4,7 +4,8 @@
 // ảnh dùng ANH_MAC_DINH ở cuối tệp. Chỉ để XEM — không lưu vào tin.
 // ============================================================================
 
-const KHO = "https://miyugmacyerqvzhgmbyd.supabase.co/storage/v1/object/public/listings/";
+// Qua /anh/ (Cloudflare, 17/11/2026) — không gọi thẳng kho Supabase (tốn băng thông Supabase mỗi lượt xem).
+const KHO = "/anh/listings/";
 
 // Chọn lại 12/11/2026 (anh: "chọn hình đẹp thay vào cho cả 2 bản, nhiều loại hình, ảnh đẹp") — mỗi hạng một loại hình:
 // Diamond biệt thự (mặt tiền + nội thất) · Gold căn hộ view sông · Silver nhà phố (phòng khách) · Basic đất nền dự án (ảnh trên cao)
