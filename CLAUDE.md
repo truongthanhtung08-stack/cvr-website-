@@ -5,6 +5,61 @@
 
 ---
 
+## ⛔⛔⛔ QUÁN TRIỆT CÁCH LÀM VIỆC VỚI CLAUDE (anh chốt 17/11/2026) — đọc TRƯỚC mọi việc
+**1. Vercel: giới hạn hạn mức hằng tháng — CẤM để phát sinh nhiều.**
+Hoá đơn KBVO2ERL-0004 (14/11/2026) **$56,42** = Pro $20 + **Flat Rate CDN 10M $20** (gói thêm, kỳ 14/11–13/12) + phát sinh kỳ 14/10–13/11 **$16,42**:
+Fast Origin Transfer $3,77 · ISR Writes $3,52 · Build CPU $2,93 (2.316 phút) · Fluid Active CPU $2,30 · Observability Events $1,57 · Deployment Storage $0,85 ·
+Fluid Memory $0,84 · Function Invocations $0,31 · ISR Reads $0,17 · Function Storage $0,16. (Kỳ trước: 9–10 $46,37 · 10–11 $30,45.)
+- Mục tiêu: mỗi tháng chỉ trả phí gói. Mọi việc Claude làm không được đẩy số nào trong bảng trên tăng lên.
+- Trước khi sửa mã đụng cache / cron / route máy chủ / ảnh / build: tính "mỗi tháng thêm bao nhiêu" — có thêm thì HỎI anh trước, không làm.
+- Build: gom việc, push MỘT lần mỗi đợt (Build CPU tính theo số lần đẩy lên main). Không push lắt nhắt.
+- Sau mỗi lần push đụng các phần trên: 1–2 ngày sau đo Vercel → Usage, báo anh số.
+- Gói thêm (Flat Rate CDN, Observability Plus…) và mức trần chi tiêu (Spend Management): chỉ anh quyết; Claude không tự bật / tắt / đổi.
+- Chi tiết kỹ thuật đã sửa: mục 0C1.
+- **Cân đối dung lượng web theo gói Supabase + Vercel — hiện tại và tương lai (anh 17/11):** nắm số đang dùng so với hạn mức gói (Supabase:
+  CSDL, kho ảnh/video, băng thông ra, số tài khoản · Vercel: các khoản trong hoá đơn) và dự tính khi số tin / khách tăng (web phải chịu 10.000 tin).
+  Thêm tính năng, tin, ảnh, video → tính trước còn nằm trong gói không; sắp chạm hạn mức → báo anh trước, không để vượt rồi mới biết.
+- **Ảnh + video đi qua YouTube và Cloudflare (anh 17/11):** video phát qua kênh YouTube (luật 08/10, cách hiển thị đã đóng băng) · ảnh đi qua
+  Cloudflare (kho R2 / CDN Cloudflare — kế hoạch `docs/KE-HOACH-HA-TANG.md`) → Supabase và Vercel không gánh dung lượng, băng thông ảnh/video.
+  Hiện ảnh còn ở kho Supabase, đi qua `/anh` (vẫn MISS do cookie `__cf_bm`); video khách tự đăng còn ở kho Supabase, chưa tự chuyển lên YouTube.
+  Chuyển là đổi đường dẫn ảnh toàn web → lập kế hoạch, anh duyệt rồi mới làm; không làm mất ảnh nào (luật CẤM XOÁ ẢNH).
+  **17/11 đã đo + làm:** số đo, dự tính 10.000 tin, các bước: `docs/KE-HOACH-HA-TANG.md` mục "17/11/2026". ✅ Chép bù Supabase → R2 XONG (8.067/8.067, hỏng 0, `scripts/dong-bo-r2.mjs`) · Worker
+  `cloudflare/anh-worker.js` (giữ đường dẫn `/anh/...`). ✅ Worker `anh-coastalland` + kho R2 `ANH` + tên miền `anh.coastalland.vn` ĐÃ CHẠY
+  (Claude tạo trên Chrome anh, bản 3e9403f4; đã thử ảnh, ảnh nhỏ, video Range iPhone, 404, tự chép tệp mới). Commit 81fe5707 đổi `vercel.json` +
+  `next.config.ts` rewrite `/anh/*` → `anh.coastalland.vn` — CHƯA PUSH. Sau Push: đo `X-Vercel-Cache: HIT` ảnh + Usage Vercel/Supabase sau 2 ngày.
+  Sửa Worker: sửa `cloudflare/anh-worker.js` rồi dán vào Cloudflare → Workers → anh-coastalland → Edit code → Deploy.
+  **Áp cho CẢ nội dung trên Admin** (ảnh/video dự án, bài Tin tức, banner, ảnh đầu trang, tin nạp hàng loạt, tin khách) **và mọi nhà cung cấp
+  liên quan** (Supabase · Vercel · Cloudflare · YouTube · Resend · Zalo ZBS/OA/Mini App · PayOS · Google): mỗi bên nằm trong gói, cân đối theo số
+  hiện tại và tương lai, không để phát sinh.
+
+**⏳ BÀN GIAO 17/11/2026 TỐI (phiên 03f0f418, anh tắt máy: "bật lại để build và commit") — 7 commit CHƯA PUSH, web thật vẫn bản ab55e212:**
+d4ab08d1 email Admin gửi 1 lần · 5c737808 + 81fe5707 ảnh `/anh/*` qua Cloudflare (Worker `anh-coastalland`, `anh.coastalland.vn` ĐÃ CHẠY) ·
+phiên local_8de36471 gửi sang: 9355d5da nút ‹ › ảnh tin điện thoại · 7390e208 ô Tiêu đề 3 dòng cố định · adc69166 ô Mô tả không tự thu lại ·
+f46212ca chọn gói điện thoại chạm ô là chọn. **Đã kiểm (phiên 03f0f418):** build chung qua (trước 3 commit form) · máy thử 3008 khổ 375 cảm ứng:
+tin 688b30e5 khung ảnh = ảnh (232px), nút › trong ảnh, vùng chạm 44px còn · ảnh qua `/anh` → Cloudflare 200; 5 trang (chủ, mua bán, cho thuê, dự án,
+tin tức) không ảnh hỏng (649 ảnh, kiểm dở — chưa thấy lỗi). **CHƯA KIỂM — bật máy làm:** ① `NEXT_DIST_DIR=.next-kiem npx next build` cả 7 commit
+② form đăng tin khổ 375 (bản dev `/dang-tin?xem-thu=1`): Tiêu đề 88px, Mô tả giữ cỡ khi chạm, chọn gói bằng chạm ô; `scripts/do-o-bi-che.mjs … 470`
+③ điện thoại thật (Chrome, Safari, Zalo) ④ anh "Push" → kiểm ảnh web thật `X-Vercel-Cache: HIT` → 2 ngày sau đo Usage Vercel + Supabase.
+Tệp đang đổi KHÔNG phải của 2 phiên này (đừng add): ChonCoTim, PostListingForm, admin/ListingForm, dang-tin/page, next.config (dòng allowedDevOrigins), tsconfig, next-env, launch.json.
+
+**Làm thì làm cho TRỌN, không ngắt quãng giữa chừng (anh 17/11).** Anh giao việc → làm hết một mạch tới khi xong + kiểm xong rồi mới báo một lần.
+Không dừng giữa chừng để hỏi / báo dở; việc chạy nền thì vừa chờ vừa làm tiếp phần khác. Chỉ dừng khi bước đó phải đúng tay anh (tài khoản, tiền,
+duyệt chữ) — khi ấy làm xong mọi phần còn lại trước, rồi báo đúng MỘT việc anh cần làm.
+
+**4. Email thông báo cho Admin: gửi MỘT lần cho mỗi việc — không lặp đi lặp lại.** Nội dung ngắn gọn, rõ ràng, đúng việc cần báo (việc gì · tin /
+khách nào · cần anh làm gì + link). Việc đã báo thì không gửi lại (cron, thử lại, tự kiểm 8h không được gửi trùng); lỗi đã báo mà chưa xử lý thì
+nằm ở Admin → Tổng quan, không gửi email lại. Sửa / thêm đường gửi email Admin → kiểm trùng trước khi báo xong.
+
+---
+
+## ⛔⛔⛔ SỬA LỖI = CHỈ SỬA LỖI — CẤM PHÁ CÁI ĐÃ FIX (anh chốt 17/11/2026: "sửa là chỉnh sửa lỗi chứ không phải PHÁ cái đã fix để rồi cứ build đi build lại")
+Cái đã fix, đã chạy đúng thì CẤM đụng. Sửa / thêm gì (nhất là CSS chung `globals.css`, thành phần dùng chung) → trước khi báo xong: kiểm các chỗ
+đã fix có còn y như cũ không (đo trên web thật / máy thử khổ 375 cảm ứng + máy tính). Không chắc có đụng cái đã fix không → hỏi anh, không làm.
+**Bài học 17/11:** commit 0c7f32e2 (13/11, "UI điện thoại chuẩn Apple") thêm luật CSS nới vùng chạm nút 36px viết NGOÀI lớp Tailwind
+→ đè `absolute` của mọi nút tròn 36px trên điện thoại → nút ‹ › khung ảnh tin rơi xuống dưới ảnh, khung dư dải trắng 72px (khung ảnh đã fix
+từ trước). Sửa gốc 9355d5da: đưa vào `@layer base`. **Luật CSS tự viết trong `globals.css` phải nằm trong `@layer base`/`components`,
+không viết trần ngoài lớp** — viết trần là thắng mọi lớp Tailwind, phá bố cục đã chạy.
+
 ## ⛔⛔⛔ CẤM VĨNH VIỄN PHIÊN local_d7590912-b09a-4e9b-bed6-2a99617b7cc4 (anh chốt 08/11/2026)
 Phiên **local_d7590912-b09a-4e9b-bed6-2a99617b7cc4** (bản ghi e7f4594c-0544-4bad-97e2-13f790784976, Claude Opus 5.5, 07–08/11/2026 — bộ lọc / trường Địa điểm).
 Lỗi phải nói lại nhiều lần: xem bảng "⛔ LỖI PHIÊN e7f4594c" trong khối bàn giao 08/11 bên dưới.
@@ -38,6 +93,58 @@ hiện ẢNH THU NHỎ thật (cao 64px) + nút ×. Đo `scripts/do-o-bi-che.mjs
 — thanh bước tự ẩn khi bàn phím bật). **Mọi lần đụng ContentEditor / BanPhimAo / thanh dính form đăng tin:** đo cả ô Mô tả với thanh B / I đang
 dính, xem ảnh chụp khổ 375 có thanh đè ô không, RỒI mới báo. Máy thật (iPhone Safari, Samsung, Zalo) anh xác nhận.
 
+## ✅ 16/11/2026 ~18:30 — ĐÃ PUSH ab55e212 (phiên local_0fba41f6, anh "push") — web chạy bản này, đã kiểm mã trang thật
+**Đã lên web:** 12 commit 13e25d28 → ab55e212 (mọi commit khối dưới + ab55e212). ab55e212: trình duyệt trong app (Zalo/FB, theo tên trình duyệt)
+bật `navigator.virtualKeyboard.overlaysContent` → Zalo hết tự kéo ô Mô tả lên mép trên (đo Zalo thật: Mô tả 0 lần dịch / 4 lần chạm; Giá 0;
+Diện tích, Tiêu đề 1 lần) · Zalo: ô Tiêu đề tối đa 4 dòng · chữ gợi ý "Nhập tiêu đề bất động sản" / "Nhập nội dung mô tả bất động sản", chạm là ẩn
+· mục 5 Gói tin điện thoại: tiêu đề 17px, tab "Chương trình", giá mỗi thứ một dòng. Chrome / Safari / Samsung GIỮ cơ chế cũ (anh chốt: "áp cơ chế
+Chrome cho trình duyệt khác, trừ Zalo đã chỉnh") — bản "một chuẩn < 640px" đã bỏ, KHÔNG làm lại. Máy giả lập Android (do-o-bi-che 470): 10/10 ô
+không che, mỗi ô dịch một chiều.
+**⛔ CHƯA KIỂM (anh mệt, dừng 16/11 tối) — phiên sau làm:**
+1. **Ảnh HEIC (anh báo lỗi tải ảnh HEVC/HEIC):** chưa tái hiện được. Nghi gốc: `uploadImage.ts` `laHeic` chỉ nhận HEIC theo loại tệp / đuôi tên —
+   ảnh chọn trong Zalo thường KHÔNG có loại tệp / đuôi → không đổi HEIC → Chrome Android không giải mã → "Ảnh … không đọc được". Mini App đã nhận
+   theo 12 byte đầu ("ftyp" + heic/mif1…, `zalo-mini-app/src/lib/taiAnh.ts`) — web chưa. Cần ảnh HEIC THẬT để thử (tệp `OneDrive\Desktop\Tempt\Sơ đồ
+   khu đất .heic` thực ra là JPEG — tệp này vẫn đi qua được vì nenAnh giải mã theo nội dung). Hỏi anh xin ảnh chụp lỗi + một ảnh HEIC gốc.
+2. Bản ĐÃ LÊN WEB chưa chạm thử trên điện thoại (form web thật cần đăng nhập; số đo Zalo ở trên là trên máy thử 3000 trước push).
+3. Mục 7 ô số điện thoại + gõ ô Mô tả: ĐÃ ĐO GIẢ LẬP 16/11 tối (Edge 390px, bản dev): chưa có số → ô "Số điện thoại của bạn" gõ được (đúng luật:
+   tài khoản chưa có số thì nhập + xác minh khi đăng, có rồi thì không hỏi) · Mô tả 18 ms/phím (Tiêu đề 36), dán 5.400 ký tự 47 ms, gõ tiếp 32 ms →
+   hết lag. Bản build tắt ?xem-thu (chỉ dev) → đo giả lập dùng bản dev. Chưa thử tay trên máy thật.
+4. Lỗi #10 sổ `.claude/LOI-ZALO-16-11.md`: trong Zalo tắt bàn phím mà ô còn chọn → đầu trang COASTAL LAND vẫn ẩn — chưa sửa.
+5. Samsung Internet, iPhone Safari: chưa thử.
+6. Tin nháp thử 56687f40 + 28f0e7ee (tài khoản fbe1d9ec) chưa xoá · Mini App ea463a74 / f442a60c / 6d99bc88 chưa deploy lên Zalo (phiên local_76b49610).
+
+## ⏳ BÀN GIAO 16/11/2026 TỐI (phiên 18419c5a, anh: "bàn giao hết trong CLAUDE.md, ghi lỗi vào, để tao điều phối khác") — ĐÃ PUSH (xem khối trên)
+**Việc đang dở, đã giao phiên `local_0fba41f6` ("Hết giật ô gõ form đăng tin trong Zalo"):** chạm ô gõ trong Zalo còn giật — chi tiết khối ⛔ ngay dưới.
+**Đã commit hôm nay (CHƯA PUSH, web thật vẫn bản cũ 13e25d28):** f68a7cc8 (duyệt tin: "7.9 tỷ" không thành 79) · 162d73fa (ảnh HEIC → JPEG,
+mọi dạng số "7,9"/"7.9" qua `src/lib/docSo.ts`) · 31d1697c (cảnh báo ở Duyệt tin chỉ để xem, bấm Duyệt là lên web) · 9d64faca (ô Mô tả hết
+nhảy lặp trên trình duyệt không báo bàn phím) · ace7475a (Zalo: gõ thì ẩn đầu trang; ô Diện tích / phòng mở bàn phím số) · ed096f88 + 4d1e0a69
+(thử chọn nhiều ảnh trong Zalo → KHÔNG được, đã trả lại) · 2c7fd48c (giật trong Zalo/FB: scroll-margin-bottom âm, BanPhimAo 1 bước, Mô tả gom
+300 ms, ô số điện thoại mục 7 gõ được). Phiên Mini App: 6d99bc88, f442a60c (ô Mô tả Mini App), ea463a74 (Mini App ghi hạn tin đúng luật web).
+**Chưa commit:** `src/app/layout.tsx` — áp phần sửa giật cho MỌI trình duyệt điện thoại (matchMedia < 640px) + ô Tiêu đề `#o-tieude` luôn tối đa
+4 dòng; anh chưa duyệt. Các tệp khác đang đổi (ChonCoTim, admin/ListingForm, next.config, tsconfig, next-env, launch.json, hunk `nhom=` trong
+PostListingForm) là của phiên khác — không add.
+**Đã làm không qua mã:** bảng `HE-THONG-TU-KHOA.xlsx` +439 dòng "giá rẻ" (đã nạp Admin, chưa xin index — hết lượt / trang < 5 tin) ·
+`RA\VIEC.md` mục 0J cho Cowork · tin khách 160d2c5a (8 ảnh HEIC đổi WebP, khách đã được duyệt) · sổ lỗi Zalo `.claude/LOI-ZALO-16-11.md`.
+**Sự thật đã đo trên Zalo thật (đừng hỏi lại):** trình duyệt trong Zalo chỉ cho chọn 1 ảnh/lần (bộ chọn của Zalo; bỏ accept thì ra bộ chọn
+Android nhưng vẫn 1 ảnh) — chỉ Mini App chọn nhiều · link `zalo.me/s/1268705237708475790/<đường>` bấm trong Zalo mở thẳng Mini App ·
+Zalo KHÔNG đưa số điện thoại cho web (chỉ tên + ảnh) → tài khoản Zalo chưa có số phải xác minh số 1 lần · tài khoản Zalo trên điện thoại anh
+= fbe1d9ec (chưa có số; số anh ở 0b9e07d6, không gộp) · gõ / dán từ bàn phím máy tính qua Phone Link làm điện thoại tắt bàn phím ảo.
+**Còn lại trên máy / tài khoản:** tin nháp thử 56687f40 + 28f0e7ee (tài khoản fbe1d9ec) — xoá khi xong · Claude lỡ thả 2 tim vào tin "Gọi quảng cáo
+hội nhôm giúp" trong chat Zalo với Tuyen (anh gỡ) · đường hầm cloudflared anh chạy (`claire-academy-boxed-hampshire.trycloudflare.com`) ·
+máy 3000 `next dev` (preview phiên local_7f6fbd7e).
+**⛔ LỖI CỦA PHIÊN 18419c5a HÔM NAY — ĐỪNG LẶP:**
+| Lỗi | |
+|---|---|
+| Cả buổi không làm xong việc chính anh giao: hết giật ô gõ trong Zalo | sửa → báo "hết" → anh thử vẫn giật, nhiều vòng |
+| Báo "đã sửa / đã xong" khi chưa đo trên máy thật (chọn nhiều ảnh: báo xong, thực tế vẫn 1 ảnh) | phải trả lại commit |
+| Tự thêm mã gây lỗi mới: "tắt bàn phím thì bỏ chọn ô" làm bàn phím TỰ TẮT ngay khi bật; giới hạn ô Tiêu đề chỉ lúc gõ làm trang nhảy | gỡ |
+| Đoán gốc rồi sửa trước khi đo; thử cách rồi gỡ liên tục (giữ trang đứng yên, scroll-margin-top, thả ghim thanh bước) | mất thời gian |
+| Kết luận sai "lỗi do điện thoại/Phone Link" dựa trên ô Họ tên là ô KHOÁ (readonly) | phải đính chính |
+| Bấm nhầm trên điện thoại anh: Esc đóng trình duyệt → thả 2 tim vào chat Tuyen; mở máy ảnh Zalo; dán link vào ô Mô tả; suýt chia sẻ | |
+| Hỏi lại nhiều, giải thích dài, anh không hiểu ("cái gì", "nói gì") | nói ngắn, chữ thường |
+| Đề cập Push / web thật nhiều lần khi anh không hỏi | |
+| Dừng build / chạy build song song làm bản thử treo; cửa sổ Phone Link đóng do click nhầm | |
+
 ## ⛔⛔⛔ CẤM GIẬT · NHẢY · LAG KHI CHẠM Ô GÕ VÀ BÀN PHÍM BẬT — MỌI Ô, MỌI TRÌNH DUYỆT, CẢ TRONG ZALO / FACEBOOK (anh chốt 16/11/2026)
 Anh (nguyên văn): "TAO CẤM TÌNH TRẠNG GIẬT LẮC KHI BẤM VÀO Ô GÕ HIỆN BÀN PHÍM KIỂU GIẬT VỚI LAG NÀY — bất kỳ đâu".
 Chạm ô gõ (ô chữ, ô số, ô Mô tả, khung xác minh số…) → chỉ bàn phím bật, ô đứng yên trong tầm nhìn; KHÔNG kéo trang nhiều lần, không nhảy,
@@ -55,6 +162,11 @@ bàn phím đang bật (từ ô khác sang) thì đặt khung ngay (datKhung). �
 (khung soạn tự đặt); ô bị bàn phím che: 1 (Zalo đưa lên) — HẾT đi-rồi-về. ⛔ Đã thử & gỡ: "giữ trang đứng yên" (scrollTo liên tục) — lần kéo
 của Zalo là của WebView, web không dừng được, giành nhau = giật thêm; scroll-margin-top / scroll-padding — Zalo bỏ qua.
 Chưa đo: đang gõ Tiêu đề chạm sang Mô tả (phần chữ Mô tả nằm dưới bàn phím, Phone Link không chạm tới). Anh chưa xác nhận bằng tay.
+**16/11 17:20 — ANH DỪNG ("đủ rồi"). CHƯA XONG:** đo lại sau 2c7fd48c: Zalo VẪN tự kéo ô lên SÁT MÉP TRÊN (ô Giá 249→12px, ô Mô tả
++85px) rồi BanPhimAo / datKhung kéo về = còn một lần đi-rồi-về. Đã thử & gỡ thêm: "tắt bàn phím thì bỏ chọn ô" theo cỡ cửa sổ (bắt nhầm,
+bàn phím tự tắt ngay khi bật) · cho "‹ Đăng tin" + thanh bước thôi ghim lúc gõ (Mô tả vẫn đi-rồi-về). CHƯA COMMIT trong `layout.tsx`: áp phần
+sửa cho MỌI trình duyệt điện thoại (matchMedia < 640px, thay vì chỉ Zalo) + ô Tiêu đề (#o-tieude) LUÔN tối đa 4 dòng — anh chưa duyệt.
+Hướng chưa thử: cho datKhung / BanPhimAo đặt ô đúng chỗ Zalo sẽ kéo tới (mép trên ô = 0) để Zalo không kéo; cần đo trên Zalo thật.
 Bản thử trên điện thoại: đường hầm anh chạy (`cloudflared … --url http://localhost:3000`, link trong My Documents Zalo, thêm `?xem-thu=1`).
 
 ## ⏳ 15/11/2026 20:30 — Ô MÔ TẢ ĐIỆN THOẠI: TRẠNG THÁI CUỐI (anh: "thôi dừng, ghi vào CLAUDE.md") — CHƯA PUSH
