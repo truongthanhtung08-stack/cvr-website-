@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { flushSync } from "react-dom";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 import { imageMarkerUrl, videoMarkerUrl } from "@/lib/dauNoiDung";
 import { asset } from "@/lib/asset";
@@ -170,28 +169,26 @@ export default function ContentEditor({
       const caoTho = Math.max(72, Math.min(caoMan.current * 0.58 - phu, cao - tren - caoNhan - phu - 8));
       return Math.round(dem + Math.max(2, Math.floor((caoTho - dem) / dong)) * dong);
   };
-  // Phần màn hình còn thấy khi bàn phím bật (đo lần trước); chưa đo thì đoán ~55% màn hình
-  const caoConThay = useRef(0);
   const giuCoLuc = useRef(0);
   const choConTro = useRef(0);
   useEffect(() => {
     if (!laDt) return;
     const vv = window.visualViewport;
     const tinh = () => {
-      const cao = vv ? vv.height : window.innerHeight;
       if (window.innerHeight > caoMan.current) caoMan.current = window.innerHeight; // cao màn hình khi KHÔNG có bàn phím
       const bp = banPhimBat();
       // Vừa chạm ô, bàn phím đang trượt lên: Chrome đổi cỡ thêm một nấc trung gian (thanh địa chỉ thu, nhật ký 18:45: 631→659→373) — nấc đó
       // không phải bàn phím tắt; tính theo nó thì ô giãn to, chữ nhảy về đầu rồi co lại = GIẬT. Bỏ qua trong 0,8 giây sau khi chạm.
       if (!bp && document.activeElement === khungRef.current && Date.now() < giuCoLuc.current) return;
-      if (bp) caoConThay.current = cao; // nhớ phần còn thấy khi bàn phím bật — lần chạm sau co ô sẵn đúng cỡ (không giật)
       const ed = khungRef.current;
-      setCaoToiDa(tinhCao(cao));
+      // MIN · MAX CỐ ĐỊNH THEO MÀN HÌNH (anh 17/11/2026: "đã giãn ra thì bấm vào hiện như vậy, sao phải TỰ THU LẠI"): MAX tính theo cao màn hình
+      // KHÔNG có bàn phím, bàn phím bật / tắt không đổi cỡ ô. Trước đây MAX = phần còn thấy trên bàn phím (máy anh ~135px ≈ MIN) → chạm vào là ô co.
+      setCaoToiDa(tinhCao(caoMan.current));
       if (!bp) daDat.current = false; // bàn phím tắt → lần bật sau đặt khung lại một lần
-      // Bàn phím vừa bật: đặt khung + đưa dòng con trỏ vào khung NGAY sau khi ô co (L5, 18:57: chờ 2 khung hình thì Chrome tự kéo trang đi tìm con trỏ
+      // Bàn phím vừa bật: đưa dòng con trỏ lên trên bàn phím + đặt khung NGAY (L5, 18:57: chờ 2 khung hình thì Chrome tự kéo trang đi tìm con trỏ
       // trước, rồi lệnh mình kéo lại = nhảy 3 lần)
       else if (ed && document.activeElement === ed) {
-        flushSync(() => setCaoToiDa(tinhCao(cao))); giuConTro(); thuDatKhung();
+        thuDatKhung(); giuConTro();
       }
     };
     caoMan.current = window.innerHeight;
@@ -211,8 +208,11 @@ export default function ContentEditor({
     if (!c) return;
     const sc = ed;
     const k = sc.getBoundingClientRect();
+    // Đáy phần ô CÒN THẤY: bàn phím bật mà ô cao hơn phần còn thấy → đáy là mép trên bàn phím (ô không co, chữ cuộn trong ô)
+    const vv = window.visualViewport;
+    const day = Math.min(k.bottom, vv ? vv.offsetTop + vv.height : window.innerHeight);
     if (c.top < k.top + 4) sc.scrollTop -= k.top + 8 - c.top;
-    else if (c.bottom > k.bottom - 4) sc.scrollTop += c.bottom - k.bottom + 8;
+    else if (c.bottom > day - 4) sc.scrollTop += c.bottom - day + 8;
   };
   useEffect(() => { requestAnimationFrame(giuConTro); }, [caoToiDa, caoKeo]); // eslint-disable-line react-hooks/exhaustive-deps
   // ĐẶT KHUNG VÀO TẦM NHÌN (một lần, mượt): khung vừa phần màn hình còn thấy mà đầu khung (thanh B · I) khuất dưới thanh trên, hoặc đáy
@@ -248,8 +248,7 @@ export default function ContentEditor({
   // lần trước), đưa khung lên dưới thanh trên, cuộn trong ô cho dòng vừa chạm nằm trong tầm nhìn — cùng một khung hình, dịch MỘT lần.
   const duBao = () => {
     giuCoLuc.current = Date.now() + 800;
-    const cho = caoConThay.current || Math.round(caoMan.current * 0.55);
-    flushSync(() => setCaoToiDa(tinhCao(cho)));
+    // Ô GIỮ NGUYÊN CỠ khi chạm (anh 17/11/2026) — chỉ đưa khung lên + dòng vừa chạm vào phần sẽ còn thấy trên bàn phím
     datKhung();
     giuConTro();
     // CHẠM BẰNG NGÓN TAY: điện thoại đặt con trỏ SAU lệnh chạm (nhật ký 19:07: chọn chữ đổi sau click 17ms) → lúc này chưa có con trỏ ở dòng vừa
@@ -257,7 +256,7 @@ export default function ContentEditor({
     choConTro.current = Date.now() + 500;
     // Bàn phím không bật (máy có bàn phím rời…) → trả ô về cỡ thường. Ô còn đang gõ thì GIỮ: Samsung / Zalo / Facebook có bàn phím mà không báo
     // (trang không co) — trả về là khung giãn ra rồi co lại = giật (16/11/2026). Rời ô thì onBlur trả về.
-    setTimeout(() => { if (!banPhimBat() && document.activeElement !== khungRef.current) setCaoToiDa(tinhCao(window.visualViewport?.height ?? window.innerHeight)); }, 850);
+    setTimeout(() => { if (!banPhimBat() && document.activeElement !== khungRef.current) setCaoToiDa(tinhCao(caoMan.current)); }, 850);
   };
   const dangGoTruoc = useRef(false); // lúc chạm, ô đã đang gõ chưa (chạm chữ khi đang gõ ≠ chạm mở ô)
   const keoRef = useRef<HTMLDivElement>(null);
@@ -527,7 +526,7 @@ export default function ContentEditor({
           onBlur={() => {
             daDat.current = false; nhoKhoi(); phat();
             // Rời ô ở trình duyệt không báo bàn phím → trả khung về cỡ thường (Chrome: bàn phím tắt tự đổi cỡ, dòng này không làm gì thêm)
-            if (laDt) setTimeout(() => { if (document.activeElement !== khungRef.current && !banPhimBat()) setCaoToiDa(tinhCao(window.visualViewport?.height ?? window.innerHeight)); }, 300);
+            if (laDt) setTimeout(() => { if (document.activeElement !== khungRef.current && !banPhimBat()) setCaoToiDa(tinhCao(caoMan.current)); }, 300);
           }}
           onPaste={(e) => {
             // Chỉ lấy CHỮ — bỏ định dạng rác của nơi khác (màu, cỡ chữ, bảng…).
