@@ -203,12 +203,14 @@ export default function BangGiaGoiTin({
                           onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, ngay))}
                           aria-pressed={dangChon}
                           // MỘT LỚP KHUNG (chủ dự án 23/10/2026: "phần giá có 2 cái khung"): ô giá không viền riêng — chỉ ô đang chọn có viền đậm.
-                          className={`w-full rounded-xl px-1.5 py-1.5 transition ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
+                          className={`relative w-full rounded-xl px-1.5 py-1.5 transition ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
                         >
                           {noiDung}
+                          {dangChon && <span aria-hidden className="absolute -right-1.5 -top-1.5 z-[1] hidden h-4 w-4 items-center justify-center rounded-full bg-cvr-ink text-[10px] font-bold leading-none text-white max-sm:flex">✓</span>}
                           {/* Nút chọn rõ ràng (chủ dự án 09/10/2026) */}
                           {/* GỌN (anh 12/11/2026: "có thể sắp xếp thu gọn lại được mà") — nút thấp, sát số tiền */}
-                          <span className={`mt-1 inline-flex h-6 items-center rounded-md px-2.5 text-[11.5px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
+                          {/* ĐIỆN THOẠI (anh 17/11/2026: "chỉnh gọn lại, bỏ nút Chọn và Bỏ chọn, chọn / bỏ chọn theo chuẩn"): không nút — chạm ô là chọn (viền + ✓), chạm lại là bỏ */}
+                          <span className={`mt-1 inline-flex max-sm:hidden h-6 items-center rounded-md px-2.5 text-[11.5px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
                             {dangChon ? "Bỏ chọn" : "Chọn"}
                           </span>
                         </button>
