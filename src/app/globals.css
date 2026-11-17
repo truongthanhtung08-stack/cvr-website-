@@ -929,9 +929,14 @@ body[data-nav="in"] main {
 :where(a:has(img)).vua-bam { transform: scale(0.99); }
 :where(a:not(:has(img)):not(.press)).vua-bam { animation: tab-mo 220ms cubic-bezier(0.25, 0.1, 0.25, 1); }
 /* VÙNG CHẠM ≥ 44 px (chuẩn Apple HIG): nút biểu tượng 36 px (Yêu thích, Chia sẻ…) nới vùng bấm ra 4 px mỗi phía, hình nút giữ nguyên */
-@media (pointer: coarse) {
-  :where(button.h-9.w-9) { position: relative; }
-  :where(button.h-9.w-9)::after { content: ""; position: absolute; inset: -4px; }}
+/* @layer base (17/11/2026): luật viết NGOÀI lớp thắng mọi lớp Tailwind bất kể :where — "position: relative" từng đè "absolute" của nút ‹ › trên ảnh
+   tin (nút rơi xuống dưới ảnh, khung dư dải trắng 72px). Trong lớp base thì lớp riêng của nút (absolute, fixed…) luôn thắng. */
+@layer base {
+  @media (pointer: coarse) {
+    :where(button.h-9.w-9) { position: relative; }
+    :where(button.h-9.w-9)::after { content: ""; position: absolute; inset: -4px; }
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   :where(button:not(:disabled), [role="button"]).vua-bam, :where(a:has(img)).vua-bam { transform: none; }
   :where(a:not(:has(img)):not(.press)).vua-bam { animation: none; }
