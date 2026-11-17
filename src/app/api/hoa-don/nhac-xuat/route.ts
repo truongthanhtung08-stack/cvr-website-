@@ -77,6 +77,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, canNhac: false, nhatKy, message: "Không có giao dịch nào chờ xuất hóa đơn." });
   }
 
+  // ── MỖI GIAO DỊCH CHỈ NHẮC MỘT LẦN (anh 17/11/2026: email Admin gửi 1 lần, không lặp lại) ──
+  // Nhớ id đã nhắc ở site_content "nhac_hoa_don_da_bao" (chỉ giữ id còn chờ xuất). Không có giao dịch MỚI → không gửi;
+  // hoá đơn cũ chưa ký vẫn hiện ở Admin → Hóa đơn & thuế. Trước đây nhắc lại 20:00 + 08:30 mỗi ngày cho cùng hoá đơn.
+  const conCho = new Set(ds.map((d) => String(d.id)));
+  const { data: nho } = await supabase.from("site_content").select("data").eq("key", "nhac_hoa_don_da_bao").maybeSingle();
+  const daNhac = new Set<string>(((nho?.data as { ids?: string[] } | null)?.ids ?? []).filter((x) => conCho.has(x)));
+  const moi = ds.filter((d) => !daNhac.has(String(d.id)));
+  if (moi.length === 0) {
+    return NextResponse.json({ ok: true, canNhac: false, nhatKy, message: "Giao dịch chờ xuất đều đã nhắc — không gửi lại." });
+  }
+
   // ── Gom theo ngày để biết phải ký mấy tờ ──────────────────────────────────
   // Mỗi ngày: khách có MST → mỗi giao dịch một tờ riêng; còn lại gộp một tờ tổng.
   const theoNgay = new Map<string, { rieng: number; tong: number }>();
@@ -126,15 +137,14 @@ export async function GET(request: Request) {
           ? `GẤP — ${soTo} tờ hóa đơn của ngày trước chưa xuất`
           : `Còn ${soTo} tờ hóa đơn chưa xuất hôm nay`,
         loiNhan:
-          (coNgayCu
-            ? "⚠️ Có hóa đơn của NGÀY TRƯỚC chưa xuất. VNPT chặn ký nếu quá 1 ngày " +
-              "làm việc — xử lý ngay hôm nay, để sang mai là khoá, phải gọi VNPT xin mở. "
-            : "") +
-          "Mở /admin/hoa-don-thue → mục “Hóa đơn chờ phát hành” → tải file → " +
-          "vào VNPT Invoice tải lên → cắm USB token ký. Ký xong nhớ bấm “Đánh dấu đã phát hành”.",
+          (coNgayCu ? "Có hóa đơn ngày trước chưa xuất — VNPT khoá ký nếu quá 1 ngày làm việc. " : "") +
+          "Admin → Hóa đơn & thuế → Hóa đơn chờ phát hành → tải file → ký trên VNPT → bấm “Đánh dấu đã phát hành”.",
         cacDong,
       }),
     );
+  }
+  if (ketQua.flat().some((k) => k.daGui)) {
+    await supabase.from("site_content").upsert({ key: "nhac_hoa_don_da_bao", data: { ids: [...conCho] } });
   }
 
   // Lời nhắc không tới được ai = coi như không có lời nhắc: quên ký một tối là
@@ -149,6 +159,7 @@ export async function GET(request: Request) {
       chiTiet: ketQua.flat().map((k) => `${k.kenh}: ${k.lyDo ?? "không rõ"}`).join(" · "),
       hauQua: SU_CO.xuatHoaDon.hauQua,
       canLam: "Mở /admin/hoa-don-thue ký ngay, rồi kiểm tra khoá Resend.",
+      khoa: "nhac-xuat-hoa-don", // một khoá cố định: số tờ đổi không thành sự cố mới, chỉ một email tới khi xử lý
     });
   }
 

@@ -181,8 +181,7 @@ function dungHtml(khoa: string, t: SuCo): string {
       ${t.chiTiet ? dong(NHAN_SU_CO.chiTiet, t.chiTiet.slice(0, 500)) : ""}
     </table>
     <p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#86868b">
-      Mã gộp: ${thoat(khoa)} — cùng mã này chỉ báo tối đa 1 lần mỗi giờ.
-      Xem đầy đủ tại coastalland.vn/admin.
+      Mã gộp: ${thoat(khoa)} — chỉ báo 1 lần; bấm “Đã xử lý” ở coastalland.vn/admin, lỗi lại mới báo tiếp.
     </p>
   </div>
 </div>`;

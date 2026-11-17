@@ -1,7 +1,6 @@
 import { baoLoi } from "@/lib/baoLoi";
 import { SU_CO } from "@/lib/chuThongBao";
 import type { Viec } from "./soViec";
-import { homNayVn } from "@/lib/gioVn";
 
 // ════════════════════════════════════════════════════════════════════════════
 // CANH SÁU BẢN GHI TÊN MIỀN — MẤT MỘT CÁI LÀ HỎNG NGAY, MÀ KHÔNG AI THẤY
@@ -85,8 +84,9 @@ export const viecCanhDns: Viec = {
         canLam:
           "Mở docs/DNS-SAO-LUU-17-09-2026.md đối chiếu rồi khai lại đúng bản ghi bên nhà cung cấp DNS " +
           "(PA Vietnam access.pavietnam.vn, hoặc Cloudflare nếu đã chuyển).",
-        // Mỗi ngày một cảnh báo riêng — ngày nào còn sai là ngày đó còn thấy.
-        khoa: `canh-dns:${homNayVn()}`,
+        // Một khoá cố định (anh 17/11/2026: email Admin 1 lần, không lặp): còn sai thì vẫn ghi sổ mỗi ngày ở Admin → Tổng quan,
+        // email chỉ một lần tới khi bấm "Đã xử lý". Trước: mỗi ngày một email.
+        khoa: "canh-dns",
       });
     }
 
