@@ -255,7 +255,6 @@ export default function PostListingForm() {
   // Voucher gói hội viên còn lượt của khách (0040) — Tổng tiền trừ y như máy chủ trừ lúc duyệt.
   const [vouchers, setVouchers] = useState<{ loai: string; giam: number; con_lai: number; tu: string; den: string }[]>([]);
   useKhoaCuon(xemTinMau, () => setXemTinMau(false)); // bảng Tin hiển thị: khoá cuộn nền, nút Quay lại điện thoại = đóng bảng
-  const [xemChiTietTien, setXemChiTietTien] = useState(false); // khối Tổng tiền: bấm "Chi tiết" mới hiện từng khoản
   const [daRoiO, setDaRoiO] = useState<{ sdt?: boolean; email?: boolean }>({});
   const [giaTuGhi, setGiaTuGhi] = useState("");
   // XEM TRƯỚC TIN — khách thấy tin hiện ra thế nào trước khi bấm đăng (15/10/2026)
@@ -335,10 +334,10 @@ export default function PostListingForm() {
     if (dc.searchParams.get("huy-tt") !== "1" && !coCo) return false;
     dc.searchParams.delete("huy-tt");
     window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
-    // Mỗi mục một trang (18/11/2026): mở đúng trang Gói tin (mục 5)
-    setMucDang("5");
+    // Nạp xong / huỷ nạp → về bước cuối Thanh toán – Đăng tin (anh 18/11/2026)
+    setMucDang("7");
     // Về ĐẦU mục "Gói tin — thanh toán" (chủ dự án 29/10/2026: "về chỗ nộp tiền là ở phần gói") — thấy gói đã chọn + Tổng tiền
-    const toi = () => document.getElementById("b-goi") ?? document.getElementById("b-thanhtoan");
+    const toi = () => document.getElementById("b-thanhtoan-dang") ?? document.getElementById("b-thanhtoan");
     // Điện thoại thật (29/10/2026: từ app ngân hàng về vẫn đứng đầu trang): máy chậm dựng khối sau 3 giây, trình duyệt / Next khôi
     // phục vị trí cuộn cũ → soát mỗi 300 ms tới 12 giây: lệch thì đưa khối lên lại, đứng đúng 3 lượt liền thì thôi; khách tự chạm /
     // cuộn thì thôi ngay, không giật trang của khách.
@@ -1073,6 +1072,9 @@ export default function PostListingForm() {
   // NÚT TIẾP (mỗi mục một trang, 18/11/2026): mục đang mở còn ô bắt buộc thiếu → báo ngay ô đó, chưa cho sang mục sau;
   // đủ thì sang mục kế. Kiểm cùng luật với nút Đăng tin (loiDangTin), chỉ xét lỗi thuộc mục đang mở.
   const tongMuc = goiDangDung && editId ? 6 : 7;
+  // Bước cuối (anh 18/11/2026): ví đủ → nút Đăng tin; ví thiếu → nút Nạp tiền, nạp xong về lại bước này bấm Đăng tin
+  // Chưa đăng nhập (chỉ máy thử ?xem-thu) → coi ví 0 đ để thấy đúng nút Thanh toán
+  const thieuVi = !!planTier && !(goiDangDung && editId) && truocVoucher.tongTra > 0 && (hoSoVi ? hoSoVi.balance : userId ? Infinity : 0) < truocVoucher.tongTra;
   function tiepMuc() {
     const l = loiDangTin();
     let b = l?.[1];
@@ -1144,8 +1146,6 @@ export default function PostListingForm() {
       return;
     }
     const loi = asDraft ? null : loiDangTin();
-    // Đủ thông tin để gửi duyệt (nạp xong máy tự gửi). Nút Nạp thêm bỏ qua mọi ô bắt buộc.
-    const duDeGui = !asDraft && !loi;
     if (diNap && (!province || !title.trim())) {
       // Chưa có Tỉnh/Thành + Tiêu đề (CSDL bắt buộc) → chưa lưu được tin nháp: sang nạp luôn, bản soạn dở vẫn nằm
       // trong máy (tự lưu) và hiện lại khi khách quay về form.
@@ -1290,18 +1290,17 @@ export default function PostListingForm() {
     if (!luuNhap && !viThieu && (!editId || editStatus === "draft")) fetch("/api/tin-dang/da-nhan", { method: "POST" }).catch(() => {});
     // Thiếu tiền: tin đã nằm an toàn trong nháp → mời nạp ngay, kèm số còn thiếu.
     if (viThieu) {
-      // Ghi "chờ nạp" (up_cho, dùng chung với Đăng lại): nạp đủ tiền là máy TỰ gửi tin
-      // nháp này đi duyệt đúng gói đã chọn + báo khách — không phải quay lại bấm đăng.
-      // Chỉ tin ĐỦ thông tin mới tự gửi duyệt khi nạp xong; bấm Nạp thêm lúc còn thiếu ô → nạp xong về tin điền tiếp.
-      if (maTinNhap && duDeGui) {
-        await fetch("/api/tin-dang/up", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: maTinNhap, tier: hangTin, soNgay: planDays }),
-        }).catch(() => {});
-      }
+      // 18/11/2026 (anh): nạp xong KHÔNG tự gửi duyệt — về bước cuối Thanh toán – Đăng tin, khách bấm Đăng tin mới đăng.
       try { if (userId) localStorage.removeItem(khoaNhap(userId)); } catch {}
-      setThieuTien({ can: phaiTra, du: khaDung, id: maTinNhap, dienTiep: !duDeGui });
+      setThieuTien({ can: phaiTra, du: khaDung, id: maTinNhap, dienTiep: true });
+      // Bấm nút Thanh toán (anh 18/11/2026: "không đủ tiền bấm nộp tiền – thanh toán – quay về chỗ đăng tin"): sang thẳng trang nạp,
+      // không qua màn trung gian. Địa chỉ trang này đổi thành tin nháp trước (Back / nạp xong về đúng tin, bước Thanh toán – Đăng tin).
+      if (diNap) {
+        const den = `/tai-khoan/nap-tien?can=${Math.max(0, phaiTra - khaDung)}&luu=1${maTinNhap ? `&ve=${encodeURIComponent(`/dang-tin?id=${maTinNhap}`)}` : ""}&dien-tiep=1`;
+        if (maTinNhap && editId !== maTinNhap) { diNapSau.current = den; router.replace(`/dang-tin?id=${maTinNhap}`); }
+        else router.push(den);
+        return;
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -1439,7 +1438,7 @@ export default function PostListingForm() {
       // mục dọc (đi theo chỗ đang xem, như cột menu trang Báo giá) · cột phải các mục. Điện thoại/máy tính bảng: thanh mục vuốt ngang.
       className="lg:grid lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:items-start lg:gap-8">
       <MucMoCtx.Provider value={{ moMuc, mucDang, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
-      <ThanhBuoc boQua={goiDangDung && editId ? ["b-goi"] : []} />
+      <ThanhBuoc boQua={goiDangDung && editId ? ["b-goi", "b-thanhtoan-dang"] : ["b-lienhe"]} />
       <div className="mt-3 min-w-0 space-y-6 sm:mt-6 lg:mt-0">
       {nhapCho && (() => {
         const chu = (k: string) => (typeof nhapCho[k] === "string" ? (nhapCho[k] as string).trim() : "");
@@ -1898,7 +1897,7 @@ export default function PostListingForm() {
       {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-khuyen-mai */}
       {/* Sửa tin ĐÃ DUYỆT: ẩn hẳn mục Gói tin — không sửa được gói (chủ dự án 06/11/2026) */}
       {!(goiDangDung && editId) && (
-      <Card id="b-goi" step={buoc()} title="Gói tin — thanh toán *">
+      <Card id="b-goi" step={buoc()} title="Chọn gói *">
         {goiDangDung ? (
           // TIN ĐÃ ĐĂNG đang sửa: gói cố định (chuẩn Batdongsan) — chỉ hiện gói đang dùng.
           <div className="rounded-2xl border border-cvr-line bg-cvr-surface px-5 py-4 text-sm text-cvr-body">
@@ -2020,6 +2019,59 @@ export default function PostListingForm() {
             </>
             )}
 
+
+          </>
+        )}
+        {/* Quyền lợi CVR Diamond: chèn 1 link bất kỳ dưới tin đăng */}
+        {(goiDangDung?.tier ?? planTier) === "diamond" && (
+          <div className="mt-4">
+            <Label>Link chèn dưới tin (CVR Diamond)</Label>
+            <input
+              type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              value={linkChen}
+              onChange={(e) => setLinkChen(e.target.value)}
+              placeholder="https://… (video, trang dự án, tài liệu…)"
+              className={inputCls}
+            />
+            {linkChen.trim() && !linkHopLe(linkChen) && (
+              <p className="mt-1 text-xs text-red-600">Link phải bắt đầu bằng http:// hoặc https://</p>
+            )}
+          </div>
+        )}
+      </Card>
+      )}
+
+      {/* Hình ảnh — SAU khi chọn gói (chủ dự án 10/10/2026, nhắc lại 22/10/2026: "không đưa gói tin lên trước thì
+          không thể biết giới hạn ảnh"): số ảnh / video tối đa theo gói đã chọn, số từ admin.
+          Tải từ máy / dán link, ảnh đầu là ảnh đại diện. */}
+      {/* Tin người mua, người thuê thường không có ảnh → mục không bắt buộc, bỏ dấu * (05/11/2026) */}
+      <Card id="b-anh" step={buoc()} title={laTinTim ? "Hình ảnh & video" : "Hình ảnh & video *"}>
+        <ImagePicker
+          value={images}
+          onChange={setImages}
+          // CHƯA CHỌN GÓI (chủ dự án chốt 22/10/2026): tối đa ANH_CHUA_CHON_GOI ảnh, chưa nhận video; nhắc chọn gói để
+          // up tiếp theo quy định của gói (số từ admin). Trước đây lấy gói đầu bảng giá (Diamond) làm mặc định — sai.
+          // Tin ĐÃ ĐĂNG đang sửa: theo gói đang dùng (không bắt chọn gói lại), giữ đủ số ảnh / video đã duyệt (05/11/2026)
+          maxImages={goiDangDung ? Math.max(soAnhDaLuu.anh, soAnhToiDa(billing, goiDangDung.tier)) : !planTier ? ANH_CHUA_CHON_GOI : duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId)}
+          maxVideos={goiDangDung ? Math.max(soAnhDaLuu.video, soVideoToiDa(billing, goiDangDung.tier)) : !planTier ? 0 : duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId)}
+          tierName={goiDangDung ? getTier(goiDangDung.tier).name : planTier ? getTier(planTier as TierId).name : undefined}
+          chuaChonGoi={!planTier && !goiDangDung}
+        />
+      </Card>
+
+      {/* 7. Liên hệ */}
+
+
+      {/* BƯỚC CUỐI — THANH TOÁN · ĐĂNG TIN (anh 18/11/2026: "chọn gói vẫn chọn, đến bước cuối là Thanh toán – Đăng tin"): đủ tiền → bấm
+          Đăng tin → tin vào Admin chờ duyệt; thiếu → Nạp thêm, nạp xong tự về đúng bước này, khách bấm Đăng tin mới đăng. */}
+      {!(goiDangDung && editId) && (
+      <Card id="b-thanhtoan-dang" step={buoc()} title="Thanh toán – Đăng tin">
+            {!planTier && (
+              <button type="button" onClick={() => moMuc("5")} className="flex h-11 w-full items-center justify-center rounded-lg border border-cvr-line text-[14px] font-semibold text-cvr-ink">Chọn gói tin</button>
+            )}
             {/* THANH TOÁN — đủ từng khoản như Batdongsan; các dòng cộng lại đúng bằng tổng */}
             {planTier && (
               <>
@@ -2087,13 +2139,6 @@ export default function PostListingForm() {
                   </span>
                   <span className="shrink-0 text-right">
                     <span className="block whitespace-nowrap text-xl font-bold tabular-nums tracking-tight text-cvr-ink">{thanhTien > 0 ? vnd(tienThue.tongTra) : "0 ₫"}</span>
-                    {/* GỌN (chủ dự án 06/11/2026: "quá rườm rà"): 0 đ thì không có Chi tiết — không có gì để chi tiết */}
-                    {(thanhTien > 0 || duocMienPhi) && (
-                    <button type="button" onClick={() => setXemChiTietTien(!xemChiTietTien)} aria-expanded={xemChiTietTien} className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-cvr-blue-ink">
-                      Chi tiết
-                      <svg className={`h-3.5 w-3.5 transition ${xemChiTietTien ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                    )}
                   </span>
                 </div>
                 <div className="mt-2.5 border-t pt-2" style={{ borderColor: `${t.accent}40` }}>
@@ -2102,7 +2147,8 @@ export default function PostListingForm() {
                   <Dong nhan="Thời gian hiển thị" giaTri={`${soNgayThat} ngày`} />
                   <Dong nhan="Bắt đầu hiển thị" giaTri={batDau ? batDau.split("-").reverse().join("/") : "Ngay khi được duyệt"} />
                 </div>
-                {xemChiTietTien && (thanhTien > 0 || duocMienPhi) && (
+                {/* Bước Thanh toán – Đăng tin (anh 18/11/2026): chi tiết gói, phí, thuế LUÔN HIỆN, không phải bấm Chi tiết */}
+                {(thanhTien > 0 || duocMienPhi) && (
                 <div className="mt-2 border-t pt-2" style={{ borderColor: `${t.accent}40` }}>
                 {/* ĐỦ MỌI KHOẢN ĐANG ÁP (chủ dự án 06/11/2026: "đơn giá theo gói, tính theo ngày, chiết khấu, khuyến mãi hay bất cứ thứ
                     gì: thành viên – hội viên, voucher — có là đưa vào hết"); khoản nào không có thì không hiện. */}
@@ -2142,64 +2188,20 @@ export default function PostListingForm() {
                       <span className={hoSoVi.balance < truocVoucher.tongTra ? "font-semibold tabular-nums text-red-600" : "font-semibold tabular-nums text-cvr-ink"}>{vnd(hoSoVi.balance)}</span>
                     </div>
                     {/* ĐÚNG TRÌNH TỰ CHUẨN (chủ dự án 26/10/2026): nút này đi như bấm Đăng tin — kiểm đủ thông tin → tự lưu nháp
-                        KÈM GÓI → màn "Nạp thêm … để đăng tin" → nạp đủ là tin tự gửi duyệt. Trước đây là link đi tắt: chưa lưu gì, mất gói.
+                        KÈM GÓI → màn "Nạp thêm … để đăng tin" → nạp xong về lại bước này, khách bấm Đăng tin (18/11/2026). Trước đây là link đi tắt: chưa lưu gì, mất gói.
                         Nút kêu gọi to, cả bề ngang (chủ dự án 26/10/2026: "nút CTA nạp thêm"). */}
-                    {hoSoVi.balance < truocVoucher.tongTra && (
-                      <button type="button" onClick={() => save(false, false, true)} disabled={!!saving} className="mt-2.5 h-12 w-full rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60">
-                        Nạp thêm {vnd(truocVoucher.tongTra - hoSoVi.balance)}
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
               ); })()}
               </>
             )}
-
-          </>
-        )}
-        {/* Quyền lợi CVR Diamond: chèn 1 link bất kỳ dưới tin đăng */}
-        {(goiDangDung?.tier ?? planTier) === "diamond" && (
-          <div className="mt-4">
-            <Label>Link chèn dưới tin (CVR Diamond)</Label>
-            <input
-              type="text"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              value={linkChen}
-              onChange={(e) => setLinkChen(e.target.value)}
-              placeholder="https://… (video, trang dự án, tài liệu…)"
-              className={inputCls}
-            />
-            {linkChen.trim() && !linkHopLe(linkChen) && (
-              <p className="mt-1 text-xs text-red-600">Link phải bắt đầu bằng http:// hoặc https://</p>
-            )}
-          </div>
-        )}
       </Card>
       )}
 
-      {/* Hình ảnh — SAU khi chọn gói (chủ dự án 10/10/2026, nhắc lại 22/10/2026: "không đưa gói tin lên trước thì
-          không thể biết giới hạn ảnh"): số ảnh / video tối đa theo gói đã chọn, số từ admin.
-          Tải từ máy / dán link, ảnh đầu là ảnh đại diện. */}
-      {/* Tin người mua, người thuê thường không có ảnh → mục không bắt buộc, bỏ dấu * (05/11/2026) */}
-      <Card id="b-anh" step={buoc()} title={laTinTim ? "Hình ảnh & video" : "Hình ảnh & video *"}>
-        <ImagePicker
-          value={images}
-          onChange={setImages}
-          // CHƯA CHỌN GÓI (chủ dự án chốt 22/10/2026): tối đa ANH_CHUA_CHON_GOI ảnh, chưa nhận video; nhắc chọn gói để
-          // up tiếp theo quy định của gói (số từ admin). Trước đây lấy gói đầu bảng giá (Diamond) làm mặc định — sai.
-          // Tin ĐÃ ĐĂNG đang sửa: theo gói đang dùng (không bắt chọn gói lại), giữ đủ số ảnh / video đã duyệt (05/11/2026)
-          maxImages={goiDangDung ? Math.max(soAnhDaLuu.anh, soAnhToiDa(billing, goiDangDung.tier)) : !planTier ? ANH_CHUA_CHON_GOI : duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId)}
-          maxVideos={goiDangDung ? Math.max(soAnhDaLuu.video, soVideoToiDa(billing, goiDangDung.tier)) : !planTier ? 0 : duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId)}
-          tierName={goiDangDung ? getTier(goiDangDung.tier).name : planTier ? getTier(planTier as TierId).name : undefined}
-          chuaChonGoi={!planTier && !goiDangDung}
-        />
-      </Card>
-
-      {/* 7. Liên hệ */}
-      <Card id="b-lienhe" step={buoc()} title="Thông tin liên hệ">
+      {/* Liên hệ nằm CHUNG bước cuối với Thanh toán – Đăng tin (anh 18/11/2026: 7 bước — 5 Chọn gói · 6 Ảnh / video · 7 Thanh toán –
+          Đăng tin). Sửa tin đã duyệt (không có bước thanh toán) thì Liên hệ là bước riêng cuối. */}
+      <Card id="b-lienhe" step={goiDangDung && editId ? buoc() : String(demBuoc)} phu={!(goiDangDung && editId)} title="Thông tin liên hệ">
         {laCuaMinh ? (
           // TIN CỦA CHÍNH KHÁCH = THÔNG TIN TÀI KHOẢN, CHỈ XEM (chủ dự án 05/11/2026: "cái mặc định thì để mặc định, cấm để họ sửa — chỉ
           // sửa khi vào tài khoản cài đặt"; "bỏ bước hỏi số — chỉ khi khách chưa có số mới hỏi"). Sửa ở Tài khoản → Cài đặt (thẻ mới,
@@ -2271,15 +2273,45 @@ export default function PostListingForm() {
         )}
       </Card>
 
+      {mucDang === String(tongMuc) && !!planTier && !(goiDangDung && editId) && (<>
+              {/* HAI NÚT CUỐI BƯỚC 7, sau tổng tiền + liên hệ (anh 18/11/2026): ví thiếu → Thanh toán (nạp tiền, nạp xong tự về bước này); ví đủ → Đăng tin
+                  (gửi Admin duyệt rồi lên web). Không bấm Đăng tin thì tin không đăng. */}
+              <div className="grid gap-2.5 sm:flex sm:justify-end">
+                {thieuVi && (
+                  <button type="button" onClick={() => save(false, false, true)} disabled={!!saving} className="flex h-12 items-center justify-center rounded-full bg-cvr-ink px-6 text-[15px] font-bold text-white transition hover:bg-cvr-ink/90 active:scale-[0.98] disabled:opacity-50">
+                    {saving === "draft" ? "Đang lưu…" : `Nạp tiền & thanh toán ${vnd(truocVoucher.tongTra - (hoSoVi?.balance ?? 0))}`}
+                  </button>
+                )}
+                <button type="submit" disabled={!!saving || thieuVi} className="flex h-12 items-center justify-center gap-2 rounded-full bg-cvr-blue px-7 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(26,115,232,0.4)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-40 disabled:shadow-none">
+                  <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" /></svg>
+                  {saving === "publish" ? "Đang gửi duyệt…" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : "Đăng tin"}
+                </button>
+              </div>
+      </>)}
+
+
       {error && (
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
 
       {/* THANH NÚT LUÔN HIỆN (anh 18/11/2026: "nút Lưu nháp / Xem trước luôn hiện", PC + điện thoại) — dính đáy màn hình ở mọi
-          trang: ‹ Quay lại · Xem trước · Lưu nháp · Tiếp (mục cuối: Đăng tin). Điện thoại đang gõ (bàn phím bật) thì ẩn, không đè ô. */}
-      <div className="sticky bottom-0 z-20 -mx-4 border-t border-cvr-line bg-white/95 px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 max-sm:[.phim-that_&]:hidden">
+          trang: ‹ Quay lại · Xem trước · Lưu nháp · Tiếp (mục cuối: Đăng tin). Điện thoại: hàng nút nằm NGAY DƯỚI nội dung mỗi bước (anh 18/11/2026:
+          "xong bước nào có Tiếp / Quay lại dưới đó") — không dính đáy nên không bao giờ đè ô đang gõ, bàn phím bật / tắt không ẩn mất nút. */}
+      <div className="-mx-4 border-t border-cvr-line bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 sm:sticky sm:bottom-0 sm:z-20 sm:-mx-6 sm:bg-white/95 sm:px-6 sm:pb-2 sm:pt-2 sm:backdrop-blur lg:mx-0 lg:px-0">
         {/* Bố trí (anh 18/11/2026: "nhỏ lại, cân đối, Lưu nháp, Xem trước qua bên trái"): trái = Xem trước · Lưu nháp (nút viền nhỏ),
             phải = ‹ Quay lại · Tiếp / Đăng tin. */}
+        {/* ĐIỆN THOẠI, MỤC CUỐI (anh 18/11/2026: "các nút trang 7 rất rối"): nút Đăng tin RIÊNG MỘT HÀNG, rộng hết, nổi bật; hàng dưới
+            Xem trước · Lưu nháp · Quay lại. Máy tính giữ một hàng. */}
+        {Number(mucDang) >= tongMuc && goiDangDung && editId && (
+          <button
+            type="submit"
+            disabled={!!saving}
+            className="mb-2 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cvr-blue text-[16px] font-bold text-white shadow-[0_4px_14px_rgba(26,115,232,0.4)] transition active:scale-[0.98] disabled:opacity-50 sm:hidden"
+          >
+            <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" /></svg>
+            {goiDangDung && editId ? (saving === "publish" ? "Đang cập nhật…" : "Cập nhật") : saving === "publish" ? "Đang gửi duyệt…" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : "Đăng tin"}
+          </button>
+        )}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
@@ -2320,19 +2352,19 @@ export default function PostListingForm() {
                 Tiếp
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </button>
-            ) : (
-              // NÚT ĐĂNG TIN NỔI BẬT (anh 18/11/2026: "CTA nút Đăng tin làm cho phân biệt được"): màu xanh hành động + biểu tượng gửi,
-              // to hơn nút Tiếp đen — khách nhìn là biết bước cuối, bấm để đăng.
+            ) : goiDangDung && editId ? (<>
+              {/* NÚT ĐĂNG TIN NỔI BẬT (anh 18/11/2026: "CTA nút Đăng tin làm cho phân biệt được"): màu xanh hành động + biểu tượng gửi,
+                  to hơn nút Tiếp đen — khách nhìn là biết bước cuối, bấm để đăng. Ví thiếu: mờ, bấm nút Thanh toán bên cạnh trước. */}
               <button
                 type="submit"
                 disabled={!!saving}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-cvr-blue px-5 text-[14px] font-bold text-white shadow-[0_4px_14px_rgba(26,115,232,0.4)] ring-2 ring-cvr-blue/25 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                className="max-sm:hidden flex h-10 items-center gap-1.5 rounded-full bg-cvr-blue px-5 text-[14px] font-bold text-white shadow-[0_4px_14px_rgba(26,115,232,0.4)] ring-2 ring-cvr-blue/25 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
               >
                 <svg className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" /></svg>
                 {/* Tin đã lên web: sửa xong chỉ lưu nội dung, không gửi duyệt (đang hiện → lên ngay; hết hạn / đã hạ → bấm Đăng lại) — 05/11/2026 */}
                 {goiDangDung && editId ? (saving === "publish" ? "Đang cập nhật…" : "Cập nhật") : saving === "publish" ? "Đang gửi duyệt…" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : "Đăng tin"}
               </button>
-            )}
+            </>) : null /* Thanh toán · Đăng tin nằm trong khung bước 7 */}
           </div>
         </div>
       </div>
@@ -2366,9 +2398,10 @@ const MOC_BUOC_DU = [
   { id: "b-thongtin", ten: "Thông tin chính" },
   { id: "b-dacdiem", ten: "Đặc điểm & tiện ích" },
   { id: "b-mota", ten: "Tiêu đề & mô tả" },
-  { id: "b-goi", ten: "Gói tin — thanh toán" },
+  { id: "b-goi", ten: "Chọn gói" },
   { id: "b-anh", ten: "Hình ảnh & video" },
   { id: "b-lienhe", ten: "Thông tin liên hệ" },
+  { id: "b-thanhtoan-dang", ten: "Thanh toán – Đăng tin" },
 ];
 
 // `an`: bước chưa có trên trang (vd Đặc điểm & tiện ích khi chưa chọn loại hình) → không hiện, số bước dồn lên đúng như số
@@ -2490,7 +2523,7 @@ function TieuDeCon({ children }: { children: React.ReactNode }) {
   return <h3 className="border-t border-cvr-line pt-5 text-base font-semibold tracking-tight text-cvr-ink">{children}</h3>;
 }
 
-function Card({ id, step, title, children, khoa, chiTieuDe }: { id?: string; step: string; title: string; children: React.ReactNode; khoa?: boolean; chiTieuDe?: boolean }) {
+function Card({ id, step, title, children, khoa, chiTieuDe, phu }: { id?: string; step: string; title: string; children: React.ReactNode; khoa?: boolean; chiTieuDe?: boolean; phu?: boolean }) {
   // Mọi mục LUÔN MỞ (chủ dự án 15/10/2026 bỏ kiểu thu gọn + nút "Tiếp tục": "rất rối").
   const ctx = useContext(MucMoCtx);
   return (
@@ -2502,7 +2535,7 @@ function Card({ id, step, title, children, khoa, chiTieuDe }: { id?: string; ste
     <section id={id} data-buoc={step} hidden={!!ctx?.mucDang && ctx.mucDang !== step} className={`scroll-mt-[42px] sm:scroll-mt-[70px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 ${chiTieuDe ? "opacity-50" : ""}`}>
       {/* chiTieuDe: mục chưa tới lượt (VD Đặc điểm khi chưa chọn loại hình) — chỉ tiêu đề, mờ, giữ đúng số thứ tự mục */}
       <h2 className={`${chiTieuDe ? "" : "mb-5"} flex items-center gap-2.5 text-[19px] max-sm:gap-2 max-sm:text-[17px] font-semibold tracking-tight text-cvr-ink`}>
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>
+        {!phu && <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>}
         {title}
       </h2>
       {/* Ô bắt buộc còn thiếu ở bước này → báo NGAY ĐẦU BƯỚC, sát ô cần nhập. */}

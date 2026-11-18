@@ -144,7 +144,7 @@ export default function ContentEditor({
   // đâu chạm đâu con trỏ đúng chỗ đó · ⑧ bấm vào chỉ hiện bàn phím, không nhảy / giật / tự cuộn. Thanh B · I · Chèn ảnh nằm yên đầu khung
   // (khung không cao quá màn hình nên thanh luôn thấy) — không dính trang, không gắn bàn phím.
   const laDt = useLaDt();
-  const CAO_5_DONG = 125; // mặc định nhỏ ~4 dòng cho cân đối với trang, gõ thì tự giãn (anh 15/11/2026)
+  const CAO_5_DONG = 202; // mặc định 7 dòng (anh 18/11/2026: "ô Mô tả to ra chút" — 177px rồi 202px; trước 4 dòng 125px), gõ thì tự giãn tới mức tối đa
   // THANH KÉO dưới khung: kéo lên thu ô về 5 dòng, kéo xuống mở lại tới mức tối đa (đổi chiều cao TỐI ĐA của khung)
   const [caoKeo, setCaoKeo] = useState<number | null>(null);
   // MỨC TỐI ĐA = PHẦN MÀN HÌNH CÒN THẤY (anh 15/11/2026: "điện thoại đã có màn hình giới hạn"): bàn phím bật thì chỉ còn khoảng giữa thanh
@@ -157,8 +157,7 @@ export default function ContentEditor({
       const ed = khungRef.current, khung = ed?.closest("[data-co-thanh]");
       const sc = ed;
       const phu = sc && khung ? khung.getBoundingClientRect().height - sc.getBoundingClientRect().height : 85;
-      const nhan = khung ? nhanTren(khung) : null;
-      const caoNhan = nhan && khung ? khung.getBoundingClientRect().top - nhan.getBoundingClientRect().top + 8 : 0; // nhãn + khoảng cách
+      const caoNhan = 4; // nhãn trượt lên khi gõ (datKhung) — chỉ chừa 4px dưới thanh bước
       // Tự giãn tối đa 3/4 màn hình (anh 15/11/2026); bàn phím bật thì không quá phần còn thấy giữa thanh trên và bàn phím
       // Bàn phím bật mà phần còn thấy hẹp (máy anh: chỉ ~215px dưới thanh trên + thanh bước) → ô CO dưới mức mặc định cho cả khung lọt trên
       // bàn phím (nhật ký 15/11/2026: ép tối thiểu 125px → khung tràn xuống dưới bàn phím → Chrome tự cuộn → nhảy)
@@ -166,7 +165,7 @@ export default function ContentEditor({
       const csEd = ed ? getComputedStyle(ed) : null;
       const dong = csEd ? parseFloat(csEd.lineHeight) || 26 : 26;
       const dem = csEd ? parseFloat(csEd.paddingTop) + parseFloat(csEd.paddingBottom) : 20;
-      const caoTho = Math.max(72, Math.min(caoMan.current * 0.58 - phu, cao - tren - caoNhan - phu - 8));
+      const caoTho = Math.max(72, Math.min(caoMan.current * 0.62 - phu, cao - tren - caoNhan - phu - 8));
       return Math.round(dem + Math.max(2, Math.floor((caoTho - dem) / dong)) * dong);
   };
   const giuCoLuc = useRef(0);
@@ -186,7 +185,12 @@ export default function ContentEditor({
       // 18/11/2026 (anh: "phải hiện hàng B / I phía trên để chỉnh sửa"): MAX = phần còn thấy KHI BÀN PHÍM BẬT (ước 55% màn hình, bàn phím
       // điện thoại chiếm ~40–45%) trừ thanh trên — cả khung (B · I + chữ) vừa trên bàn phím, gõ dài thì chữ cuộn TRONG khung, hàng B · I
       // không trôi khuất. Vẫn cố định theo màn hình, bàn phím bật / tắt không đổi cỡ (giữ luật 17/11).
-      setCaoToiDa(tinhCao(caoMan.current * 0.55));
+      // 18/11/2026 tối (đo giả lập: gõ dài trang dịch 2 lần, khung đổi 4 lần): bàn phím BẬT THẬT thì mức tối đa = đúng phần còn thấy trên bàn
+      // phím (đo, không ước) — khung giãn tới mép bàn phím rồi chữ cuộn TRONG khung, trang đứng yên. Không bao giờ nhỏ hơn cỡ khung đang có
+      // (giữ luật 17/11: chạm vào ô không tự thu lại). Bàn phím tắt: mức tối đa lớn (0,62 màn hình — anh: "giãn max nhiều hơn chút").
+      // Máy thật Samsung 18/11/2026: giữ cỡ lớn hơn phần còn thấy là khung tràn xuống dưới bàn phím → trình duyệt tự kéo trang = giật. Bàn phím bật
+      // thì khung vừa ĐÚNG phần còn thấy (luật "cấm giật, cấm che" đứng trên luật 17/11 "không tự thu").
+      setCaoToiDa(bp ? tinhCao(vv ? vv.height : window.innerHeight) : tinhCao(caoMan.current * 0.62));
       if (!bp) daDat.current = false; // bàn phím tắt → lần bật sau đặt khung lại một lần
       // Bàn phím vừa bật: đưa dòng con trỏ lên trên bàn phím + đặt khung NGAY (L5, 18:57: chờ 2 khung hình thì Chrome tự kéo trang đi tìm con trỏ
       // trước, rồi lệnh mình kéo lại = nhảy 3 lần)
@@ -224,9 +228,6 @@ export default function ContentEditor({
   // bao giờ đưa khung lên → bàn phím che khung. Nay: cao màn hình đo lúc mở trang / mọi lần đổi cỡ (lớn nhất = không có bàn phím); đặt khung
   // ĐÚNG MỘT LẦN mỗi lần bàn phím bật (không đặt lại khi chạm chữ, khi gõ, khi cuộn — không nhảy).
   const caoMan = useRef(0);
-  // Nhãn của ô (vd "Mô tả chi tiết") nằm ngay trên khung — bàn phím bật vẫn để nhãn hiện dưới thanh trên, khung ngay dưới nhãn
-  // (anh 15/11/2026: form nhiều mục, bấm vào Mô tả không được thành một trang riêng, canh khoảng cách cho chuẩn)
-  const nhanTren = (khung: Element): Element | null => { let el: Element | null = khung; for (let i = 0; i < 6 && el; i++) { const p = el.previousElementSibling; if (p?.tagName === "LABEL") return p; el = el.parentElement; } return null; };
   const daDat = useRef(false);
   const banPhimBat = () => window.innerHeight < caoMan.current - 150 || (window.visualViewport?.height ?? 9999) < caoMan.current - 150;
   // Mép dưới các thanh dính trên đầu: đầu trang, "‹ Đăng tin", thanh bước form (luôn hiện — anh 15/11/2026: "thanh này phải để")
@@ -238,10 +239,11 @@ export default function ContentEditor({
     if (!laDt || !ed || !khung || document.activeElement !== ed) return;
     const tren = trenThanh();
     const k = khung.getBoundingClientRect();
-    const nhan = nhanTren(khung);
-    const dau = nhan ? nhan.getBoundingClientRect().top : k.top; // đặt NHÃN ngay dưới thanh trên (cách 8px)
+    // ĐẶT HÀNG B · I SÁT DƯỚI THANH BƯỚC (đo Samsung Internet thật 18/11/2026: bàn phím bật còn 378px; đặt cả nhãn thì khung 7 dòng không lọt →
+    // trình duyệt tự kéo trang +138px rồi web kéo về −137px = giật "đi rồi về"). Nhãn "Mô tả chi tiết" trượt lên trên khi đang gõ.
+    const dau = k.top;
     // TỨC THÌ ("instant"): trang đặt cuộn mượt chung → cuộn mượt làm khung trôi từ từ, giật (nhật ký điện thoại thật 15/11/2026)
-    if (Math.abs(dau - tren - 8) > 2) window.scrollTo({ top: window.scrollY + dau - tren - 8, behavior: "instant" }); // đầu khung (B · I) ngay dưới "‹ Đăng tin"
+    if (Math.abs(dau - tren - 4) > 2) window.scrollTo({ top: window.scrollY + dau - tren - 4, behavior: "instant" }); // đầu khung (B · I) ngay dưới "‹ Đăng tin"
   };
   // Bàn phím vừa bật: đặt ngay, rồi đặt lại MỘT lần sau 450 ms — Chrome tự cuộn trang để lộ con trỏ ngay lúc bàn phím bật (nhật ký: trang tự
   // lùi 70px, khung chìm dưới bàn phím). Sau đó không đặt nữa cho tới lần bàn phím bật sau: chạm chữ, gõ, cuộn không kéo trang.
@@ -259,7 +261,7 @@ export default function ContentEditor({
     choConTro.current = Date.now() + 500;
     // Bàn phím không bật (máy có bàn phím rời…) → trả ô về cỡ thường. Ô còn đang gõ thì GIỮ: Samsung / Zalo / Facebook có bàn phím mà không báo
     // (trang không co) — trả về là khung giãn ra rồi co lại = giật (16/11/2026). Rời ô thì onBlur trả về.
-    setTimeout(() => { if (!banPhimBat() && document.activeElement !== khungRef.current) setCaoToiDa(tinhCao(caoMan.current * 0.55)); }, 850);
+    setTimeout(() => { if (!banPhimBat() && document.activeElement !== khungRef.current) setCaoToiDa(tinhCao(caoMan.current * 0.62)); }, 850);
   };
   const dangGoTruoc = useRef(false); // lúc chạm, ô đã đang gõ chưa (chạm chữ khi đang gõ ≠ chạm mở ô)
   const keoRef = useRef<HTMLDivElement>(null);
@@ -322,6 +324,11 @@ export default function ContentEditor({
   const [tienDoVideo, setTienDoVideo] = useState(0); // % chuyển + tải video (video HEVC / dài cần vài phút trên điện thoại — 12/11/2026)
   const [error, setError] = useState("");
 
+  // Lịch sử Hoàn tác / Làm lại của ô (xem ghiLs)
+  const lichSu = useRef<string[]>([]);
+  const viTri = useRef(-1);
+  const [nutLs, setNutLs] = useState({ truoc: false, sau: false });
+  const capNutLs = () => setNutLs({ truoc: viTri.current > 0, sau: viTri.current < lichSu.current.length - 1 });
   // Giá trị đổi TỪ NGOÀI (nạp tin cũ, bản nháp, đăng tin khác) → vẽ lại khung soạn.
   // Giá trị do chính khung soạn phát ra thì KHÔNG vẽ lại — giữ con trỏ và bộ gõ tiếng Việt.
   useLayoutEffect(() => {
@@ -329,6 +336,7 @@ export default function ContentEditor({
     if (!el || value === daPhat.current) return;
     el.innerHTML = giaTriSangHtml(value);
     daPhat.current = value;
+    lichSu.current = [el.innerHTML]; viTri.current = 0; capNutLs();
   }, [value]);
 
   // GÕ KHÔNG GIẬT (anh 16/11/2026, Zalo: "RẤT GIẬT LAG"): trước đây MỖI CHỮ gõ đều phat() → onChange → cả form đăng tin
@@ -339,11 +347,38 @@ export default function ContentEditor({
     if (henPhat.current) clearTimeout(henPhat.current);
     henPhat.current = window.setTimeout(() => { henPhat.current = null; phatRef.current(); }, 300);
   };
+  // HOÀN TÁC / LÀM LẠI CỦA RIÊNG Ô (anh 18/11/2026: "các nút Hoàn tác, Làm lại trên Mobile KHÔNG có tác dụng"): bộ gõ điện thoại
+  // (Gboard, Samsung, gõ dấu tiếng Việt) không ghi vào lịch sử của trình duyệt → execCommand("undo") không làm gì. Ô tự giữ các bản
+  // chữ: mỗi lần chữ được báo ra (ngừng gõ 300 ms, B / I, chèn ảnh, dán, rời ô) ghi một bản; Hoàn tác / Làm lại đổi qua lại các bản đó.
+  // Một cách cho mọi máy, mọi trình duyệt (cả Ctrl+Z / Ctrl+Y trên máy tính).
+  const ghiLs = (html: string) => {
+    if (lichSu.current[viTri.current] === html) return;
+    lichSu.current = [...lichSu.current.slice(0, viTri.current + 1), html].slice(-100);
+    viTri.current = lichSu.current.length - 1;
+    capNutLs();
+  };
+  const doiLs = (buoc: number) => {
+    const el = khungRef.current;
+    if (!el) return;
+    if (henPhat.current) phat(); // đang gõ dở → ghi bản đang gõ trước
+    const moi = viTri.current + buoc;
+    if (moi < 0 || moi >= lichSu.current.length) return;
+    viTri.current = moi;
+    el.innerHTML = lichSu.current[moi];
+    el.focus({ preventScroll: true });
+    const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+    const sel = window.getSelection(); sel?.removeAllRanges(); sel?.addRange(r);
+    const v = htmlSangGiaTri(el);
+    daPhat.current = v;
+    onChange(v);
+    capNutLs();
+  };
   const phatRef = useRef<() => void>(() => {});
   const phat = () => {
     if (henPhat.current) { clearTimeout(henPhat.current); henPhat.current = null; }
     const el = khungRef.current;
     if (!el) return;
+    ghiLs(el.innerHTML);
     const v = htmlSangGiaTri(el);
     daPhat.current = v;
     if (v !== value) onChange(v);
@@ -446,10 +481,6 @@ export default function ContentEditor({
       for (const k of ["bold", "italic", "justifyLeft", "justifyCenter", "justifyRight", "justifyFull"]) {
         try { moi[k] = document.queryCommandState(k); } catch { moi[k] = false; }
       }
-      // Hoàn tác / Làm lại: không còn gì để trả / làm lại thì nút mờ, không bấm được (anh 18/11/2026)
-      for (const k of ["undo", "redo"]) {
-        try { moi[k] = document.queryCommandEnabled(k); } catch { moi[k] = true; }
-      }
       setBatNut((cu) => (Object.keys(moi).some((k) => moi[k] !== cu[k]) ? moi : cu));
     };
     document.addEventListener("selectionchange", doc);
@@ -462,9 +493,9 @@ export default function ContentEditor({
   const nutDinhDang = (
     <>
       {/* NÚT QUAY LẠI = HOÀN TÁC (anh 18/11/2026: ô Mô tả "có nút quay lại") — trả lại thao tác gõ / định dạng vừa làm */}
-      {chiAnh && <ToolBtn label="Hoàn tác" tat={batNut.undo !== true} onClick={() => lenh("undo")}><svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 010 11H11" /></svg></ToolBtn>}
+      {chiAnh && <ToolBtn label="Hoàn tác" tat={!nutLs.truoc} onClick={() => doiLs(-1)}><svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 010 11H11" /></svg></ToolBtn>}
       {/* LÀM LẠI (anh 18/11/2026: "có Hoàn tác thì phải có Forward") */}
-      {chiAnh && <ToolBtn label="Làm lại" tat={batNut.redo !== true} onClick={() => lenh("redo")}><svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 000 11H13" /></svg></ToolBtn>}
+      {chiAnh && <ToolBtn label="Làm lại" tat={!nutLs.sau} onClick={() => doiLs(1)}><svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 000 11H13" /></svg></ToolBtn>}
       {chiAnh && <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />}
       <ToolBtn label="In đậm" bat={!!batNut.bold} onClick={() => lenh("bold")}><span className="text-[13px] font-bold">B</span></ToolBtn>
       <ToolBtn label="In nghiêng" bat={!!batNut.italic} onClick={() => lenh("italic")}><span className="font-serif text-[13px] italic">I</span></ToolBtn>
@@ -505,7 +536,8 @@ export default function ContentEditor({
           className="inline-flex h-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-cvr-ink/40 bg-white px-1 text-xs font-semibold text-cvr-ink transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60 sm:gap-1.5 sm:px-3"
         >
           {bieuTuongAnh}
-          {uploadingImg ? "Đang tải ảnh…" : "Chèn ảnh"}
+          {/* Điện thoại: thêm Hoàn tác / Làm lại thì "Chèn ảnh" bị cắt mép phải (Samsung thật 18/11/2026) → ghi gọn "Ảnh" cạnh biểu tượng */}
+          {uploadingImg ? "Đang tải…" : <><span className="sm:hidden">Ảnh</span><span className="max-sm:hidden">Chèn ảnh</span></>}
         </button>
         <input ref={imgRef} type="file" accept="image/*" multiple onChange={(e) => handleImages(e.target.files)} className="hidden" />
         {!chiAnh && (<>
@@ -537,6 +569,12 @@ export default function ContentEditor({
           aria-label={placeholder}
           onInput={() => { phatSau(); nhoKhoi(); }}
           onKeyUp={nhoKhoi}
+          onKeyDown={(e) => {
+            if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+            const k = e.key.toLowerCase();
+            if (k === "z" && !e.shiftKey) { e.preventDefault(); doiLs(-1); }
+            else if (k === "y" || (k === "z" && e.shiftKey)) { e.preventDefault(); doiLs(1); }
+          }}
           onMouseUp={nhoKhoi}
           // Chạm lúc bàn phím CHƯA bật → đưa khung lên NGAY (trước khi bàn phím trượt lên): khung đã nằm trong phần sẽ còn thấy nên Chrome không tự
           // cuộn thêm (nhật ký 15/11/2026: Chrome cuộn trang lúc bàn phím bật rồi lệnh mình kéo lại = nhảy 2 lần). Bàn phím đang bật thì chạm không kéo trang.
@@ -555,7 +593,7 @@ export default function ContentEditor({
           onBlur={() => {
             daDat.current = false; nhoKhoi(); phat();
             // Rời ô ở trình duyệt không báo bàn phím → trả khung về cỡ thường (Chrome: bàn phím tắt tự đổi cỡ, dòng này không làm gì thêm)
-            if (laDt) setTimeout(() => { if (document.activeElement !== khungRef.current && !banPhimBat()) setCaoToiDa(tinhCao(caoMan.current * 0.55)); }, 300);
+            if (laDt) setTimeout(() => { if (document.activeElement !== khungRef.current && !banPhimBat()) setCaoToiDa(tinhCao(caoMan.current * 0.62)); }, 300);
           }}
           onPaste={(e) => {
             // Chỉ lấy CHỮ — bỏ định dạng rác của nơi khác (màu, cỡ chữ, bảng…).
@@ -595,8 +633,8 @@ export default function ContentEditor({
         {/* GÓC KÉO giãn / thu ô (điện thoại) — đặt ở GÓC DƯỚI BÊN PHẢI ô theo chuẩn ô nhập (anh 15/11/2026: "để qua bên góc, theo chuẩn").
             Nhìn thấy: dấu góc nhỏ; vùng chạm 40×40 cho ngón tay. Chỉ kéo, không bao giờ bật bàn phím (chặn touchstart ở useEffect). */}
         {laDt && (
-          <div ref={keoRef} role="separator" aria-label="Kéo để giãn hoặc thu khung soạn" className="absolute bottom-0 right-0 z-10 flex h-10 w-10 touch-none select-none items-end justify-end p-1.5">
-            <svg aria-hidden className="h-3.5 w-3.5 text-cvr-faint" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round"><path d="M13 5L5 13M13 9.5L9.5 13" /></svg>
+          <div ref={keoRef} role="separator" aria-label="Kéo để giãn hoặc thu khung soạn" className="absolute bottom-0 right-0 z-10 flex h-12 w-12 touch-none select-none items-end justify-end p-1">
+            <svg aria-hidden className="h-6 w-6 text-cvr-muted" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round"><path d="M13 5L5 13M13 9.5L9.5 13" /></svg>
           </div>
         )}
       </div>

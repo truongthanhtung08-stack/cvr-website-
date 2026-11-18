@@ -43,7 +43,9 @@ function TopUpForm() {
   const veRaw = params.get("ve");
   const ve = veRaw && /^\/(dang-tin|tai-khoan)(\/|\?|$)/.test(veRaw) ? veRaw : null;
   // Tin nháp còn thiếu ô (máy chưa tự gửi duyệt được) → nạp xong về lại tin để điền tiếp (05/11/2026)
-  const dienTiep = params.get("dien-tiep") === "1" && !!ve?.startsWith("/dang-tin");
+  // 18/11/2026 (anh): nạp từ form đăng tin → nạp xong LUÔN về lại form, bước Thanh toán – Đăng tin, khách tự bấm Đăng tin (không tự gửi
+  // duyệt nữa). Không dựa vào ?dien-tiep (PayOS trả về không mang dấu này → trước đây khách bị đưa sang Tin của tôi).
+  const dienTiep = !!ve?.startsWith("/dang-tin");
   const router = useRouter();
   useEffect(() => {
     if (!ve) return;

@@ -197,7 +197,11 @@ export default function BanPhimAo() {
           const kTop = laKhungSoan(el) ? el.closest("[data-co-thanh]")!.getBoundingClientRect().top : 0;
           const dich = c && laKhungSoan(el)
             ? (c.bottom > duoi ? c.bottom - (duoi - 16) : c.top < tren - 4 ? c.top - (tren + 8) : kTop - tren) // con trỏ bị che → đưa ra; còn lại: để lộ thanh B / I
-            : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
+            // Ô thường: đưa lên SÁT DƯỚI thanh trên (18/11/2026, đo bàn phím trượt, máy còn 360–400px: đặt giữa phần còn thấy thì bàn phím trượt
+            // tiếp lại che ô → kéo lần 2). Sát trên cùng thì bàn phím lên hết vẫn không che → chỉ MỘT lần dịch, mọi máy.
+            // Đích = ĐÚNG chỗ trình duyệt tự đặt ô khi bàn phím bật (scroll-padding-top của trang — đã chừa thanh dính + nhãn ô): đặt khác chỗ đó thì
+            // trình duyệt chỉnh thêm một bước (đo giả lập 18/11/2026: +568 rồi −26 = đi rồi về). Không có scroll-padding thì sát dưới thanh + 24px.
+            : c ? c.top - (tren + 24) : r.top - vvTop() - (parseFloat(getComputedStyle(html).scrollPaddingTop) || tren + 24 - vvTop());
           // TRÌNH DUYỆT TRONG ZALO / FACEBOOK (html.trong-app, layout.tsx): đo trên Zalo thật 16/11/2026 — bàn phím bật thì Zalo tự kéo
           // trang (+246px, ô Tiêu đề lên mép trên) rồi lần chỉnh này kéo ngược lại; cả hai trượt êm = trang trượt xuống rồi lên = GIẬT.
           // Trong app: chỉnh MỘT BƯỚC, không trượt.
