@@ -32,7 +32,7 @@ const CaiDat = cham(() => import("./pages/CaiDat"));
 const HoiVien = cham(() => import("./pages/HoiVien"));
 const TimKiemLuu = cham(() => import("./pages/TimKiemLuu"));
 const TrangTinh = cham(() => import("./pages/TrangTinh"));
-const NapTien = cham(() => import("./pages/NapTien"));
+const Vi = cham(() => import("./pages/Vi"));
 
 // THANH DƯỚI 4 NÚT (Zalo Mini App Design Guidelines: "số lượng tab ở bottom bar không nên vượt quá 4", 06/11/2026) — Dự án vào từ
 // khối "Dự án nổi bật · Xem thêm" ở Trang chủ. Trước đó: THANH DƯỚI = ĐÚNG web điện thoại (06/11/2026 "lấy giao diện web trên mobile làm chuẩn"): Trang chủ · Mua bán · Cho thuê · Dự án ·
@@ -101,7 +101,7 @@ export default function UngDung() {
             <Route path="/tim-kiem-luu" element={<TimKiemLuu />} />
             <Route path="/hoi-vien" element={<HoiVien />} />
             <Route path="/thong-tin/:duong" element={<TrangTinh />} />
-            <Route path="/nap-tien" element={<NapTien />} />
+            <Route path="/vi" element={<Vi />} />
           </AnimationRoutes>
           <ThanhDuoi />
         </ZMPRouter>

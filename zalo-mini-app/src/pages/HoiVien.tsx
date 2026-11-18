@@ -61,7 +61,7 @@ export default function HoiVien() {
         body: JSON.stringify({ goi: goiChon.id, thang: ky.thang }),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok || !j.ok) setBao({ ok: false, chu: j.loi || "Chưa mua được gói. Vui lòng thử lại." });
+      if (!r.ok || !j.ok) setBao({ ok: false, chu: /nạp|không đủ/i.test(j.loi ?? "") ? "Số dư ví không đủ." : j.loi || "Chưa mua được gói. Vui lòng thử lại." }); // không nói tới nạp tiền (Zalo, bản 78)
       else { setBao({ ok: true, chu: `Đã kích hoạt ${goiChon.ten} đến ${ngay(j.hetHan)}` }); setChon(undefined); await tai(); }
     } catch {
       setBao({ ok: false, chu: "Không kết nối được. Vui lòng thử lại." });
@@ -113,7 +113,7 @@ export default function HoiVien() {
           {soDu >= phaiTra ? (
             <Button fullWidth loading={dang} onClick={mua}>Mua {vnd(phaiTra)} từ ví</Button>
           ) : (
-            <Button fullWidth onClick={() => dieuHuong("/nap-tien")}>Nạp thêm {vnd(phaiTra - soDu)}</Button>
+            <Button fullWidth disabled>Số dư ví chưa đủ {vnd(phaiTra)}</Button>
           )}
         </div>
       )}

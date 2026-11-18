@@ -24,7 +24,8 @@ import { coDienTichXayDung, coNoiThat, coPhongNgu, coPhongTam, fieldsSplit, nhan
 
 // ĐĂNG TIN — ghi thẳng vào bảng listings như form web (src/components/PostListingForm.tsx):
 // status "pending" chờ admin duyệt, details.plan = gói + số tiền đã báo (giaBao, chưa VAT).
-// Mini App chỉ mở GÓI TIN THƯỜNG (Basic); gói VIP / thanh toán cần Checkout SDK của Zalo (chưa bật).
+// Phí gói trừ vào ví lúc duyệt (như web). Mini App KHÔNG có nạp tiền — Zalo từ chối bản 78 (16/11/2026: "nền tảng chưa hỗ trợ
+// Mini App có chức năng Nạp tiền; chỉ được hiển thị số dư, lịch sử"). Ví thiếu → lưu nháp, báo số dư; không nút / chữ nạp tiền.
 
 const KHAC = "__khac"; // dòng "Khác — tự ghi" của ô chọn (như web ChonHoacGhi)
 // Danh sách CHÉP ĐÚNG web (src/lib/listingSpec.ts legalOptions · directions · furnishLevels) — 14/11/2026 "web một nẻo, đây một nẻo"
@@ -34,7 +35,16 @@ const NOI_THAT = ["Không nội thất", "Bàn giao thô", "Nội thất cơ b�
 const boDau = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
 const gonTinh = (x: string) => boDau(x.replace(/^(Thành phố|Tỉnh)\s+/i, "")).trim();
 const slugTen = (x: string) => boDau(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-const TOI_DA_ANH = 15; // web: mọi tin 15 ảnh (mức chung hiện hành)
+const ANH_CHUA_CHON_GOI = 3; // như web: chưa chọn gói thì tối đa 3 ảnh; chọn gói → số ảnh của gói (Admin)
+// ĐƠN VỊ GIÁ = web (PostListingForm donViGia): "Thoả thuận" khoá ô số, "Khác — tự ghi" ghi chữ vào details.giaTuGhi.
+const KHAC_GIA = "Khác — tự ghi";
+const DON_VI_GIA = { ban: ["tỷ", "triệu", "triệu/m²", "Thoả thuận", KHAC_GIA], thue: ["triệu/tháng", "nghìn/m²/tháng", "triệu/6 tháng", "triệu/năm", "Thoả thuận", KHAC_GIA] };
+// Gợi ý ô giá / diện tích theo đơn vị · loại hình — chép src/lib/goiYNhapTin.ts
+const goiYGia = (dv: string) => ({ "tỷ": "VD: 4,2", "triệu": "VD: 850", "triệu/m²": "VD: 45", "triệu/tháng": "VD: 12", "nghìn/m²/tháng": "VD: 35", "triệu/6 tháng": "VD: 60", "triệu/năm": "VD: 120" } as Record<string, string>)[dv] ?? "VD: 12";
+const goiYDienTich = (t: string) =>
+  /nhà xưởng|kho bãi|kho \/|đất công nghiệp|thuê đất/i.test(t) ? "VD: 1200" : /đất nông nghiệp/i.test(t) ? "VD: 2000" : /trọ/i.test(t) ? "VD: 25"
+  : /văn phòng|mặt bằng|cửa hàng/i.test(t) ? "VD: 120" : /căn hộ dịch vụ|condotel/i.test(t) ? "VD: 45" : /căn hộ|chung cư/i.test(t) ? "VD: 68"
+  : /biệt thự|villa/i.test(t) ? "VD: 300" : "VD: 100";
 const VAT = 0.08; // src/lib/thue.ts — giá niêm yết chưa gồm GTGT
 
 const ngayVnSau = (n: number) => new Date(Date.now() + 7 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
@@ -95,7 +105,9 @@ export default function DangTin() {
   const [tieuDe, setTieuDe] = useState("");
   const [moTa, setMoTa] = useState("");
   const [gia, setGia] = useState("");
-  const [donVi, setDonVi] = useState<"ty" | "trieu">("ty");
+  const [donViChon, setDonVi] = useState("tỷ");
+  const [giaTuGhi, setGiaTuGhi] = useState("");
+  const donVi = DON_VI_GIA[md].includes(donViChon) ? donViChon : DON_VI_GIA[md][0]; // đổi Mua bán ↔ Cho thuê → về đơn vị đầu (như web)
   const [dienTich, setDienTich] = useState("");
   const [ngu, setNgu] = useState("");
   const [tam, setTam] = useState("");
@@ -135,7 +147,6 @@ export default function DangTin() {
   useEffect(() => { document.querySelector(".thanh-buoc .bat")?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); }, [buoc]); // bước đang xem luôn nằm trong thanh
   const [xemTruoc, setXemTruoc] = useState(false); // nút Xem trước như web: thẻ tin đúng như sẽ hiện
   const [luuNhap, setLuuNhap] = useState(false);
-  const [conThieu, setConThieu] = useState(0); // số tiền còn thiếu để đăng (đã gồm VAT) — nút "Nạp thêm" mang theo, như web ?can= // bấm Lưu nháp (như web: ghi được tới đâu lưu tới đó, không gửi duyệt)
   const [dangGui, setDangGui] = useState(false);
   const [loi, setLoi] = useState<string>();
   const [xong, setXong] = useState<"pending" | "draft" | "sua" | null>(null);
@@ -166,11 +177,15 @@ export default function DangTin() {
       setDiaChi(d.addressDetail ?? "");
       setTieuDe(r.title ?? "");
       setMoTa(r.description ?? "");
+      // Giá VNĐ → ô nhập + đơn vị (như web: không giá + giaTuGhi = Khác — tự ghi; không giá = Thoả thuận)
       const g = Number(r.price_vnd);
-      if (g > 0) {
-        const tyDv = r.purpose !== "thue" && g >= 1e9;
-        setDonVi(tyDv ? "ty" : "trieu");
-        setGia(String(+(g / (tyDv ? 1e9 : 1e6)).toFixed(3)).replace(".", ","));
+      const thue = r.purpose === "thue" || r.purpose === "can-thue";
+      if (r.price_vnd == null && d.giaTuGhi) { setDonVi(KHAC_GIA); setGiaTuGhi(d.giaTuGhi); }
+      else if (r.price_vnd == null) setDonVi("Thoả thuận");
+      else {
+        const dv = thue ? "triệu/tháng" : g >= 1e9 ? "tỷ" : "triệu";
+        setDonVi(dv);
+        setGia(String(+(g / (dv === "tỷ" ? 1e9 : 1e6)).toFixed(3)).replace(".", ","));
       }
       setDienTich(r.area_m2 != null ? String(r.area_m2).replace(".", ",") : "");
       setNgu(r.beds != null ? String(r.beds) : "");
@@ -241,6 +256,12 @@ export default function DangTin() {
     return { mienPhi, thanhTien, soNgayThat, tongTra: thanhTien + Math.round(thanhTien * VAT), viCo: Number(hoSo.data?.balance ?? 0) };
   }, [goi, soNgay, bangGia.data, hoSo.data]);
 
+  // Số ảnh tối đa = web: theo gói đang chọn (Admin), hưởng chương trình miễn phí có số ảnh riêng thì theo chương trình; tin đã lên web giữ số ảnh đang có.
+  const anhGoi = (bangGia.data?.soAnh(daDang ? String(tinSua?.details?.plan?.tier ?? "basic") : goi?.tierId ?? "basic") || 0);
+  const toiDaAnh = daDang
+    ? Math.max(anh.length, anhGoi || ANH_CHUA_CHON_GOI)
+    : (tien.mienPhi && bangGia.data?.free?.soAnh ? bangGia.data.free.soAnh : anhGoi) || ANH_CHUA_CHON_GOI;
+
   useEffect(() => { if (he === "cu" && !dsCu.length) import("../lib/provincesOld").then((m) => setDsCu(m.provincesOld)); }, [he]); // eslint-disable-line react-hooks/exhaustive-deps
   const tinhCu = dsCu.find((p) => p.name === tinh);
   const dsQuan = he === "cu" ? tinhCu?.districts.map((d) => d.name) ?? [] : [];
@@ -265,7 +286,7 @@ export default function DangTin() {
 
   const themAnh = async () => {
     setLoi(undefined);
-    const conCho = TOI_DA_ANH - anh.length;
+    const conCho = toiDaAnh - anh.length;
     if (conCho <= 0) return;
     const ds = await chonAnh(conCho);
     if (!ds.length) return;
@@ -296,11 +317,25 @@ export default function DangTin() {
     if (kq.url) setVideo(kq.url);
   };
 
+  // = web priceToVnd: giá theo kỳ dài / theo m² quy về tổng tiền (thuê: mỗi tháng) để lọc, xếp giá cùng thước đo.
   const giaVnd = () => {
+    if (donVi === "Thoả thuận" || donVi === KHAC_GIA) return null;
     const g = so(gia);
     if (Number.isNaN(g)) return null;
-    return Math.round(md === "thue" ? g * 1e6 : g * (donVi === "ty" ? 1e9 : 1e6));
+    const a = so(dienTich);
+    if (donVi === "tỷ") return Math.round(g * 1e9);
+    if (donVi === "triệu" || donVi === "triệu/tháng") return Math.round(g * 1e6);
+    if (donVi === "triệu/m²") return Number.isNaN(a) ? null : Math.round(g * a * 1e6);
+    if (donVi === "nghìn/m²/tháng") return Number.isNaN(a) ? null : Math.round(g * 1e3 * a);
+    if (donVi === "triệu/6 tháng") return Math.round((g * 1e6) / 6);
+    if (donVi === "triệu/năm") return Math.round((g * 1e6) / 12);
+    return null;
   };
+  // Ghi kèm details như web: chữ giá tự ghi · đơn giá thuê khách tự ghi (nghìn/m²/tháng)
+  const giaDetails = () => ({
+    giaTuGhi: donVi === KHAC_GIA ? giaTuGhi.trim() || undefined : undefined,
+    ...(donVi === "nghìn/m²/tháng" && so(gia) > 0 ? { donGiaThue: so(gia), donGiaThueNhap: true } : { donGiaThue: undefined, donGiaThueNhap: undefined }),
+  });
 
   // VỊ TRÍ HIỆN TẠI (Zalo getLocation): Zalo hỏi khách cho chia sẻ vị trí → máy chủ web đổi ra tỉnh · phường · đường (/api/vi-tri-zalo),
   // điền sẵn ô Vị trí; khách vẫn sửa được. Từ chối thì thôi, không báo lỗi (Chính sách kiểm duyệt Zalo 6.3).
@@ -369,7 +404,7 @@ export default function DangTin() {
       ward: phuong || null, district: he === "cu" ? quan || null : null, province: tinh,
       images: laVideo(video.trim()) ? [video.trim(), ...anh] : anh,
       details: {
-        specs: { ...specLoai(), ...oLoaiLuu() }, legal: phapLy || undefined, direction: huong || undefined, furnish: noiThat || undefined,
+        ...giaDetails(), specs: { ...specLoai(), ...oLoaiLuu() }, legal: phapLy || undefined, direction: huong || undefined, furnish: noiThat || undefined,
         amenities: tienIch, interior: loaiGoc && coNoiThat(loaiGoc) ? noiThatDs : [], ...duAnLuu(), addressDetail: diaChi.trim() || undefined,
         plan: { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien, ...(batDau ? { batDau } : {}) },
         contact: { name: ten.trim(), phone: sdt.replace(/[^0-9]/g, "") }, nguonDang: "zalo-mini-app",
@@ -389,7 +424,9 @@ export default function DangTin() {
     if (!tinh) return setLoi("Chưa chọn Tỉnh/Thành.");
     if (!tieuDe.trim()) return setLoi("Chưa nhập tiêu đề tin.");
     if (nhap && !maSua) return luuBanNhap();
+    if (donVi === KHAC_GIA ? !giaTuGhi.trim() : donVi !== "Thoả thuận" && !gia.trim()) return setLoi("Chưa nhập giá.");
     if (Number.isNaN(so(dienTich))) return setLoi("Chưa nhập diện tích.");
+    if (anh.length > toiDaAnh) return setLoi(`Tin ${TEN_HANG[goi?.tierId ?? "basic"] ?? ""} chỉ đăng tối đa ${toiDaAnh} ảnh — xoá bớt ảnh hoặc chọn gói khác.`);
     const thieu = loaiGoc ? thieuMucBatBuoc(loaiGoc, nhuCau, oLoai).filter((t) => !(oCon && t === oCon.label)) : [];
     if (thieu.length) return setLoi(`Chưa nhập: ${thieu.join(", ")}.`);
     if (!anh.length && !laTinTim) return setLoi("Chưa thêm ảnh — tin cần ít nhất 1 ảnh."); // như web: đăng tin bắt ít nhất 1 ảnh
@@ -434,6 +471,7 @@ export default function DangTin() {
         const goc = ((await supabase.from("listings").select("details").eq("id", maSua).single()).data?.details as Record<string, any> | null) ?? tinSua.details;
         const details = {
           ...goc,
+          ...giaDetails(),
           specs: specsSua(goc.specs ?? {}),
           legal: phapLy || undefined,
           direction: huong || undefined,
@@ -458,7 +496,7 @@ export default function DangTin() {
       }
     }
 
-    // Ví không đủ → lưu nháp nguyên vẹn (như web), khách nạp tiền rồi đăng tiếp.
+    // Ví không đủ → lưu nháp nguyên vẹn (như web), báo số dư; đủ tiền thì đăng tiếp từ Tin của tôi.
     // So với KHẢ DỤNG = số dư − tiền tạm giữ cho tin chờ duyệt khác (0056, y như web + CSDL).
     const { data: vi } = await supabase.rpc("so_du_kha_dung");
     const khaDung = Number((vi as { kha_dung: number }[] | null)?.[0]?.kha_dung ?? tien.viCo);
@@ -484,6 +522,7 @@ export default function DangTin() {
       // Video (link YouTube) ĐỨNG ĐẦU mảng images — đúng cách web lưu và hiện video đầu dãy.
       images: laVideo(video.trim()) ? [video.trim(), ...anh] : anh,
       details: {
+        ...giaDetails(),
         specs,
         legal: phapLy || undefined,
         direction: huong || undefined,
@@ -504,15 +543,13 @@ export default function DangTin() {
     setDangGui(false);
     if (error && /VI_KHONG_DU/.test(error.message)) {
       const m = error.message.match(/(\d+)\s*đ/);
-      if (m) setConThieu(Number(m[1]));
-      return setLoi(m ? `Nạp thêm ${Number(m[1]).toLocaleString("vi-VN")} đ để đăng tin.` : "Ví không đủ tiền để đăng tin.");
+      return setLoi(m ? `Số dư ví còn thiếu ${Number(m[1]).toLocaleString("vi-VN")} đ cho gói đã chọn.` : "Số dư ví không đủ cho gói đã chọn.");
     }
     if (error) return setLoi(/BDS_KHAC/.test(error.message) ? error.message.replace(/^.*BDS_KHAC:\s*/, "") : `Gửi tin thất bại: ${error.message}`);
     // Gửi duyệt từ tin nháp: tin chờ duyệt đã tạo → xoá nháp cũ (như web, không để tin trùng).
     if (maSua && (tinSua?.status === "draft" || tinSua?.status === "rejected") && !viThieu) await supabase.from("listings").delete().eq("id", maSua);
-    // THIẾU TIỀN (quy trình ⑤ CLAUDE.md, như web): ghi "chờ nạp" cho tin nháp này — nạp đủ là máy chủ tự gửi đi duyệt đúng gói + báo khách
+    // THIẾU TIỀN (quy trình ⑤ CLAUDE.md, như web): ghi "chờ đủ tiền" cho tin nháp — ví đủ (nạp trên web) là máy chủ tự gửi duyệt đúng gói
     if (viThieu && tinMoi?.id) {
-      setConThieu(Math.max(0, tien.tongTra - khaDung));
       const { data: ss } = await supabase.auth.getSession();
       await fetch("https://coastalland.vn/api/tin-dang/up", {
         method: "POST",
@@ -553,9 +590,8 @@ export default function DangTin() {
           {xong !== "sua" && <Text className="chu-phu">
             {xong === "pending"
               ? "Coastal Land sẽ báo kết quả duyệt qua Zalo."
-              : luuNhap ? "" : `Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn. Tin đã lưu nháp nguyên vẹn — nạp tiền xong là đăng tiếp.`}
+              : luuNhap ? "" : `Số dư ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn.`}
           </Text>}
-          {xong === "draft" && !luuNhap && <Button fullWidth onClick={() => dieuHuong(`/nap-tien?can=${conThieu || tien.tongTra}`)}>Nạp tiền để đăng tin</Button>}
           <Button fullWidth variant={xong === "draft" ? "secondary" : "primary"} onClick={() => dieuHuong("/tin-cua-toi", { replace: true })}>Xem tin của tôi</Button>
           <Button fullWidth variant="secondary" onClick={() => dieuHuong("/", { replace: true })}>Về trang chủ</Button>
         </Box>
@@ -600,23 +636,25 @@ export default function DangTin() {
         {he === "cu" && <ChonCoTim nhan="Quận / Huyện" giuCho={tinh ? "Chọn quận/huyện" : "Chọn tỉnh/thành trước"} giaTri={quan} tat={!tinh} ds={dsQuan.map((q) => ({ gt: q, nhan: q }))} onChon={(v) => { if (v !== quan) { setQuan(v); setPhuong(""); } }} />}
         <ChonCoTim nhan="Phường / Xã" giuCho={he === "cu" ? (quan ? "Chọn phường/xã" : "Chọn quận/huyện trước") : tinh ? "Chọn phường/xã" : "Chọn tỉnh/thành trước"} giaTri={phuong} tat={he === "cu" ? !quan : !tinh} ds={dsPhuong.map((w) => ({ gt: w, nhan: w }))} onChon={setPhuong} />
         </div>
-        <ONhap nhan="Địa chỉ cụ thể (số nhà, tên đường, số lô…)" placeholder="VD: 123 Võ Nguyên Giáp · Lô A12…" value={diaChi} onChange={(e) => setDiaChi(e.target.value)} />
+        {/* Thứ tự = web: Tỉnh · Phường → Thuộc dự án → Địa chỉ cụ thể → vị trí (web: bản đồ; Mini App: vị trí Zalo) */}
         <ChonCoTim nhan="Thuộc dự án" giuCho="Chọn dự án" giaTri={duAnTuGhi ? KHAC : duAnSlug}
           ds={[{ gt: "__khong", nhan: "Không thuộc dự án" }, ...duAnTrongTinh.map((d) => ({ gt: d.slug, nhan: d.ten })), { gt: KHAC, nhan: "Khác — tự ghi" }]}
           onChon={(v) => { const k = v === KHAC; setDuAnTuGhi(k); if (k || v === "__khong") { setDuAnSlug(""); setDuAnTen(""); } else { const d = dsDuAn.data.find((x) => x.slug === v); setDuAnSlug(d?.slug ?? ""); setDuAnTen(d?.ten ?? ""); } }} />
-        <button type="button" className="nut-vi-tri" disabled={dangViTri} onClick={dungViTri}>{dangViTri ? "Đang lấy vị trí…" : "Dùng vị trí hiện tại"}</button>
         {duAnTuGhi && <ONhap placeholder="Tên dự án" value={duAnTen} onChange={(e) => setDuAnTen(e.target.value)} maxLength={80} />}
+        <ONhap nhan="Địa chỉ cụ thể (số nhà, tên đường, số lô, block…)" placeholder="VD: 123 Võ Nguyên Giáp · Lô A12 khu B · Block 3 · hoặc chỉ tên đường" value={diaChi} onChange={(e) => setDiaChi(e.target.value)} />
+        <button type="button" className="nut-vi-tri" disabled={dangViTri} onClick={dungViTri}>{dangViTri ? "Đang lấy vị trí…" : "Dùng vị trí hiện tại"}</button>
       </Nhom>
 
       <Nhom so={2} tieuDe="Thông tin chính">
+        {/* GIÁ = web điện thoại: ô số trọn hàng, ô đơn vị hàng dưới; Thoả thuận khoá ô số; Khác — tự ghi = ô chữ */}
         <div style={{ display: "grid", gap: 8 }}>
-          <div>
-            <ONhap nhan={md === "thue" ? "Giá thuê (triệu/tháng)" : "Giá bán"} placeholder={md === "thue" ? "VD: 12" : "VD: 4,2"} inputMode="decimal" value={gia} onChange={(e) => setGia(e.target.value)} />
-          </div>
-          {md === "ban" && <ChonCoTim nhan="" giuCho="Đơn vị" giaTri={donVi} ds={[{ gt: "ty", nhan: "tỷ" }, { gt: "trieu", nhan: "triệu" }]} onChon={(v) => setDonVi(v as "ty" | "trieu")} />}
-          {!gia.trim() && <small className="goi-y-o">Để trống giá = Thỏa thuận</small>}
+          {donVi === KHAC_GIA
+            ? <ONhap nhan={md === "thue" ? "Giá thuê *" : "Giá bán *"} value={giaTuGhi} onChange={(e) => setGiaTuGhi(e.target.value)} maxLength={60} />
+            : <ONhap nhan={md === "thue" ? "Giá thuê *" : "Giá bán *"} placeholder={donVi === "Thoả thuận" ? "" : goiYGia(donVi)} inputMode="decimal" disabled={donVi === "Thoả thuận"}
+                value={donVi === "Thoả thuận" ? "" : gia} onChange={(e) => setGia(e.target.value.replace(/[^\d.,]/g, ""))} />}
+          <ChonCoTim nhan="" giuCho="Đơn vị" giaTri={donVi} ds={DON_VI_GIA[md].map((d) => ({ gt: d, nhan: d }))} onChon={setDonVi} />
         </div>
-        <ONhap nhan={`${loaiGoc ? nhanDienTich(loaiGoc) : "Diện tích (m²)"} *`} placeholder="VD: 100" inputMode="decimal" value={dienTich} onChange={(e) => setDienTich(e.target.value)} />
+        <ONhap nhan={`${nhanDienTich(loaiGoc)} *`} placeholder={goiYDienTich(loaiGoc)} inputMode="decimal" value={dienTich} onChange={(e) => setDienTich(e.target.value)} />
         {loaiGoc && coDienTichXayDung(loaiGoc) && <ONhap nhan="Diện tích sử dụng (m²)" inputMode="decimal" placeholder="VD: 95" value={dtXay} onChange={(e) => setDtXay(e.target.value)} />}
         {truong.chinh.filter(boLoaiCon).map(oTruong)}
       </Nhom>
@@ -629,9 +667,10 @@ export default function DangTin() {
           </div>
         )}
         {truong.dacDiem.filter(boLoaiCon).map(oTruong)}
-        <ChonCoTim nhan="Hướng nhà / đất" giuCho="Chọn hướng" giaTri={huong} ds={HUONG.map((h) => ({ gt: h, nhan: h }))} onChon={setHuong} />
-        <ChonCoTim nhan="Tình trạng pháp lý" giuCho="Chọn pháp lý" giaTri={phapLy} ds={phapLyCho(loaiGoc || undefined).map((p) => ({ gt: p, nhan: p }))} onChon={setPhapLy} />
-        {(!loaiGoc || coNoiThat(loaiGoc)) && (
+        {/* Như web: chưa chọn loại hình thì mục 3 trống — ô đặc điểm theo loại hình */}
+        {loaiGoc && <ChonCoTim nhan="Hướng nhà / đất" giuCho="Chọn hướng" giaTri={huong} ds={HUONG.map((h) => ({ gt: h, nhan: h }))} onChon={setHuong} />}
+        {loaiGoc && <ChonCoTim nhan="Tình trạng pháp lý" giuCho="Chọn pháp lý" giaTri={phapLy} ds={phapLyCho(loaiGoc).map((p) => ({ gt: p, nhan: p }))} onChon={setPhapLy} />}
+        {loaiGoc && coNoiThat(loaiGoc) && (
           <ChonCoTim nhan="Tình trạng nội thất" giuCho="Chọn nội thất" giaTri={noiThat} ds={NOI_THAT.map((p) => ({ gt: p, nhan: p }))} onChon={setNoiThat} />
         )}
         {/* Danh sách nội thất như web: có nội thất (không phải "Không nội thất" / "Bàn giao thô") mới bày */}
@@ -651,8 +690,9 @@ export default function DangTin() {
       </Nhom>
 
       <Nhom so={4} tieuDe="Tiêu đề & mô tả">
-        <ONhap nhan="Tiêu đề tin đăng *" placeholder="VD: Bán nhà 3 tầng 90 m² kiệt ô tô Hải Châu, sổ hồng riêng" value={tieuDe} onChange={(e) => setTieuDe(e.target.value)} maxLength={120} dem />
-        <ONhap vung nhan="Mô tả chi tiết" placeholder="Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)" value={moTa} onChange={(e) => setMoTa(e.target.value)} />
+        {/* Chữ gợi ý = web (anh 16/11/2026: bỏ câu hướng dẫn dài) */}
+        <ONhap nhan="Tiêu đề tin đăng *" placeholder="Nhập tiêu đề bất động sản" value={tieuDe} onChange={(e) => setTieuDe(e.target.value)} maxLength={120} dem />
+        <ONhap vung nhan="Mô tả chi tiết" placeholder="Nhập nội dung mô tả bất động sản" value={moTa} onChange={(e) => setMoTa(e.target.value)} />
       </Nhom>
 
       {!daDang && <Nhom so={5} tieuDe="Gói tin — thanh toán *">
@@ -662,26 +702,13 @@ export default function DangTin() {
             plans={dsGoi}
             chon={{ tier: goi?.tierId ?? "", days: soNgay ?? 0 }}
             onChon={(t, d) => { setHang(t); setSoNgay(d); }}
+            quyDinh={false}
           />
         ) : (
           <Spinner />
         )}
-        {goi && (
-          <div className="tom-tat-goi">
-            <div><span>Loại tin</span><b>{TEN_HANG[goi.tierId] ?? goi.name}</b></div>
-            <div><span>Thời gian đăng</span><b>{tien.soNgayThat} ngày</b></div>
-            <div><span>Bắt đầu hiển thị</span><b>{batDau ? batDau.split("-").reverse().join("/") : "Khi tin được duyệt"}</b></div>
-            {tien.mienPhi ? (
-              <div><span>Ưu đãi thành viên mới</span><b>Miễn phí</b></div>
-            ) : (
-              <>
-                <div><span>Phí + VAT 8%</span><b>{vnd(tien.tongTra)}</b></div>
-                {tien.thanhTien > 0 && <div><span>Ví hiện có</span><b>{vnd(tien.viCo)}</b></div>}
-              </>
-            )}
-          </div>
-        )}
 
+        {/* Thứ tự = web: bảng giá → Bắt đầu hiển thị → Tổng tiền */}
         <Text size="small" bold>Bắt đầu hiển thị</Text>
         <div className="tab-md">
           <button className={!batDau ? "bat" : ""} onClick={() => setBatDau("")}>Ngay khi được duyệt</button>
@@ -693,11 +720,18 @@ export default function DangTin() {
             <input type="date" value={batDau} min={ngayVnSau(1)} max={ngayVnSau(30)} onChange={(e) => setBatDau(e.target.value)} aria-label="Ngày bắt đầu hiển thị" />
           </label>
         )}
+        {goi && (
+          <div className="tom-tat-goi">
+            <div><span>Gói tin</span><b>{TEN_HANG[goi.tierId] ?? goi.name} · {tien.soNgayThat} ngày</b></div>
+            <div><span>Tổng tiền</span><b>{tien.mienPhi ? "Miễn phí" : vnd(tien.tongTra)}</b></div>
+            {tien.thanhTien > 0 && <div><span>Số dư ví</span><b>{vnd(tien.viCo)}</b></div>}
+          </div>
+        )}
       </Nhom>}
 
 
       <Nhom so={6} tieuDe={`Hình ảnh & video${laTinTim ? "" : " *"}`}>
-        <small className="goi-y-o">Ảnh: {anh.length}/{TOI_DA_ANH}</small>
+        <small className="goi-y-o">Ảnh: {anh.length}/{toiDaAnh}</small>
         <div className="luoi-anh">
           {anh.map((u, i) => (
             <div key={u} className="o-anh">
@@ -705,7 +739,7 @@ export default function DangTin() {
               <button onClick={() => setAnh((cu) => cu.filter((_, j) => j !== i))} aria-label="Bỏ ảnh">×</button>
             </div>
           ))}
-          {anh.length < TOI_DA_ANH && (
+          {anh.length < toiDaAnh && (
             <button className="o-anh them" onClick={themAnh} disabled={dangTaiAnh}>
               {dangTaiAnh ? <Spinner /> : <><BieuTuongWeb ten="anh" co={24} /><span>Thêm ảnh</span></>}
             </button>
@@ -742,7 +776,6 @@ export default function DangTin() {
 
       {loi && <Box p={4} style={{ display: "grid", gap: 8 }}>
         <Text size="small" style={{ color: "#d70018" }}>{loi}</Text>
-        {conThieu > 0 && <Button size="small" onClick={() => dieuHuong(`/nap-tien?can=${conThieu}`)}>Nạp thêm</Button>}
       </Box>}
 
       <Sheet visible={xemTruoc} onClose={() => setXemTruoc(false)} autoHeight mask handler swipeToClose>

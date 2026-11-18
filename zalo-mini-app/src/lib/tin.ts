@@ -157,18 +157,22 @@ export const layMotBaiViet = async (slug: string) =>
 export type GoiGia = { tierId: string; name: string; terms: { days: number; price: number }[] };
 export type DongDay = { label: string; values: { gia: number; giaGoc?: number }[] };
 export type GoiHoiVien = { id: string; ten: string; thoiHan: { thang: number; price: number }[]; voucher: { loai: string; giam: number; soLuong: number }[] };
-export type ChinhSachMienPhi = { active: boolean; from?: string; to?: string; days: number; tierId: string; audience: string; quota: number };
+export type ChinhSachMienPhi = { active: boolean; from?: string; to?: string; days: number; tierId: string; audience: string; quota: number; soAnh?: number };
 export type BangGia = {
   free?: ChinhSachMienPhi;
   ban: { plans: GoiGia[]; up: DongDay[] };
   thue: { plans: GoiGia[]; up: DongDay[] };
   hoiVien: GoiHoiVien[];
+  // Số ảnh tối đa mỗi tin — cùng luật web soAnhToiDa (src/lib/billing.ts): admin bật theo cấp thì theo gói, không thì mức chung.
+  soAnh: (tier: string) => number;
 };
 export async function layBangGia(): Promise<BangGia | null> {
   const r = await doc<{ data: any }>("site_content", "select=data&key=eq.billing&limit=1");
   const d = r[0]?.data;
   if (!d?.congBo) return null;
-  return { ban: d.congBo.ban, thue: d.congBo.thue, hoiVien: d.hoiVien ?? [], free: d.free };
+  const soAnh = (tier: string) =>
+    d.mediaTheoCap ? Number((d.plans ?? []).find((p: { tierId: string }) => p.tierId === tier)?.maxImages ?? 0) : Number(d.anhChung ?? 0);
+  return { ban: d.congBo.ban, thue: d.congBo.thue, hoiVien: d.hoiVien ?? [], free: d.free, soAnh };
 }
 
 // ── Lọc tin theo bộ lọc (giống trang danh sách trên web) ────────────────────

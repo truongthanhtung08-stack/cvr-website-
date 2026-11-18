@@ -3,7 +3,7 @@ import { Button, Input, Text } from "zmp-ui";
 import { getAccessToken, getPhoneNumber } from "zmp-sdk";
 import { soVN, supabase } from "../lib/supabase";
 
-// XÁC MINH SỐ ĐIỆN THOẠI — một khối dùng chung cho Đăng tin và Nạp tiền (luật tài khoản 06/11/2026: đăng tin / nạp tiền cần số
+// XÁC MINH SỐ ĐIỆN THOẠI — khối dùng cho Đăng tin (luật tài khoản 06/11/2026: đăng tin / nạp tiền cần số
 // đã xác minh). Số Zalo một chạm (getPhoneNumber) hoặc nhập số → mã gửi về Zalo của CHÍNH số đó → nhập mã.
 // Cùng đường web /api/xac-thuc/xac-minh-sdt. dangTin = true chỉ ở form đăng tin (máy chủ mới được tự gộp tài khoản — nạp tiền
 // dính tiền nên không gộp).

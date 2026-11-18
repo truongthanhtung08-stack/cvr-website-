@@ -12,7 +12,7 @@ import { useTai } from "../lib/useTai";
 // UP TIN · ĐẨY TIN · ĐĂNG LẠI — cùng máy chủ, cùng luật với web (Tin đăng của tôi):
 //   · Up tin      → /api/tin-dang/nang-goi (chọn ô giá cao hơn gói đang chạy, chờ Admin duyệt, tiền tạm giữ)
 //   · Đẩy tin     → /api/tin-dang/day (lên đầu ngay, trừ ví hoặc lượt trong kho)
-//   · Đăng lại    → /api/tin-dang/up (tin hết hạn / khách tự hạ, chọn gói mới, duyệt như tin mới; ví thiếu → nạp xong tự gửi)
+//   · Đăng lại    → /api/tin-dang/up (tin hết hạn / khách tự hạ, chọn gói mới, duyệt như tin mới; ví thiếu → báo số dư)
 // Mọi số tiền do máy chủ tính (xemGia) — Mini App không tự tính giá.
 // ============================================================================
 const WEB = "https://coastalland.vn";
@@ -56,7 +56,6 @@ export default function GoiTin() {
   const [oUp, setOUp] = useState<OUp[]>();
   const [gia, setGia] = useState<{ phaiTra: number; mienPhi?: boolean; dungLuot?: boolean; conLai?: number; hang?: string }>();
   const [loi, setLoi] = useState<string>();
-  const [thieu, setThieu] = useState(false);
   const [dang, setDang] = useState(false);
   const [xong, setXong] = useState<string>();
 
@@ -95,7 +94,6 @@ export default function GoiTin() {
 
   const thucHien = async () => {
     setLoi(undefined);
-    setThieu(false);
     setDang(true);
     const { status, j } =
       viec === "day"
@@ -106,8 +104,8 @@ export default function GoiTin() {
     setDang(false);
     if (j.ok)
       return setXong(viec === "day" ? "Tin đã lên đầu" : viec === "up" ? "Đã gửi yêu cầu Up tin" : "Đã gửi đăng lại, đang chờ duyệt");
-    setLoi(j.loi || "Chưa thực hiện được. Vui lòng thử lại.");
-    if (status === 402 || /nạp|không đủ/i.test(j.loi ?? "")) setThieu(true);
+    // Ví thiếu: máy chủ web có thể trả chữ "nạp thêm…" — Mini App không được nói tới nạp tiền (Zalo, bản 78) → chỉ báo số dư.
+    setLoi(status === 402 || /nạp|không đủ/i.test(j.loi ?? "") ? "Số dư ví không đủ." : j.loi || "Chưa thực hiện được. Vui lòng thử lại.");
   };
 
   if (!san || (phien && tin.dangTai)) return <Page><TieuDe title={TEN[viec]} /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
@@ -181,7 +179,6 @@ export default function GoiTin() {
       {loi && (
         <Box p={4} style={{ display: "grid", gap: 8 }}>
           <Text size="small" style={{ color: "#d70018" }}>{loi}</Text>
-          {thieu && <Button size="small" variant="secondary" onClick={() => dieuHuong("/nap-tien")}>Nạp tiền</Button>}
         </Box>
       )}
 

@@ -187,13 +187,10 @@ html.xem-thu .hang-app { padding-right: 0; }
 .lien-he { flex: 1; min-width: 0; display: flex; gap: 8px; }
 .lien-he .nut-goi { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nut-zalo { flex: none; height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--cl-blue); background: #fff; color: var(--cl-blue); font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-/* Nạp tiền */
+/* Ví: số dư (Mini App chỉ hiển thị số dư + lịch sử — Zalo không cho nạp tiền trong Mini App, 16/11/2026) */
 .khung-vi { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-radius: 14px; background: var(--cl-surface); }
 .khung-vi span { color: var(--cl-muted); font-size: 14px; }
 .khung-vi strong { font-size: 20px; color: var(--cl-ink); }
-.luoi-muc-nap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.luoi-muc-nap button { height: 44px; border-radius: 10px; border: 1px solid var(--cl-line); background: #fff; font-size: 14px; color: var(--cl-ink); }
-.luoi-muc-nap button.bat { border-color: var(--cl-blue); background: #eef4ff; color: var(--cl-blue); font-weight: 600; }
 /* ── Tìm kiếm chuẩn như web (28/09/2026) ─────────────────────────────────── */
 .tim-dau { display: flex; align-items: center; gap: 8px; padding: 10px 16px 8px; background: #fff; }
 .tim-o { flex: 1; min-width: 0; display: flex; align-items: center; height: 44px; border: 1.5px solid var(--cl-blue); border-radius: 22px; padding: 0 6px 0 16px; background: #fff; }
@@ -627,9 +624,6 @@ html.xem-thu .hang-app { padding-right: 0; }
 .nut-chinh > .zaui-btn { font-size: 14px !important; padding-left: 14px !important; padding-right: 14px !important; }
 /* Mặc định cho mọi nút tự vẽ CHƯA đặt cỡ chữ (trước: trình duyệt cho 13,33px, lệch thang Zalo). :where → không ghi đè nút đã có cỡ riêng. */
 :where(button:not(.zaui-btn)) { font-family: inherit; font-size: 14px; }
-/* Nạp tiền: mệnh giá 2 cột, số tiền một dòng (3 cột làm "1.000.000 đ" xuống dòng ở khổ máy thật). */
-.luoi-muc-nap { grid-template-columns: 1fr 1fr !important; }
-.luoi-muc-nap button { white-space: nowrap; }
 /* Nút viền (như BTN_LINE của web): nền trắng, viền xám, chữ đen. */
 .zaui-btn.nut-vien { background: #fff !important; border: 1px solid var(--cl-line) !important; color: var(--cl-ink) !important; }
 /* "Xem thêm" dưới khối trang chủ: nút canh giữa như trang tin; cách nội dung 12px, khối vẫn đệm đáy 16px. */

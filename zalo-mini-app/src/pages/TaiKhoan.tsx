@@ -43,7 +43,7 @@ export default function TaiKhoan() {
       { ten: "Đăng tin", icon: "dangTin", app: "/dang-tin" },
     ] },
     { ten: "Tài khoản", muc: [
-      { ten: "Ví & nạp tiền", icon: "vi", app: "/nap-tien", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
+      { ten: "Ví", icon: "vi", app: "/vi", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
       { ten: "Hóa đơn", icon: "hoaDon", app: "/hoa-don" },
       { ten: "Gói hội viên", icon: "hoiVien", app: "/hoi-vien" },
       { ten: "Bảng giá dịch vụ", icon: "baoGia", app: "/bang-gia" },

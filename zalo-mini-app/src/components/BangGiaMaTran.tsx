@@ -31,7 +31,9 @@ export default function BangGiaMaTran({
   chon,
   onChon,
   khoa,
+  quyDinh = true,
 }: {
+  quyDinh?: boolean; // form đăng tin: không bày dòng quy định dưới bảng (như web — chỉ "Giá đã gồm 8% VAT")
   plans: GoiBang[];
   chon?: { tier: string; days: number };
   onChon?: (tier: string, days: number) => void;
@@ -77,7 +79,7 @@ export default function BangGiaMaTran({
         </table>
       </div>
       <p className="chu-phu" style={{ fontSize: 12, padding: "6px 16px 0", margin: 0 }}>Giá đã gồm 8% VAT.</p>
-      <QuyDinh dong={QD_TIN} />
+      {quyDinh && <QuyDinh dong={QD_TIN} />}
     </>
   );
 }
