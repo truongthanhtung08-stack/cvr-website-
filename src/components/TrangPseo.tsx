@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
+import ListingShowcase from "@/components/ListingShowcase";
 import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import LienKetPseo from "@/components/LienKetPseo";
@@ -10,7 +11,7 @@ import { ListingListJsonLd } from "@/components/ListJsonLd";
 import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
 import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
-import { TRANG_DONG_BANG, TRANG_GIU_THEM, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
+import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
 import { tieuDeGoogle } from "@/lib/thang";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 
@@ -49,6 +50,10 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   const soLieu = soLieuTrang(items, dk.muc, !giuSoCu(path));
   // Trang 1 máy chủ dựng sẵn (lib/ketQuaDau, 21/10/2026): HTML có tin thật khách nhìn thấy — thay khung chờ + danh sách ẩn cũ
   const ketQuaDau = boLoc ? await ketQuaTrangDau(dk.muc, { initialFilters: boLoc }) : undefined;
+  // Trang ít tin (< 8 — dưới một dải thẻ): thêm "Bất động sản tương tự" dưới danh sách (anh 18/11/2026). Trang đang top / đóng băng giữ nguyên.
+  // HTML nhẹ như trang tin: 8 thẻ bỏ mô tả, "Xem thêm" tự nạp theo mã.
+  const tuongTu = items.length < 8 && !TRANG_TOP.has(path) && !TRANG_DONG_BANG.has(path) ? tinTuongTuTrang(listings, dk, items) : [];
+  const tuongTuNhe = tuongTu.slice(0, 8).map(({ desc: _d, searchText: _s, ...the }) => the);
   return (
     <>
       <ListingListJsonLd items={items} heading={heading} path={path} />
@@ -68,6 +73,18 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
             itemsHetHan={goiNheTin(itemsHetHan)}
             articles={goiNheBaiViet(articles)}
           />
+        )}
+        {tuongTu.length > 0 && (
+          <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+            <ListingShowcase
+              items={tuongTuNhe} idsDayDu={tuongTu.map((l) => l.id)}
+              sectionKey="bds-tuong-tu-pseo"
+              purpose={dk.muc}
+              title="Bất động sản tương tự"
+              heading="Bất động sản tương tự"
+              relevance
+            />
+          </div>
         )}
         {/* Trang đang lên Google (TRANG_DONG_BANG): giữ đúng bản cũ — khối giá cũ, 3 câu hỏi đáp cũ */}
         {/* Trang "giữ cũ + thêm mới" (TRANG_GIU_THEM): khối giá cũ giữ nguyên ở trên, khối theo phường + quận cũ thêm ở dưới */}

@@ -26,7 +26,7 @@ import { loiCuaTrang, loiChoCon, laLoiUuTien, phienBanTuKhoa } from "@/lib/tuKho
 // KHÔNG in số tin, không in ngưỡng ra giao diện (chốt 11/09/2026).
 // ============================================================================
 
-export const NGUONG_INDEX = 3;
+export const NGUONG_INDEX = 2; // anh 18/11/2026: "hạ xuống 2 tin" (trước 3)
 
 export type Muc = "ban" | "thue";
 
@@ -216,6 +216,25 @@ export function khop(l: Listing, dk: DieuKien): boolean {
   if (dk.phongNgu && l.beds !== dk.phongNgu) return false;
   if (dk.giaDuoi && !(l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= dk.giaDuoi.max)) return false;
   return true;
+}
+
+// BẤT ĐỘNG SẢN TƯƠNG TỰ dưới trang pSEO ít tin (anh 18/11/2026: "trang 2 tin thì vẫn hiển thị bất động sản tương tự phía dưới").
+// Cùng mục đích, không lặp tin đã khớp; ưu tiên cùng tỉnh (+4) → cùng loại hình (+3) → cùng phường (+2), mức giá gần (+1).
+// Phải cùng tỉnh hoặc cùng loại hình mới lấy. Không vào ItemList / số tin của trang (cổng index không đổi).
+export function tinTuongTuTrang(ds: Listing[], dk: DieuKien, daCo: Listing[], n = 24): Listing[] {
+  const bo = new Set(daCo.map((l) => l.id));
+  const diem = (l: Listing) =>
+    (cungTen(tinhCuaTin(l), dk.tinh.name) ? 4 : 0) +
+    (dk.cat?.types.includes(l.type) ? 3 : 0) +
+    (dk.phuong && cungTen(phuongCuaTin(l), dk.phuong) ? 2 : 0) +
+    (dk.giaDuoi && l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= dk.giaDuoi.max * 1.5 ? 1 : 0);
+  return ds
+    .filter((l) => !l.banSao && mucCuaTin(l) === dk.muc && !bo.has(l.id))
+    .map((l, i) => ({ l, s: diem(l), i }))
+    .filter((x) => x.s >= 3)
+    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .slice(0, n)
+    .map((x) => x.l);
 }
 
 export function duongDan(dk: DieuKien): string {

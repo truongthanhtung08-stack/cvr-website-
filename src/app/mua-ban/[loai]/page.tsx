@@ -86,7 +86,7 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
     description,
     alternates: { canonical: `/mua-ban/${kv.slug}` },
     openGraph: { title, description, url: `/mua-ban/${kv.slug}`, type: "website" },
-    ...(soTinXet < NGUONG_INDEX_DANH_MUC ? { robots: { index: false, follow: true } } : {}), // cổng 3 tin (20/10/2026), đếm cả tin hết hạn (09/11/2026)
+    ...(soTinXet < NGUONG_INDEX_DANH_MUC ? { robots: { index: false, follow: true } } : {}), // cổng NGUONG_INDEX_DANH_MUC tin (2 tin từ 18/11/2026), đếm cả tin hết hạn (09/11/2026)
   };
 }
 
