@@ -47,6 +47,8 @@ function laSamsungInternet() {
 // Nhưng CHROME thì khai đúng "image/*" lại KHÔNG hỏi app nào — nó tự bung lưới ảnh,
 // trùng y hệt dòng Thư viện ảnh. Nên Chrome phải khai hai loại để rơi về bảng chọn app.
 // ⛔ ĐỪNG GỘP HAI TRƯỜNG HỢP NÀY LÀM MỘT. Gộp kiểu nào cũng hỏng một bên.
+const ACCEPT_VIDEO_MAY_TINH = "video/*,.mp4,.mov,.m4v,.mkv,.avi,.wmv,.webm,.flv,.3gp,.3g2,.mts,.m2ts,.ts,.mpg,.mpeg,.hevc,.vob,.ogv";
+
 function acceptThuMuc() {
   return laSamsungInternet() ? "image/*" : "image/*,application/pdf";
 }
@@ -473,6 +475,10 @@ export default function ImagePicker({
                   // Chưa chọn gói → video chưa nhận: báo ngay, không mở bộ chọn tệp rồi mới báo (22/10/2026)
                   if (lo.ma === "video" && chuaChonGoi) { setError("Chọn gói tin để đăng video."); setMoChon(false); return; }
                   const o = oRef.current[lo.ma];
+                  // MÁY TÍNH (anh 18/11/2026: "PC không up được video, cần up được mọi định dạng"): hộp chọn tệp Windows lọc theo
+                  // "video/*" chỉ hiện đuôi máy biết là video — .mov / .mkv / .avi / .wmv… nhiều máy không hiện → khách không chọn được.
+                  // Kê thêm đuôi tường minh; nenVideo đổi mọi định dạng sang MP4 H.264. Điện thoại giữ "video/*" trần (bộ chọn của máy).
+                  if (o && lo.ma === "video") o.accept = window.matchMedia("(pointer: fine)").matches ? ACCEPT_VIDEO_MAY_TINH : "video/*";
                   if (o) o.click();
                   setMoChon(false);
                 }}

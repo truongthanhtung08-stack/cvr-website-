@@ -115,7 +115,7 @@ async function uploadMedia(file: File, kind: "image" | "video", maxMB: number): 
         ? "Chưa tạo kho ảnh. Chạy migration 0004_listings_storage.sql trong Supabase → SQL Editor."
         // Chưa đăng nhập / hết phiên → kho ảnh từ chối (row-level security). Câu tiếng Việt anh duyệt 15/11/2026, không hiện chữ kỹ thuật
         : /row-level security|jwt|unauthorized|not authorized|403/i.test(error.message)
-          ? "Chưa tải được ảnh. Vui lòng đăng nhập rồi thử lại."
+          ? `Chưa tải được ${kind === "video" ? "video" : "ảnh"}. Vui lòng đăng nhập rồi thử lại.`
           : `Tải lên thất bại: ${error.message}`,
     };
   }

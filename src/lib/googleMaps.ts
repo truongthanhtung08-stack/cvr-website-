@@ -72,6 +72,17 @@ declare global {
 
 // Toạ độ ghim tay: "16.05, 108.22" hoặc link Google Maps có @lat,lng / q=lat,lng.
 export function parseLatLng(q: string): LatLng | null {
+  // TOẠ ĐỘ ĐỘ-PHÚT-GIÂY (anh 18/11/2026: "dán link GPS cũng không được") — Google Maps máy tính chép ra dạng
+  // 16°03'38.2"N 108°13'20.1"E; nhận cả dấu ′ ″ và chữ S/W (âm).
+  const dms = q.match(/(\d{1,3})\s*°\s*(\d{1,2})\s*['′]\s*([\d.]+)\s*["″]?\s*([NS])\W+(\d{1,3})\s*°\s*(\d{1,2})\s*['′]\s*([\d.]+)\s*["″]?\s*([EW])/i);
+  if (dms) {
+    const doi = (d: string, p: string, g: string, h: string) => (Number(d) + Number(p) / 60 + Number(g) / 3600) * (/[SW]/i.test(h) ? -1 : 1);
+    return { lat: doi(dms[1], dms[2], dms[3], dms[4]), lng: doi(dms[5], dms[6], dms[7], dms[8]) };
+  }
+  // "16.0612 108.2214" · "(16.0612, 108.2214)" · ".../maps/search/16.0612,+108.2214" · "?q=16.0612,+108.2214" — số thập phân có ≥ 3 số lẻ
+  let giai = q.replace(/\+/g, " ");
+  try { giai = decodeURIComponent(giai); } catch { /* chuỗi có % lẻ — đọc nguyên văn */ }
+  const tp = giai.match(/(?:^|[\s(/=@])(-?\d{1,2}\.\d{3,})\s*[, ]\s*(-?\d{2,3}\.\d{3,})(?=$|[\s),/&?z])/);
   const m =
     q.match(/^\s*(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$/) ||
     // !3d…!4d… = TOẠ ĐỘ ĐÚNG ĐIỂM khách chọn — xét TRƯỚC @… (tâm khung bản đồ đang xem, lệch nếu khách đã kéo bản đồ
@@ -79,7 +90,8 @@ export function parseLatLng(q: string): LatLng | null {
     q.match(/!3d(-?\d{1,3}(?:\.\d+)?)!4d(-?\d{1,3}(?:\.\d+)?)/) ||
     q.match(/@(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/) ||
     // link api=1 (query=) · ll=
-    q.match(/[?&](?:q|query|ll)=(-?\d{1,3}(?:\.\d+)?)(?:,|%2C)(-?\d{1,3}(?:\.\d+)?)/i);
+    q.match(/[?&](?:q|query|ll)=(-?\d{1,3}(?:\.\d+)?)(?:,|%2C)(-?\d{1,3}(?:\.\d+)?)/i) ||
+    tp;
   if (!m) return null;
   const lat = Number(m[1]);
   const lng = Number(m[2]);

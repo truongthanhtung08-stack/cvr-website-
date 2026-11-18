@@ -57,7 +57,8 @@ html {
 }
 /* Trang có thanh "← Quay lại" dính dưới header (điện thoại): chừa thêm chiều cao thanh đó → ô đang gõ, mục cuộn tới
    không bị thanh đè (chủ dự án 17/10/2026). Trình duyệt cũ không hiểu :has thì giữ như trên. */
-html:has(.thanh-quay-lai) { scroll-padding-top: calc(var(--hdr) + var(--backbar-h) + var(--at)); }
+/* + --buoc-h (thanh bước trang đăng tin, đo ở PostListingForm) + --cho-nhan (chỗ cho nhãn ngay trên ô): ô được đưa lên mà nhãn không bị thanh bước che (18/11/2026). Trang khác hai biến = 0. */
+html:has(.thanh-quay-lai) { scroll-padding-top: calc(var(--hdr) + var(--backbar-h) + var(--at) + var(--buoc-h, 0px) + var(--cho-nhan, 0px)); }
 
 /* ── CẮT CHỮ ĐÚNG THEO DÒNG (2 dòng / 1 dòng) ──────────────────────────────
    Trước đây tiêu đề thẻ tin đặt CHIỀU CAO CỨNG h-[3em] + overflow-hidden.

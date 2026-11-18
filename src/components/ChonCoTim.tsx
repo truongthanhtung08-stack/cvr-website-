@@ -76,9 +76,12 @@ export default function ChonCoTim({
     const ngangLuc = window.innerWidth;
     const dongNgay = () => { if (window.innerWidth !== ngangLuc) dong(); };
     document.addEventListener("mousedown", ngoai, true);
+    // Bấm Tab sang ô khác (máy tính, anh 18/11/2026: bảng Nhu cầu vẫn mở khi đã Tab sang ô Loại hình) → đóng bảng
+    document.addEventListener("focusin", ngoai, true);
     window.addEventListener("resize", dongNgay);
     return () => {
       document.removeEventListener("mousedown", ngoai, true);
+      document.removeEventListener("focusin", ngoai, true);
       window.removeEventListener("resize", dongNgay);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

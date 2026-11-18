@@ -85,9 +85,9 @@ export default function BangGiaDayTin({
                             className={`relative w-full rounded-xl px-1.5 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40 ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
                           >
                             <span className="flex flex-col items-center">{noiDung}</span>
-                            {dangChon && <span aria-hidden className="absolute -right-1.5 -top-1.5 z-[1] hidden h-4 w-4 items-center justify-center rounded-full bg-cvr-ink text-[10px] font-bold leading-none text-white max-sm:flex">✓</span>}
+                            {dangChon && <span aria-hidden className="absolute -right-1.5 -top-1.5 z-[1] flex h-4 w-4 items-center justify-center rounded-full bg-cvr-ink text-[10px] font-bold leading-none text-white">✓</span>}
                             {!khoa && (
-                              <span className={`mt-1 inline-flex max-sm:hidden h-6 items-center rounded-md px-2.5 text-[11.5px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
+                              <span className={`hidden h-6 items-center rounded-md px-2.5 text-[11.5px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
                                 {dangChon ? "Bỏ chọn" : "Chọn"}
                               </span>
                             )}

@@ -88,7 +88,8 @@ const KHAC_GIA = "Khác — tự ghi";
 // xuống DB, chỉ để biết phải hiện ô gõ tên.
 // 7 BƯỚC, MỌI MỤC LUÔN MỞ (chủ dự án 15/10/2026 bỏ kiểu thu gọn + "Tiếp tục"). Ngữ cảnh này chỉ để
 // báo lỗi ô bắt buộc ngay đầu bước có ô đó và cuộn tới bước đó.
-const MucMoCtx = createContext<{ moMuc: (step: string) => void; loi?: { buoc: string; msg: string } } | null>(null);
+// mucDang: MỖI MỤC MỘT TRANG (anh 18/11/2026) — chỉ mục đang mở hiện, các mục khác ẩn nhưng VẪN GIỮ dữ liệu (không gỡ khỏi trang).
+const MucMoCtx = createContext<{ moMuc: (step: string) => void; mucDang?: string; loi?: { buoc: string; msg: string } } | null>(null);
 
 const DU_AN_KHAC = "__khac";
 const DU_AN_TU_GHI = "Khác — tự ghi";
@@ -334,6 +335,8 @@ export default function PostListingForm() {
     if (dc.searchParams.get("huy-tt") !== "1" && !coCo) return false;
     dc.searchParams.delete("huy-tt");
     window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
+    // Mỗi mục một trang (18/11/2026): mở đúng trang Gói tin (mục 5)
+    setMucDang("5");
     // Về ĐẦU mục "Gói tin — thanh toán" (chủ dự án 29/10/2026: "về chỗ nộp tiền là ở phần gói") — thấy gói đã chọn + Tổng tiền
     const toi = () => document.getElementById("b-goi") ?? document.getElementById("b-thanhtoan");
     // Điện thoại thật (29/10/2026: từ app ngân hàng về vẫn đứng đầu trang): máy chậm dựng khối sau 3 giây, trình duyệt / Next khôi
@@ -616,9 +619,16 @@ export default function PostListingForm() {
   // sau tự dồn lên, không bao giờ nhảy số hay trùng số như trước.
   let demBuoc = 0;
   const buoc = () => String(++demBuoc);
-  // Cuộn tới đầu một bước (báo lỗi ô bắt buộc, bấm thanh bước).
+  // MỖI MỤC MỘT TRANG (anh 18/11/2026: "chia ra mỗi mục 1 trang", PC + điện thoại): mở một bước = chỉ bước đó hiện, đưa trang
+  // về đầu form. Các bước khác ẩn bằng CSS (vẫn giữ nguyên ô đã điền, ảnh đang tải, bản đồ). Báo lỗi ô bắt buộc / bấm thanh bước
+  // / nút Tiếp đều đi qua đây.
+  const [mucDang, setMucDang] = useState("1");
   const moMuc = (step: string) => {
-    requestAnimationFrame(() => document.querySelector(`[data-buoc="${step}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    setMucDang(step);
+    requestAnimationFrame(() => {
+      const f = document.querySelector<HTMLElement>("[data-vung-nhap]");
+      if (f && f.getBoundingClientRect().top < 0) f.scrollIntoView({ block: "start" });
+    });
   };
 
   // Ô nhập một mục đặc điểm — dùng chung cho cả hai khối để hai bên không lệch nhau.
@@ -1060,6 +1070,19 @@ export default function PostListingForm() {
     }, 350);
   }
 
+  // NÚT TIẾP (mỗi mục một trang, 18/11/2026): mục đang mở còn ô bắt buộc thiếu → báo ngay ô đó, chưa cho sang mục sau;
+  // đủ thì sang mục kế. Kiểm cùng luật với nút Đăng tin (loiDangTin), chỉ xét lỗi thuộc mục đang mở.
+  const tongMuc = goiDangDung && editId ? 6 : 7;
+  function tiepMuc() {
+    const l = loiDangTin();
+    let b = l?.[1];
+    if (b && goiDangDung && editId && Number(b) > 5) b = String(Number(b) - 1);
+    if (l && b === mucDang) return baoLoi(l[0], l[1], l[2]);
+    setError("");
+    setLoiBuoc("");
+    moMuc(String(Math.min(tongMuc, Number(mucDang) + 1)));
+  }
+
   // Khách điền / chọn xong đúng ô đang báo thiếu → dòng báo đỏ tự tắt (06/11/2026: trước đây chọn xong vẫn còn "Chưa chọn…"
   // tới lần bấm Đăng sau). Chỉ chạy khi ô thay đổi; ô khác còn thiếu thì chờ khách bấm Đăng mới báo tiếp.
   useEffect(() => {
@@ -1415,7 +1438,7 @@ export default function PostListingForm() {
       // MÁY TÍNH HAI CỘT (chủ dự án 23/10/2026: "PC mà làm giống y mobile — PC thiếu gì không gian để tối ưu"): cột trái menu 7
       // mục dọc (đi theo chỗ đang xem, như cột menu trang Báo giá) · cột phải các mục. Điện thoại/máy tính bảng: thanh mục vuốt ngang.
       className="lg:grid lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-      <MucMoCtx.Provider value={{ moMuc, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
+      <MucMoCtx.Provider value={{ moMuc, mucDang, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
       <ThanhBuoc boQua={goiDangDung && editId ? ["b-goi"] : []} />
       <div className="mt-3 min-w-0 space-y-6 sm:mt-6 lg:mt-0">
       {nhapCho && (() => {
@@ -2252,45 +2275,66 @@ export default function PostListingForm() {
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
 
-      {/* 2 nút TÁCH BIỆT RÕ (pill Apple): ĐĂNG TIN = đen đặc nổi bật (gửi duyệt) ·
-          LƯU NHÁP = xám nhạt kín đáo (cất tạm, làm tiếp sau) */}
-      {/* THỨ TỰ = TRÌNH TỰ (12/11/2026): Xem trước → Lưu nháp → Đăng tin, điện thoại và máy tính như nhau */}
-      {/* Máy tính: nút cỡ vừa, nằm GIỮA (chủ dự án 23/10/2026: "vừa to, vừa lệch phải") — điện thoại: mỗi nút một hàng, rộng hết */}
-      <div className="flex flex-col gap-3 border-t border-cvr-line pt-5 sm:flex-row sm:items-center sm:justify-center">
-        <button
-          type="submit"
-          disabled={!!saving}
-          className="btn-dangtin order-3 flex h-12 w-full items-center justify-center gap-2 rounded-full px-8 text-base font-bold text-white disabled:opacity-50 sm:h-10 sm:w-auto sm:px-6 sm:text-[14px]"
-        >
-          <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
-          </svg>
-          {/* Tin đã lên web: sửa xong chỉ lưu nội dung, không gửi duyệt (đang hiện → lên ngay; hết hạn / đã hạ → bấm Đăng lại) — 05/11/2026 */}
-          {goiDangDung && editId ? (saving === "publish" ? "Đang cập nhật…" : "Cập nhật") : saving === "publish" ? "Đang gửi duyệt…" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : "Đăng tin ngay"}
-        </button>
-        <button
-          type="button"
-          onClick={() => save(true)}
-          disabled={!!saving}
-          className="order-2 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cvr-surface px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-line/40 hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:h-10 sm:w-auto sm:px-5 sm:text-[14px]"
-        >
-          <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-8H7v8M7 3v5h8M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-          </svg>
-          {saving === "draft" ? "Đang lưu nháp…" : "Lưu nháp"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setXemTruoc(true)}
-          disabled={!!saving}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 order-1 sm:h-10 sm:w-auto sm:px-5 sm:text-[14px]"
-        >
-          <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-          Xem trước
-        </button>
+      {/* THANH NÚT LUÔN HIỆN (anh 18/11/2026: "nút Lưu nháp / Xem trước luôn hiện", PC + điện thoại) — dính đáy màn hình ở mọi
+          trang: ‹ Quay lại · Xem trước · Lưu nháp · Tiếp (mục cuối: Đăng tin). Điện thoại đang gõ (bàn phím bật) thì ẩn, không đè ô. */}
+      <div className="sticky bottom-0 z-20 -mx-4 border-t border-cvr-line bg-white/95 px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 max-sm:[.ban-phim-mo_&]:hidden">
+        {/* Bố trí (anh 18/11/2026: "nhỏ lại, cân đối, Lưu nháp, Xem trước qua bên trái"): trái = Xem trước · Lưu nháp (nút viền nhỏ),
+            phải = ‹ Quay lại · Tiếp / Đăng tin. */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setXemTruoc(true)}
+              disabled={!!saving}
+              className="h-9 rounded-full bg-white px-3 text-[13px] font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:px-4"
+            >
+              Xem trước
+            </button>
+            <button
+              type="button"
+              onClick={() => save(true)}
+              disabled={!!saving}
+              className="h-9 rounded-full bg-white px-3 text-[13px] font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:px-4"
+            >
+              {saving === "draft" ? "Đang lưu…" : "Lưu nháp"}
+            </button>
+          </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {mucDang !== "1" && (
+              <button
+                type="button"
+                aria-label="Mục trước"
+                onClick={() => moMuc(String(Number(mucDang) - 1))}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-cvr-ink ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface active:scale-[0.97] sm:w-auto sm:gap-0.5 sm:pl-2.5 sm:pr-3.5 sm:text-[13px] sm:font-semibold"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                <span className="max-sm:hidden">Quay lại</span>
+              </button>
+            )}
+            {Number(mucDang) < tongMuc ? (
+              <button
+                type="button"
+                onClick={tiepMuc}
+                className="btn-dangtin flex h-9 items-center gap-0.5 rounded-full pl-4 pr-3 text-[13px] font-bold text-white"
+              >
+                Tiếp
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            ) : (
+              // NÚT ĐĂNG TIN NỔI BẬT (anh 18/11/2026: "CTA nút Đăng tin làm cho phân biệt được"): màu xanh hành động + biểu tượng gửi,
+              // to hơn nút Tiếp đen — khách nhìn là biết bước cuối, bấm để đăng.
+              <button
+                type="submit"
+                disabled={!!saving}
+                className="flex h-10 items-center gap-1.5 rounded-full bg-cvr-blue px-5 text-[14px] font-bold text-white shadow-[0_4px_14px_rgba(26,115,232,0.4)] ring-2 ring-cvr-blue/25 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+              >
+                <svg className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" /></svg>
+                {/* Tin đã lên web: sửa xong chỉ lưu nội dung, không gửi duyệt (đang hiện → lên ngay; hết hạn / đã hạ → bấm Đăng lại) — 05/11/2026 */}
+                {goiDangDung && editId ? (saving === "publish" ? "Đang cập nhật…" : "Cập nhật") : saving === "publish" ? "Đang gửi duyệt…" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : "Đăng tin"}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
       {/* 22/10/2026 bỏ dòng giải thích dưới nút (chủ dự án: bớt chú thích, cấu trúc tự nói). */}
       </div>
@@ -2306,7 +2350,8 @@ const ANH_CHUA_CHON_GOI = 3;
 
 // Ô lấy MẶC ĐỊNH từ tài khoản — chỉ xem (sửa ở Cài đặt)
 const oKhoa = "h-11 w-full rounded-lg border border-cvr-line bg-cvr-surface px-3 text-sm text-cvr-body outline-none";
-const inputCls = "h-11 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint caret-cvr-blue outline-none transition focus:border-cvr-blue focus:ring-1 focus:ring-cvr-blue";
+// Máy tính ô cao 48px, chữ 15px (anh 18/11/2026: "PC các ô nội dung hiện quá nhỏ") — điện thoại giữ 44px / 14px.
+const inputCls = "h-11 lg:h-12 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm lg:text-[15px] text-cvr-ink placeholder-cvr-faint caret-cvr-blue outline-none transition focus:border-cvr-blue focus:ring-1 focus:ring-cvr-blue";
 
 // ════════════════════════════════════════════════════════════════════════════
 // THANH BƯỚC — dính trên đầu, bấm là tới thẳng phần đó.
@@ -2337,49 +2382,23 @@ function ThanhBuoc({ boQua = [] }: { boQua?: string[] }) {
   // Mục không có trên trang (sửa tin đã duyệt: không có Gói tin) → bỏ khỏi thanh, số thứ tự dồn lên khớp số trên từng mục
   const MOC_BUOC = MOC_BUOC_DU.filter((m) => !boQua.includes(m.id));
   const ctxBuoc = useContext(MucMoCtx);
-  const [dangO, setDangO] = useState(MOC_BUOC[0].id);
+  // Mỗi mục một trang (anh 18/11/2026): mốc sáng = mục đang mở (trước: mục đang cuộn tới).
+  const dangO = MOC_BUOC[Number(ctxBuoc?.mucDang ?? "1") - 1]?.id ?? MOC_BUOC[0].id;
   const bocRef = useRef<HTMLDivElement>(null);
-
-  // Phần nào đang nằm trong tầm nhìn thì mốc đó sáng lên.
+  // CHIỀU CAO THANH BƯỚC → --buoc-h (anh 18/11/2026: chạm ô Tiêu đề, nhãn "Tiêu đề tin đăng *" bị thanh bước che). Trình duyệt
+  // tự đưa ô lên trên bàn phím theo scroll-padding-top — trước không tính thanh bước nên đặt ô sát dưới nó, nhãn bị che.
+  // globals.css cộng --buoc-h + chỗ cho nhãn vào scroll-padding-top của trang đăng tin; BanPhimAo đọc cùng giá trị đó.
+  const thanhRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const els = MOC_BUOC.map((m) => document.getElementById(m.id)).filter(Boolean) as HTMLElement[];
-    if (!els.length) return;
-    // TÍNH LẠI TỪ ĐẦU MỖI LẦN CUỘN, KHÔNG DỰA VÀO MỤC VỪA ĐỔI.
-    //
-    // Bản cũ chỉ xét những mục VỪA thay đổi trạng thái, rồi lấy mục trên cùng
-    // trong số đó. Cuộn từ "Mô tả" xuống "Hình ảnh" mà mục Mô tả rời dải quan
-    // sát trước khi mục Hình ảnh lọt vào thì không có mục nào để chọn → thanh
-    // đứng nguyên ở chữ cũ. Chủ dự án gặp thật 12/09/2026: đang ở phần "Hình
-    // ảnh" mà thanh vẫn sáng "Mô tả".
-    //
-    // Nay mỗi lần có thay đổi thì quét LẠI TOÀN BỘ và lấy mục CUỐI CÙNG đã đi
-    // qua vạch 200px kể từ đỉnh màn hình — luôn có đáp án, không bao giờ kẹt.
-    const chon = () => {
-      let id = els[0].id;
-      for (const el of els) if (el.getBoundingClientRect().top <= 200) id = el.id;
-      setDangO(id);
-    };
-    const io = new IntersectionObserver(chon, { rootMargin: "-180px 0px -55% 0px", threshold: [0, 0.01, 1] });
-    els.forEach((el) => io.observe(el));
-
-    // Nghe cả lúc cuộn: một mục dài (như phần Hình ảnh) có thể chiếm hết màn
-    // hình, cuộn chậm bên trong nó thì bộ quan sát không phát tín hiệu nào cả.
-    // Gom vào một khung hình để cuộn nhanh cỡ nào cũng không làm giật máy yếu.
-    let cho = false;
-    const khiCuon = () => {
-      if (cho) return;
-      cho = true;
-      requestAnimationFrame(() => {
-        cho = false;
-        chon();
-      });
-    };
-    window.addEventListener("scroll", khiCuon, { passive: true });
-    chon();
-    return () => {
-      io.disconnect();
-      window.removeEventListener("scroll", khiCuon);
-    };
+    const el = thanhRef.current;
+    if (!el) return;
+    const goc = document.documentElement;
+    const ro = new ResizeObserver(() => {
+      goc.style.setProperty("--buoc-h", el.offsetHeight + "px");
+      goc.style.setProperty("--cho-nhan", el.offsetHeight ? "28px" : "0px"); // máy tính (thanh ẩn) không chừa
+    });
+    ro.observe(el);
+    return () => { ro.disconnect(); goc.style.removeProperty("--buoc-h"); goc.style.removeProperty("--cho-nhan"); };
   }, []);
 
   // Điện thoại không đủ chỗ cho 7 mốc → thanh cuộn ngang, mốc đang xem tự kéo
@@ -2424,7 +2443,7 @@ function ThanhBuoc({ boQua = [] }: { boQua?: string[] }) {
       </nav>
     </aside>
     {/* ĐIỆN THOẠI / MÁY TÍNH BẢNG: thanh mục dính trên đầu, vuốt ngang */}
-    <div className="an-buoc-khi-go sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
+    <div ref={thanhRef} className="an-buoc-khi-go sticky top-[calc(var(--hdr)+var(--backbar-h)+var(--at))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
       {/* MÁY TÍNH HIỆN ĐỦ MỌI MỤC (chủ dự án 23/10/2026: "trên PC phải làm cho logic như bản mobile — vào đăng tin bấm mục 6 thì
           như thế nào"): điện thoại vuốt ngang được, máy tính dùng chuột thì không → trước đây mục 5–7 khuất ngoài khung, không
           bấm tới được. Máy tính chia đều bề ngang cho các mục, tên dài xuống hai dòng; điện thoại giữ thanh vuốt như cũ. */}
@@ -2462,7 +2481,9 @@ function ThanhBuoc({ boQua = [] }: { boQua?: string[] }) {
 // hiện để khách dễ nhìn, dễ biết"): MỤC = 19px đậm + số thứ tự (Card) · MỤC CON = 16px đậm + kẻ trên (TieuDeCon, MucAnHien)
 // · NHÃN Ô chọn/ghi = 13px xám (Label). Không thêm màu — chỉ cỡ chữ, độ đậm, khoảng cách.
 function Label({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 block text-[13px] font-medium text-cvr-muted">{children}</label>;
+  // Ô BẮT BUỘC (nhãn có dấu *) chữ đậm, màu chữ chính (anh 18/11/2026: "các mục bắt buộc thì chữ đậm lên"); ô không bắt buộc giữ xám.
+  const batBuoc = typeof children === "string" ? children.includes("*") : Array.isArray(children) && children.some((c) => typeof c === "string" && c.includes("*"));
+  return <label className={`mb-1.5 block text-[13px] lg:text-[14px] ${batBuoc ? "font-semibold text-cvr-ink" : "font-medium text-cvr-muted"}`}>{children}</label>;
 }
 
 function TieuDeCon({ children }: { children: React.ReactNode }) {
@@ -2477,7 +2498,8 @@ function Card({ id, step, title, children, khoa, chiTieuDe }: { id?: string; ste
     // (globals.css). Trước đây chừa cả header lần nữa (168px) → bấm mốc xong tiêu đề nằm cách thanh ~120px, đầu màn
     // hình trống (chủ dự án 22/10/2026: "bấm chọn không hiện nội dung ngay đầu trang").
     // Điện thoại: thanh bước đã gọn (~42px) → chừa đúng chiều cao thanh, bấm số là thẻ mục nằm SÁT ngay dưới thanh (anh 15/11/2026)
-    <section id={id} data-buoc={step} className={`scroll-mt-[42px] sm:scroll-mt-[70px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 ${chiTieuDe ? "opacity-50" : ""}`}>
+    // Mỗi mục một trang (anh 18/11/2026): mục không đang mở thì ẩn — vẫn nằm trong form nên mọi ô, ảnh đang tải giữ nguyên.
+    <section id={id} data-buoc={step} hidden={!!ctx?.mucDang && ctx.mucDang !== step} className={`scroll-mt-[42px] sm:scroll-mt-[70px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 ${chiTieuDe ? "opacity-50" : ""}`}>
       {/* chiTieuDe: mục chưa tới lượt (VD Đặc điểm khi chưa chọn loại hình) — chỉ tiêu đề, mờ, giữ đúng số thứ tự mục */}
       <h2 className={`${chiTieuDe ? "" : "mb-5"} flex items-center gap-2.5 text-[19px] max-sm:gap-2 max-sm:text-[17px] font-semibold tracking-tight text-cvr-ink`}>
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>

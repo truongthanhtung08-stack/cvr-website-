@@ -183,7 +183,10 @@ export default function ContentEditor({
       const ed = khungRef.current;
       // MIN · MAX CỐ ĐỊNH THEO MÀN HÌNH (anh 17/11/2026: "đã giãn ra thì bấm vào hiện như vậy, sao phải TỰ THU LẠI"): MAX tính theo cao màn hình
       // KHÔNG có bàn phím, bàn phím bật / tắt không đổi cỡ ô. Trước đây MAX = phần còn thấy trên bàn phím (máy anh ~135px ≈ MIN) → chạm vào là ô co.
-      setCaoToiDa(tinhCao(caoMan.current));
+      // 18/11/2026 (anh: "phải hiện hàng B / I phía trên để chỉnh sửa"): MAX = phần còn thấy KHI BÀN PHÍM BẬT (ước 55% màn hình, bàn phím
+      // điện thoại chiếm ~40–45%) trừ thanh trên — cả khung (B · I + chữ) vừa trên bàn phím, gõ dài thì chữ cuộn TRONG khung, hàng B · I
+      // không trôi khuất. Vẫn cố định theo màn hình, bàn phím bật / tắt không đổi cỡ (giữ luật 17/11).
+      setCaoToiDa(tinhCao(caoMan.current * 0.55));
       if (!bp) daDat.current = false; // bàn phím tắt → lần bật sau đặt khung lại một lần
       // Bàn phím vừa bật: đưa dòng con trỏ lên trên bàn phím + đặt khung NGAY (L5, 18:57: chờ 2 khung hình thì Chrome tự kéo trang đi tìm con trỏ
       // trước, rồi lệnh mình kéo lại = nhảy 3 lần)
@@ -256,7 +259,7 @@ export default function ContentEditor({
     choConTro.current = Date.now() + 500;
     // Bàn phím không bật (máy có bàn phím rời…) → trả ô về cỡ thường. Ô còn đang gõ thì GIỮ: Samsung / Zalo / Facebook có bàn phím mà không báo
     // (trang không co) — trả về là khung giãn ra rồi co lại = giật (16/11/2026). Rời ô thì onBlur trả về.
-    setTimeout(() => { if (!banPhimBat() && document.activeElement !== khungRef.current) setCaoToiDa(tinhCao(caoMan.current)); }, 850);
+    setTimeout(() => { if (!banPhimBat() && document.activeElement !== khungRef.current) setCaoToiDa(tinhCao(caoMan.current * 0.55)); }, 850);
   };
   const dangGoTruoc = useRef(false); // lúc chạm, ô đã đang gõ chưa (chạm chữ khi đang gõ ≠ chạm mở ô)
   const keoRef = useRef<HTMLDivElement>(null);
@@ -356,6 +359,7 @@ export default function ContentEditor({
     document.execCommand("defaultParagraphSeparator", false, "div");
     document.execCommand(ten, false);
     phat();
+    document.dispatchEvent(new Event("selectionchange"));
   };
 
   // Khối của khung soạn đang chứa con trỏ (con trực tiếp của khung); không có → null.
@@ -432,18 +436,43 @@ export default function ContentEditor({
     if (videoRef.current) videoRef.current.value = "";
   }
 
+  // NÚT ĐANG BẬT theo chỗ con trỏ (anh 18/11/2026: "logic các nút dòng B/I cho CHUẨN"): con trỏ trong chữ đậm thì B sáng, v.v.
+  const [batNut, setBatNut] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    const doc = () => {
+      const el = khungRef.current, sel = window.getSelection();
+      if (!el || !sel || !sel.rangeCount || !el.contains(sel.getRangeAt(0).startContainer)) return;
+      const moi: Record<string, boolean> = {};
+      for (const k of ["bold", "italic", "justifyLeft", "justifyCenter", "justifyRight", "justifyFull"]) {
+        try { moi[k] = document.queryCommandState(k); } catch { moi[k] = false; }
+      }
+      // Hoàn tác / Làm lại: không còn gì để trả / làm lại thì nút mờ, không bấm được (anh 18/11/2026)
+      for (const k of ["undo", "redo"]) {
+        try { moi[k] = document.queryCommandEnabled(k); } catch { moi[k] = true; }
+      }
+      setBatNut((cu) => (Object.keys(moi).some((k) => moi[k] !== cu[k]) ? moi : cu));
+    };
+    document.addEventListener("selectionchange", doc);
+    document.addEventListener("input", doc);
+    return () => { document.removeEventListener("selectionchange", doc); document.removeEventListener("input", doc); };
+  }, []);
   const giuChon = (e: React.MouseEvent | React.PointerEvent) => e.preventDefault(); // bấm nút không làm rời ô, không mất vùng bôi đen
 
   // B · I · canh lề — một thanh trên đầu ô cho cả máy tính lẫn điện thoại
   const nutDinhDang = (
     <>
-      <ToolBtn label="In đậm" onClick={() => lenh("bold")}><span className="text-[13px] font-bold">B</span></ToolBtn>
-      <ToolBtn label="In nghiêng" onClick={() => lenh("italic")}><span className="font-serif text-[13px] italic">I</span></ToolBtn>
+      {/* NÚT QUAY LẠI = HOÀN TÁC (anh 18/11/2026: ô Mô tả "có nút quay lại") — trả lại thao tác gõ / định dạng vừa làm */}
+      {chiAnh && <ToolBtn label="Hoàn tác" tat={batNut.undo !== true} onClick={() => lenh("undo")}><svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 010 11H11" /></svg></ToolBtn>}
+      {/* LÀM LẠI (anh 18/11/2026: "có Hoàn tác thì phải có Forward") */}
+      {chiAnh && <ToolBtn label="Làm lại" tat={batNut.redo !== true} onClick={() => lenh("redo")}><svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 000 11H13" /></svg></ToolBtn>}
+      {chiAnh && <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />}
+      <ToolBtn label="In đậm" bat={!!batNut.bold} onClick={() => lenh("bold")}><span className="text-[13px] font-bold">B</span></ToolBtn>
+      <ToolBtn label="In nghiêng" bat={!!batNut.italic} onClick={() => lenh("italic")}><span className="font-serif text-[13px] italic">I</span></ToolBtn>
       <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
-      <ToolBtn label="Canh trái" onClick={() => lenh("justifyLeft")}><AlignIcon lines={[16, 10, 16, 10]} /></ToolBtn>
-      <ToolBtn label="Canh giữa" onClick={() => lenh("justifyCenter")}><AlignIcon lines={[16, 10, 16, 10]} center /></ToolBtn>
-      <ToolBtn label="Canh phải" onClick={() => lenh("justifyRight")}><AlignIcon lines={[16, 10, 16, 10]} right /></ToolBtn>
-      <ToolBtn label="Canh đều 2 bên" onClick={() => lenh("justifyFull")}><AlignIcon lines={[16, 16, 16, 16]} /></ToolBtn>
+      <ToolBtn label="Canh trái" bat={!!batNut.justifyLeft} onClick={() => lenh("justifyLeft")}><AlignIcon lines={[16, 10, 16, 10]} /></ToolBtn>
+      <ToolBtn label="Canh giữa" bat={!!batNut.justifyCenter} onClick={() => lenh("justifyCenter")}><AlignIcon lines={[16, 10, 16, 10]} center /></ToolBtn>
+      <ToolBtn label="Canh phải" bat={!!batNut.justifyRight} onClick={() => lenh("justifyRight")}><AlignIcon lines={[16, 10, 16, 10]} right /></ToolBtn>
+      <ToolBtn label="Canh đều 2 bên" bat={!!batNut.justifyFull} onClick={() => lenh("justifyFull")}><AlignIcon lines={[16, 16, 16, 16]} /></ToolBtn>
     </>
   );
   const bieuTuongAnh = <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z" /></svg>;
@@ -460,7 +489,7 @@ export default function ContentEditor({
         onMouseDown={giuChon}
         // Thanh nằm YÊN đầu khung (không dính trang — dính thì con trỏ chui dưới thanh, ảnh Samsung anh 15/11/2026 11:49). MỘT DÒNG trên điện thoại kể cả trình duyệt Zalo phóng chữ (ảnh Zalo anh 15/11/2026 8:28: "Chèn ảnh" rớt dòng 2, thanh cao gấp đôi
         // đè lên chữ) — không xuống hàng; máy chữ quá to thì vuốt ngang thanh (chạm nút vẫn giữ vùng bôi đen, vuốt không bị chặn).
-        className="no-scrollbar -mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:mx-0 max-sm:flex-nowrap max-sm:justify-between max-sm:overflow-x-auto max-sm:gap-0.5 max-sm:border-b max-sm:border-cvr-line max-sm:px-1 max-sm:py-1.5 sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0"
+        className={`${chiAnh ? "sm:sticky sm:top-[var(--hdr)] sm:z-10" : ""} no-scrollbar -mx-1 flex flex-wrap items-center gap-1 bg-white px-1 py-1 max-sm:mx-0 max-sm:flex-nowrap max-sm:justify-between max-sm:overflow-x-auto max-sm:gap-0.5 max-sm:border-b max-sm:border-cvr-line max-sm:px-1 max-sm:py-1.5 sm:mx-0 sm:gap-1.5 sm:px-0 sm:py-0`}
       >
         {nutDinhDang}
         <span className="mx-1 hidden h-5 w-px shrink-0 bg-cvr-line sm:block" />
@@ -526,7 +555,7 @@ export default function ContentEditor({
           onBlur={() => {
             daDat.current = false; nhoKhoi(); phat();
             // Rời ô ở trình duyệt không báo bàn phím → trả khung về cỡ thường (Chrome: bàn phím tắt tự đổi cỡ, dòng này không làm gì thêm)
-            if (laDt) setTimeout(() => { if (document.activeElement !== khungRef.current && !banPhimBat()) setCaoToiDa(tinhCao(caoMan.current)); }, 300);
+            if (laDt) setTimeout(() => { if (document.activeElement !== khungRef.current && !banPhimBat()) setCaoToiDa(tinhCao(caoMan.current * 0.55)); }, 300);
           }}
           onPaste={(e) => {
             // Chỉ lấy CHỮ — bỏ định dạng rác của nơi khác (màu, cỡ chữ, bảng…).
@@ -550,8 +579,13 @@ export default function ContentEditor({
           // CON TRỎ ĐỨNG YÊN THEO CHỮ KHI CUỘN (15/11/2026, gốc trong mã Chrome box_fragment_painter.cc): chữ nằm THẲNG trong ô cuộn thì Chrome vẽ con
           // trỏ ở lớp KHÔNG cuộn của ô → con trỏ lơ lửng, trôi ra ngoài khung. Chữ nằm trong khối con thì con trỏ vẽ cùng lớp chữ (như ô gõ thường của
           // điện thoại: cuộn khuất thì khuất, cuộn lại thì hiện). flex cột = chữ rời luôn được bọc khối con (không đổi dữ liệu, giữ B / I).
-          style={laDt ? { display: "flex", flexDirection: "column", gridArea: "1 / 1", minHeight: caoKeo && value.trim() ? Math.min(Math.max(caoKeo, CAO_5_DONG), caoToiDa) : Math.min(CAO_5_DONG, caoToiDa), maxHeight: caoKeo && value.trim() ? Math.min(Math.max(caoKeo, CAO_5_DONG), caoToiDa) : caoToiDa, overflowY: "auto", overscrollBehavior: "contain" } : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
-          className="soan-thao peer caret-[#1a73e8] w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line max-sm:rounded-none max-sm:border-0 bg-white px-3 py-2.5 text-[16px] leading-relaxed sm:resize-y sm:overflow-auto sm:text-sm text-cvr-ink outline-none transition focus:border-cvr-ink"
+          style={laDt ? { display: "flex", flexDirection: "column", gridArea: "1 / 1", minHeight: caoKeo && value.trim() ? Math.min(Math.max(caoKeo, CAO_5_DONG), caoToiDa) : Math.min(CAO_5_DONG, caoToiDa), maxHeight: caoKeo && value.trim() ? Math.min(Math.max(caoKeo, CAO_5_DONG), caoToiDa) : caoToiDa, overflowY: "auto", overscrollBehavior: "contain" } : chiAnh
+            // MÁY TÍNH, ô Mô tả tin (anh 18/11/2026: "bỏ kéo giãn, cân đối; gõ nhiều tự giãn, nội dung đi trong phạm vi đó"): mặc định
+            // ~7 dòng, chữ nhiều tự giãn tới MỨC TỐI ĐA (420px, không quá màn hình) rồi CUỘN TRONG KHUNG; góc phải dưới có nút kéo giãn
+            // chuẩn (anh: "có nút kéo giãn chuẩn") — kéo trong khoảng 180px → mức tối đa, không giãn vô hạn.
+            ? { minHeight: 180, maxHeight: "min(420px, calc(100dvh - 200px))", overflowY: "auto", overscrollBehavior: "contain" }
+            : { minHeight: `${Math.max(rows, 7) * 1.6}rem` }}
+          className={`soan-thao peer caret-[#1a73e8] w-full resize-none overflow-visible whitespace-pre-wrap break-words rounded-lg border border-cvr-line max-sm:rounded-none max-sm:border-0 bg-white px-3 py-2.5 text-[16px] leading-relaxed ${chiAnh ? "sm:resize-y sm:text-[15px]" : "sm:resize-y sm:overflow-auto sm:text-sm"} text-cvr-ink outline-none transition focus:border-cvr-ink`}
         />
         {!value.trim() && placeholder && (laDt
           ? <p aria-hidden style={{ gridArea: "1 / 1", maxHeight: Math.min(CAO_5_DONG, caoToiDa), display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 4 }} className="pointer-events-none overflow-hidden px-3 py-2.5 text-[16px] leading-relaxed text-cvr-faint peer-focus:invisible">{placeholder}</p>
@@ -576,7 +610,7 @@ export default function ContentEditor({
 }
 
 // Nút trên thanh định dạng
-function ToolBtn({ label, onClick, onMouseDown, children }: { label: string; onClick: () => void; onMouseDown?: (e: React.MouseEvent) => void; children: React.ReactNode }) {
+function ToolBtn({ label, onClick, onMouseDown, bat, tat, children }: { label: string; onClick: () => void; onMouseDown?: (e: React.MouseEvent) => void; bat?: boolean; tat?: boolean; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -584,7 +618,10 @@ function ToolBtn({ label, onClick, onMouseDown, children }: { label: string; onC
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="flex h-8 w-6 shrink-0 items-center justify-center rounded-lg border border-cvr-line bg-white text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink sm:w-8"
+      aria-pressed={bat === undefined ? undefined : bat}
+      disabled={tat}
+      // Nút đang BẬT ở chỗ con trỏ (đậm, nghiêng, kiểu canh) nền đen chữ trắng — như trình soạn chuẩn (anh 18/11/2026)
+      className={`flex h-8 w-6 shrink-0 items-center justify-center rounded-lg border transition sm:w-8 ${bat ? "border-cvr-ink bg-cvr-ink text-white" : "border-cvr-line bg-white text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"} disabled:pointer-events-none disabled:opacity-35`}
     >
       {children}
     </button>

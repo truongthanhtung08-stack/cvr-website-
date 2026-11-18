@@ -498,7 +498,7 @@ export default function MapPickerMo({
   return (
     <div className="space-y-3">
       <div className={toan ? "ban-do-toan fixed inset-0 z-[80] bg-white" : "relative overflow-hidden rounded-xl border border-cvr-line"}>
-        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className={`w-full bg-cvr-surface ${toan ? "h-full" : "h-[240px] sm:h-[360px]"}`} />
+        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className={`w-full bg-cvr-surface ${toan ? "h-full" : "h-[200px] sm:h-[320px]"}`} />{/* khung cân đối (anh 18/11/2026): điện thoại 200, máy tính 320 — trước 240 / 360px */}
         {!sanSang && !hong && (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[13px] font-medium text-cvr-muted">
             Đang mở bản đồ…
