@@ -1106,3 +1106,5 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 .tab-md button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; padding: 8px 6px; }
 .bang-mt .ghim { box-shadow: 1px 0 0 var(--cl-line); }
 .bang-mt .ghim { z-index: 2; background-clip: padding-box; }
+.tk-dang-tin { padding: 12px 16px 4px; background: #fff; }
+.tk-dang-tin .zaui-btn { background: var(--cl-blue, #1a73e8) !important; font-weight: 700; }

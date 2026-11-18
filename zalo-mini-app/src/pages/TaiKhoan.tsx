@@ -40,7 +40,6 @@ export default function TaiKhoan() {
     { ten: "Quản lý", muc: [
       { ten: "Tin đăng", icon: "tinDang", app: "/tin-cua-toi" },
       { ten: "Khách hàng", icon: "khachHang", app: "/khach-hang" },
-      { ten: "Đăng tin", icon: "dangTin", app: "/dang-tin" },
     ] },
     // Nhóm "Hồ sơ" = ĐÚNG danh sách trang Hồ sơ web điện thoại (src/lib/menuTaiKhoan.ts, cùng thứ tự). Mini App không có Nạp tiền (Zalo cấm,
     // bản 78) → "Ví" chỉ xem số dư; "Dự án của tôi" chỉ có trên web.
@@ -97,6 +96,8 @@ export default function TaiKhoan() {
           </div>
         )}
       </div>
+      {/* ĐĂNG TIN LÊN ĐẦU, NÚT XANH (anh 19/11/2026) — việc chính của khách, như nút Đăng tin xanh thanh dưới */}
+      <div className="tk-dang-tin"><Button fullWidth onClick={() => dieuHuong("/dang-tin")}>Đăng tin</Button></div>
       {NHOM.map((n) => (
         <section key={n.ten} className="tk-nhom">
           <h3>{n.ten}</h3>
