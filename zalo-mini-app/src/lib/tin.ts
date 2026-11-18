@@ -47,7 +47,15 @@ async function rest(query: string): Promise<Tin[]> {
   });
   if (!res.ok) throw new Error(`Không đọc được tin (${res.status})`);
   // Tin mẫu seed có id dạng số — web đã loại, Mini App cũng loại.
-  return ((await res.json()) as Tin[]).filter((t) => !/^\d+$/.test(t.id));
+  let ds = ((await res.json()) as Tin[]).filter((t) => !/^\d+$/.test(t.id));
+  // Y HỆT WEB getListings (listingsDb.ts): tin hẹn ngày đăng chưa tới giờ thì chưa hiện (daToiNgay) · thứ tự trong cùng hạng = MỐC GẦN
+  // NHẤT giữa ngày đăng và lần đẩy (anh 23/10/2026) — Postgres xếp bumped_at trước nên tin đẩy từ lâu đứng mãi trên tin mới đăng.
+  if (query.includes("status=eq.approved")) ds = ds.filter((t) => !t.published_at || Date.parse(t.published_at) <= Date.now());
+  if (query.includes(THU_TU)) {
+    const moc = (t: Tin) => Math.max(Date.parse(t.bumped_at ?? "") || 0, Date.parse(t.published_at ?? "") || 0);
+    ds = ds.map((t, i) => ({ t, i })).sort((a, b) => moc(b.t) - moc(a.t) || a.i - b.i).map((x) => x.t);
+  }
+  return ds;
 }
 
 const THU_TU = "order=bumped_at.desc.nullslast,published_at.desc.nullslast,created_at.desc";

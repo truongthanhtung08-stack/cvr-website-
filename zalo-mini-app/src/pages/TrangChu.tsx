@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { setNavigationBarColor } from "zmp-sdk/apis";
 import { Input, Page, useNavigate } from "zmp-ui";
 import Khoi from "../components/Khoi";
 import KhoiNoiBat from "../components/KhoiNoiBat";
@@ -13,7 +14,7 @@ const KHU_VUC_WEB = ["Đà Nẵng", "Huế", "Quảng Trị", "Quảng Ngãi", "
 import TheBaiViet from "../components/TheBaiViet";
 import { useTai } from "../lib/useTai";
 import { nhanCoastalLand } from "../lib/zalo";
-import logoNgang from "../assets/logo-ngang.svg";
+import logoTrang from "../assets/logo-trang.svg";
 import ChanTrang from "../components/ChanTrang";
 
 // TRANG CHỦ — cấu trúc chuẩn Mini App Zalo (không bê nguyên web):
@@ -50,6 +51,12 @@ export default function TrangChu() {
   const baiViet = useTai(() => layBaiViet(6), [], []); // như web: khối Tin tức trên trang chủ, Xem thêm → danh sách bài
   const anhDau = useTai(() => layAnhDauTrang(), [], []);
   const kv = useTai(() => layKhuVucTrangChu(), [], []);
+  // ĐẦU TRANG NỀN ĐEN như web điện thoại (#161617, logo trắng — Header.tsx 08/11/2026): thanh trạng thái Zalo đổi chữ trắng khi ở trang
+  // chủ, rời trang chủ trả về trắng / chữ đen như app-config.json (các trang con dùng thanh tiêu đề trắng của Zalo).
+  useEffect(() => {
+    setNavigationBarColor({ color: "#161617", statusBarColor: "#161617", textColor: "white" }).catch(() => {});
+    return () => { setNavigationBarColor({ color: "#ffffff", statusBarColor: "#ffffff", textColor: "black" }).catch(() => {}); };
+  }, []);
 
   return (
     <Page className="trang-chu" style={{ paddingBottom: 0, paddingTop: 0 }}>
@@ -57,10 +64,10 @@ export default function TrangChu() {
         <div className="hang-app">
           {/* LOGO CHUẨN (06/11/2026 "lấy logo CHUẨN, không làm kiểu dối"): đúng file logo ngang của thương hiệu (cùng chân trang), không tự ghép chữ */}
           {/* Bấm logo = về đầu Trang chủ, như web (06/11/2026) — logo chỉ có ở Trang chủ nên chỉ cần cuộn lên đầu */}
-          <img className="logo-chuan" src={logoNgang} alt="COASTAL LAND" onClick={(e) => { (e.currentTarget.closest(".zaui-page") as HTMLElement | null)?.scrollTo({ top: 0, behavior: "smooth" }); }} />
+          <img className="logo-chuan" src={logoTrang} alt="COASTAL LAND" onClick={(e) => { (e.currentTarget.closest(".zaui-page") as HTMLElement | null)?.scrollTo({ top: 0, behavior: "smooth" }); }} />
         </div>
         <div onClick={() => dieuHuong("/tim-kiem")}>
-          <Input.Search placeholder="Tìm nhà đất, khu vực, dự án…" readOnly />
+          <Input.Search placeholder="Tìm nhà đất theo khu vực, dự án…" readOnly />
         </div>
       </div>
 

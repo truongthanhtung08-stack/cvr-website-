@@ -691,7 +691,8 @@ export default function DangTin() {
 
       <Nhom so={4} tieuDe="Tiêu đề & mô tả">
         {/* Chữ gợi ý = web (anh 16/11/2026: bỏ câu hướng dẫn dài) */}
-        <ONhap nhan="Tiêu đề tin đăng *" placeholder="Nhập tiêu đề bất động sản" value={tieuDe} onChange={(e) => setTieuDe(e.target.value)} maxLength={120} dem />
+        {/* Ô Tiêu đề = web điện thoại 17/11/2026 (7390e208): khung CỐ ĐỊNH 3 dòng (88px), dài hơn cuộn trong khung — ô không đổi cỡ nên trang không dịch */}
+        <ONhap vung className="o-tieu-de" rows={3} nhan="Tiêu đề tin đăng *" placeholder="Nhập tiêu đề bất động sản" value={tieuDe} onChange={(e) => setTieuDe(e.target.value.replace(/\n/g, " "))} maxLength={120} dem />
         <ONhap vung nhan="Mô tả chi tiết" placeholder="Nhập nội dung mô tả bất động sản" value={moTa} onChange={(e) => setMoTa(e.target.value)} />
       </Nhom>
 

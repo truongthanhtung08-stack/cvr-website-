@@ -68,6 +68,7 @@ export default function BangGiaMaTran({
                       className={`${onChon && !khoaO ? "o-chon" : ""} ${dangChon ? "dang-chon" : ""} ${khoaO ? "khoa" : ""}`}
                       onClick={onChon && !khoaO ? () => onChon(p.tierId, ngay) : undefined}
                     >
+                      {dangChon && <i className="dau-tick" aria-hidden>✓</i>}
                       <b>{t.price > 0 ? tien(gomVat(t.price)) : "0 đ"}</b>
                       {giam > 0 && <span className="giam">−{giam}%</span>}
                     </td>

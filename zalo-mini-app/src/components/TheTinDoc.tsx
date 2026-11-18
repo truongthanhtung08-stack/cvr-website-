@@ -10,6 +10,7 @@ import { chiaSeTin } from "../lib/zalo";
 import { supabase, usePhien } from "../lib/supabase";
 import BieuTuongWeb from "./BieuTuongWeb";
 import logoTron from "../assets/logo-tron.svg";
+import logoZalo from "../assets/zalo.svg"; // logo Zalo LÀ ẢNH như web (LienHeReveal ZaloMark, public/logo/zalo.svg)
 
 // THẺ TIN TO — trang chủ, ĐÚNG thẻ web điện thoại (src/components/TheTinMobile.tsx, 12/11/2026): ảnh lớn tràn bề ngang · hàng 3 ảnh nhỏ
 // (Diamond, Gold) · tiêu đề · giá · diện tích đỏ · địa chỉ · mô tả theo cấp · người đăng + Làm mới · tim · chia sẻ · [Zalo] [số ẩn đuôi + mắt].
@@ -86,7 +87,7 @@ export default function TheTinDoc({ tin }: { tin: Tin }) {
         </div>
         {h && tin.sdt && (
           <div className="the-to-lienhe">
-            <button className="the-to-zalo" onClick={nhanZalo}>Zalo</button>
+            <button className="the-to-zalo" onClick={nhanZalo} aria-label="Nhắn Zalo"><img src={logoZalo} alt="" width={22} height={22} /></button>
             <button className="the-to-goi" onClick={moSo}><BieuTuongWeb ten="dienThoai" co={18} /> {hienSo ? `Gọi ${tin.sdt}` : anDuoi(tin.sdt)}{!hienSo && <BieuTuongWeb ten="mat" co={18} />}</button>
           </div>
         )}

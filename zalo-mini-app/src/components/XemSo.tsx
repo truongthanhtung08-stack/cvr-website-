@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { openPhone, openWebview } from "zmp-sdk";
+import logoZalo from "../assets/zalo.svg"; // logo Zalo là ảnh như web
 import BieuTuongWeb from "./BieuTuongWeb";
 import { supabase, usePhien } from "../lib/supabase";
 
@@ -32,7 +33,7 @@ export default function XemSo({ id, sdt, soAn, ten }: { id: string; sdt?: string
     <div className="lien-he">
       {ten && <span className="lien-he-avt">{ten.trim().split(/\s+/).slice(0, 2).map((x) => x[0]).join("").toUpperCase()}</span>}
       <button className="nut-zalo" onClick={nhanZalo} aria-label="Nhắn Zalo">
-        <span className="logo-zalo">Zalo</span>
+        <img src={logoZalo} alt="" width={26} height={26} />
       </button>
       {!hien ? (
         <button className="nut-goi" onClick={moSo}>
