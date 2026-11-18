@@ -20,7 +20,7 @@ const emailThat = (e?: string | null) => (e && !/@users.coastalland.vn$/i.test(e
 
 type Muc = { ten: string; icon: string; app?: string; bam?: () => void; phu?: string };
 
-// Đã bấm Đăng xuất thì nút vào lại ghi "Đăng nhập bằng Zalo" (mở app không tự vào lại — lib/lienKet tuVaoBangZalo)
+// Đã bấm Đăng xuất thì nút vào lại ghi "Tiếp tục" (không ghi chữ "đăng nhập" — Zalo từ chối bản 52, chính sách 6.5) (mở app không tự vào lại — lib/lienKet tuVaoBangZalo)
 function daDangXuat() { try { return localStorage.getItem(DA_DANG_XUAT) === "1"; } catch { return false; } }
 
 export default function TaiKhoan() {
@@ -93,7 +93,7 @@ export default function TaiKhoan() {
         ) : (
           // Mở app là vào bằng Zalo (lib/lienKet). Chỉ khi lần vào ngầm hỏng (mạng) mới có nút này — bấm là vào lại bằng Zalo.
           <div className="tk-lien-ket">
-            <Button fullWidth loading={dangLk} onClick={async () => { setDangLk(true); await vaoNgay(); setDangLk(false); }}>{daDangXuat() ? "Đăng nhập bằng Zalo" : "Thử lại"}</Button>
+            <Button fullWidth loading={dangLk} onClick={async () => { setDangLk(true); await vaoNgay(); setDangLk(false); }}>{daDangXuat() ? "Tiếp tục" : "Thử lại"}</Button>
           </div>
         )}
       </div>

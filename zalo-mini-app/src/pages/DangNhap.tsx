@@ -10,7 +10,7 @@ export default function DangNhap() {
   const dieuHuong = useNavigate();
   const [thamSo] = useSearchParams();
   const tiep = thamSo.get("tiep") || "/tai-khoan";
-  // Khách đã bấm Đăng xuất: không tự vào lại, chờ khách bấm "Đăng nhập bằng Zalo"
+  // Khách đã bấm Đăng xuất: không tự vào lại, chờ khách bấm "Tiếp tục" (không ghi chữ "đăng nhập": Zalo từ chối bản 52, chính sách 6.5)
   const daDangXuat = (() => { try { return localStorage.getItem(DA_DANG_XUAT) === "1"; } catch { return false; } })();
   const [dang, setDang] = useState(!daDangXuat);
 
@@ -26,7 +26,7 @@ export default function DangNhap() {
     <Page style={{ background: "#fff" }}>
       <TieuDe title="Tài khoản" />
       <Box p={4} flex justifyContent="center">
-        {dang ? <Spinner /> : <Button fullWidth onClick={vao}>{daDangXuat ? "Đăng nhập bằng Zalo" : "Thử lại"}</Button>}
+        {dang ? <Spinner /> : <Button fullWidth onClick={vao}>{daDangXuat ? "Tiếp tục" : "Thử lại"}</Button>}
       </Box>
     </Page>
   );
