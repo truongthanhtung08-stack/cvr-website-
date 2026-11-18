@@ -42,7 +42,9 @@ export default function TaiKhoan() {
       { ten: "Khách hàng", icon: "khachHang", app: "/khach-hang" },
       { ten: "Đăng tin", icon: "dangTin", app: "/dang-tin" },
     ] },
-    { ten: "Tài khoản", muc: [
+    // Nhóm "Hồ sơ" = ĐÚNG danh sách trang Hồ sơ web điện thoại (src/lib/menuTaiKhoan.ts, cùng thứ tự). Mini App không có Nạp tiền (Zalo cấm,
+    // bản 78) → "Ví" chỉ xem số dư; "Dự án của tôi" chỉ có trên web.
+    { ten: "Hồ sơ", muc: [
       { ten: "Ví", icon: "vi", app: "/vi", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
       { ten: "Hóa đơn", icon: "hoaDon", app: "/hoa-don" },
       { ten: "Gói hội viên", icon: "hoiVien", app: "/hoi-vien" },
@@ -77,10 +79,12 @@ export default function TaiKhoan() {
         {nguoiDung ? (
           <>
             {h?.avatar_url ? <img className="tk-anh" src={h.avatar_url} alt="" /> : <span className="tk-anh"><BieuTuongWeb ten="nguoi" co={24} /></span>}
-            <div className="tk-ten">
-              <strong>{h?.full_name || "Tài khoản"}</strong>
-              <span>{soVN(h?.phone ?? nguoiDung.phone) || emailThat(h?.email) || emailThat(nguoiDung.email)}</span>
-            </div>
+            {/* Bấm tên = sang Cài đặt đổi tên, ảnh (như thẻ tên trang Hồ sơ web) */}
+            <button type="button" className="tk-ten" onClick={() => dieuHuong("/cai-dat")}>
+              <strong>{h?.full_name || "Thành viên"}</strong>
+              {soVN(h?.phone ?? nguoiDung.phone) && <span>{soVN(h?.phone ?? nguoiDung.phone)}</span>}
+              {(emailThat(h?.email) || emailThat(nguoiDung.email)) && <span>{emailThat(h?.email) || emailThat(nguoiDung.email)}</span>}
+            </button>
             {/* Vào ngầm bằng mã Zalo thì chưa có tên + ảnh: khách bấm là Zalo hỏi cho dùng tên + ảnh (hộp chuẩn của Zalo) */}
             {!h?.avatar_url && (
               <Button size="small" variant="secondary" loading={dangLk} onClick={async () => { setDangLk(true); await lienKetZalo(); setDangLk(false); setLan((x) => x + 1); }}>Dùng tên và ảnh Zalo</Button>
@@ -108,10 +112,7 @@ export default function TaiKhoan() {
       ))}
       {nguoiDung && (
         <section className="tk-nhom">
-          <button className="tk-muc tk-dang-xuat" onClick={() => { try { localStorage.setItem(DA_DANG_XUAT, "1"); } catch { /* bỏ qua */ } void supabase.auth.signOut(); }}>
-            <span className="tk-bt"><BieuTuongWeb ten="dangXuat" /></span>
-            <span className="tk-muc-ten">Đăng xuất</span>
-          </button>
+          <button className="tk-dang-xuat-web" onClick={() => { try { localStorage.setItem(DA_DANG_XUAT, "1"); } catch { /* bỏ qua */ } void supabase.auth.signOut(); }}>Đăng xuất</button>
         </section>
       )}
     </Page>

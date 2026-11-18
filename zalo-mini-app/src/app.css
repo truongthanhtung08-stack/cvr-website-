@@ -1080,3 +1080,18 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 /* Ô Tiêu đề 3 dòng cố định (88px) như web, chữ cuộn trong ô */
 .o-nhap textarea.o-tieu-de { height: 88px !important; min-height: 88px !important; max-height: 88px !important; resize: none; overflow-y: auto; }
 .the-to-zalo { display: flex; align-items: center; justify-content: center; }
+
+/* HÀNG NÚT FORM ĐĂNG TIN (18/11/2026, như web): nằm ngay dưới nội dung bước, không dính đáy */
+.hang-buoc { display: grid; gap: 10px; padding: 12px 16px 16px; border-top: 1px solid var(--cl-line); background: #fff; }
+.hang-buoc-duoi { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hang-buoc-nhom { display: flex; align-items: center; gap: 6px; }
+.hang-buoc .nut-vien { height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--cl-line); background: #fff; font-size: 13px; font-weight: 600; color: #1d1d1f; }
+.hang-buoc .nut-vien:disabled { opacity: .5; }
+.hang-buoc .nut-tron { width: 36px; padding: 0; font-size: 20px; line-height: 1; }
+.hang-buoc .nut-tiep { height: 36px; padding: 0 16px; border-radius: 999px; background: #1d1d1f; color: #fff; font-size: 13px; font-weight: 700; }
+.the-muc[hidden] { display: none !important; } /* mỗi mục một trang: mục không đang mở ẩn hẳn */
+
+/* Hồ sơ = trang Hồ sơ web điện thoại (18/11/2026) */
+.tk-ten { background: none; border: 0; padding: 0; text-align: left; display: grid; gap: 2px; min-width: 0; flex: 1; }
+.tk-ten span { display: block; }
+.tk-dang-xuat-web { width: 100%; padding: 14px 0; border: 1px solid var(--cl-line); border-radius: 16px; background: #fff; color: #dc2626; font-size: 15px; font-weight: 500; }
