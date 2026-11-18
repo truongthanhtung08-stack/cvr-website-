@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { setNavigationBarColor } from "zmp-sdk/apis";
+import { configAppView } from "zmp-sdk/apis";
 import { Input, Page, useNavigate } from "zmp-ui";
 import Khoi from "../components/Khoi";
 import KhoiNoiBat from "../components/KhoiNoiBat";
@@ -54,8 +54,10 @@ export default function TrangChu() {
   // ĐẦU TRANG NỀN ĐEN như web điện thoại (#161617, logo trắng — Header.tsx 08/11/2026): thanh trạng thái Zalo đổi chữ trắng khi ở trang
   // chủ, rời trang chủ trả về trắng / chữ đen như app-config.json (các trang con dùng thanh tiêu đề trắng của Zalo).
   useEffect(() => {
-    setNavigationBarColor({ color: "#161617", statusBarColor: "#161617", textColor: "white" }).catch(() => {});
-    return () => { setNavigationBarColor({ color: "#ffffff", statusBarColor: "#ffffff", textColor: "black" }).catch(() => {}); };
+    // configAppView GIỮ thanh tiêu đề Zalo ẨN (actionBar.hide). setNavigationBarColor cũ làm thanh Zalo hiện lại chữ "COASTAL LAND" chồng lên
+    // hàng logo — 2 đầu trang trên Zalo thật (ảnh anh 18/11/2026 23:44, bản 81). Khung giả lập không có thanh Zalo nên không thấy.
+    configAppView({ headerColor: "#161617", headerTextColor: "white", actionBar: { hide: true } }).catch(() => {});
+    return () => { configAppView({ headerColor: "#ffffff", headerTextColor: "black", actionBar: { hide: true } }).catch(() => {}); };
   }, []);
 
   return (
