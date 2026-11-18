@@ -47,7 +47,27 @@ function boVuaSoan(el: HTMLElement | null) {
   if (el instanceof HTMLTextAreaElement && el.style.height) el.style.height = "";
 }
 
+// BẢNG CHỌN CÓ Ô TÌM (Tỉnh/Thành, Phường…) — đo trên Zalo thật 19/11/2026: chạm ô Tìm, bàn phím bật mà màn hình Zalo KHÔNG co → bảng (đáy màn
+// hình) nằm dưới bàn phím, chỉ còn tiêu đề. Đang gõ trong bảng: khung bảng cao đúng phần còn thấy trên bàn phím (bảng bám đáy khung = mép bàn phím),
+// danh sách co vừa, cuộn trong bảng. Tắt bàn phím / rời ô → trả về như cũ.
+function datBang(el: HTMLElement | null, coBanPhim: boolean) {
+  document.querySelectorAll<HTMLElement>(".zaui-sheet-wrapper[data-vua-phim]").forEach((w) => {
+    if (coBanPhim && el && w.contains(el)) return;
+    w.style.height = ""; w.style.bottom = ""; w.removeAttribute("data-vua-phim");
+    const nd = w.querySelector<HTMLElement>(".zaui-sheet-content"); if (nd) { nd.style.maxHeight = ""; nd.style.overflowY = ""; }
+  });
+  const w = el?.closest<HTMLElement>(".zaui-sheet-wrapper");
+  const vv = window.visualViewport;
+  if (!w || !vv || !coBanPhim) return;
+  const cao = Math.round(vv.height + vv.offsetTop);
+  w.setAttribute("data-vua-phim", "");
+  w.style.height = cao + "px"; w.style.bottom = "auto";
+  const nd = w.querySelector<HTMLElement>(".zaui-sheet-content");
+  if (nd) { nd.style.maxHeight = (cao - 16) + "px"; nd.style.overflowY = "auto"; }
+}
+
 function choThay(el: HTMLElement, caoDu: number) {
+  if (el.closest(".zaui-sheet-wrapper")) return datBang(el, coBanPhimNay(caoDu));
   if (el instanceof HTMLTextAreaElement && coBanPhimNay(caoDu)) return vuaChoSoan(el);
   const vv = window.visualViewport;
   const cao = vv ? vv.height + vv.offsetTop : window.innerHeight;
@@ -76,6 +96,7 @@ export function canBanPhim(): () => void {
     hen = window.setTimeout(() => {
       if (!LA_O_GO(document.activeElement)) {
         boVuaSoan(dangGo);
+        datBang(null, false);
         dangGo = null;
         document.documentElement.classList.remove("dang-go");
       }
@@ -89,7 +110,7 @@ export function canBanPhim(): () => void {
     if (!dangGo) return;
     document.documentElement.classList.toggle("dang-go", coBanPhim);
     if (coBanPhim) choThay(dangGo, caoDu);
-    else boVuaSoan(dangGo);
+    else { boVuaSoan(dangGo); datBang(null, false); }
   };
   document.addEventListener("focusin", vao);
   document.addEventListener("focusout", ra);
