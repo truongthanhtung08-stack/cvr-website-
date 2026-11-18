@@ -126,6 +126,7 @@ export default function PostListingForm() {
   // Tài khoản đã có số điện thoại XÁC MINH chưa (bắt buộc trước khi đăng — chốt 27/09/2026).
   // null = chưa biết; admin không phải qua bước này.
   const [soDaXacMinh, setSoDaXacMinh] = useState<boolean | null>(null);
+  const [mucDang, setMucDang] = useState("1"); // bước đang mở (mỗi mục một trang) — nhớ vào bản soạn dở
   const [maVuaLuu, setMaVuaLuu] = useState<string | null>(null); // mã tin vừa lưu nháp → nút "Soạn tiếp"
   const [moXacMinh, setMoXacMinh] = useState(false); // hộp "Số điện thoại của bạn" bật lên khi bấm Đăng tin
   useKhoaCuon(moXacMinh, () => setMoXacMinh(false));
@@ -279,6 +280,7 @@ export default function PostListingForm() {
     // Bản soạn trên máy đã thành TIN NHÁP trên CSDL → mở đúng tin đó (CSDL là nguồn mới nhất: khách có thể đã chọn gói, sửa tiếp
     // ở máy khác). Đổ bản cũ trên máy vào rồi tự lưu là ghi đè mất gói (lỗi 10–11/11/2026: tin nháp lưu gói rỗng).
     if (typeof d.maNhap === "string" && d.maNhap) { router.replace(`/dang-tin?id=${d.maNhap}`); return; }
+    if (typeof d.buoc === "string" && d.buoc) setMucDang(d.buoc); // Tiếp tục → đúng bước khách đang làm
     boQuaDoiLoai.current = true; setTimeout(() => { boQuaDoiLoai.current = false; }, 800); // chỉ nuốt lần đổi do nạp
     const s = (k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
     const ds = (k: string) => (Array.isArray(d[k]) ? (d[k] as string[]) : []);
@@ -398,14 +400,14 @@ export default function PostListingForm() {
         demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
         title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
         interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
-        planTier, planDays, chonKm, batDau,
+        planTier, planDays, chonKm, batDau, buoc: mucDang,
         maNhap: maNhapTk.current,
       }));
     } catch {}
   }, [editId, daNapNhap, nhapCho, userId, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
     title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
     interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
-    planTier, planDays, chonKm, batDau]);
+    planTier, planDays, chonKm, batDau, mucDang]);
 
   // KHÔNG còn ô "Ngày bắt đầu" tự chọn: tin bắt đầu hiển thị LÚC ĐƯỢC DUYỆT (một luật,
   // 01/10/2026) — cho chọn ngày là hứa một mốc web không làm đúng.
@@ -621,7 +623,6 @@ export default function PostListingForm() {
   // MỖI MỤC MỘT TRANG (anh 18/11/2026: "chia ra mỗi mục 1 trang", PC + điện thoại): mở một bước = chỉ bước đó hiện, đưa trang
   // về đầu form. Các bước khác ẩn bằng CSS (vẫn giữ nguyên ô đã điền, ảnh đang tải, bản đồ). Báo lỗi ô bắt buộc / bấm thanh bước
   // / nút Tiếp đều đi qua đây.
-  const [mucDang, setMucDang] = useState("1");
   const moMuc = (step: string) => {
     setMucDang(step);
     requestAnimationFrame(() => {
@@ -1332,6 +1333,41 @@ export default function PostListingForm() {
     );
   }
 
+  // TIN ĐANG SOẠN DỞ (anh 18/11/2026: "bấm Đăng tin mới là ra form mới; tin chưa lưu nháp thì tự lưu, vào ra Tiếp tục và Tạo tin mới"):
+  // một màn riêng, chưa hiện form — khách chọn Tiếp tục (mở lại đúng tin, đúng bước đang làm) hoặc Tạo tin mới (form trống; tin cũ đã tự
+  // lưu nháp vẫn nằm ở Tài khoản → Tin đăng → Nháp, sửa và đăng tiếp từ đó).
+  if (nhapCho) {
+    return (
+      <div className="mx-auto max-w-xl py-4">
+        {(() => {
+            const chu = (k: string) => (typeof nhapCho[k] === "string" ? (nhapCho[k] as string).trim() : "");
+            // Loại hình ghi đúng tên như ô chọn (tenLoaiHinhDayDu, 05/11/2026) — không hiện tên nội bộ "Đất khác"
+            const sv = (nhapCho.specValues ?? {}) as Record<string, string>;
+            const loai = chu("category") && tenLoaiHinhDayDu(chu("category"), purposeOfDemand(chu("demand")), sv.landType);
+            const ten = chu("title") || [loai, chu("province")].filter(Boolean).join(" · ");
+            return (
+              <div className="rounded-2xl border border-cvr-blue/30 bg-cvr-blue/[0.06] p-4">
+                <p className="text-[15px] leading-snug text-cvr-ink">
+                  <span className="font-semibold">Bạn có tin đang soạn dở{ten ? ":" : "."}</span> {ten}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {/* eslint-disable-next-line react-hooks/refs -- apDungNhap chỉ chạy khi khách bấm, không chạy lúc vẽ */}
+                  <button type="button" onClick={() => { apDungNhap(nhapCho); setNhapCho(null); }}
+                    className="inline-flex h-10 items-center rounded-lg bg-cvr-ink px-4 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+                    Tiếp tục
+                  </button>
+                  <button type="button" onClick={() => { try { if (userId) localStorage.removeItem(khoaNhap(userId)); } catch {} setNhapCho(null); }}
+                    className="inline-flex h-10 items-center rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
+                    Tạo tin mới
+                  </button>
+                </div>
+              </div>
+            );
+        })()}
+      </div>
+    );
+  }
+
   // VÍ CHƯA ĐỦ TIỀN — tin đã được lưu nháp nguyên vẹn, chỉ còn thiếu tiền.
   // Đưa thẳng sang nạp tiền, kèm đúng số còn thiếu để khách khỏi phải tự tính.
   if (thieuTien) {
@@ -1440,32 +1476,6 @@ export default function PostListingForm() {
       <MucMoCtx.Provider value={{ moMuc, mucDang, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
       <ThanhBuoc boQua={goiDangDung && editId ? ["b-goi", "b-thanhtoan-dang"] : ["b-lienhe"]} />
       <div className="mt-3 min-w-0 space-y-6 sm:mt-6 lg:mt-0">
-      {nhapCho && (() => {
-        const chu = (k: string) => (typeof nhapCho[k] === "string" ? (nhapCho[k] as string).trim() : "");
-        // Loại hình ghi đúng tên như ô chọn (tenLoaiHinhDayDu, 05/11/2026) — không hiện tên nội bộ "Đất khác"
-        const sv = (nhapCho.specValues ?? {}) as Record<string, string>;
-        const loai = chu("category") && tenLoaiHinhDayDu(chu("category"), purposeOfDemand(chu("demand")), sv.landType);
-        const ten = chu("title") || [loai, chu("province")].filter(Boolean).join(" · ");
-        return (
-          <div className="rounded-2xl border border-cvr-blue/30 bg-cvr-blue/[0.06] p-4">
-            <p className="text-[15px] leading-snug text-cvr-ink">
-              <span className="font-semibold">Bạn có tin đang soạn dở{ten ? ":" : "."}</span> {ten}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {/* eslint-disable-next-line react-hooks/refs -- apDungNhap chỉ chạy khi khách bấm, không chạy lúc vẽ */}
-              <button type="button" onClick={() => { apDungNhap(nhapCho); setNhapCho(null); }}
-                className="inline-flex h-10 items-center rounded-lg bg-cvr-ink px-4 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
-                Soạn tiếp
-              </button>
-              <button type="button" onClick={() => { try { if (userId) localStorage.removeItem(khoaNhap(userId)); } catch {} setNhapCho(null); }}
-                className="inline-flex h-10 items-center rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
-                Đăng tin mới
-              </button>
-            </div>
-          </div>
-        );
-      })()}
-
       {xemTruoc && (
         <XemTruocTin
           row={{ ...giaTriTin(true), province: province || "", tier: (planTier || "basic") as TierId } as Parameters<typeof xemTruocTin>[0]}
