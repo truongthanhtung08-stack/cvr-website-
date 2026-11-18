@@ -145,6 +145,9 @@ export default function BanPhimAo() {
       const giaDinh = go && cham && !baoPhim; // không báo nhưng máy cảm ứng đang gõ → bàn phím đang che nửa dưới
       const mo = go && (baoPhim || giaDinh);
       html.classList.toggle("ban-phim-mo", mo);
+      // phim-that: trình duyệt BÁO bàn phím đang bật thật (cửa sổ co) — thanh nút form đăng tin chỉ ẩn khi này. ban-phim-mo còn bật cả khi chỉ
+      // ĐOÁN (ô còn được chọn mà bàn phím đã tắt) → ẩn theo nó là thanh Tiếp / Quay lại biến mất, khách bấm không được (anh 18/11/2026).
+      html.classList.toggle("phim-that", go && baoPhim);
       if (!mo || !go) return traLopPhu();
 
       const phu = timLopPhu(el);
@@ -249,6 +252,7 @@ export default function BanPhimAo() {
       if (raf) cancelAnimationFrame(raf);
       traLopPhu();
       html.classList.remove("ban-phim-mo");
+      html.classList.remove("phim-that");
     };
   }, []);
 

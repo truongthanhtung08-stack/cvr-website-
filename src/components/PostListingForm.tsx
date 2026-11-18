@@ -2277,7 +2277,7 @@ export default function PostListingForm() {
 
       {/* THANH NÚT LUÔN HIỆN (anh 18/11/2026: "nút Lưu nháp / Xem trước luôn hiện", PC + điện thoại) — dính đáy màn hình ở mọi
           trang: ‹ Quay lại · Xem trước · Lưu nháp · Tiếp (mục cuối: Đăng tin). Điện thoại đang gõ (bàn phím bật) thì ẩn, không đè ô. */}
-      <div className="sticky bottom-0 z-20 -mx-4 border-t border-cvr-line bg-white/95 px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 max-sm:[.ban-phim-mo_&]:hidden">
+      <div className="sticky bottom-0 z-20 -mx-4 border-t border-cvr-line bg-white/95 px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 max-sm:[.phim-that_&]:hidden">
         {/* Bố trí (anh 18/11/2026: "nhỏ lại, cân đối, Lưu nháp, Xem trước qua bên trái"): trái = Xem trước · Lưu nháp (nút viền nhỏ),
             phải = ‹ Quay lại · Tiếp / Đăng tin. */}
         <div className="flex items-center justify-between gap-2">
