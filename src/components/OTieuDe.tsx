@@ -72,7 +72,7 @@ export default function OTieuDe({
   // Giãn theo nội dung. Đặt về "auto" trước rồi mới đo scrollHeight — không thì
   // ô chỉ cao lên mà không bao giờ thấp xuống khi người dùng xoá bớt chữ.
   // ĐIỆN THOẠI (< 640px, anh 17/11/2026: "khung đủ cho 1 câu chuẩn, nhập nhiều câu thì chạy trong khung, không giật khi bấm"):
-  // KHUNG CỐ ĐỊNH 3 dòng (đo 375px: tiêu đề chuẩn 63–68 ký tự = 2–3 dòng), dài hơn cuộn trong ô. Không giãn bằng mã — ô đổi cỡ
+  // KHUNG CỐ ĐỊNH 2 dòng (64px — anh 18/11/2026: "cho ô tiêu đề ngắn lại chút"; trước 3 dòng 88px), dài hơn cuộn trong ô. Không giãn bằng mã — ô đổi cỡ
   // mỗi lần xuống dòng là cả trang bên dưới dịch theo = giật.
   useEffect(() => {
     const el = ref.current;
@@ -105,7 +105,7 @@ export default function OTieuDe({
         }}
         onBlur={bao}
         // py-2.5: lớp ô chung (h-11, chỉ có lề ngang) làm chữ dính sát mép trên — "ô tiêu đề bố trí rất lệch" (chủ dự án 03/11/2026 mục 8)
-        className={`${className.replace(/\bh-11\b/, "min-h-11")} resize-none overflow-hidden py-2.5 max-sm:h-[88px] max-sm:overflow-y-auto max-sm:overscroll-contain leading-snug focus:placeholder:text-transparent`} // chạm vào là chữ gợi ý ẩn (anh 16/11/2026)
+        className={`${className.replace(/\bh-11\b/, "min-h-11")} resize-none overflow-hidden py-2.5 max-sm:h-[64px] max-sm:overflow-y-auto max-sm:overscroll-contain leading-snug focus:placeholder:text-transparent`} // chạm vào là chữ gợi ý ẩn (anh 16/11/2026)
       />
       {demKyTu && (
         <p className="mt-1 text-xs text-cvr-faint">

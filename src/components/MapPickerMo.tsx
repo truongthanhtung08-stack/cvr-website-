@@ -301,8 +301,22 @@ export default function MapPickerMo({
           },
           // Dòng ghi nguồn bản đồ thu thành nút (i) — mở rộng sẵn thì che cả đáy bản đồ trên điện thoại.
           attributionControl: { compact: true },
+          // KHÔNG nghe cửa sổ đổi cỡ (anh 18/11/2026: "bấm ô Tiêu đề giật lag"): trang dùng interactive-widget=resizes-content nên
+          // bàn phím bật/tắt = cửa sổ đổi cỡ → MapLibre vẽ lại cả bản đồ + tải lại chữ ngay lúc khách chạm ô gõ (đo 375px, CPU 4x:
+          // máy bận ~0,7 s, ô đưa lên trên bàn phím trễ 1,2–1,6 s). Chỉ vẽ lại khi KHUNG bản đồ thật sự đổi cỡ (ResizeObserver dưới).
+          trackResize: false,
         });
         mapRef.current = map;
+        // Khung đổi cỡ (xoay máy, mở / thu bản đồ lớn ⛶) → vẽ lại; cửa sổ chỉ đổi chiều cao vì bàn phím thì khung giữ nguyên → không vẽ.
+        let coTruoc = "";
+        const theoKhung = new ResizeObserver(([m]) => {
+          const co = `${Math.round(m.contentRect.width)}x${Math.round(m.contentRect.height)}`;
+          if (co === coTruoc) return;
+          coTruoc = co;
+          map.resize();
+        });
+        theoKhung.observe(boxRef.current);
+        map.once("remove", () => theoKhung.disconnect());
         // Điện thoại KHÔNG có +/− (chủ dự án 22/10/2026: "trên mobile chỉ cần nút full, off full, nút Location — hết";
         // phóng to bằng chụm hai ngón hoặc mở bản đồ lớn). Máy tính giữ +/− (không chụm được).
         if (window.matchMedia("(min-width: 640px)").matches) map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");

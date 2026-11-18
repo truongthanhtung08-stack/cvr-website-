@@ -197,8 +197,10 @@ export default function BanPhimAo() {
             : c ? c.top - (tren + 24) : giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
           // TRÌNH DUYỆT TRONG ZALO / FACEBOOK (html.trong-app, layout.tsx): đo trên Zalo thật 16/11/2026 — bàn phím bật thì Zalo tự kéo
           // trang (+246px, ô Tiêu đề lên mép trên) rồi lần chỉnh này kéo ngược lại; cả hai trượt êm = trang trượt xuống rồi lên = GIẬT.
-          // Trong app: chỉnh MỘT BƯỚC, không trượt. Chrome / Safari / Samsung giữ trượt êm như bản đã duyệt.
-          window.scrollBy({ top: dich, behavior: document.documentElement.classList.contains("trong-app") ? "instant" : "smooth" });
+          // Trong app: chỉnh MỘT BƯỚC, không trượt.
+          // MỌI TRÌNH DUYỆT một bước (anh 18/11/2026: "CẤM giật lag khi bấm trên điện thoại", form đăng tin trên Chrome): đo 375px, CPU 4x —
+          // trượt êm kéo dài ~0,4 s ngay sau lúc trình duyệt tự đưa ô lên trên bàn phím = trang chạy hai lần. Một bước = ô đứng đúng chỗ ngay.
+          window.scrollBy({ top: dich, behavior: "instant" });
         }
       }
       canCuon = false;
@@ -231,7 +233,9 @@ export default function BanPhimAo() {
     document.addEventListener("input", dangGo);
     // Bàn phím đổi kích thước lúc đang ở khung soạn (Chrome điện thoại cuộn theo bàn phím muộn hơn các lần đo ở vaoO — Phone Link 15/11/2026):
     // đo lại, chỉ đẩy khi dòng con trỏ bị che / thanh B · I khuất (dangNhin)
-    const doiCoPhim = () => { const a = document.activeElement; if (a instanceof HTMLElement && laKhungSoan(a)) canCuon = true; henCapNhat(); };
+    // Mọi ô gõ: bàn phím vừa bật / đổi cỡ → chỉnh NGAY trong khung hình đó (18/11/2026: trước chỉ khung soạn được chỉnh lúc này, ô khác
+    // chờ lần đo hẹn 350 ms → ô nằm sau bàn phím ~0,2 s rồi mới nhảy lên). Chỉ dịch khi ô thật sự bị che (dangNhin).
+    const doiCoPhim = () => { if (laOGo(document.activeElement)) canCuon = true; henCapNhat(); };
     vv?.addEventListener("resize", doiCoPhim);
     vv?.addEventListener("scroll", henCapNhat);
     window.addEventListener("resize", doiCoPhim); // WebView Android (Zalo, Facebook) co cửa sổ khi bật bàn phím
