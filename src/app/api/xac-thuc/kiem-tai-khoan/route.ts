@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { timTaiKhoan, demTinDangHo } from "@/lib/taiKhoanTheoSdt";
+import { optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
 
 // ============================================================================
 // POST /api/xac-thuc/kiem-tai-khoan — { sdt? , email? }
@@ -13,7 +14,7 @@ import { timTaiKhoan, demTinDangHo } from "@/lib/taiKhoanTheoSdt";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
+async function xuLy(req: Request) {
   const b = (await req.json().catch(() => ({}))) as { sdt?: string; email?: string };
   const admin = createAdminClient();
   if (!admin) return NextResponse.json({ ok: false });
@@ -31,3 +32,7 @@ export async function POST(req: Request) {
   if (tim) return NextResponse.json({ ok: true, coTaiKhoan: true });
   return NextResponse.json({ ok: true, coTaiKhoan: false, soTin: await demTinDangHo(admin, sdt) });
 }
+
+// Form đăng tin web chạy cả trong Zalo Mini App (19/11/2026) → cho tên miền Zalo gọi sang (CORS), như /api/xac-thuc/xac-minh-sdt
+export const POST = postMiniApp(xuLy);
+export const OPTIONS = optionsMiniApp;

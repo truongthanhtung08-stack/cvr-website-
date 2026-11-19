@@ -1109,3 +1109,6 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 .tk-dang-tin { padding: 12px 16px 4px; background: #fff; }
 .tk-dang-tin .zaui-btn { background: var(--cl-blue, #1a73e8) !important; font-weight: 700; }
 .zaui-sheet-wrapper[data-vua-phim] .ds-chon { max-height: none !important; }
+
+/* FORM WEB TRONG MINI APP (19/11/2026): web chừa chỗ cho đầu trang web + "‹ Đăng tin" — trong Mini App đầu trang là thanh Zalo, không chừa */
+html.trong-mini-app { --hdr: 0px; --backbar-h: 0px; --at: 0px; }

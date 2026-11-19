@@ -1075,6 +1075,9 @@ export default function PostListingForm() {
   const tongMuc = goiDangDung && editId ? 6 : 7;
   // Bước cuối (anh 18/11/2026): ví đủ → nút Đăng tin; ví thiếu → nút Nạp tiền, nạp xong về lại bước này bấm Đăng tin
   // Chưa đăng nhập (chỉ máy thử ?xem-thu) → coi ví 0 đ để thấy đúng nút Thanh toán
+  // Form này chạy cả trong Zalo Mini App (zalo-mini-app/src/pages/DangTinWeb.tsx). Zalo CẤM Nạp tiền trong Mini App (từ chối bản 78):
+  // ở đó không có nút / chữ nạp, ví thiếu chỉ báo số dư không đủ.
+  const laMiniApp = typeof window !== "undefined" && (window as unknown as { __CL_MINI_APP__?: boolean }).__CL_MINI_APP__ === true;
   const thieuVi = !!planTier && !(goiDangDung && editId) && truocVoucher.tongTra > 0 && (hoSoVi ? hoSoVi.balance : userId ? Infinity : 0) < truocVoucher.tongTra;
   function tiepMuc() {
     const l = loiDangTin();
@@ -1278,7 +1281,7 @@ export default function PostListingForm() {
     // CSDL chặn vì khả dụng không đủ (0056 — vd vừa tiêu tiền ở thẻ khác) → nói đúng số phải nạp.
     if (err && /VI_KHONG_DU/.test(err.message)) {
       const m = err.message.match(/(\d+)\s*đ/);
-      return setError(m ? `Nạp thêm ${vnd(Number(m[1]))} để đăng tin.` : "Ví không đủ tiền để đăng tin.");
+      return setError(laMiniApp ? "Số dư ví không đủ cho gói đã chọn." : m ? `Nạp thêm ${vnd(Number(m[1]))} để đăng tin.` : "Ví không đủ tiền để đăng tin.");
     }
     if (err) return setError(`Lưu thất bại: ${err.message}`);
     // Lưu xong (gửi duyệt hoặc lưu nháp) → tin này đã nằm trong tài khoản; tin soạn tiếp theo
@@ -2287,7 +2290,8 @@ export default function PostListingForm() {
               {/* HAI NÚT CUỐI BƯỚC 7, sau tổng tiền + liên hệ (anh 18/11/2026): ví thiếu → Thanh toán (nạp tiền, nạp xong tự về bước này); ví đủ → Đăng tin
                   (gửi Admin duyệt rồi lên web). Không bấm Đăng tin thì tin không đăng. */}
               <div className="grid gap-2.5 sm:flex sm:justify-end">
-                {thieuVi && (
+                {thieuVi && laMiniApp && <p className="text-center text-sm font-medium text-red-600 sm:self-center">Số dư ví không đủ cho gói đã chọn.</p>}
+                {thieuVi && !laMiniApp && (
                   <button type="button" onClick={() => save(false, false, true)} disabled={!!saving} className="flex h-12 items-center justify-center rounded-full bg-cvr-ink px-6 text-[15px] font-bold text-white transition hover:bg-cvr-ink/90 active:scale-[0.98] disabled:opacity-50">
                     {saving === "draft" ? "Đang lưu…" : `Nạp tiền & thanh toán ${vnd(truocVoucher.tongTra - (hoSoVi?.balance ?? 0))}`}
                   </button>

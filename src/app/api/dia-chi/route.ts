@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 // Gọi Nominatim (khai danh tính, nhớ kết quả) — dùng chung với việc máy tự tra toạ độ mỗi tin.
 import { hoiNominatim } from "@/lib/nominatim";
+import { optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
 
 // ============================================================================
 // TRA ĐỊA CHỈ — GỌI QUA MÁY CHỦ CỦA MÌNH, KHÔNG GỌI THẲNG TỪ TRÌNH DUYỆT
@@ -24,7 +25,7 @@ import { hoiNominatim } from "@/lib/nominatim";
 // ============================================================================
 
 
-export async function GET(req: Request) {
+async function xuLy(req: Request) {
   const u = new URL(req.url);
   const viec = u.searchParams.get("viec") ?? "";
   const q = (u.searchParams.get("q") ?? "").trim();
@@ -87,3 +88,7 @@ export async function GET(req: Request) {
     return NextResponse.json(viec === "nguoc" ? {} : [], { status: 200 });
   }
 }
+
+// Form đăng tin web chạy cả trong Zalo Mini App (19/11/2026) → cho tên miền Zalo gọi sang (CORS), như /api/xac-thuc/xac-minh-sdt
+export const GET = postMiniApp(xuLy);
+export const OPTIONS = optionsMiniApp;

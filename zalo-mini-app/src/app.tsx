@@ -23,7 +23,7 @@ const BaiVietChiTiet = cham(() => import("./pages/BaiVietChiTiet"));
 const BangGia = cham(() => import("./pages/BangGia"));
 const DaLuu = cham(() => import("./pages/DaLuu"));
 const DangNhap = cham(() => import("./pages/DangNhap"));
-const DangTin = cham(() => import("./pages/DangTin"));
+const DangTin = cham(() => import("./pages/DangTinWeb")); // NGUYÊN form web (19/11/2026); form riêng cũ: pages/DangTin.tsx
 const TinCuaToi = cham(() => import("./pages/TinCuaToi"));
 const GoiTin = cham(() => import("./pages/GoiTin"));
 const HoaDon = cham(() => import("./pages/HoaDon"));
