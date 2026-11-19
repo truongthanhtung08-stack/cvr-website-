@@ -1112,3 +1112,6 @@ html.dang-go .nut-chinh, html.dang-go .zaui-bottom-navigation, html.dang-go .nut
 
 /* FORM WEB TRONG MINI APP (19/11/2026): web chừa chỗ cho đầu trang web + "‹ Đăng tin" — trong Mini App đầu trang là thanh Zalo, không chừa */
 html.trong-mini-app { --hdr: 0px; --backbar-h: 0px; --at: 0px; }
+
+/* Form web trong Mini App: Zalo phóng chữ → nút Xem trước / Lưu nháp gãy 2 dòng (Zalo thật 19/11/2026) — giữ một dòng */
+.form-web .hang-nut-form button, .form-web button { white-space: nowrap; }

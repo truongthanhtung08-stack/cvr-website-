@@ -24,6 +24,9 @@ export default ({ mode }: { mode: string }) => {
         NODE_ENV: mode === "production" ? "production" : "development",
         NEXT_PUBLIC_SUPABASE_URL: env.VITE_SUPABASE_URL,
         NEXT_PUBLIC_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY,
+        // asset() của web ghép tiền tố này vào đường ảnh /anh/…, /images/… → trong Mini App ảnh lấy thẳng từ coastalland.vn
+        // (Zalo thật 19/11/2026: ảnh vừa tải lên báo "Link ảnh không hiện được" vì đường tương đối trỏ về tên miền Zalo)
+        NEXT_PUBLIC_BASE_PATH: "https://coastalland.vn",
       }),
     },
     resolve: {

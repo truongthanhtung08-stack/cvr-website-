@@ -231,7 +231,9 @@ export default function ContentEditor({
   const daDat = useRef(false);
   const banPhimBat = () => window.innerHeight < caoMan.current - 150 || (window.visualViewport?.height ?? 9999) < caoMan.current - 150;
   // Mép dưới các thanh dính trên đầu: đầu trang, "‹ Đăng tin", thanh bước form (luôn hiện — anh 15/11/2026: "thanh này phải để")
+  // .zaui-header: form này chạy cả trong Zalo Mini App (đầu trang là thanh tiêu đề Zalo, không phải <header> của web) — 19/11/2026
   const trenThanh = () => Math.max(document.querySelector("header")?.getBoundingClientRect().bottom ?? 0,
+    document.querySelector(".zaui-header")?.getBoundingClientRect().bottom ?? 0,
     document.querySelector(".thanh-quay-lai")?.getBoundingClientRect().bottom ?? 0,
     document.querySelector(".an-buoc-khi-go")?.getBoundingClientRect().bottom ?? 0, window.visualViewport?.offsetTop ?? 0);
   const datKhung = () => {
