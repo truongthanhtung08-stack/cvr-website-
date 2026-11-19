@@ -34,6 +34,7 @@ export default ({ mode }: { mode: string }) => {
         { find: /^next\/navigation$/, replacement: `${NOI}/navigation.ts` },
         { find: /^next\/dynamic$/, replacement: `${NOI}/dynamic.tsx` },
         { find: /^next\/image$/, replacement: `${NOI}/image.tsx` },
+        { find: /^heic-to\/next$/, replacement: `${NOI}/heicTo.ts` },
         { find: /^@\/lib\/supabase\/client$/, replacement: `${NOI}/supabaseClient.ts` },
         { find: /^@\/components\/LoginForm$/, replacement: `${NOI}/LoginForm.tsx` },
         { find: /^@\//, replacement: `${WEB}/` },
