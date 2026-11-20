@@ -42,8 +42,3 @@ export const catMoTa = (s: string, toiDa = 155): string => {
   const cat = t.slice(0, toiDa - 1);
   return `${cat.slice(0, cat.lastIndexOf(" ")).replace(/[\s,.;:—-]+$/, "")}…`;
 };
-
-// ĐẶC ĐIỂM "GIÁ RẺ" TRONG <title> TRANG LÕI (anh 20/11/2026: "Nhà đất Đà Nẵng giá rẻ" — câu lõi + đặc điểm phải lên top).
-// Chỉ <title> Google đọc của trang Nhà đất / Loại hình + tỉnh / thành phố; H1, liên kết nội bộ, mô tả giữ nguyên.
-// "Bán nhà đất Đà Nẵng tháng 11/2026" → "Bán nhà đất Đà Nẵng giá rẻ tháng 11/2026" (giữ "tháng 11" đang top).
-export const themGiaRe = (t: string): string => (/giá rẻ/i.test(t) ? t : t.replace(/ (tháng \d{1,2}\/\d{4})$/, " giá rẻ $1"));
