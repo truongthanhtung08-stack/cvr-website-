@@ -125,7 +125,7 @@ export async function POST(req: Request) {
   // Không có sheet Thương hiệu trong tệp → giữ bản thương hiệu đã nạp lần trước (không xoá mất)
   const { data: cu } = await admin.from("site_content").select("data").eq("key", "tu_khoa_loi").limit(1);
   const thuongHieu = th.thuongHieu ?? (cu?.[0]?.data as { thuongHieu?: unknown } | undefined)?.thuongHieu ?? null;
-  const data = { trang: kq.trang, doi: kq.doi, giu: kq.giu, soDong: kq.soDong, keHoach: kq.keHoach, dacDiem: kq.dacDiem, tenTep: tep.name, capNhat: new Date().toISOString(), thuongHieu };
+  const data = { trang: kq.trang, doi: kq.doi, giu: kq.giu, soDong: kq.soDong, keHoach: kq.keHoach, tenTep: tep.name, capNhat: new Date().toISOString(), thuongHieu };
   const { error } = await admin.from("site_content").upsert({ key: "tu_khoa_loi", data });
   if (error) return loi(`Không lưu được: ${error.message}`, 500);
   // Tiêu đề, H1, mô tả trang lõi + trang con đổi theo → làm mới trang đọc nội dung Admin + trang danh sách

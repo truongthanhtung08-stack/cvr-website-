@@ -12,8 +12,7 @@ import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
 import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
-import { tieuDeGoogle, themDacDiem } from "@/lib/thang";
-import { dacDiemCuaTrang } from "@/lib/tuKhoaLoiStore";
+import { tieuDeGoogle, themGiaRe } from "@/lib/thang";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 
 // ============================================================================
@@ -26,8 +25,9 @@ import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
   const [tin, tinXet] = await Promise.all([getListings().catch(() => []), getTinXetTrang()]);
   const trang = tatCaTrang(tinXet).get(duongDan(dk)); // cổng đếm cả tin hết hạn (29/10/2026)
-  // Đặc điểm anh chọn ở cột "Chọn" của bảng từ khoá cho đúng trang này → vào <title> (lộ trình longtail, anh 21/11/2026)
-  const title = themDacDiem(`${tieuDe(dk)} ${thangHienTai()}`, dacDiemCuaTrang(duongDan(dk)));
+  // Trang LÕI (Loại hình / Nhà đất + tỉnh / thành phố, không phường, giá, phòng ngủ, pháp lý…): <title> thêm đặc điểm "giá rẻ" (anh 20/11/2026)
+  const laLoi = !dk.phuong && !dk.giaDuoi && !dk.phongNgu && !dk.phapLy && !dk.huong && !dk.kiet && !dk.duong;
+  const title = laLoi ? themGiaRe(`${tieuDe(dk)} ${thangHienTai()}`) : `${tieuDe(dk)} ${thangHienTai()}`;
   const description = moTa(dk, tin.filter((l) => khop(l, dk)));
   const path = duongDan(dk);
   return {

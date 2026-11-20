@@ -9,12 +9,11 @@ import { giuSoCu } from "@/lib/pseo";
 import type { ThuongHieu } from "@/lib/thuongHieu";
 
 // loiCon: chữ lõi CHỈ cho trang con (phường, giá, phòng ngủ…) khi chính trang lõi đang top / giữ bản cũ (12/11/2026)
-export type TuKhoaLoiTrang = Record<string, { loi?: string; loiCon?: string; longtail?: string; uuTien?: true; dacDiem?: string }>;
+export type TuKhoaLoiTrang = Record<string, { loi?: string; loiCon?: string; longtail?: string; uuTien?: true }>;
 // DÒNG ĐẶC ĐIỂM (anh 13/11/2026: "một bảng kế hoạch, thống nhất Admin và web"): dòng tầng "Đặc điểm" của sheet — CHỈ để Admin theo dõi
 // (longtail · đặc điểm · trang đích · trạng thái), KHÔNG đổi chữ nào trên web (chữ trên web chỉ đi theo LÕI GỌN của dòng có x).
 export type DongKeHoach = { khuVuc: string; loaiHinh: string; loiGoc: string; loTrinh: string; tang: string; muc: "ban" | "thue"; noi: string; loi: string; longtail: string; dacDiem: string; nhom: string; google: number; soTin: number; trang: string; xin: string; chon: boolean };
-export type KetQuaDocBang = { trang: TuKhoaLoiTrang; doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number; keHoach: DongKeHoach[];
-  dacDiem: { trang: string; dacDiem: string; cau: string }[] };
+export type KetQuaDocBang = { trang: TuKhoaLoiTrang; doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number; keHoach: DongKeHoach[] };
 
 function moZip(buf: Buffer): Map<string, Buffer> {
   const out = new Map<string, Buffer>();
@@ -114,22 +113,6 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
     if (d.slug && d.cha && /^[23]/.test(d.uu)) muc.uuTien = true; // chỉ loại CHA (anh 09/11/2026: SEO tập trung loại cha Nhà, Đất…)
     if (muc.loi || muc.loiCon || muc.longtail || muc.uuTien) trang[d.trang] = muc;
   }
-  // CỘT "CHỌN" (anh 21/11/2026: lộ trình LONGTAIL lên top trước, rồi mới về lõi): dòng anh đánh x ở cột "Chọn" → đặc điểm của
-  // câu (cột LONGTAIL bỏ phần lõi; không khớp thì lấy cột "Đặc điểm") vào <title> trang đích cột "Trang lõi" (thang.ts themDacDiem).
-  // Một trang một đặc điểm — dòng đứng trước trong bảng nhận. Chỉ <title>; H1, mô tả, liên kết nội bộ không đổi.
-  const cChon = dau.findIndex((h) => (h ?? "").trim().startsWith("Chọn"));
-  const cDd = dau.findIndex((h) => (h ?? "").trim() === "Đặc điểm");
-  const dacDiem: KetQuaDocBang["dacDiem"] = [];
-  if (cChon >= 0) for (const r of bang.slice(1)) {
-    if ((r[cChon] ?? "").trim().toLowerCase() !== "x") continue;
-    const duong = (r[C.trang] ?? "").trim();
-    if (!/^\/(mua-ban|cho-thue)\//.test(duong) || dacDiem.some((d) => d.trang === duong)) continue;
-    const cau = (r[C.lt] ?? "").trim(), loiDong = (r[C.loi] ?? "").trim();
-    const dd = (cau.toLowerCase().startsWith(loiDong.toLowerCase()) && loiDong ? cau.slice(loiDong.length) : cDd >= 0 ? r[cDd] ?? "" : "").trim();
-    if (!dd || /^tháng \d/i.test(dd)) continue; // "tháng 11" web đã có sẵn trong mọi tiêu đề
-    dacDiem.push({ trang: duong, dacDiem: dd, cau });
-    trang[duong] = { ...trang[duong], dacDiem: dd };
-  }
   const j = (ten: string) => dau.findIndex((h) => (h ?? "").startsWith(ten));
   const K = { kv: j("Khu vực"), lh: j("Loại hình"), goc: j("Lõi gốc"), lo: j("Lộ trình"), muc: j("Mục đích"), dd: j("Đặc điểm"), nhom: j("Nhóm đặc điểm"), g: j("Google gợi ý"), tin: j("Tin"), xin: j("Xin index") };
   // MỌI dòng của bảng (lõi + đặc điểm) — Admin hiện đúng từng dòng của file kèm trạng thái thật trên web (anh 13/11/2026:
@@ -142,10 +125,9 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
       muc: (r[K.muc] ?? "").includes("thuê") ? "thue" : "ban", noi: (r[C.noi] ?? "").trim(), loi: (r[C.loi] ?? "").trim(), longtail: (r[C.lt] ?? "").trim() || (r[C.loi] ?? "").trim(),
       dacDiem: (r[K.dd] ?? "").trim(), nhom: K.nhom < 0 ? "" : (r[K.nhom] ?? "").trim(), google: Number(r[K.g] ?? 0) || 0, soTin: Number(r[K.tin] ?? 0) || 0,
       trang: (r[C.trang] ?? "").trim(), xin: K.xin < 0 ? "" : (r[K.xin] ?? "").trim(),
-      // anh đánh x ở "Chọn" (từ 21/11/2026) hoặc "Lên web" = dòng đang làm (xin index / mở trang)
-      chon: (r[C.len] ?? "").trim().toLowerCase() === "x" || (cChon >= 0 && (r[cChon] ?? "").trim().toLowerCase() === "x"),
+      chon: (r[C.len] ?? "").trim().toLowerCase() === "x", // anh lọc bảng, đánh x ở "Lên web" = dòng đặc điểm đang làm (xin index / mở trang)
     }));
-  return { trang, doi, giu, soDong: chon.length, keHoach, dacDiem };
+  return { trang, doi, giu, soDong: chon.length, keHoach };
 }
 
 // ── SHEET "THƯƠNG HIỆU" (anh 12/11/2026: "sheet riêng, nạp là lên luôn") ─────────────────────────────────────────────
