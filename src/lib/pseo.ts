@@ -95,7 +95,7 @@ export const PHAP_LY: PhapLy[] = [
 // Điều kiện trang → bộ lọc mở sẵn của ListingBrowser. Đường / kiệt không có ô lọc riêng → null
 // (trang đó nhận đúng danh sách tin khớp thay vì bộ lọc).
 export function boLocCua(dk: DieuKien): Partial<Filters> | null {
-  if (dk.duong || dk.kiet || dk.giaRe) return null; // giá rẻ: không có ô lọc riêng → trang nhận đúng danh sách tin khớp
+  if (dk.duong || dk.kiet || dk.giaRe || dk.dacDiem) return null; // giá rẻ: không có ô lọc riêng → trang nhận đúng danh sách tin khớp
   return {
     locations: dk.thanhPho
       ? dk.thanhPho.phuong.map((ward) => ({ province: dk.tinh.name, ward }))
@@ -147,6 +147,24 @@ export function danhDauGiaRe(tin: Listing[]): void {
   giaRe = moi;
 }
 export const laGiaRe = (l: Listing) => giaRe.has(l.id);
+
+// TRỤC ĐẶC ĐIỂM THEO CHỮ TRONG TIN (anh 21/11/2026: "đặc điểm sao chỉ có giá rẻ" — làm đủ đặc điểm Google gợi ý cho Loại hình + Địa điểm):
+//   /<mục>/<loại>/<tỉnh>/<slug> · /<mục>/<tỉnh>/<slug>. Tin khớp = tiêu đề / mô tả người đăng ghi đúng ý đó (không suy đoán, không gán thêm).
+//   "mới nhất" = tin đăng / đẩy trong 14 ngày. Cổng index + chống trùng như mọi trục; tiêu đề = H1 = lõi + nơi + đặc điểm (không thêm tháng).
+export type DacDiem = { slug: string; nhan: string; muc?: Muc; khop: (l: Listing) => boolean };
+const chuTin = (l: Listing) => `${l.title ?? ""} ${l.desc ?? ""}`.toLowerCase();
+export const DAC_DIEM: DacDiem[] = [
+  { slug: "giam-gia-manh", nhan: "giảm giá mạnh", muc: "ban", khop: (l) => /giảm giá|hạ giá|cắt lỗ|giảm sâu|giảm mạnh/.test(chuTin(l)) },
+  { slug: "can-ban-gap", nhan: "cần bán gấp", muc: "ban", khop: (l) => /bán gấp|cần bán nhanh|kẹt tiền|cần tiền bán/.test(chuTin(l)) },
+  { slug: "gan-bien", nhan: "gần biển", khop: (l) => /gần biển|sát biển|cách biển|ven biển|view biển|hướng biển|mặt biển/.test(chuTin(l)) },
+  { slug: "view-bien", nhan: "view biển", khop: (l) => /view biển|hướng biển|nhìn biển|view trực diện biển/.test(chuTin(l)) },
+  { slug: "moi-nhat", nhan: "mới nhất", khop: (l) => Date.now() - (new Date(l.bumpedAt ?? l.postedAt ?? 0).getTime() || 0) <= 14 * 864e5 },
+  { slug: "nguyen-can", nhan: "nguyên căn", muc: "thue", khop: (l) => /nguyên căn/.test(chuTin(l)) },
+  { slug: "mini", nhan: "mini", khop: (l) => /\bmini\b/.test(chuTin(l)) },
+  { slug: "co-ho-boi", nhan: "có hồ bơi", khop: (l) => /hồ bơi|bể bơi/.test(chuTin(l)) },
+  { slug: "full-noi-that", nhan: "full nội thất", khop: (l) => /full nội thất|đầy đủ nội thất|nội thất đầy đủ|full đồ/.test(chuTin(l)) },
+];
+const dacDiemCua = (muc: Muc, slug: string) => DAC_DIEM.find((d) => d.slug === slug && (!d.muc || d.muc === muc));
 
 // TRỤC THÀNH PHỐ (#5 kế hoạch SEO, 17/10/2026): người tìm gõ tên THÀNH PHỐ LỚN ("bán nhà Nha Trang"
 // 185 cụm, "đất Đà Lạt" 167, "căn hộ Quy Nhơn" 147), tên này gần như không đổi dù địa giới đổi
@@ -210,6 +228,7 @@ export type DieuKien = {
   giaDuoi?: GiaDuoi;
   thanhPho?: ThanhPho;
   giaRe?: boolean;
+  dacDiem?: DacDiem;
 };
 
 // Danh mục menu + nhóm "Nhà" chỉ dùng cho trang pSEO
@@ -244,6 +263,7 @@ export function khop(l: Listing, dk: DieuKien): boolean {
   if (dk.phongNgu && l.beds !== dk.phongNgu) return false;
   if (dk.giaDuoi && !(l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= dk.giaDuoi.max)) return false;
   if (dk.giaRe && !laGiaRe(l)) return false;
+  if (dk.dacDiem && !dk.dacDiem.khop(l)) return false;
   return true;
 }
 
@@ -274,11 +294,12 @@ export function duongDan(dk: DieuKien): string {
     if (dk.thanhPho) return `${g}/${dk.cat.slug}/${dk.tinh.slug}/${dk.thanhPho.slug}`;
     const duoi = dk.phuong
       ? slugKhuVuc(dk.phuong)
-      : dk.giaDuoi?.slug ?? dk.phapLy?.slug ?? (dk.phongNgu ? phongNguSlug(dk.phongNgu) : dk.giaRe ? GIA_RE_SLUG : "");
+      : dk.giaDuoi?.slug ?? dk.phapLy?.slug ?? (dk.phongNgu ? phongNguSlug(dk.phongNgu) : dk.giaRe ? GIA_RE_SLUG : dk.dacDiem?.slug ?? "");
     return `${g}/${dk.cat.slug}/${dk.tinh.slug}${duoi ? `/${duoi}` : ""}`;
   }
   if (dk.kiet) return `${g}/${dk.tinh.slug}/${KIET_SLUG}`;
-  if (dk.giaRe) return `${g}/${dk.tinh.slug}/${GIA_RE_SLUG}`; // Nhà đất <tỉnh> giá rẻ (21/11/2026)
+  if (dk.giaRe) return `${g}/${dk.tinh.slug}/${GIA_RE_SLUG}`;
+  if (dk.dacDiem) return `${g}/${dk.tinh.slug}/${dk.dacDiem.slug}`; // Nhà đất <tỉnh> giá rẻ (21/11/2026)
   if (dk.giaDuoi) return `${g}/${dk.tinh.slug}/${dk.giaDuoi.slug}`; // cha tổng + mức giá (13/11/2026)
   if (dk.thanhPho) return `${g}/${dk.tinh.slug}/${dk.thanhPho.slug}`;
   return `${g}/${dk.tinh.slug}${dk.phuong ? `/${slugKhuVuc(dk.phuong)}` : ""}`;
@@ -299,11 +320,12 @@ export function tieuDe(dk: DieuKien): string {
       noi,
       dk.giaDuoi ? dk.giaDuoi.nhan : "",
       dk.giaRe ? "giá rẻ" : "",
+      dk.dacDiem ? dk.dacDiem.nhan : "",
       dk.phapLy ? `có ${dk.phapLy.nhan}` : "",
     ].filter(Boolean).join(" ");
   }
   if (dk.kiet) return `Bán nhà kiệt, hẻm ${noi}`;
-  return `${nhaDat(dk.muc, dk.tinh, duongDan(dk))} ${noi}${dk.giaDuoi ? ` ${dk.giaDuoi.nhan}` : ""}${dk.giaRe ? " giá rẻ" : ""}`;
+  return `${nhaDat(dk.muc, dk.tinh, duongDan(dk))} ${noi}${dk.giaDuoi ? ` ${dk.giaDuoi.nhan}` : ""}${dk.giaRe ? " giá rẻ" : ""}${dk.dacDiem ? ` ${dk.dacDiem.nhan}` : ""}`;
 }
 
 // Mô tả cho Google — câu chủ dự án duyệt 24/10/2026 (mỗi trang một đoạn riêng từ chính các tin của trang, Google/AI
@@ -382,8 +404,8 @@ export function cha(dk: DieuKien): DieuKien | null {
   const { muc, tinh, cat } = dk;
   if (dk.duong || dk.kiet) return { muc, tinh };
   if (dk.huong) return cat ? { muc, tinh, cat } : { muc, tinh };
-  if (cat && (dk.phuong || dk.thanhPho || dk.giaDuoi || dk.phapLy || dk.phongNgu || dk.giaRe)) return { muc, tinh, cat };
-  if (dk.phuong || dk.thanhPho || dk.giaDuoi || dk.giaRe || cat) return { muc, tinh };
+  if (cat && (dk.phuong || dk.thanhPho || dk.giaDuoi || dk.phapLy || dk.phongNgu || dk.giaRe || dk.dacDiem)) return { muc, tinh, cat };
+  if (dk.phuong || dk.thanhPho || dk.giaDuoi || dk.giaRe || dk.dacDiem || cat) return { muc, tinh };
   return null;
 }
 
@@ -409,6 +431,8 @@ export function giaiMaDanhSach(muc: Muc, loai: string, rest: string[], tin: List
     const gia = GIA_DUOI[muc].find((g) => g.slug === s);
     if (gia) return { muc, tinh, cat, giaDuoi: gia };
     if (s === GIA_RE_SLUG) return { muc, tinh, cat, giaRe: true };
+    const dd = dacDiemCua(muc, s);
+    if (dd) return { muc, tinh, cat, dacDiem: dd };
     const pl = muc === "ban" ? PHAP_LY.find((p) => p.slug === s) : undefined;
     if (pl) return { muc, tinh, cat, phapLy: pl };
     if (CO_PHONG_NGU.includes(cat.slug)) {
@@ -425,6 +449,8 @@ export function giaiMaDanhSach(muc: Muc, loai: string, rest: string[], tin: List
   const giaTinh = GIA_DUOI[muc].find((g) => g.slug === rest[0]);
   if (giaTinh) return { muc, tinh, giaDuoi: giaTinh };
   if (rest[0] === GIA_RE_SLUG) return { muc, tinh, giaRe: true };
+  const ddTinh = dacDiemCua(muc, rest[0]);
+  if (ddTinh) return { muc, tinh, dacDiem: ddTinh };
   const tp = timThanhPho(tinh, rest[0]);
   if (tp) return { muc, tinh, thanhPho: tp };
   const phuong = timPhuong(tin, tinh, rest[0]);
@@ -473,6 +499,8 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
   // mọi loại hình, cùng mốc giá với trang loại hình; mở trang theo cùng cổng (≥ 5 tin, khác rõ trang tỉnh, không trùng mốc bên cạnh)
   for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, giaDuoi: g });
   if (laGiaRe(l)) ds.push({ muc, tinh, giaRe: true });
+  const ddCua = DAC_DIEM.filter((d) => (!d.muc || d.muc === muc) && d.khop(l));
+  for (const dacDiem of ddCua) ds.push({ muc, tinh, dacDiem });
   if (phuong) ds.push({ muc, tinh, phuong });
   const thanhPho = phuong ? thanhPhoCuaPhuong(tinh.name, phuong) : undefined;
   if (thanhPho) ds.push({ muc, tinh, thanhPho });
@@ -494,6 +522,7 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
     for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, cat, giaDuoi: g });
     if (CO_PHONG_NGU.includes(cat.slug) && l.beds && l.beds <= 4) ds.push({ muc, tinh, cat, phongNgu: l.beds });
     if (laGiaRe(l)) ds.push({ muc, tinh, cat, giaRe: true });
+    for (const dacDiem of ddCua) ds.push({ muc, tinh, cat, dacDiem });
   }
   return ds;
 }
@@ -563,7 +592,7 @@ export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   return m;
 }
 
-const laTinhGia = (dk: DieuKien) => (!dk.cat && !!dk.giaDuoi) || !!dk.giaRe; // + giá rẻ (21/11/2026): trang mới, trùng tin thì nhường trang cũ; // cha tổng + mức giá — trang mới, nhường trang cũ khi trùng tin
+const laTinhGia = (dk: DieuKien) => (!dk.cat && !!dk.giaDuoi) || !!dk.giaRe || !!dk.dacDiem; // + giá rẻ (21/11/2026): trang mới, trùng tin thì nhường trang cũ; // cha tổng + mức giá — trang mới, nhường trang cũ khi trùng tin
 function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const m = new Map<string, TrangPseo>();
   for (const l of tinConHan) {
@@ -601,7 +630,7 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   // người tìm nhất; bước này bỏ qua cặp đó để bước ⑤ chọn trang rộng. Các cặp khác giữ luật cũ (vd condotel ≠ nghỉ dưỡng:
   // giữ "Bán condotel Đà Nẵng" đang có lượt hiển thị — đổi luật chung là tắt mất trang này).
   const capDat = (a: DieuKien, b: DieuKien) => {
-    const chiLoai = (dk: DieuKien) => !!dk.cat && !dk.phuong && !dk.duong && !dk.huong && !dk.phapLy && !dk.kiet && !dk.phongNgu && !dk.giaDuoi && !dk.thanhPho && !dk.giaRe;
+    const chiLoai = (dk: DieuKien) => !!dk.cat && !dk.phuong && !dk.duong && !dk.huong && !dk.phapLy && !dk.kiet && !dk.phongNgu && !dk.giaDuoi && !dk.thanhPho && !dk.giaRe && !dk.dacDiem;
     return chiLoai(a) && chiLoai(b) && [a.cat!.slug, b.cat!.slug].sort().join("|") === "dat|dat-nen-du-an";
   };
   for (const ds of theoCha.values()) {
@@ -641,11 +670,11 @@ export type NhomLienKet = { tieuDe: string; links: { href: string; nhan: string;
 export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   const hien = duongDan(dk);
   // Trang đang top / giữ bản cũ: không thêm link trang giá rẻ (HTML giữ y như cũ — luật TRANG_TOP)
-  const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === dk.muc && !(p.dk.giaRe && giuSoCu(hien)));
+  const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === dk.muc && !((p.dk.giaRe || p.dk.dacDiem) && giuSoCu(hien)));
   const cungTinh = (p: TrangPseo) => p.dk.tinh.slug === dk.tinh.slug && p.path !== hien;
   const laLoai = (p: TrangPseo, cat?: Category) => (cat ? p.dk.cat?.slug === cat.slug : !p.dk.cat);
   const chiCo = (p: TrangPseo, k: keyof DieuKien) =>
-    (["phuong", "duong", "huong", "phapLy", "kiet", "phongNgu", "giaDuoi", "thanhPho", "giaRe"] as (keyof DieuKien)[]).every((x) => (x === k ? p.dk[x] != null : p.dk[x] == null));
+    (["phuong", "duong", "huong", "phapLy", "kiet", "phongNgu", "giaDuoi", "thanhPho", "giaRe", "dacDiem"] as (keyof DieuKien)[]).every((x) => (x === k ? p.dk[x] != null : p.dk[x] == null));
   const nhom: NhomLienKet[] = [];
   const them = (tenNhom: string, ps: TrangPseo[], nhan: (p: TrangPseo) => string) => {
     const links = ps.sort((a, b) => b.n - a.n).slice(0, tenNhom === "Tìm kiếm theo từ khoá" ? 12 : 24).map((p) => ({ href: p.path, nhan: nhan(p), day: tieuDe(p.dk) }));
@@ -655,10 +684,10 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   // người tìm gõ — "Bán nhà riêng Đà Nẵng dưới 5 tỷ". Ưu tiên trang cùng loại hình với trang đang xem.
   them(
     "Tìm kiếm theo từ khoá",
-    ds.filter((p) => cungTinh(p) && !p.dk.giaRe && (!dk.cat || p.dk.cat?.slug === dk.cat.slug) && (p.dk.cat || p.dk.phuong || p.dk.duong || p.dk.kiet || p.dk.thanhPho)),
+    ds.filter((p) => cungTinh(p) && !p.dk.giaRe && !p.dk.dacDiem && (!dk.cat || p.dk.cat?.slug === dk.cat.slug) && (p.dk.cat || p.dk.phuong || p.dk.duong || p.dk.kiet || p.dk.thanhPho)),
     (p) => tieuDe(p.dk),
   );
-  them("Theo loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe), (p) => tieuDe(p.dk));
+  them("Theo loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe && !p.dk.dacDiem), (p) => tieuDe(p.dk));
   them("Theo thành phố", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "thanhPho")), (p) => tieuDe(p.dk));
   them("Theo phường, xã", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "phuong")), (p) => p.dk.phuong!);
   if (!dk.cat && !dk.phuong && !dk.thanhPho && !dk.giaDuoi) them("Theo mức giá", ds.filter((p) => cungTinh(p) && !p.dk.cat && chiCo(p, "giaDuoi")), (p) => tieuDe(p.dk));
@@ -668,7 +697,7 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
     them("Theo pháp lý", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "phapLy")), (p) => viHoa(p.dk.phapLy!.nhan));
   }
   // GIÁ RẺ (21/11/2026): trang giá rẻ cùng tỉnh, cùng loại hình với trang đang xem (trang tỉnh → mọi trang giá rẻ của tỉnh)
-  them("Giá rẻ", ds.filter((p) => cungTinh(p) && p.dk.giaRe && (!dk.cat || laLoai(p, dk.cat))), (p) => tieuDe(p.dk));
+  them("Theo đặc điểm", ds.filter((p) => cungTinh(p) && (p.dk.giaRe || p.dk.dacDiem) && (!dk.cat || laLoai(p, dk.cat))), (p) => tieuDe(p.dk));
   // Đường, nhà kiệt: CÙNG LOẠI HÌNH với trang đang xem như mọi nhóm khác (chủ dự án 21/10/2026: trang "Bán biệt thự Hội An" dẫn sang
   // "Bán nhà kiệt, hẻm Đà Nẵng" là sai lệch). Trang chưa có loại hình (trang tỉnh) thì giữ như cũ.
   const cungLoai = (p: TrangPseo) => !dk.cat || p.dk.cat?.slug === dk.cat.slug;
@@ -676,7 +705,7 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   them("Theo hướng nhà", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "huong")), (p) => `Hướng ${p.dk.huong}`);
   them("Nhà kiệt, hẻm", ds.filter((p) => cungTinh(p) && cungLoai(p) && chiCo(p, "kiet")), () => `Nhà kiệt, hẻm ${dk.tinh.name}`);
   if (dk.cat) {
-    them("Tỉnh, thành khác", ds.filter((p) => p.dk.tinh.slug !== dk.tinh.slug && laLoai(p, dk.cat) && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe), (p) => p.dk.tinh.name);
+    them("Tỉnh, thành khác", ds.filter((p) => p.dk.tinh.slug !== dk.tinh.slug && laLoai(p, dk.cat) && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe && !p.dk.dacDiem), (p) => p.dk.tinh.name);
   }
   return nhom;
 }
@@ -702,7 +731,7 @@ export function lienKetChoDu(dk: DieuKien, tinConHan: Listing[], tinHetHan: List
 
 // Liên kết từ trang LOẠI HÌNH gốc (/mua-ban/nha-rieng) xuống các tỉnh
 export function lienKetLoaiHinh(muc: Muc, cat: Category, tinConHan: Listing[]): NhomLienKet[] {
-  const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === muc && p.dk.cat?.slug === cat.slug && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe);
+  const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === muc && p.dk.cat?.slug === cat.slug && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe && !p.dk.dacDiem);
   const links = ds.sort((a, b) => b.n - a.n).map((p) => ({ href: p.path, nhan: tieuDe(p.dk) }));
   return links.length ? [{ tieuDe: "Theo tỉnh, thành", links }] : [];
 }

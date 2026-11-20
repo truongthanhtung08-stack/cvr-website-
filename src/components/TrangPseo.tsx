@@ -26,7 +26,7 @@ export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
   const [tin, tinXet] = await Promise.all([getListings().catch(() => []), getTinXetTrang()]);
   const trang = tatCaTrang(tinXet).get(duongDan(dk)); // cổng đếm cả tin hết hạn (29/10/2026)
   // Một câu một đặc điểm (anh 21/11/2026): trang giá rẻ không thêm "tháng" — "Nhà đất Đà Nẵng giá rẻ"
-  const title = dk.giaRe ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
+  const title = dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
   const description = moTa(dk, tin.filter((l) => khop(l, dk)));
   const path = duongDan(dk);
   return {
@@ -43,7 +43,7 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   if (dk.giaRe) danhDauGiaRe([...listings, ...hetHan]); // mốc trung bình trên cả bộ tin — cùng mốc với sitemap (pseo.ts)
   const items = listings.filter((l) => khop(l, dk));
   const itemsHetHan = hetHan.filter((l) => khop(l, dk));
-  const heading = dk.giaRe ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
+  const heading = dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
   const path = duongDan(dk);
   // Trục có ô lọc tương ứng (tỉnh, phường, loại hình, giá, phòng ngủ, pháp lý, hướng): danh sách
   // dùng chung dữ liệu /api/danh-sach + MỞ SẴN bộ lọc (file pSEO: "Preset filter bar"), khách nới
