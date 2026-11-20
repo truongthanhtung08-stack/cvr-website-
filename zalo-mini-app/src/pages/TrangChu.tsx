@@ -16,6 +16,7 @@ import { useTai } from "../lib/useTai";
 import { nhanCoastalLand } from "../lib/zalo";
 import logoTrang from "../assets/logo-trang.svg";
 import ChanTrang from "../components/ChanTrang";
+import MenuWeb from "../components/MenuWeb";
 
 // TRANG CHỦ — cấu trúc chuẩn Mini App Zalo (không bê nguyên web):
 // Đầu trang (logo tròn + tên app, ngang cụm ⋯ ✕) · ô tìm ·
@@ -67,6 +68,7 @@ export default function TrangChu() {
           {/* LOGO CHUẨN (06/11/2026 "lấy logo CHUẨN, không làm kiểu dối"): đúng file logo ngang của thương hiệu (cùng chân trang), không tự ghép chữ */}
           {/* Bấm logo = về đầu Trang chủ, như web (06/11/2026) — logo chỉ có ở Trang chủ nên chỉ cần cuộn lên đầu */}
           <img className="logo-chuan" src={logoTrang} alt="COASTAL LAND" onClick={(e) => { (e.currentTarget.closest(".zaui-page") as HTMLElement | null)?.scrollTo({ top: 0, behavior: "smooth" }); }} />
+          <MenuWeb />
         </div>
         <div onClick={() => dieuHuong("/tim-kiem")}>
           <Input.Search placeholder="Tìm nhà đất theo khu vực, dự án…" readOnly />

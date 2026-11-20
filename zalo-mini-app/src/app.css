@@ -1115,3 +1115,23 @@ html.trong-mini-app { --hdr: 0px; --backbar-h: 0px; --at: 0px; }
 
 /* Form web trong Mini App: Zalo phóng chữ → nút Xem trước / Lưu nháp gãy 2 dòng (Zalo thật 19/11/2026) — giữ một dòng */
 .form-web .hang-nut-form button, .form-web button { white-space: nowrap; }
+
+/* MENU ≡ = menu web điện thoại (Header.tsx: màn đen buông xuống, chữ hiện dần, mục con trượt vào) — 20/11/2026 */
+.trang-chu .hang-app .nut-menu { margin-left: auto; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #fff; background: none; border: 0; padding: 0; flex: none; }
+.menu-man-app { position: fixed; inset: 0; z-index: 1000; background: #161617; color: #f5f5f7; display: flex; flex-direction: column;
+  padding: calc(max(var(--zaui-safe-area-inset-top, 0px), env(safe-area-inset-top, 0px), 28px) + 4px) 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
+  animation: menuXuong .32s cubic-bezier(.16,1,.3,1); overflow-y: auto; }
+@keyframes menuXuong { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.menu-man-app .menu-dau { display: flex; align-items: center; justify-content: flex-start; gap: 4px; min-height: 44px; padding: 0 104px 0 36px; }
+.menu-man-app .menu-dong { order: -1; width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #f5f5f7; }
+.menu-man-app .menu-lui { background: none; border: 0; color: #a1a1a6; font-size: 15px; padding: 10px 0; }
+.menu-man-app .menu-ds { display: flex; flex-direction: column; padding: 8px 48px 0; }
+.menu-man-app .menu-con { animation: menuVao .3s cubic-bezier(.16,1,.3,1); }
+@keyframes menuVao { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.menu-man-app .menu-dong-muc { display: flex; align-items: center; justify-content: space-between; min-height: 46px; background: none; border: 0; color: #f5f5f7;
+  font-size: 20px; font-weight: 600; text-align: left; padding: 0; opacity: 0; animation: menuChu .35s ease forwards; }
+.menu-man-app .menu-con .menu-dong-muc { font-size: 16px; font-weight: 500; min-height: 44px; }
+@keyframes menuChu { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.menu-man-app .menu-mui { color: #6e6e73; font-size: 22px; font-weight: 400; }
+.menu-man-app .menu-cuoi { margin-top: auto; padding: 24px 48px 0; }
+.menu-man-app .menu-dang-tin { width: 100%; height: 44px; border-radius: 999px; border: 0; background: #0071e3; color: #fff; font-size: 15px; font-weight: 600; }

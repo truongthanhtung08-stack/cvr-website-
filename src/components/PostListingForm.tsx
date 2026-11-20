@@ -2326,13 +2326,13 @@ export default function PostListingForm() {
             {goiDangDung && editId ? (saving === "publish" ? "Đang cập nhật…" : "Cập nhật") : saving === "publish" ? "Đang gửi duyệt…" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : "Đăng tin"}
           </button>
         )}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => setXemTruoc(true)}
               disabled={!!saving}
-              className="h-9 rounded-full bg-white px-3 text-[13px] font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:px-4"
+              className="h-9 shrink-0 whitespace-nowrap rounded-full bg-white px-3 text-[13px] font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:px-4"
             >
               Xem trước
             </button>
@@ -2340,18 +2340,18 @@ export default function PostListingForm() {
               type="button"
               onClick={() => save(true)}
               disabled={!!saving}
-              className="h-9 rounded-full bg-white px-3 text-[13px] font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:px-4"
+              className="h-9 shrink-0 whitespace-nowrap rounded-full bg-white px-3 text-[13px] font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:px-4"
             >
               {saving === "draft" ? "Đang lưu…" : "Lưu nháp"}
             </button>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             {mucDang !== "1" && (
               <button
                 type="button"
                 aria-label="Mục trước"
                 onClick={() => moMuc(String(Number(mucDang) - 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-cvr-ink ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface active:scale-[0.97] sm:w-auto sm:gap-0.5 sm:pl-2.5 sm:pr-3.5 sm:text-[13px] sm:font-semibold"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-cvr-ink ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface active:scale-[0.97] sm:w-auto sm:gap-0.5 sm:pl-2.5 sm:pr-3.5 sm:text-[13px] sm:font-semibold"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 <span className="max-sm:hidden">Quay lại</span>
@@ -2361,7 +2361,7 @@ export default function PostListingForm() {
               <button
                 type="button"
                 onClick={tiepMuc}
-                className="btn-dangtin flex h-9 items-center gap-0.5 rounded-full pl-4 pr-3 text-[13px] font-bold text-white"
+                className="btn-dangtin flex h-9 shrink-0 items-center whitespace-nowrap gap-0.5 rounded-full pl-4 pr-3 text-[13px] font-bold text-white"
               >
                 Tiếp
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
