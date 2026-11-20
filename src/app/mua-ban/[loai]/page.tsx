@@ -17,7 +17,8 @@ import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
 import { TRANG_DONG_BANG, giuSoCu, lienKetChoDu, lienKetLoaiHinh, moTaSoLieu, moTaTinh } from "@/lib/pseo";
-import { thangHienTai, tieuDeGoogle, themGiaRe } from "@/lib/thang";
+import { thangHienTai, tieuDeGoogle, themDacDiem } from "@/lib/thang";
+import { dacDiemCuaTrang } from "@/lib/tuKhoaLoiStore";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 
 // ============================================================================
@@ -82,10 +83,10 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
   const tinTinh = listings.filter((l) => (l.purpose ?? "ban") === "ban" && normalizeVi(tinhCua(l.location)) === normalizeVi(kv.name));
   const description = moTaTinh(title, tinTinh, "ban", kv.name, !giuSoCu(`/mua-ban/${loai}`)) ?? moTaKhuVuc("ban", kv.name, soTin); // câu duyệt 24/10/2026
   return {
-    title: themGiaRe(title), // "giá rẻ" trong <title> trang tỉnh (anh 20/11/2026)
+    title: themDacDiem(title, dacDiemCuaTrang(`/mua-ban/${kv.slug}`)), // đặc điểm anh chọn trong bảng (21/11/2026)
     description,
     alternates: { canonical: `/mua-ban/${kv.slug}` },
-    openGraph: { title: themGiaRe(title), description, url: `/mua-ban/${kv.slug}`, type: "website" },
+    openGraph: { title: themDacDiem(title, dacDiemCuaTrang(`/mua-ban/${kv.slug}`)), description, url: `/mua-ban/${kv.slug}`, type: "website" },
     ...(soTinXet < NGUONG_INDEX_DANH_MUC ? { robots: { index: false, follow: true } } : {}), // cổng NGUONG_INDEX_DANH_MUC tin (2 tin từ 18/11/2026), đếm cả tin hết hạn (09/11/2026)
   };
 }

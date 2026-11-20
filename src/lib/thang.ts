@@ -43,7 +43,12 @@ export const catMoTa = (s: string, toiDa = 155): string => {
   return `${cat.slice(0, cat.lastIndexOf(" ")).replace(/[\s,.;:—-]+$/, "")}…`;
 };
 
-// ĐẶC ĐIỂM "GIÁ RẺ" TRONG <title> TRANG LÕI (anh 20/11/2026: "Nhà đất Đà Nẵng giá rẻ" — câu lõi + đặc điểm phải lên top).
-// Chỉ <title> Google đọc của trang Nhà đất / Loại hình + tỉnh / thành phố; H1, liên kết nội bộ, mô tả giữ nguyên.
-// "Bán nhà đất Đà Nẵng tháng 11/2026" → "Bán nhà đất Đà Nẵng giá rẻ tháng 11/2026" (giữ "tháng 11" đang top).
-export const themGiaRe = (t: string): string => (/giá rẻ/i.test(t) ? t : t.replace(/ (tháng \d{1,2}\/\d{4})$/, " giá rẻ $1"));
+// ĐẶC ĐIỂM ANH CHỌN TRONG <title> (anh 20–21/11/2026: lộ trình LONGTAIL lên top trước — "Nhà đất Đà Nẵng giá rẻ").
+// Đặc điểm = dòng anh đánh x ở cột "Chọn" của HE-THONG-TU-KHOA.xlsx → Admin → Từ khoá lõi (tuKhoaLoiDoc.ts) → trang đích của dòng.
+// Chỉ <title> Google đọc; H1, liên kết nội bộ, mô tả giữ nguyên. Giữ "tháng 11" (câu mẫu đang top):
+// "Bán nhà đất Đà Nẵng tháng 11/2026" + "giá rẻ" → "Bán nhà đất Đà Nẵng giá rẻ tháng 11/2026". Tiêu đề đã chứa đặc điểm → giữ nguyên.
+export const themDacDiem = (t: string, dd?: string): string => {
+  const d = (dd ?? "").trim();
+  if (!d || t.toLowerCase().includes(d.toLowerCase())) return t;
+  return / tháng \d{1,2}\/\d{4}$/.test(t) ? t.replace(/ (tháng \d{1,2}\/\d{4})$/, ` ${d} $1`) : `${t} ${d}`;
+};
