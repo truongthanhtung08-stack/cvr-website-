@@ -10,6 +10,10 @@ import { ganAnhWeb, ganFetchWeb } from "../noi-web/fetchWeb";
 ganFetchWeb();
 ganAnhWeb();
 (window as unknown as { __CL_MINI_APP__?: boolean }).__CL_MINI_APP__ = true;
+// Bản đồ ghim vị trí của form web: worker MapLibre lấy tệp trong gói Mini App (như BanDoTin), không phải gốc tên miền Zalo.
+const tepWorker = "maplibre/" + "maplibre-gl-worker.js";
+(window as unknown as { __CL_WORKER_BAN_DO__?: string }).__CL_WORKER_BAN_DO__ =
+  import.meta.env.DEV ? "/" + tepWorker : new URL("../" + tepWorker, import.meta.url).href;
 
 export default function DangTinWeb() {
   useEffect(() => { document.documentElement.classList.add("trong-mini-app"); return () => document.documentElement.classList.remove("trong-mini-app"); }, []);

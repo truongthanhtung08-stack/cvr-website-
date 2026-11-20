@@ -59,7 +59,10 @@ export function napMapLibre(): Promise<typeof import("maplibre-gl")> {
     // được ô bản đồ nào mà cũng KHÔNG báo lỗi gì (đo trên web thật 11/09/2026:
     // style + sprite tải xong, canvas dựng xong, không một ô .pbf nào được gọi).
     // File dưới đây do scripts/chep-maplibre-worker.mjs chép ra public/maplibre/.
-    ml.setWorkerUrl("/maplibre/maplibre-gl-worker.js");
+    // Zalo Mini App (form web chạy trong Mini App, 20/11/2026): tệp worker nằm trong gói Mini App, không ở gốc tên miền →
+    // Mini App đặt sẵn đường vào window.__CL_WORKER_BAN_DO__. Web không đặt → giữ đường cũ.
+    const w = typeof window !== "undefined" ? (window as unknown as { __CL_WORKER_BAN_DO__?: string }).__CL_WORKER_BAN_DO__ : undefined;
+    ml.setWorkerUrl(w || "/maplibre/maplibre-gl-worker.js");
     return ml;
   })();
   return dangNap;
