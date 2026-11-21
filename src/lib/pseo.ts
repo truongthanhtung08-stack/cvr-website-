@@ -150,7 +150,7 @@ export const laGiaRe = (l: Listing) => giaRe.has(l.id);
 
 // TRỤC ĐẶC ĐIỂM THEO CHỮ TRONG TIN (anh 21/11/2026: "đặc điểm sao chỉ có giá rẻ" — làm đủ đặc điểm Google gợi ý cho Loại hình + Địa điểm):
 //   /<mục>/<loại>/<tỉnh>/<slug> · /<mục>/<tỉnh>/<slug>. Tin khớp = tiêu đề / mô tả người đăng ghi đúng ý đó (không suy đoán, không gán thêm).
-//   "mới nhất" = tin đăng / đẩy trong 14 ngày. Cổng index + chống trùng như mọi trục; tiêu đề = H1 = lõi + nơi + đặc điểm (không thêm tháng).
+//   "mới nhất" KHÔNG có trang riêng: trang lõi đã xếp mới nhất, mọi tin kể cả hết hạn (anh 21/11/2026). Cổng index + chống trùng như mọi trục; tiêu đề = H1 = lõi + nơi + đặc điểm (không thêm tháng).
 export type DacDiem = { slug: string; nhan: string; muc?: Muc; khop: (l: Listing) => boolean };
 const chuTin = (l: Listing) => `${l.title ?? ""} ${l.desc ?? ""}`.toLowerCase();
 export const DAC_DIEM: DacDiem[] = [
@@ -158,7 +158,6 @@ export const DAC_DIEM: DacDiem[] = [
   { slug: "can-ban-gap", nhan: "cần bán gấp", muc: "ban", khop: (l) => /bán gấp|cần bán nhanh|kẹt tiền|cần tiền bán/.test(chuTin(l)) },
   { slug: "gan-bien", nhan: "gần biển", khop: (l) => /gần biển|sát biển|cách biển|ven biển|view biển|hướng biển|mặt biển/.test(chuTin(l)) },
   { slug: "view-bien", nhan: "view biển", khop: (l) => /view biển|hướng biển|nhìn biển|view trực diện biển/.test(chuTin(l)) },
-  { slug: "moi-nhat", nhan: "mới nhất", khop: (l) => Date.now() - (new Date(l.bumpedAt ?? l.postedAt ?? 0).getTime() || 0) <= 14 * 864e5 },
   { slug: "nguyen-can", nhan: "nguyên căn", muc: "thue", khop: (l) => /nguyên căn/.test(chuTin(l)) },
   { slug: "mini", nhan: "mini", khop: (l) => /\bmini\b/.test(chuTin(l)) },
   { slug: "co-ho-boi", nhan: "có hồ bơi", khop: (l) => /hồ bơi|bể bơi/.test(chuTin(l)) },

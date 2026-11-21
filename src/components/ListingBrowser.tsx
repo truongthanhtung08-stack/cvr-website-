@@ -59,6 +59,7 @@ export default function ListingBrowser({
   initialProvince,
   duongTrang,
   trangDau,
+  sapXepDau,
 }: {
   heading: string;
   // PHÂN TRANG THẬT CHO GOOGLE (24/10/2026 — Search Console: 306 trang chưa được ghé; ?trang=N máy chủ trả lại đúng 10 tin
@@ -67,6 +68,8 @@ export default function ListingBrowser({
   duongTrang?: string;
   // Đang đứng ở /<duongTrang>/trang/N → danh sách mở sẵn trang N (máy chủ đã dựng ketQuaDau đúng trang này).
   trangDau?: number;
+  // Kiểu xếp mở sẵn khi đường dẫn không có ?sapxep (trang giá rẻ: rẻ → cao, anh 21/11/2026). Không truyền → như cũ.
+  sapXepDau?: SortKey;
   // Mục đích trang: "ban" = mua bán · "thue" = cho thuê — lọc nguồn tin + danh mục loại hình.
   purpose?: "ban" | "thue";
   // Tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
@@ -135,7 +138,7 @@ export default function ListingBrowser({
     boLocKhoiDau(filtersFromParams(params), { initialTypes, initialProvince, initialFilters, muc: purpose });
   const sapXepTu = (params: URLSearchParams): SortKey => {
     const sx = params.get("sapxep");
-    return sx === "gia-tang" || sx === "gia-giam" || sx === "dt-giam" || sx === "gia-m2" ? sx : relevance ? "lien-quan" : "moi";
+    return sx === "gia-tang" || sx === "gia-giam" || sx === "dt-giam" || sx === "gia-m2" ? sx : sapXepDau ?? (relevance ? "lien-quan" : "moi");
   };
   const trangTu = (params: URLSearchParams) => {
     const n = parseInt(params.get("trang") ?? "1", 10);

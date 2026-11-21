@@ -14,6 +14,7 @@ import { getArticles } from "@/lib/contentDb";
 import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, danhDauGiaRe, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
 import { tieuDeGoogle } from "@/lib/thang";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
+import { giaMoiM2 } from "@/lib/chiSoGia";
 
 // ============================================================================
 // TEMPLATE 1 — DYNAMIC LISTING (pSEO). Dùng chung cho mọi trục: loại × tỉnh, phường,
@@ -42,6 +43,8 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   const [listings, articles, hetHan] = await Promise.all([getListings(), getArticles(), getListingsHetHan()]);
   if (dk.giaRe) danhDauGiaRe([...listings, ...hetHan]); // mốc trung bình trên cả bộ tin — cùng mốc với sitemap (pseo.ts)
   const items = listings.filter((l) => khop(l, dk));
+  // Trang giá rẻ: xếp rẻ → cao theo giá/m² (anh 21/11/2026) — danh sách + ItemList cho Google cùng thứ tự
+  if (dk.giaRe) items.sort((x, y) => (giaMoiM2(x) ?? Infinity) - (giaMoiM2(y) ?? Infinity));
   const itemsHetHan = hetHan.filter((l) => khop(l, dk));
   const heading = dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
   const path = duongDan(dk);
@@ -72,6 +75,7 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
             heading={heading}
             soLieu={soLieu}
             items={goiNheTin(items)}
+            sapXepDau={dk.giaRe ? (dk.muc === "ban" ? "gia-m2" : "gia-tang") : undefined}
             itemsHetHan={goiNheTin(itemsHetHan)}
             articles={goiNheBaiViet(articles)}
           />
