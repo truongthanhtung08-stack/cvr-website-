@@ -12,7 +12,7 @@ import type { ThuongHieu } from "@/lib/thuongHieu";
 export type TuKhoaLoiTrang = Record<string, { loi?: string; loiCon?: string; longtail?: string; uuTien?: true }>;
 // DÒNG ĐẶC ĐIỂM (anh 13/11/2026: "một bảng kế hoạch, thống nhất Admin và web"): dòng tầng "Đặc điểm" của sheet — CHỈ để Admin theo dõi
 // (longtail · đặc điểm · trang đích · trạng thái), KHÔNG đổi chữ nào trên web (chữ trên web chỉ đi theo LÕI GỌN của dòng có x).
-export type DongKeHoach = { khuVuc: string; loaiHinh: string; loiGoc: string; loTrinh: string; tang: string; muc: "ban" | "thue"; noi: string; loi: string; longtail: string; dacDiem: string; nhom: string; google: number; soTin: number; trang: string; xin: string; chon: boolean };
+export type DongKeHoach = { khuVuc: string; loaiHinh: string; loiGoc: string; loTrinh: string; tang: string; muc: "ban" | "thue"; noi: string; loi: string; longtail: string; dacDiem: string; nhom: string; google: number; soTin: number; trang: string; xin: string; chon: boolean; hang?: string };
 export type KetQuaDocBang = { trang: TuKhoaLoiTrang; doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number; keHoach: DongKeHoach[] };
 
 function moZip(buf: Buffer): Map<string, Buffer> {
@@ -114,19 +114,29 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
     if (muc.loi || muc.loiCon || muc.longtail || muc.uuTien) trang[d.trang] = muc;
   }
   const j = (ten: string) => dau.findIndex((h) => (h ?? "").startsWith(ten));
-  const K = { kv: j("Khu vực"), lh: j("Loại hình"), goc: j("Lõi gốc"), lo: j("Lộ trình"), muc: j("Mục đích"), dd: j("Đặc điểm"), nhom: j("Nhóm đặc điểm"), g: j("Google gợi ý"), tin: j("Tin"), xin: j("Xin index") };
+  const K = { kv: j("Khu vực"), lh: j("Loại hình"), goc: j("Lõi gốc"), lo: j("Lộ trình"), muc: j("Mục đích"), dd: j("Đặc điểm"), nhom: j("Nhóm đặc điểm"), g: j("Google gợi ý"), tin: j("Tin"), xin: j("Xin index"),
+    chonL: j("Chọn"), hang: j("Hạng Google"), ct: j("Trang Cho thuê") };
   // MỌI dòng của bảng (lõi + đặc điểm) — Admin hiện đúng từng dòng của file kèm trạng thái thật trên web (anh 13/11/2026:
   // "đồng bộ file này lên Admin, hiển thị để tôi quản lý được — link nào đã index, chưa index")
+  // Một câu trỏ đủ các mục đích trên web (anh 21/11/2026): dòng "Mua bán + Cho thuê" → một dòng Mua bán (cột Trang lõi) + một dòng
+  // Cho thuê (cột "Trang Cho thuê"). "Chọn" = x ở cột Chọn HOẶC Lên web. Hạng Google (cột X) → lọc "Đang top" ở Admin.
   const keHoach: DongKeHoach[] = C.tang < 0 || K.dd < 0 ? [] : bang.slice(1)
     .filter((r) => (r[C.lt] ?? "").trim() || (r[C.loi] ?? "").trim())
-    .map((r) => ({
-      khuVuc: K.kv < 0 ? "" : (r[K.kv] ?? "").trim(), loaiHinh: K.lh < 0 ? "" : (r[K.lh] ?? "").trim(), loiGoc: K.goc < 0 ? "" : (r[K.goc] ?? "").trim(),
-      loTrinh: K.lo < 0 ? "" : (r[K.lo] ?? "").trim(), tang: (r[C.tang] ?? "").trim(),
-      muc: (r[K.muc] ?? "").includes("thuê") ? "thue" : "ban", noi: (r[C.noi] ?? "").trim(), loi: (r[C.loi] ?? "").trim(), longtail: (r[C.lt] ?? "").trim() || (r[C.loi] ?? "").trim(),
-      dacDiem: (r[K.dd] ?? "").trim(), nhom: K.nhom < 0 ? "" : (r[K.nhom] ?? "").trim(), google: Number(r[K.g] ?? 0) || 0, soTin: Number(r[K.tin] ?? 0) || 0,
-      trang: (r[C.trang] ?? "").trim(), xin: K.xin < 0 ? "" : (r[K.xin] ?? "").trim(),
-      chon: (r[C.len] ?? "").trim().toLowerCase() === "x", // anh lọc bảng, đánh x ở "Lên web" = dòng đặc điểm đang làm (xin index / mở trang)
-    }));
+    .flatMap((r) => {
+      const md = (r[K.muc] ?? "").trim();
+      const goc: DongKeHoach = {
+        khuVuc: K.kv < 0 ? "" : (r[K.kv] ?? "").trim(), loaiHinh: K.lh < 0 ? "" : (r[K.lh] ?? "").trim(), loiGoc: K.goc < 0 ? "" : (r[K.goc] ?? "").trim(),
+        loTrinh: K.lo < 0 ? "" : (r[K.lo] ?? "").trim(), tang: (r[C.tang] ?? "").trim(),
+        muc: md.includes("Mua bán") || !md.includes("thuê") ? "ban" : "thue", noi: (r[C.noi] ?? "").trim(), loi: (r[C.loi] ?? "").trim(), longtail: (r[C.lt] ?? "").trim() || (r[C.loi] ?? "").trim(),
+        dacDiem: (r[K.dd] ?? "").trim(), nhom: K.nhom < 0 ? "" : (r[K.nhom] ?? "").trim(), google: Number(r[K.g] ?? 0) || 0, soTin: Number(r[K.tin] ?? 0) || 0,
+        trang: (r[C.trang] ?? "").trim(), xin: K.xin < 0 ? "" : (r[K.xin] ?? "").trim(),
+        chon: (r[C.len] ?? "").trim().toLowerCase() === "x" || (K.chonL >= 0 && (r[K.chonL] ?? "").trim().toLowerCase() === "x"),
+        hang: K.hang >= 0 ? (r[K.hang] ?? "").trim() || undefined : undefined,
+      };
+      const ct = K.ct >= 0 ? (r[K.ct] ?? "").trim() : "";
+      if (!ct.startsWith("/cho-thue/")) return [goc];
+      return goc.trang.startsWith("/cho-thue/") ? [{ ...goc, muc: "thue" as const }] : [goc, { ...goc, muc: "thue" as const, trang: ct }];
+    });
   return { trang, doi, giu, soDong: chon.length, keHoach };
 }
 
