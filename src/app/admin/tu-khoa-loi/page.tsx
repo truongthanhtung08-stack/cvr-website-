@@ -105,10 +105,10 @@ export default function TuKhoaLoiPage() {
 
       {td && (() => {
         const bo = (x: string) => x.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d");
-        const ds = td.dong.filter((d) => d.muc === muc && (!kv || d.khuVuc === kv || (!d.khuVuc && d.tinh === kv)) && (!lo || (d.loTrinh ?? "").startsWith(lo)) && (!lh || d.loaiHinh === lh) && (!tim || bo(`${d.tinh} ${d.tuKhoa} ${d.longtail ?? ""} ${d.trang}`).includes(bo(tim))));
+        const ds = td.dong.filter((d) => d.trongBang && d.muc === muc && (!kv || d.khuVuc === kv || (!d.khuVuc && d.tinh === kv)) && (!lo || (d.loTrinh ?? "").startsWith(lo)) && (!lh || d.loaiHinh === lh) && (!tim || bo(`${d.tinh} ${d.tuKhoa} ${d.longtail ?? ""} ${d.trang}`).includes(bo(tim))));
         const thuoc = (d: DongTheoDoi, l: Loc) =>
           l === "mo" ? !!d.trang && (d.duChuan || !!d.xin) && !d.daIndex : l === "da-index" ? d.daIndex
-          : l === "top" ? !!d.top : l === "it-tin" ? !d.trang || (d.thieu ?? []).some((t) => /thiếu \d+ tin/i.test(t)) : d.trongBang;
+          : l === "top" ? !!d.top : l === "it-tin" ? !d.trang || (d.thieu ?? []).some((t) => /thiếu \d+ tin/i.test(t)) : true;
         const dem = (l: Loc) => ds.filter((d) => thuoc(d, l)).length;
         const hien = ds.filter((d) => thuoc(d, loc));
         const nut = (on: boolean) => `rounded-full px-3 py-1.5 text-[13px] font-medium ${on ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink"}`;
