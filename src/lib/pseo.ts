@@ -299,6 +299,8 @@ export function duongDan(dk: DieuKien): string {
     return `${g}/${dk.cat.slug}/${dk.tinh.slug}${duoi ? `/${duoi}` : ""}`;
   }
   if (dk.kiet) return `${g}/${dk.tinh.slug}/${KIET_SLUG}`;
+  // THÀNH PHỐ + ĐẶC ĐIỂM / MỨC GIÁ (anh 21/11/2026: "nhà đất nha trang dưới 2 tỷ", "… gần biển" — người tìm gõ tên thành phố)
+  if (dk.thanhPho && (dk.giaDuoi || dk.giaRe || dk.dacDiem)) return `${g}/${dk.tinh.slug}/${dk.thanhPho.slug}/${dk.giaDuoi?.slug ?? (dk.giaRe ? GIA_RE_SLUG : dk.dacDiem!.slug)}`;
   if (dk.giaRe) return `${g}/${dk.tinh.slug}/${GIA_RE_SLUG}`;
   if (dk.dacDiem) return `${g}/${dk.tinh.slug}/${dk.dacDiem.slug}`; // Nhà đất <tỉnh> giá rẻ (21/11/2026)
   if (dk.giaDuoi) return `${g}/${dk.tinh.slug}/${dk.giaDuoi.slug}`; // cha tổng + mức giá (13/11/2026)
@@ -393,8 +395,15 @@ export function duongDanPhanCap(dk: DieuKien): Crumb[] {
     { name: cu ? dk.tinh.name : tieuDe({ muc: dk.muc, tinh: dk.tinh }), href: `${g}/${dk.tinh.slug}` },
   ];
   if (dk.cat) c.push({ name: cu ? dk.cat.label : tieuDe({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat }), href: duongDan({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat }) });
+  // Thành phố + đặc điểm / mức giá: Tỉnh → Thành phố → đặc điểm (21/11/2026)
+  const dacDiemNhan = dk.giaRe ? "Giá rẻ" : dk.dacDiem ? viHoa(dk.dacDiem.nhan) : "";
+  if (dk.thanhPho && !dk.cat && (dk.giaDuoi || dk.giaRe || dk.dacDiem)) {
+    c.push({ name: tieuDe({ muc: dk.muc, tinh: dk.tinh, thanhPho: dk.thanhPho }), href: duongDan({ muc: dk.muc, tinh: dk.tinh, thanhPho: dk.thanhPho }) });
+    c.push({ name: dk.giaDuoi ? viHoa(dk.giaDuoi.nhan) : dacDiemNhan, href: duongDan(dk) });
+    return c;
+  }
   const cuoi = dk.thanhPho?.name ?? dk.phuong ?? (dk.duong ? `Đường ${dk.duong}` : dk.huong ? `Hướng ${dk.huong}` : dk.giaDuoi ? viHoa(dk.giaDuoi.nhan)
-    : dk.phapLy ? viHoa(dk.phapLy.nhan) : dk.phongNgu ? viHoa(phongNguNhan(dk.phongNgu)) : dk.kiet ? "Nhà kiệt, hẻm" : "");
+    : dk.phapLy ? viHoa(dk.phapLy.nhan) : dk.phongNgu ? viHoa(phongNguNhan(dk.phongNgu)) : dk.kiet ? "Nhà kiệt, hẻm" : dacDiemNhan);
   if (cuoi) c.push({ name: cuoi, href: duongDan(dk) });
   return c;
 }
@@ -406,6 +415,7 @@ export function cha(dk: DieuKien): DieuKien | null {
   if (dk.duong || dk.kiet) return { muc, tinh };
   if (dk.huong) return cat ? { muc, tinh, cat } : { muc, tinh };
   if (cat && (dk.phuong || dk.thanhPho || dk.giaDuoi || dk.phapLy || dk.phongNgu || dk.giaRe || dk.dacDiem)) return { muc, tinh, cat };
+  if (!cat && dk.thanhPho && (dk.giaDuoi || dk.giaRe || dk.dacDiem)) return { muc, tinh, thanhPho: dk.thanhPho };
   if (dk.phuong || dk.thanhPho || dk.giaDuoi || dk.giaRe || dk.dacDiem || cat) return { muc, tinh };
   return null;
 }
@@ -445,6 +455,15 @@ export function giaiMaDanhSach(muc: Muc, loai: string, rest: string[], tin: List
     return phuong ? { muc, tinh, cat, phuong } : null;
   }
   const tinh = timKhuVuc(loai);
+  if (tinh && rest.length === 2) {
+    const tp2 = timThanhPho(tinh, rest[0]);
+    if (!tp2) return null;
+    const gia2 = GIA_DUOI[muc].find((g) => g.slug === rest[1]);
+    if (gia2) return { muc, tinh, thanhPho: tp2, giaDuoi: gia2 };
+    if (rest[1] === GIA_RE_SLUG) return { muc, tinh, thanhPho: tp2, giaRe: true };
+    const dd2 = dacDiemCua(muc, rest[1]);
+    return dd2 ? { muc, tinh, thanhPho: tp2, dacDiem: dd2 } : null;
+  }
   if (!tinh || rest.length !== 1) return null;
   if (muc === "ban" && rest[0] === KIET_SLUG) return { muc, tinh, kiet: true };
   const giaTinh = GIA_DUOI[muc].find((g) => g.slug === rest[0]);
@@ -504,7 +523,12 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
   for (const dacDiem of ddCua) ds.push({ muc, tinh, dacDiem });
   if (phuong) ds.push({ muc, tinh, phuong });
   const thanhPho = phuong ? thanhPhoCuaPhuong(tinh.name, phuong) : undefined;
-  if (thanhPho) ds.push({ muc, tinh, thanhPho });
+  if (thanhPho) {
+    ds.push({ muc, tinh, thanhPho });
+    for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, thanhPho, giaDuoi: g });
+    if (laGiaRe(l)) ds.push({ muc, tinh, thanhPho, giaRe: true });
+    for (const dacDiem of DAC_DIEM.filter((d) => (!d.muc || d.muc === muc) && d.khop(l))) ds.push({ muc, tinh, thanhPho, dacDiem });
+  }
   if (muc === "ban") {
     if (l.viTri === "kiet") ds.push({ muc, tinh, kiet: true });
     if (l.duong) ds.push({ muc, tinh, duong: l.duong });
@@ -593,7 +617,11 @@ export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   return m;
 }
 
+// Trang lõi: đúng loại hình + tỉnh, không trục con (phường, giá, đặc điểm, thành phố…)
+const laLoiLoaiTinh = (dk: DieuKien) => !!dk.cat && !dk.phuong && !dk.duong && !dk.huong && !dk.phapLy && !dk.kiet && !dk.phongNgu && !dk.giaDuoi && !dk.thanhPho && !dk.giaRe && !dk.dacDiem;
 const laTinhGia = (dk: DieuKien) => (!dk.cat && !!dk.giaDuoi) || !!dk.giaRe || !!dk.dacDiem; // + giá rẻ (21/11/2026): trang mới, trùng tin thì nhường trang cũ; // cha tổng + mức giá — trang mới, nhường trang cũ khi trùng tin
+// Thứ tự nhường khi trùng tin (21/11/2026: CHỈ THÊM, KHÔNG BỚT): 0 trang cũ · 1 trang giá / đặc điểm cấp tỉnh · 2 trang thành phố + giá / đặc điểm (mới nhất, nhường hết)
+const hangMoi = (dk: DieuKien) => (dk.thanhPho && (dk.giaDuoi || dk.giaRe || dk.dacDiem) ? 2 : laTinhGia(dk) ? 1 : 0);
 function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const m = new Map<string, TrangPseo>();
   for (const l of tinConHan) {
@@ -620,7 +648,7 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
     const pathCha = duongDan(c);
     const nCha = m.get(pathCha)?.n ?? 0;
     // Trang thành phố: người tìm gõ tên thành phố, không gõ tên tỉnh → giữ dù gần trùng trang tỉnh
-    if (p.n > 0.8 * nCha && !p.dk.thanhPho) continue;
+    if (p.n > 0.8 * nCha && !(p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.giaRe && !p.dk.dacDiem)) continue;
     (theoCha.get(pathCha) ?? theoCha.set(pathCha, []).get(pathCha)!).push(p);
   }
   const giong = (a: Set<string>, b: Set<string>) => {
@@ -639,7 +667,7 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
     const chon: TrangPseo[] = [];
     // Cụ thể trước (ít tin hơn) — trang rộng hơn chỉ được giữ khi khác rõ các trang đã chọn
     // TRANG MỚI "Nhà đất <tỉnh> dưới X" (13/11/2026) xếp SAU mọi trang đã có: trùng tin thì trang cũ (đang được Google index) giữ
-    for (const p of ds.sort((a, b) => Number(laTinhGia(a.dk)) - Number(laTinhGia(b.dk)) || a.n - b.n)) {
+    for (const p of ds.sort((a, b) => hangMoi(a.dk) - hangMoi(b.dk) || a.n - b.n)) {
       if (chon.some((q) => giong(p.ids, q.ids) && !capDat(p.dk, q.dk))) continue;
       p.index = true;
       chon.push(p);
@@ -652,12 +680,16 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
     .filter((p) => p.index)
     // Cùng số tin: trang lõi anh đánh x trong bảng từ khoá (laLoiUuTien) đứng trước trang con của nó (anh 09/11/2026: "Bán đất Khánh Hòa"
     // trùng hệt "Bán đất Nha Trang" → giữ trang lõi) → rồi trang thành phố → rồi danh mục rộng hơn
-    .sort((a, b) => Number(laTinhGia(a.dk)) - Number(laTinhGia(b.dk)) || b.n - a.n || Number(laLoiUuTien(b.path)) - Number(laLoiUuTien(a.path)) || Number(!!b.dk.thanhPho) - Number(!!a.dk.thanhPho) || (b.dk.cat?.types.length ?? 0) - (a.dk.cat?.types.length ?? 0));
+    .sort((a, b) => hangMoi(a.dk) - hangMoi(b.dk) || b.n - a.n || Number(laLoiUuTien(b.path)) - Number(laLoiUuTien(a.path)) || Number(!!b.dk.thanhPho) - Number(!!a.dk.thanhPho) || (b.dk.cat?.types.length ?? 0) - (a.dk.cat?.types.length ?? 0));
   const giu: TrangPseo[] = [];
   for (const p of daIndex) {
     if (giu.some((q) => q.dk.muc === p.dk.muc && q.dk.tinh.slug === p.dk.tinh.slug && giong(p.ids, q.ids))) p.index = false;
     else giu.push(p);
   }
+  // ⑥ TRANG LÕI LOẠI HÌNH + TỈNH (anh 21/11/2026: "có 1 tin cũng index", "loại hình nào chưa có tin thì bỏ qua"): từ 1 tin (còn hạn
+  // hoặc hết hạn) là mở cho Google, kể cả trùng tin trang khác — lõi là câu đích của kế hoạch từ khoá. CHỈ THÊM: chạy sau mọi cổng,
+  // không đóng trang nào đang mở. 0 tin thì không có trong m → bỏ qua.
+  for (const p of m.values()) if (p.n >= 1 && cha(p.dk) && laLoiLoaiTinh(p.dk)) p.index = true;
   return m;
 }
 
@@ -672,7 +704,7 @@ export type NhomLienKet = { tieuDe: string; links: { href: string; nhan: string;
 export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   const hien = duongDan(dk);
   // Trang đang top / giữ bản cũ: không thêm link trang giá rẻ (HTML giữ y như cũ — luật TRANG_TOP)
-  const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === dk.muc && !((p.dk.giaRe || p.dk.dacDiem) && giuSoCu(hien)));
+  const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === dk.muc && !((p.dk.giaRe || p.dk.dacDiem || (p.dk.thanhPho && p.dk.giaDuoi)) && giuSoCu(hien)));
   const cungTinh = (p: TrangPseo) => p.dk.tinh.slug === dk.tinh.slug && p.path !== hien;
   const laLoai = (p: TrangPseo, cat?: Category) => (cat ? p.dk.cat?.slug === cat.slug : !p.dk.cat);
   const chiCo = (p: TrangPseo, k: keyof DieuKien) =>
@@ -691,6 +723,8 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   );
   them("Theo loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe && !p.dk.dacDiem), (p) => tieuDe(p.dk));
   them("Theo thành phố", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "thanhPho")), (p) => tieuDe(p.dk));
+  if (dk.thanhPho && !dk.cat && !dk.giaDuoi && !dk.giaRe && !dk.dacDiem)
+    them("Nhà đất " + dk.thanhPho.name, ds.filter((p) => p.dk.thanhPho?.slug === dk.thanhPho!.slug && !p.dk.cat && (p.dk.giaDuoi || p.dk.giaRe || p.dk.dacDiem)), (p) => tieuDe(p.dk));
   them("Theo phường, xã", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "phuong")), (p) => p.dk.phuong!);
   if (!dk.cat && !dk.phuong && !dk.thanhPho && !dk.giaDuoi) them("Theo mức giá", ds.filter((p) => cungTinh(p) && !p.dk.cat && chiCo(p, "giaDuoi")), (p) => tieuDe(p.dk));
   if (dk.cat) {
