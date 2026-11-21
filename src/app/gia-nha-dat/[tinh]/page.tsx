@@ -60,6 +60,8 @@ export default async function GiaNhaDatTinh({ params }: { params: Promise<{ tinh
           <Link href={`/mua-ban/${kv.slug}`} className="text-[15px] font-medium text-cvr-ink underline underline-offset-4">Xem nhà đất bán {kv.name}</Link>
           <span className="mx-2 text-cvr-faint">·</span>
           <Link href={`/cho-thue/${kv.slug}`} className="text-[15px] font-medium text-cvr-ink underline underline-offset-4">Xem nhà đất cho thuê {kv.name}</Link>
+          <span className="mx-2 text-cvr-faint">·</span>
+          <Link href={`/tim-nhanh/${kv.slug}`} className="text-[15px] font-medium text-cvr-ink underline underline-offset-4">Tìm nhanh nhà đất {kv.name}</Link>
           {/* MỘT THỰC THỂ (14/11/2026): trang giá của tỉnh nối tới Điểm tin thị trường khu vực chứa tỉnh (chỉ khu vực đủ số) */}
           {diemTin && (<><span className="mx-2 text-cvr-faint">·</span><Link href={`/diem-tin-thi-truong/${diemTin.id}`} className="text-[15px] font-medium text-cvr-ink underline underline-offset-4">Điểm tin thị trường {diemTin.ten}</Link></>)}
         </div>

@@ -164,6 +164,8 @@ export const DAC_DIEM: DacDiem[] = [
   { slug: "full-noi-that", nhan: "full nội thất", khop: (l) => /full nội thất|đầy đủ nội thất|nội thất đầy đủ|full đồ/.test(chuTin(l)) },
   { slug: "chinh-chu", nhan: "chính chủ", khop: (l) => /chính chủ/.test(chuTin(l)) },
   { slug: "view-song-han", nhan: "view sông Hàn", khop: (l) => /sông hàn/.test(chuTin(l)) },
+  // anh 21/11/2026: căn hộ / chung cư nhỏ gọi là "studio" (căn hộ mini, chung cư mini cùng nghĩa). Trang "mini" cũ giữ nguyên.
+  { slug: "studio", nhan: "studio", khop: (l) => /căn hộ|chung cư/i.test(l.type ?? "") && /studio|căn hộ mini|chung cư mini/.test(chuTin(l)) },
 ];
 const dacDiemCua = (muc: Muc, slug: string) => DAC_DIEM.find((d) => d.slug === slug && (!d.muc || d.muc === muc));
 

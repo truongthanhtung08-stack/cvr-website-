@@ -147,6 +147,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (kv && trangGiaNhaDat(kv, [...listings, ...tinHetHan]).index) dynamic.push({ url: `${SITE}/gia-nha-dat/${kv.slug}`, changeFrequency: "weekly", priority: 0.8 });
     }
 
+    // TRANG TỔNG HỢP KHU VỰC /tim-nhanh/<tỉnh> (anh 21/11/2026: "1 trang đọc nhiều trang") — tỉnh có ≥ 1 trang pSEO đang mở
+    {
+      const coTrang = new Set(trangIndex([...listings, ...tinHetHan]).map((p) => p.dk.tinh.slug));
+      for (const t of khuVucTrongDiem) if (coTrang.has(slugKhuVuc(t))) dynamic.push({ url: `${SITE}/tim-nhanh/${slugKhuVuc(t)}`, changeFrequency: "daily", priority: 0.8 });
+    }
+
     // TRANG CHỦ ĐẦU TƯ — chỉ chủ đầu tư có ≥ 2 dự án đã đăng (src/lib/chuDauTu.ts)
     for (const [cdt, g] of nhomChuDauTu(projects)) {
       if (g.duAn.length >= NGUONG_INDEX_CDT) dynamic.push({ url: `${SITE}/chu-dau-tu/${cdt}`, changeFrequency: "weekly", priority: 0.6 });

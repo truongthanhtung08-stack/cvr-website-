@@ -137,7 +137,26 @@ export function docBangTuKhoaLoi(buf: Buffer): KetQuaDocBang {
       if (!ct.startsWith("/cho-thue/")) return [goc];
       return goc.trang.startsWith("/cho-thue/") ? [{ ...goc, muc: "thue" as const }] : [goc, { ...goc, muc: "thue" as const, trang: ct }];
     });
-  return { trang, doi, giu, soDong: chon.length, keHoach };
+  // SHEET "Kế hoạch" GỌN (anh 21/11/2026: "trên Admin rất lộn xộn — tôi cần đơn giản như vậy"): có sheet này thì bảng Admin đọc nó
+  // (mỗi dòng một câu = lõi + 1 đặc điểm, 12 cột) thay cho mọi dòng của "Từ khoá lõi". Chữ trên web (trang) vẫn chỉ từ "Từ khoá lõi".
+  let gon: DongKeHoach[] | null = null;
+  try {
+    const kh = docSheet(buf, "Kế hoạch");
+    const h = kh[0] ?? [], c = (t: string) => h.findIndex((x) => (x ?? "").startsWith(t));
+    const K2 = { kv: c("Khu vực"), lh: c("Loại hình"), loi: c("Lõi"), dd: c("Đặc điểm"), cau: c("Câu"), md: c("Mục đích"), mb: c("Trang Mua bán"), ct: c("Trang Cho thuê"), tin: c("Tin"), chon: c("Chọn"), hang: c("Hạng"), lich: c("Lịch") };
+    if (K2.cau >= 0 && K2.mb >= 0) {
+      gon = kh.slice(1).filter((r) => (r[K2.cau] ?? "").trim()).flatMap((r) => {
+        const v = (k: number) => (k < 0 ? "" : (r[k] ?? "").trim());
+        const dd = v(K2.dd);
+        const goc: DongKeHoach = { khuVuc: v(K2.kv), loaiHinh: v(K2.lh), loiGoc: "", loTrinh: "", tang: dd === "tháng 11" ? "Lõi (tháng 11)" : "Đặc điểm",
+          muc: "ban", noi: v(K2.kv), loi: v(K2.loi), longtail: v(K2.cau), dacDiem: dd, nhom: "", google: 0, soTin: Number(v(K2.tin)) || 0,
+          trang: v(K2.mb), xin: v(K2.lich), chon: v(K2.chon).toLowerCase() === "x", hang: v(K2.hang) || undefined };
+        const ct = v(K2.ct);
+        return [...(goc.trang ? [goc] : []), ...(ct ? [{ ...goc, muc: "thue" as const, trang: ct }] : [])];
+      });
+    }
+  } catch { /* chưa có sheet "Kế hoạch" → giữ bảng đọc từ "Từ khoá lõi" */ }
+  return { trang, doi, giu, soDong: chon.length, keHoach: gon ?? keHoach };
 }
 
 // ── SHEET "THƯƠNG HIỆU" (anh 12/11/2026: "sheet riêng, nạp là lên luôn") ─────────────────────────────────────────────

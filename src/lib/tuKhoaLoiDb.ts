@@ -9,12 +9,13 @@ export async function napTuKhoaLoi(): Promise<void> {
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon) return;
   try {
-    const res = await fetch(`${url}/rest/v1/site_content?key=eq.tu_khoa_loi&select=data&limit=1`, {
+    const res = await fetch(`${url}/rest/v1/site_content?key=eq.tu_khoa_loi&select=trang:data->trang&limit=1`, {
       headers: { apikey: anon, Authorization: `Bearer ${anon}` },
       next: { tags: ["noi-dung"], revalidate: false },
     });
     if (!res.ok) return;
-    const trang = ((await res.json()) as { data?: { trang?: Record<string, { loi?: string }> } }[])[0]?.data?.trang;
+    // chỉ lấy phần "trang" (vài KB) — cả khối kèm bảng kế hoạch Admin > 2MB, Next không lưu đệm được (21/11/2026)
+    const trang = ((await res.json()) as { trang?: Record<string, { loi?: string }> }[])[0]?.trang;
     if (trang && typeof trang === "object") datTuKhoaLoi(trang);
   } catch {
     /* lỗi mạng → giữ bản đang có */

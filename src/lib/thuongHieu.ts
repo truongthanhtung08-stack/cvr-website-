@@ -61,12 +61,12 @@ export async function layThuongHieu(): Promise<ThuongHieu> {
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon) return THUONG_HIEU_MAC_DINH;
   try {
-    const res = await fetch(`${url}/rest/v1/site_content?key=eq.tu_khoa_loi&select=data&limit=1`, {
+    const res = await fetch(`${url}/rest/v1/site_content?key=eq.tu_khoa_loi&select=th:data->thuongHieu&limit=1`, {
       headers: { apikey: anon, Authorization: `Bearer ${anon}` },
       next: { tags: ["noi-dung"], revalidate: false },
     });
     if (!res.ok) return THUONG_HIEU_MAC_DINH;
-    const th = ((await res.json()) as { data?: { thuongHieu?: Partial<ThuongHieu> } }[])[0]?.data?.thuongHieu;
+    const th = ((await res.json()) as { th?: Partial<ThuongHieu> }[])[0]?.th; // chỉ phần thương hiệu (cả khối > 2MB)
     return ghepThuongHieu(th);
   } catch {
     return THUONG_HIEU_MAC_DINH;

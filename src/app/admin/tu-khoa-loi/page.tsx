@@ -7,14 +7,13 @@ import { useEffect, useState } from "react";
 type KetQua = { doi: { trang: string; cu: string; moi: string }[]; giu: string[]; soDong: number };
 type HienTai = KetQua & { tenTep?: string; capNhat?: string };
 type DongTheoDoi = { trang: string; muc: "ban" | "thue"; tinh: string; tang: string; tuKhoa: string; soTin: number; duChuan: boolean; trongBang: boolean; daIndex: boolean; xin: string | null;
-  loTrinh?: string; tieuDeWeb?: string; longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; chon?: boolean; noiToi?: boolean; thieu?: string[]; khuVuc?: string; loaiHinh?: string; loiGoc?: string; hang?: string; top?: boolean };
+  loTrinh?: string; tieuDeWeb?: string; longtail?: string; dacDiem?: string; nhom?: string; google?: number; coTrang?: boolean; chon?: boolean; noiToi?: boolean; thieu?: string[]; khuVuc?: string; loaiHinh?: string; loiGoc?: string; hang?: string; top?: boolean; lich?: string };
 type TheoDoi = { nguong: number; dong: DongTheoDoi[] };
 // MỘT BẢNG = ĐÚNG FILE (13/11/2026): lọc theo trạng thái thật trên web
 // Anh 21/11/2026: "link nào đã index, link mở chưa index, top — để có kế hoạch index hằng ngày" + trang thiếu tin để giao Cowork.
 // "Mở cho Google, chưa index" = danh sách xin index hằng ngày (trang đủ chuẩn, chưa xin). "Ít / không có tin" = giao Cowork lọc tin.
 const LOC = [
-  ["mo", "Mở cho Google, chưa index"], ["da-xin", "Đã xin, chờ Google"], ["da-index", "Đã index"], ["top", "Đang top"],
-  ["it-tin", "Ít / không có tin (giao Cowork)"], ["chon", "Đã chọn (x)"], ["ngoai", "Ngoài bảng"], ["tat-ca", "Tất cả"],
+  ["mo", "Chờ index"], ["da-index", "Đã index"], ["top", "Đang top"], ["it-tin", "Thiếu tin"], ["tat-ca", "Tất cả"],
 ] as const;
 type Loc = (typeof LOC)[number][0];
 const ngayVn = (s: string) => s.split("-").reverse().slice(0, 2).join("/");
@@ -46,7 +45,7 @@ export default function TuKhoaLoiPage() {
       const j = await (await fetch(`/api/admin/tu-khoa-loi${xemTruoc ? "?xemTruoc=1" : ""}`, { method: "POST", body: fd })).json();
       if (!j.ok) setBao({ loi: j.message ?? "Lỗi" });
       else if (xemTruoc) setXem(j);
-      else { setXem(null); setTep(null); setBao({ xong: `Đã đưa lên web: đổi ${j.doi.length} trang, giữ ${j.giu.length} trang.` }); napHienTai(); }
+      else { setXem(null); setTep(null); setBao({ xong: `Đã nạp tệp. Tiêu đề trang theo tệp: ${j.doi.length} trang · giữ tiêu đề cũ (đang top): ${j.giu.length} trang.` }); napHienTai(); }
     } catch {
       setBao({ loi: "Không gửi được tệp" });
     }
@@ -56,7 +55,7 @@ export default function TuKhoaLoiPage() {
   const Bang = ({ kq }: { kq: KetQua }) => (
     <div className="space-y-3 text-sm">
       <div>
-        <div className="font-semibold text-cvr-ink">Đổi chữ lõi · {kq.doi.length} trang</div>
+        <div className="font-semibold text-cvr-ink">Tiêu đề trang theo tệp · {kq.doi.length} trang</div>
         <ul className="mt-1 space-y-1">
           {kq.doi.map((d) => (
             <li key={d.trang} className="text-cvr-body">
@@ -67,7 +66,7 @@ export default function TuKhoaLoiPage() {
       </div>
       {kq.giu.length > 0 && (
         <div>
-          <div className="font-semibold text-cvr-ink">Giữ nguyên · {kq.giu.length} trang</div>
+          <div className="font-semibold text-cvr-ink">Giữ tiêu đề cũ · {kq.giu.length} trang</div>
           <ul className="mt-1 space-y-1 text-cvr-muted">{kq.giu.map((g) => <li key={g}>{g}</li>)}</ul>
         </div>
       )}
@@ -108,9 +107,8 @@ export default function TuKhoaLoiPage() {
         const bo = (x: string) => x.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d");
         const ds = td.dong.filter((d) => d.muc === muc && (!kv || d.khuVuc === kv || (!d.khuVuc && d.tinh === kv)) && (!lo || (d.loTrinh ?? "").startsWith(lo)) && (!lh || d.loaiHinh === lh) && (!tim || bo(`${d.tinh} ${d.tuKhoa} ${d.longtail ?? ""} ${d.trang}`).includes(bo(tim))));
         const thuoc = (d: DongTheoDoi, l: Loc) =>
-          l === "mo" ? !!d.trang && d.duChuan && !d.daIndex && !d.xin : l === "da-xin" ? !!d.trang && !d.daIndex && !!d.xin : l === "da-index" ? d.daIndex
-          : l === "top" ? !!d.top : l === "it-tin" ? !d.trang || (d.thieu ?? []).some((t) => /thiếu \d+ tin/i.test(t)) : l === "chon" ? !!d.chon
-          : l === "ngoai" ? !d.trongBang : true;
+          l === "mo" ? !!d.trang && (d.duChuan || !!d.xin) && !d.daIndex : l === "da-index" ? d.daIndex
+          : l === "top" ? !!d.top : l === "it-tin" ? !d.trang || (d.thieu ?? []).some((t) => /thiếu \d+ tin/i.test(t)) : d.trongBang;
         const dem = (l: Loc) => ds.filter((d) => thuoc(d, l)).length;
         const hien = ds.filter((d) => thuoc(d, loc));
         const nut = (on: boolean) => `rounded-full px-3 py-1.5 text-[13px] font-medium ${on ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink"}`;
@@ -168,7 +166,7 @@ export default function TuKhoaLoiPage() {
                       <td className="py-2 pr-2 text-right tabular-nums">{d.soTin}</td>
                       <td className="py-2 pr-2">
                         {!d.trang ? <span className="text-cvr-faint">—</span> : d.daIndex ? <span className="font-medium text-emerald-700">✓ Đã index</span>
-                          : <span className="font-medium text-amber-700">Chưa index{d.xin ? <span className="font-normal text-cvr-muted"> · đã xin {ngayVn(d.xin)}</span> : null}</span>}
+                          : <span className="font-medium text-amber-700">Chờ index{d.xin ? <span className="font-normal text-cvr-muted"> · đã xin {ngayVn(d.xin)}</span> : d.lich ? <span className="font-normal text-cvr-muted"> · lịch xin {d.lich}</span> : null}</span>}
                       </td>
                       <td className="py-2 pr-2 text-xs">{d.top ? <span className="font-semibold text-emerald-700">{d.hang}</span> : <span className="text-cvr-faint">{d.hang || "—"}</span>}</td>
                       <td className="py-2 text-xs">
