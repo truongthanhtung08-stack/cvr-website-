@@ -169,8 +169,8 @@ export default function TuKhoaLoiPage() {
                     <tr key={d.trang || d.longtail} className="border-b border-cvr-line/60 align-top">
                       <td className="py-2 pr-2 text-cvr-body">{d.khuVuc || d.tinh}</td>
                       <td className="py-2 pr-2">
-                        {d.cau.map((c) => <div key={c} className="font-medium text-cvr-ink">{c}</div>)}
-                        {d.trang ? <a href={d.trang} target="_blank" rel="noreferrer" className="text-xs text-cvr-faint hover:underline">coastalland.vn{d.trang}</a> : <span className="text-xs text-cvr-faint">chưa có trang</span>}
+                        {d.cau.map((c) => d.trang ? <a key={c} href={d.trang} target="_blank" rel="noreferrer" className="block font-medium text-cvr-blue hover:underline">{c}</a> : <div key={c} className="font-medium text-cvr-ink">{c}</div>)}
+                        {d.trang ? <a href={d.trang} target="_blank" rel="noreferrer" className="text-xs text-cvr-muted hover:underline">https://coastalland.vn{d.trang}</a> : <span className="text-xs text-cvr-faint">chưa có trang</span>}
                       </td>
                       <td className="py-2 pr-2 text-right tabular-nums">{d.soTin}</td>
                       <td className="py-2 pr-2">{!d.trang ? <span className="text-cvr-faint">—</span> : d.daIndex ? <span className="font-medium text-emerald-700">Đã index</span> : <span className="font-medium text-amber-700">Chưa index</span>}</td>

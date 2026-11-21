@@ -692,6 +692,10 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   // hoặc hết hạn) là mở cho Google, kể cả trùng tin trang khác — lõi là câu đích của kế hoạch từ khoá. CHỈ THÊM: chạy sau mọi cổng,
   // không đóng trang nào đang mở. 0 tin thì không có trong m → bỏ qua.
   for (const p of m.values()) if (p.n >= 1 && cha(p.dk) && laLoiLoaiTinh(p.dk)) p.index = true;
+  // ⑦ BIỂN THEO THÀNH PHỐ (anh 21/11/2026: "ven biển / gần biển / view biển lấy thành phố thuộc tỉnh đó"): người tìm gõ "Quy Nhơn gần biển",
+  // "Phan Thiết view biển", không gõ "Gia Lai gần biển" → trang thành phố + gần biển / view biển mở từ 1 tin, kể cả trùng tin trang tỉnh.
+  // CHỈ THÊM: không đóng trang tỉnh nào đang mở.
+  for (const p of m.values()) if (p.n >= 1 && p.dk.thanhPho && !p.dk.cat && (p.dk.dacDiem?.slug === "gan-bien" || p.dk.dacDiem?.slug === "view-bien")) p.index = true;
   return m;
 }
 
