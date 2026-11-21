@@ -163,6 +163,8 @@ export const DAC_DIEM: DacDiem[] = [
   { slug: "mini", nhan: "mini", khop: (l) => /\bmini\b/.test(chuTin(l)) },
   { slug: "co-ho-boi", nhan: "có hồ bơi", khop: (l) => /hồ bơi|bể bơi/.test(chuTin(l)) },
   { slug: "full-noi-that", nhan: "full nội thất", khop: (l) => /full nội thất|đầy đủ nội thất|nội thất đầy đủ|full đồ/.test(chuTin(l)) },
+  { slug: "chinh-chu", nhan: "chính chủ", khop: (l) => /chính chủ/.test(chuTin(l)) },
+  { slug: "view-song-han", nhan: "view sông Hàn", khop: (l) => /sông hàn/.test(chuTin(l)) },
 ];
 const dacDiemCua = (muc: Muc, slug: string) => DAC_DIEM.find((d) => d.slug === slug && (!d.muc || d.muc === muc));
 
@@ -614,7 +616,8 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const theoCha = new Map<string, TrangPseo[]>();
   for (const p of m.values()) {
     const c = cha(p.dk);
-    if (!c || p.dk.huong || p.n < NGUONG_INDEX) continue;
+    // Trang đặc điểm (giá rẻ, gần biển…): 1 tin đúng + "Bất động sản tương tự" bên dưới là đủ (anh 21/11/2026); trục khác giữ NGUONG_INDEX
+    if (!c || p.dk.huong || p.n < (p.dk.giaRe || p.dk.dacDiem ? 1 : NGUONG_INDEX)) continue;
     const pathCha = duongDan(c);
     const nCha = m.get(pathCha)?.n ?? 0;
     // Trang thành phố: người tìm gõ tên thành phố, không gõ tên tỉnh → giữ dù gần trùng trang tỉnh
