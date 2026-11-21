@@ -56,6 +56,69 @@ nằm ở Admin → Tổng quan, không gửi email lại. Sửa / thêm đườ
 
 ---
 
+## ⏳ SEO 20/11/2026 TỐI — PHIÊN NHẬN BÀN GIAO SEO (anh đuổi: "cút") — CHƯA NẠP, CHƯA INDEX, CHƯA PUSH
+**Anh cần (nguyên ý):** câu **lõi + đặc điểm** lên top mọi khu vực (vd "Nhà đất Đà Nẵng giá rẻ"); đặc điểm theo gợi ý Google + "Mọi người cũng
+tìm kiếm" + chữ trang top. **FILE phải ghi rõ đủ các câu đó → anh CHỌN → NẠP TỪ FILE lên Admin → web → xin index trang đủ tin.**
+Anh hỏi nhiều lần "đặc điểm trong file đâu… có mẹ đâu mà chọn" — Claude KHÔNG hiểu anh muốn file trông thế nào. Phiên sau: hỏi anh MỘT câu
+kèm ví dụ dạng bảng (cột nào, mỗi dòng một câu) TRƯỚC khi sửa file.
+**Trạng thái thật (anh bảo "khôi phục lại hết" — ĐÃ KHÔI PHỤC 20/11 ~22:15):**
+- `HE-THONG-TU-KHOA.xlsx`: 587 chữ "x" Claude đánh sai ở cột V đã gỡ — tệp giống bản anh lưu 18/11, chỉ khác ô **G7** = "đa" (anh lưu 21:52,
+  trước là "Đặc điểm (longtail)" — có thể gõ nhầm, hỏi anh). ⚠️ Biết thêm: bộ đọc Admin đang chạy coi dòng đặc điểm có x ở cột V là dòng LÕI →
+  anh đánh x dòng đặc điểm rồi nạp thì chữ lõi trang có thể đổi (thử 20/11: 24 trang). Trước khi nạp: Xem trước, so danh sách "Đổi chữ lõi".
+- Mã + commit: trả về y như trước — HEAD = ebe999ec (chưa push, "giá rẻ" cứng trong <title>, anh chưa đồng ý push), đã bỏ hết mã đọc đặc điểm.
+- Xin index: chưa xin trang nào. /cho-thue/van-phong-mat-bang/da-nang/gia-duoi-20-trieu Google đã có (chưa ghi sổ da-co). Còn /cho-thue/van-phong-mat-bang/khanh-hoa/gia-duoi-10-trieu.
+- Số liệu: 17 lõi chưa có dòng đặc điểm nào (Nhà riêng ĐN/Huế, Cho thuê văn phòng / mặt bằng / nhà mặt phố ĐN, Shophouse Huế…); sheet "Gợi ý Google (thô)"
+  8.691 câu (6.473 "nhận"). Admin → Từ khoá lõi: "Chưa index (có trang)" 369 · "Đã index" 715.
+**⛔ LỖI PHIÊN NÀY — ĐỪNG LẶP:** chưa hiểu ý anh mà vẫn làm (sửa mã, đánh x hàng loạt vào file anh) · hỏi lại đường đi khi anh đã nói "Admin + index" ·
+định nạp bản sao lưu thay vì đúng tệp quy trình · trả lời "đặc điểm ở cột K" lặp lại trong khi anh hỏi chuyện khác · chạy lệnh ghi đè tệp khi anh có thể đang mở.
+
+---
+
+## ⭐⭐⭐ QUY TRÌNH SEO CỦA ANH (chốt 20–21/11/2026) — ĐỌC TRƯỚC MỌI VIỆC SEO, LÀM ĐÚNG THỨ TỰ, KHÔNG NHẢY BƯỚC
+**SEO là phải lên TOP.** Web là MỘT THỰC THỂ — mọi trang, liên kết, tệp từ khoá, Admin thống nhất.
+
+**1. CÂU LONGTAIL CHUẨN = LOẠI HÌNH + ĐỊA ĐIỂM + MỘT ĐẶC ĐIỂM. HẾT.**
+- Mẫu điển hình đã lên top: **"Nhà đất Đà Nẵng tháng 11"** (Loại hình "Nhà đất" + Địa điểm "Đà Nẵng" + đặc điểm "tháng 11"; tháng tự đổi).
+- Câu khác = giữ khung, THAY đặc điểm: "Nhà đất Đà Nẵng giá rẻ" · "… dưới 2 tỷ" · "… gần biển" · "Căn hộ Đà Nẵng view biển"…
+- ⛔ Một câu MỘT đặc điểm — cấm ghép hai ("… giá rẻ tháng 11" = sai, dài). ⛔ Cấm chọn một đặc điểm ("giá rẻ") áp cho tất cả.
+- Đặc điểm có NGHĨA THẬT, trang phải dẫn tới tin đúng nghĩa đó: "giá rẻ" = tin giá/m² DƯỚI trung bình cùng loại hình + tỉnh (luật 13/11);
+  "gần biển", "cần bán gấp", "full nội thất"… = tin người đăng ghi đúng ý đó; "mới nhất" = tin mới; "dưới X tỷ" = tin dưới mức giá đó.
+
+**⭐ QUY TRÌNH SEO 5 BƯỚC — ANH ĐỌC NGUYÊN Ý 21/11/2026 (làm đúng thứ tự):**
+1. **Xem tình trạng Google Search Console + tình trạng website** (hiệu suất 28 ngày, index, câu đang hiện / top; web đang chạy bản nào, trang 200, sitemap).
+2. **Xây dựng kế hoạch từ khoá: từ khoá LONGTAIL = LÕI + ĐẶC ĐIỂM.**
+3. **LÕI = Nhà đất / Bất động sản hoặc Loại hình (+ Địa điểm)** — không chữ mục đích (bán, cho thuê).
+4. **ĐẶC ĐIỂM = như "tháng 11", "giá rẻ", "view" (view biển, view sông Hàn…) và các đặc điểm khác** theo gợi ý Google.
+5. **Các longtail ĐÃ LÊN TOP: tiếp tục duy trì để đạt top cao nhất — TOP 1 — rồi thu gọn lại về LÕI.**
+6. **Các longtail có ĐẶC ĐIỂM KHÁC chưa lên top: tiếp tục INDEX để lên top.**
+Sau kế hoạch: chọn trong tệp → nạp Admin → mapping lên web → xin index theo hạn mức → đo lại (chi tiết mục 2 dưới).
+
+**2. THỨ TỰ LÀM (không nhảy bước):**
+① **LÊN GOOGLE** — mỗi lõi (Loại hình + Địa điểm): gợi ý khi gõ + "Mọi người cũng tìm kiếm" + tiêu đề các trang top → ra các đặc điểm.
+② **KẾ HOẠCH TỪ KHOÁ** — mỗi đặc điểm thành một câu longtail chuẩn, cho TẤT CẢ loại hình × TẤT CẢ địa điểm (7 tỉnh + thành phố trong tỉnh).
+③ **LÀM TRONG TỆP** `D:\Coastal Land\SEO\Plan SEO - pSEO\HE-THONG-TU-KHOA.xlsx` sheet "Từ khoá lõi": mỗi câu một dòng — cột J câu ·
+   K đặc điểm · **L "Chọn" = x** · R trang đích. Chưa có dòng thì thêm.
+④ **NẠP** sheet lên Admin → Từ khoá lõi (Xem trước: chữ lõi trang khác phải 0 đổi) → **MAPPING lên web** (trang mang đúng câu).
+⑤ **XIN INDEX** — CHỈ sau khi đã nạp + trang đã có trên web; theo hạn mức Google mỗi ngày (~10). Xin ĐÚNG trang của câu đã chọn,
+   không xin trang lạc. ⛔ **Một câu = nhiều trang** (vd "Nhà đất Đà Nẵng tháng 11" gồm mọi loại hình ở Đà Nẵng, Mua bán + Cho thuê).
+⑥ **ĐO** — tra Google từng câu (Search Console chưa ghi câu mới), câu chưa lên → kiểm trang đích (tin, index, Google đọc lần cuối) → xin index lại.
+
+**3. LỘ TRÌNH:** longtail lên TOP trước (hết câu "… tháng 11" → các đặc điểm khác) → rồi mới rút gọn về câu ngắn LÕI (Loại hình + Địa điểm).
+
+**4. TRƯỚC KHI LÀM PHẢI NẮM 4 THỨ:** web đang ở đâu · Google Search Console · tệp từ khoá · trang cần index (Admin → Từ khoá lõi / Xin index).
+Anh nói "làm" là làm; chưa hiểu thì hỏi MỘT câu kèm ví dụ; không hỏi lại điều đã ghi ở đây.
+
+**5. TRẠNG THÁI 21/11/2026:**
+- Câu "… tháng 11": 321/330 trang có trong tiêu đề. Tra Google: căn hộ ĐN #1 · nhà đất Huế #1 · nhà ĐN #2 · đất ĐN #2 · thuê căn hộ ĐN #2 ·
+  thuê nhà ĐN #3 · Quy Nhơn #3 · Quảng Trị #4 · Quảng Ngãi #5 · Nha Trang, Đà Lạt ngoài top 9 (Nha Trang đã xin index lại 21/11).
+- Trang đặc điểm (commit 01c938d4 giá rẻ + c1d30711 đặc điểm, CHƯA PUSH): 127 trang `/<mục>/<loại>/<tỉnh>/<đặc điểm>` và `/<mục>/<tỉnh>/<đặc điểm>`
+  (gia-re · giam-gia-manh · can-ban-gap · gan-bien · view-bien · moi-nhat · nguyen-can · mini · co-ho-boi · full-noi-that), tiêu đề = H1 =
+  câu chuẩn. Máy thử: 754 trang cũ giữ đủ, trang top không đổi. Tệp: 127 câu x cột Chọn, đã nạp Admin. Lên web cần Push (chỉ khi anh nói).
+- Xin index 21/11: 6 trang (xa-hoa-tien, căn hộ ĐN hợp đồng mua bán, nhà Hải Vân, Nha Trang, căn hộ ĐN 3 phòng ngủ, Khánh Hòa nhà kiệt hẻm) —
+  chỉ Nha Trang đúng câu cần, còn lại xin lạc (lỗi). Sổ Admin chưa ghi 21/11.
+- Đã gỡ việc sai: ebe999ec + ebf35029 (ghép "giá rẻ" vào tiêu đề có "tháng 11") đã revert (fce5a0e3, ec36f3a7).
+- Tệp: thêm cột L "Chọn"; chỉ khoá dòng tiêu đề. ⛔ Kịch bản COM mở Excel phải `Quit()` — từng có Excel chạy ngầm giữ tệp, anh không thấy gì.
+
 ## ⛔⛔⛔ SỬA LỖI = CHỈ SỬA LỖI — CẤM PHÁ CÁI ĐÃ FIX (anh chốt 17/11/2026: "sửa là chỉnh sửa lỗi chứ không phải PHÁ cái đã fix để rồi cứ build đi build lại")
 Cái đã fix, đã chạy đúng thì CẤM đụng. Sửa / thêm gì (nhất là CSS chung `globals.css`, thành phần dùng chung) → trước khi báo xong: kiểm các chỗ
 đã fix có còn y như cũ không (đo trên web thật / máy thử khổ 375 cảm ứng + máy tính). Không chắc có đụng cái đã fix không → hỏi anh, không làm.
