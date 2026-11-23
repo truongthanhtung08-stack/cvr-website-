@@ -47,7 +47,9 @@ export async function GET(request: Request) {
     const vn = new Date(Date.now() + 7 * 3_600_000);
     const dauNgay = vn.getUTCHours() === 0 && vn.getUTCMinutes() === 0;
     if ((vuaDoi ?? 0) + (vuaLen ?? 0) > 0 || dauNgay) {
-      revalidateTag("listings", "max");
+      // expire: 0 (anh duyệt 23/11/2026): hết hạn NGAY, người vào kế tiếp (kể cả Googlebot) nhận bản mới. "max" phục vụ bản cũ
+      // một lượt rồi mới dựng lại → trang giá rẻ hiện tin vừa hết hạn xen giữa tin còn hạn. Số lần dựng lại không đổi (vẫn 1 lần/lần đổi).
+      revalidateTag("listings", { expire: 0 });
       if (dauNgay) revalidateTag("noi-dung", "max");
     }
     // Báo Bing các trang tin vừa đổi (IndexNow) — chỉ khi có đổi thật, không thêm lệnh nào lúc yên.
