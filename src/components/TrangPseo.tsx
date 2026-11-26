@@ -27,7 +27,13 @@ import { giaMoiM2 } from "@/lib/chiSoGia";
 
 function titleCongThuc(dk: DieuKien): string {
   const hoa = (s: string) => s.split(" ").map((w) => (w ? w[0].toLocaleUpperCase("vi") + w.slice(1) : w)).join(" ");
-  const phan = tieuDe(dk).replace(/^(Mua bán|Bán|Cho thuê)\s+/i, "");
+  // PHƯỜNG / THÀNH PHỐ ghi kèm TỈNH, gọn như người gõ (anh 26/11/2026: "họ nói Đà Nẵng, mình ghi Hòa Xuân Đà Nẵng"):
+  // "Phường Hòa Xuân, Đà Nẵng" → "Hòa Xuân Đà Nẵng" · "Nha Trang" → "Nha Trang Khánh Hòa"
+  let phan = tieuDe(dk).replace(/^(Mua bán|Bán|Cho thuê)\s+/i, "");
+  // Trang đang có hạng giữ đúng tiêu đề đang trên web: /mua-ban/hue/phuong-vy-da #2 "nhà đất vỹ dạ" (tra 26/11/2026)
+  if (duongDan(dk) === "/mua-ban/hue/phuong-vy-da") { /* giữ nguyên */ }
+  else if (dk.phuong) phan = phan.replace(`${dk.phuong}, ${dk.tinh.name}`, `${dk.phuong.replace(/^(Phường|Xã|Đặc khu)\s+/i, "")} ${dk.tinh.name}`);
+  else if (dk.thanhPho && !phan.includes(dk.tinh.name)) phan = phan.replace(dk.thanhPho.name, `${dk.thanhPho.name} ${dk.tinh.name}`);
   const goc = hoa(`${dk.muc === "ban" ? "Mua Bán" : "Cho Thuê"} ${phan}`);
   const coLoc = !!(dk.giaRe || dk.dacDiem || dk.giaDuoi || dk.phapLy || dk.phongNgu || dk.huong || dk.duong || dk.kiet);
   const thang = thangHienTai().replace(/^tháng (\d{1,2})\/(\d{4})$/, "T$1/$2");
