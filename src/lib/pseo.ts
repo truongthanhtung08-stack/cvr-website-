@@ -615,16 +615,19 @@ export function banGocCua(l: Listing, tatCa: Listing[]): Listing | null {
 // Cùng một bộ tin (cùng mã + mốc đẩy) → dùng lại kết quả: một trang gọi hàm này nhiều lần
 // (metadata, liên kết nội bộ, dựng sẵn), build gọi hàng trăm lần.
 let nhoTrang: { khoa: string; kq: Map<string, TrangPseo> } | null = null;
+// HẾT HẠN THẬT theo ngày hạn (anh 26/11/2026: tin quá hạn < 1 tháng hiện như tin thường → cờ hetHan = false; cổng trang Google
+// phải đọc ngày hạn thật, không đọc cờ hiển thị — đọc cờ là cổng "chỉ thêm" tính sai, đóng 15 trang 27/11)
+const hetHanThat = (l: Listing) => !!l.hetHan || (!!l.hetHanLuc && Date.parse(l.hetHanLuc) <= Date.now());
 export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const khoa = phienBanTuKhoa() + "|" + tinConHan.map((l) => l.id + (l.bumpedAt ?? "")).join(","); // bảng từ khoá đổi → tính lại
   if (nhoTrang?.khoa === khoa) return nhoTrang.kq;
   // Mức trung bình giá rẻ tính trên CẢ bộ tin (còn hạn + hết hạn) — gọi với bộ đầy đủ mới tính lại, để mọi trang cùng một mốc
-  if (tinConHan.some((l) => l.hetHan) || !giaReDaTinh) danhDauGiaRe(tinConHan);
+  if (tinConHan.some(hetHanThat) || !giaReDaTinh) danhDauGiaRe(tinConHan);
   const m = tinhTatCaTrang(tinConHan);
   // CHỈ THÊM, KHÔNG BỚT (chủ dự án 29/10/2026): đếm cả tin hết hạn mở thêm trang, nhưng trang đang đủ chuẩn theo tin còn hạn
   // vẫn giữ — cộng tin hết hạn có thể làm trang "gần trùng" cha / anh em và bị cổng chống trùng loại, mất trang đã index.
-  if (tinConHan.some((l) => l.hetHan)) {
-    for (const p of tinhTatCaTrang(tinConHan.filter((l) => !l.hetHan)).values()) {
+  if (tinConHan.some(hetHanThat)) {
+    for (const p of tinhTatCaTrang(tinConHan.filter((l) => !hetHanThat(l))).values()) {
       const q = m.get(p.path);
       if (p.index && q) q.index = true;
     }
