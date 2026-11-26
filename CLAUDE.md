@@ -56,6 +56,33 @@ nằm ở Admin → Tổng quan, không gửi email lại. Sửa / thêm đườ
 
 ---
 
+## ⏳ BÀN GIAO SEO 21/11/2026 TỐI (phiên 161689b3, anh: "bàn giao, cút")
+**Tệp `HE-THONG-TU-KHOA.xlsx` sheet "Từ khoá lõi" — đã làm, CHƯA nạp Admin:** bỏ 12 dòng "giá đất nhà nước" · gom mỗi lõi MỘT khối (không tách
+Mua bán / Cho thuê), đặc điểm ngay dưới lõi, bỏ 56 dòng trùng → 2.547 dòng · G7 "đa" → "Đặc điểm (longtail)" · bỏ chữ mục đích (bán / cho thuê)
+ở cột I + J của 200 dòng. **28 dòng có x "Lên web" vẫn giữ chữ "Cho thuê …"** (anh: "cái gì đã lên top thì CẤM đụng") — vì máy nạp
+(`src/lib/tuKhoaLoiDoc.ts`) lấy thẳng cột I làm tiêu đề; bỏ chữ là /cho-thue/<tỉnh> thành "Nhà đất Đà Nẵng…" trùng trang top /mua-ban/da-nang.
+Đã đo bằng bộ đọc Admin: chữ lên web 0/69 trang đổi so với trước khi sửa. Sao lưu: `SEO\_cu\HE-THONG-TU-KHOA-truoc-thong-nhat-21-11.xlsx`,
+`…truoc-bo-muc-dich-21-11.xlsx`, `…truoc-bo-gia-dat-21-11.xlsx`.
+**Việc tiếp:** ① nạp tệp lên Admin → Từ khoá lõi (Xem trước phải 0 trang đổi chữ) ② trục thành phố × giá/đặc điểm (`src/lib/pseo.ts`, CHƯA
+commit): build lại, so sitemap máy với web 0 trang mất, commit, chờ "Push" ③ 22/11 xin index tiếp từ /mua-ban/hue/gia-re.
+Muốn bỏ nốt chữ "Cho thuê" ở 28 dòng: phải sửa máy nạp tự thêm "Cho thuê" cho trang /cho-thue trước — anh chưa duyệt.
+**Đã lên web 21/11 (push a239c6d4, Vercel Ready):** 182 trang đặc điểm trong sitemap (gia-re · giam-gia-manh · can-ban-gap · gan-bien · view-bien ·
+nguyen-can · mini · co-ho-boi · full-noi-that · chinh-chu · view-song-han; bỏ moi-nhat). Trang đặc điểm mở cho Google từ 1 tin + "Bất động sản tương tự".
+Trang giá rẻ: tin còn hạn trước → hết hạn sau, mỗi phần xếp rẻ → cao (mua bán theo giá/m², cho thuê theo giá). Tiêu đề = H1 = câu chuẩn, không thêm tháng.
+Đã xin index 10 trang đặc điểm (ghi sổ Admin da-xin) — danh sách ở mục 5b dưới. Cowork: `RA\VIEC.md` mục 0L (53 câu 0 tin đúng).
+**LUẬT ANH NÓI LẠI NHIỀU LẦN HÔM NAY — ĐỌC, ĐỪNG HỎI LẠI:**
+1. Lõi = Nhà đất / Bất động sản + địa điểm, hoặc Loại hình + địa điểm. KHÔNG mục đích (Google tự hiểu, câu khỏi dài). Lõi = câu đích lấy traffic cuối lộ trình.
+2. Longtail = Lõi + MỘT đặc điểm. Hết. Mẫu đã top: "Nhà đất Đà Nẵng tháng 11". Thay "tháng 11" bằng đặc điểm khác (giá rẻ, gần biển, view biển…
+   theo gợi ý Google + "Mọi người cũng tìm kiếm" + trang top). Cấm ghép 2 đặc điểm, cấm áp một đặc điểm cho tất cả.
+3. Lộ trình: longtail lên top trước → giữ tới top 1 → thu gọn về lõi. Câu chưa top → index tiếp.
+4. Thứ tự: làm trong tệp (anh chọn x) → nạp Admin → trang lên web → xin index theo hạn mức (~10/ngày) → đo. Chưa nạp thì CẤM xin index.
+5. Một câu = nhiều trang (vd "Nhà đất Đà Nẵng tháng 11" = mọi loại hình ở ĐN, cả Mua bán + Cho thuê).
+6. "Giá rẻ" = giá/m² dưới trung bình cùng loại hình + tỉnh. Trang đặc điểm 1–2 tin + tin liên quan là đủ để index.
+7. CÁI GÌ ĐÃ LÊN TOP THÌ CẤM ĐỤNG. Anh bảo bỏ cái gì thì bỏ ĐÚNG cái đó (bỏ "giá đất NHÀ NƯỚC" ≠ bỏ mọi dòng giá đất).
+**⛔ LỖI PHIÊN 161689b3 (21/11) — ĐỪNG LẶP:** hỏi lại quy trình đã ghi · nói dài, giải thích vòng vo · xin index trang khi chưa nạp + xin trang lạc ·
+ghép "giá rẻ" vào tiêu đề có "tháng 11" (đã revert) · đánh x giá rẻ cho tất cả · chỉ làm "giá rẻ" mà quên các đặc điểm khác · bỏ nhầm 193 dòng
+giá đất khi anh bảo bỏ giá đất nhà nước · gom tệp nhưng còn để chữ "Cho thuê" trong lõi, anh phải nhắc · nhắc Push khi anh không hỏi.
+
 ## ⏳ SEO 20/11/2026 TỐI — PHIÊN NHẬN BÀN GIAO SEO (anh đuổi: "cút") — CHƯA NẠP, CHƯA INDEX, CHƯA PUSH
 **Anh cần (nguyên ý):** câu **lõi + đặc điểm** lên top mọi khu vực (vd "Nhà đất Đà Nẵng giá rẻ"); đặc điểm theo gợi ý Google + "Mọi người cũng
 tìm kiếm" + chữ trang top. **FILE phải ghi rõ đủ các câu đó → anh CHỌN → NẠP TỪ FILE lên Admin → web → xin index trang đủ tin.**
@@ -76,6 +103,72 @@ kèm ví dụ dạng bảng (cột nào, mỗi dòng một câu) TRƯỚC khi s�
 
 ## ⭐⭐⭐ QUY TRÌNH SEO CỦA ANH (chốt 20–21/11/2026) — ĐỌC TRƯỚC MỌI VIỆC SEO, LÀM ĐÚNG THỨ TỰ, KHÔNG NHẢY BƯỚC
 **SEO là phải lên TOP.** Web là MỘT THỰC THỂ — mọi trang, liên kết, tệp từ khoá, Admin thống nhất.
+**SEO TỰ ĐỘNG HẰNG NGÀY (anh 21/11/2026):** 6 bước máy tự làm mỗi sáng (đo GSC · thêm câu longtail vào tệp · tra hạng · xin index · danh sách cần tin · báo cáo) — một nguồn: `Plan SEO - pSEO\chi-tiet\quy-trinh-3-ben.md` mục **11.00b**. Phiên phụ trách SEO từ 21/11: phiên 48381eba. 553 "đã thu thập – chưa index" đo 21/11 = 524 tệp `/_next/` + 29 trang thật mới đọc 17–18/11 → không phải lỗi web.
+**⏳ TRẠNG THÁI 21/11 TỐI (phiên 48381eba):** ① `HE-THONG-TU-KHOA.xlsx` ĐÃ THỐNG NHẤT: 2.547 → 2.237 dòng · 310 câu Mua bán + Cho thuê gộp
+một dòng (cột R = trang Mua bán, cột Y "Trang Cho thuê (cùng câu)", Mục đích "Mua bán + Cho thuê") · mỗi lõi một khối, lõi trước đặc điểm sau ·
+sửa 107 ô cột K Đặc điểm (= phần câu sau lõi) · 56 câu 2 đặc điểm chuyển cuối tệp, cột Z ghi chú "chờ anh quyết" (không xoá) · cột X hạng Google
+26 câu (tra 21/11: chỉ "tháng 11" vào top 10; giá rẻ, gần biển, view biển… ngoài top 10). Bộ đọc Admin: `trang` GIỐNG HỆT trước → chữ web 0 đổi.
+Sao lưu `SEO\_cu\HE-THONG-TU-KHOA-truoc-thong-nhat-lan2-21-11.xlsx`. ✅ ĐÃ NẠP Admin 16:31 21/11 ("đổi 42 trang, giữ 4" — cả 42 trang đã
+mang đúng chữ đó trên web thật trước khi nạp, đối chiếu từng tiêu đề) · sau nạp curl 6 trang (3 trang top) tiêu đề không đổi · bảng Admin 1.559 dòng.
+② `src/lib/pseo.ts` (CHƯA commit): thêm ⑥ — trang LÕI loại hình + tỉnh có từ 1 tin (còn hạn hoặc hết hạn) là mở cho Google, kể cả trùng tin
+(anh: "có 1 tin cũng index", "loại hình chưa có tin thì bỏ qua") + trục thành phố của phiên trước. So sitemap máy với web: 0 trang mất, thêm
+34 trang lõi + 13 trang thành phố. Build: lần 1 dừng ở bước TypeScript (mã 4, không ra lỗi) → đang build lại với NODE_OPTIONS=--max-old-space-size=8192.
+③ Đính chính: mã ĐÃ đếm cả tin hết hạn từ trước (`getTinXetTrang`); trang lõi đóng vì 0–1 tin hoặc luật trùng tin, KHÔNG phải vì chỉ đếm tin còn hạn.
+④ Lịch SEO tự động 8h: hệ thống chặn quyền tạo lịch (`mcp__scheduled-tasks__create_scheduled_task`) — anh cho phép trong cài đặt rồi tạo theo 11.00b.
+⑤ ✅ Commit 0b48960f (pseo.ts, build lần 3 qua sau khi xoá `.next-kiem` — 2 lần trước dừng mã 4 không ra lỗi) — CHƯA PUSH. Việc tiếp: xin index từ 22/11 (/mua-ban/hue/gia-re → 186 trang đặc điểm → 47 trang mới sau Push) ·
+tra Google tiếp các câu "tháng 11" còn lại (Google bật ô robot 21/11 sau ~45 câu — không bấm) · anh muốn "Admin cho rõ ràng" — chưa làm.
+
+**⭐ SEO HẰNG NGÀY CHẠY KHI ANH MỞ MÁY VÀ NHẮN "Bắt đầu" (anh chốt 21/11 tối):** phiên nhận "Bắt đầu" chạy ngay tác vụ
+`seo-tu-dong-8h` (Scheduled, đang TẮT lịch giờ — chạy bằng run_scheduled_task hoặc làm đúng các bước trong
+`C:\Users\X1 GEN 8\.claude\scheduled-tasks\seo-tu-dong-8h\SKILL.md`) — **6 BƯỚC (chốt 22/11): ① tệp từ khoá → ② chọn trang
+(kiểm web thật) → ③ nạp Admin → ④ mapping web → ⑤ index → ⑥ theo dõi Search Console** — chi tiết một nguồn `quy-trinh-3-ben.md` 11.00b. Không chờ nhắc, không hỏi lại.
+**LỘ TRÌNH (anh chốt 21/11 tối): hiện CHỈ đặc điểm "tháng 11" lên top → GIAI ĐOẠN 1 = đưa "… tháng 11" của MỌI lõi (7 khu vực × 8 loại hình)
+lên top trước:** mỗi ngày tra hạng ~20 câu "tháng 11" chưa tra (ghi cột X), câu chưa top → kiểm trang đích (đủ tin · tiêu đề có "tháng 11" ·
+đã index · có liên kết trỏ tới) → sửa đúng chỗ thiếu (thiếu tin giao Cowork, chưa index thì xin). Các đặc điểm khác KHÔNG chờ: mỗi ngày vẫn xin index
+phần lượt còn lại (trang lõi tháng 11 đã index hết → lượt chủ yếu cho trang đặc điểm: giá rẻ → gần biển / view biển / dưới X tỷ → khác) + Cowork lọc tin song song.
+**CẢ 2 NHÓM ĐẶC ĐIỂM LÀM NHƯ NHAU (anh 21/11 tối):** "tháng 11" và các đặc điểm khác đều: xin index · tra hạng (chia đôi ~20 câu/ngày) · câu chưa top thì kiểm + sửa trang đích · thiếu tin giao Cowork. Khu vực ít cạnh tranh trước (Quảng Trị, Quảng Ngãi, Gia Lai, Huế).
+**⛔ LỘ TRÌNH 22/11 LÀ CHUẨN (anh chốt): đồng nhất tệp → web → Google, GIỮ NGUYÊN tới khi anh yêu cầu đổi.** Mỗi ngày chỉ cập nhật trạng thái (index,
+hạng, tin, lịch); không đổi lõi, nhóm loại hình, đặc điểm, trang đích, thứ tự ưu tiên khi anh chưa bảo (sheet "Lộ trình" + "Kế hoạch" trong KE-HOACH-TU-KHOA.xlsx).
+**⛔ BÀN GIAO 23/11 TỐI (anh: "bàn giao, cút") — ĐỌC TRƯỚC KHI LÀM SEO:**
+- **Anh chỉ ra: SEO theo Ý ĐỊNH NGƯỜI TÌM + gợi ý Google + đối thủ, KHÔNG lấy từ khoá theo đường dẫn web rồi dựng trang mỏng.** Ví dụ "nhà đất đà nẵng giá rẻ":
+  top Google (batdongsan /nha-dat-ban-da-nang, nhatot /mua-ban-nha-dat-da-nang, nhadatvui…) đều là trang TOÀN BỘ tin mua bán nhà đất ĐN, "Giá Rẻ T11/2026" chỉ ở tiêu đề.
+  Mình dựng /mua-ban/da-nang/gia-re lọc vài tin → mỏng, ngoài top 9. Anh: "cấu trúc page ngu như bò".
+- **Treo, anh chưa trả lời:** câu "<khu vực / loại hình> giá rẻ" trỏ về trang ĐẦY ĐỦ (vd /mua-ban/da-nang, trang top — giữ nguyên tiêu đề vì 21/11 anh bỏ ghép "giá rẻ"
+  vào tiêu đề có "tháng 11"), đẩy bằng liên kết chữ + thêm tin. Phiên sau: hỏi anh MỘT câu ngắn, rồi sửa tệp từ khoá → nạp Admin → xin index. Áp cho mọi đặc điểm (gần biển, view biển…): xem đối thủ top trước.
+- **Lỗi tin hết hạn xen giữa trang giá rẻ:** gốc = `revalidateTag("listings","max")` trong cron het-han phục vụ bản cũ một lượt sau khi tin hết hạn.
+  Sửa commit **4306f3e2** (`{ expire: 0 }`, build qua, anh duyệt) — CHƯA PUSH. Sau push: mở trang giá rẻ ngay sau giờ có tin hết hạn, tin đó phải rời vị trí còn hạn.
+- Anh mắng: nói nhiều · tra hạng không chia đôi tháng 11 / đặc điểm · báo "đủ" khi chưa đủ · không xem đối thủ · nhắc push.
+**23/11 "Bắt đầu":** 16 trang lịch 22–23/11 mở đủ (200, không noindex, canonical đúng) · xin index /tim-nhanh/da-nang rồi Quota exceeded → **24/11 xin tiếp từ /mua-ban/khanh-hoa/nha-trang/gan-bien** (rồi condotel ĐN, thuê căn hộ Huế giá rẻ, nhà KH chính chủ/mini, các trang giá rẻ + gần biển ĐN/KH) · đã ghi sổ Admin da-xin /tim-nhanh/da-nang · hạng 23/11: QT tháng 11 #2 · Phan Thiết #6 · đất Huế #1 · nhà Huế #4 (trang lạc) · QNg #5 · **Khánh Hòa tháng 11 #1 (→ thu gọn về lõi "nhà đất khánh hòa")** · Gia Lai #1 (trang lạc nhà mặt phố) · căn hộ ĐN #2 · nhà đất Huế #2 · LĐ #2 · căn hộ NT #2 (trang lạc) · Quy Nhơn #3 · giá rẻ / view biển ngoài top 9. Cowork: 0N vẫn đủ, không thêm mục.
+**22/11 "Bắt đầu" (phiên 48381eba):** anh: ưu tiên longtail top 6 khu vực ngoài Đà Nẵng (ít cạnh tranh). Xin index 15 trang (đã ghi sổ):
+6 /tim-nhanh (Huế, KH, LĐ, GL, QNg, QT) · nhà QT · căn hộ LĐ · đất QNg giá rẻ · GL giá rẻ · căn hộ GL giá rẻ · căn hộ Huế giá rẻ · đất LĐ giá rẻ ·
+KH giá rẻ · Quy Nhơn gần biển; đã có: condotel KH, thuê nhà KH, đất Huế giá rẻ. Hết lượt ở /mua-ban/khanh-hoa/nha-trang/gan-bien → 23/11 xin tiếp từ đây
+(ưu tiên ngoài Đà Nẵng). Anh lưu ý: nội dung Báo cáo / Điểm tin thị trường (hiện chỉ /diem-tin-thi-truong/da-nang).
+**22/11 trưa (phiên 48381eba) — LỘ TRÌNH SEO + ĐÃ PUSH 8e04a7d9** (trang thành phố + gần biển / view biển mở cho Google, đã kiểm web thật).
+Tra Google 22/11: MỌI câu lõi (nhà đất đà nẵng, căn hộ đà nẵng, nhà đất huế, nhà đất nha trang…) ngoài top 9; "tháng 11" top: Khánh Hòa #2 ·
+Lâm Đồng #2 · Gia Lai #2 (Google chọn nhầm trang nhà mặt phố) · căn hộ Nha Trang #2 (nhầm trang cho thuê phường Bắc NT); chưa top: Đà Lạt, Phan Thiết,
+nhà Huế, đất Huế, căn hộ Quy Nhơn. **Luật thu gọn (anh 22/11): longtail top → thu gọn về LÕI cùng cách gõ, cùng cách hiểu (nhà đất đà nẵng =
+bất động sản đà nẵng = mua bán nhà đất đà nẵng); GIỮ trang + tiêu đề đang top, đẩy bằng liên kết chữ lõi + thêm tin mỗi tuần + xin index lại.**
+Lộ trình: sheet "Lộ trình" trong `KE-HOACH-TU-KHOA.xlsx` (A: 11 trang thu gọn về lõi · B: 10 câu đưa lên top) · Cowork `RA\VIEC.md` mục 0N.
+**22/11 sáng (phiên 48381eba) — ĐỒNG BỘ tệp ↔ Admin ↔ web:** kiểm 431 trang đích trên web thật (228 mở, 202 noindex, canonical 0 lệch) +
+trạng thái index Admin → cột Index (trang Mua bán) + cột N "Index (trang Cho thuê)": Đã index 639 · Đã xin 44 · Chưa index 199 · Đóng (trùng tin)
+139 · Thiếu tin 463 · Chờ Push 115 (câu thành phố + biển, mở khi push 8e04a7d9). Chọn x = trang đang mở. Lịch xin index 114 trang 22/11–03/12.
+Nạp Admin 08:58 (sheet Kế hoạch 254 câu: top + chờ index), chữ web 0 đổi. Sao lưu `_cu\HE-THONG-TU-KHOA-truoc-dong-bo-22-11.xlsx`.
+**21/11 ~23:00 (phiên 48381eba):** ĐÃ PUSH afbec398 + e86eeb6b (trang /tim-nhanh/<tỉnh>, studio, Admin gọn 1 dòng 1 trang, web đọc
+site_content tu_khoa_loi chỉ phần trang/thương hiệu — khối > 2MB). Admin đọc sheet "Kế hoạch" (chỉ câu top + chờ index); tệp đủ
+`KE-HOACH-TU-KHOA.xlsx` (1.599 câu, cột Lịch xin index 22/11–05/12, Cowork lọc). Câu biển Gia Lai/Lâm Đồng/Khánh Hòa/Quảng Trị → thành phố
+(Quy Nhơn, Phan Thiết, Nha Trang, Cam Ranh, Đồng Hới). **CHƯA PUSH: 8e04a7d9** (⑦ mở trang thành phố + gần biển/view biển từ 1 tin, câu
+Admin là link) — anh "để mai"; build qua, sitemap 0 mất.
+**21/11 ~22:00 (phiên 48381eba):** tệp từ khoá +1.104 câu = 56 lõi (7 khu vực × Nhà đất · BĐS · Nhà · Đất · Căn hộ · BĐS nghỉ dưỡng/du lịch ·
+Kho xưởng · BĐS khác) × 37 đặc điểm gợi ý Google (Chrome), cột Chọn x khi ≥1 tin, cột AA Dự án · AB Giá nhà đất; sao lưu
+`_cu\HE-THONG-TU-KHOA-truoc-56-loi-21-11.xlsx`; ĐÃ NẠP Admin 21:20 (chữ web 0 đổi). Lõi "tháng 11" 7 khu vực đều đã index. Xin index 21/11 tối:
+/mua-ban/hue/gia-re · /mua-ban/dat/khanh-hoa/nha-trang (hết lượt) → **22/11 xin TRƯỚC 7 trang tìm nhanh /tim-nhanh/<tỉnh> (đã lên web 21/11 tối, push afbec398 — 1 trang dẫn tới mọi trang pSEO của khu vực), rồi theo cột "Lịch xin index" của KE-HOACH-TU-KHOA.xlsx (120 trang, 22/11–03/12)** (Admin lọc "Mở cho Google,
+chưa index"). Cowork: `RA\VIEC.md` mục 0M. Commit 136ff678 (Admin lọc Đang top / Mở chưa index / Ít tin, CHƯA PUSH) — sau Push nạp lại tệp để Admin có cột Hạng + dòng Cho thuê.
+
+**⭐ 4 ĐIỀU ANH CHỐT 21/11 TỐI (nguyên ý):**
+1. Quy trình liền mạch: chốt hệ thống từ khoá trên tệp → nạp Admin → index. **Trước khi xin index phải xem hiện trạng web + Google Search Console.**
+2. Nội dung ngữ nghĩa: longtail = LÕI + ĐẶC ĐIỂM. **Xin index hết các câu có đặc điểm phổ biến theo người tìm mà chưa được index và chưa lên top.**
+3. Google đọc nội dung theo MỤC ĐÍCH đang hiện trên web: **Mua bán · Cho thuê · Dự án · Báo cáo thị trường** (một câu trỏ đủ các trang mục đích đó).
+4. **Câu đã lên top → thu gọn về từ khoá LÕI.**
 
 **1. CÂU LONGTAIL CHUẨN = LOẠI HÌNH + ĐỊA ĐIỂM + MỘT ĐẶC ĐIỂM. HẾT.**
 - Mẫu điển hình đã lên top: **"Nhà đất Đà Nẵng tháng 11"** (Loại hình "Nhà đất" + Địa điểm "Đà Nẵng" + đặc điểm "tháng 11"; tháng tự đổi).
@@ -87,7 +180,8 @@ kèm ví dụ dạng bảng (cột nào, mỗi dòng một câu) TRƯỚC khi s�
 **⭐ QUY TRÌNH SEO 5 BƯỚC — ANH ĐỌC NGUYÊN Ý 21/11/2026 (làm đúng thứ tự):**
 1. **Xem tình trạng Google Search Console + tình trạng website** (hiệu suất 28 ngày, index, câu đang hiện / top; web đang chạy bản nào, trang 200, sitemap).
 2. **Xây dựng kế hoạch từ khoá: từ khoá LONGTAIL = LÕI + ĐẶC ĐIỂM.**
-3. **LÕI = Nhà đất / Bất động sản hoặc Loại hình (+ Địa điểm)** — không chữ mục đích (bán, cho thuê).
+3. **LÕI = Nhà đất / Bất động sản hoặc Loại hình (+ Địa điểm)** — không chữ mục đích (bán, cho thuê): Google tự hiểu mục đích, bỏ đi để câu không dài. Lõi = câu đích lấy traffic cuối lộ trình.
+   Tệp: mỗi lõi MỘT khối (không tách Mua bán / Cho thuê), dòng đặc điểm nằm ngay dưới lõi (gom 21/11: 2.547 dòng, bỏ 56 dòng trùng, chữ lên web 0 đổi).
 4. **ĐẶC ĐIỂM = như "tháng 11", "giá rẻ", "view" (view biển, view sông Hàn…) và các đặc điểm khác** theo gợi ý Google.
 5. **Các longtail ĐÃ LÊN TOP: tiếp tục duy trì để đạt top cao nhất — TOP 1 — rồi thu gọn lại về LÕI.**
 6. **Các longtail có ĐẶC ĐIỂM KHÁC chưa lên top: tiếp tục INDEX để lên top.**
@@ -103,10 +197,25 @@ Sau kế hoạch: chọn trong tệp → nạp Admin → mapping lên web → xi
    không xin trang lạc. ⛔ **Một câu = nhiều trang** (vd "Nhà đất Đà Nẵng tháng 11" gồm mọi loại hình ở Đà Nẵng, Mua bán + Cho thuê).
 ⑥ **ĐO** — tra Google từng câu (Search Console chưa ghi câu mới), câu chưa lên → kiểm trang đích (tin, index, Google đọc lần cuối) → xin index lại.
 
+⛔ **BỎ GIÁ ĐẤT NHÀ NƯỚC (anh 21/11):** tệp từ khoá KHÔNG có câu "giá đất nhà nước" / "bảng giá đất nhà nước" (đã bỏ 12 dòng 21/11).
+⛔ **Anh bảo bỏ cái gì thì bỏ ĐÚNG cái đó** — 21/11 Claude bỏ nhầm cả 180 dòng giá khác rồi phải trả lại.
+
 **3. LỘ TRÌNH:** longtail lên TOP trước (hết câu "… tháng 11" → các đặc điểm khác) → rồi mới rút gọn về câu ngắn LÕI (Loại hình + Địa điểm).
 
 **4. TRƯỚC KHI LÀM PHẢI NẮM 4 THỨ:** web đang ở đâu · Google Search Console · tệp từ khoá · trang cần index (Admin → Từ khoá lõi / Xin index).
 Anh nói "làm" là làm; chưa hiểu thì hỏi MỘT câu kèm ví dụ; không hỏi lại điều đã ghi ở đây.
+
+**5b. ĐÃ PUSH 21/11 (a239c6d4, Vercel Ready — lần đầu 1e4297d6 lỗi tải Google Fonts, push lại thì qua):** web thật có 182 trang đặc điểm
+trong sitemap (936 trang, 0 trang cũ mất), trang top giữ tiêu đề. Trang đặc điểm mở cho Google từ 1 tin; trang giá rẻ xếp còn hạn → hết hạn, rẻ → cao.
+**Đã xin index 21/11 (10 trang đặc điểm, đã ghi sổ Admin da-xin):** /mua-ban/khanh-hoa/gan-bien · /mua-ban/nha/khanh-hoa/gan-bien ·
+/mua-ban/can-ho-chung-cu/khanh-hoa/gan-bien · /cho-thue/nha/da-nang/nguyen-can · /mua-ban/da-nang/gia-re · /mua-ban/can-ho-chung-cu/khanh-hoa/gia-re ·
+/mua-ban/can-ho-chung-cu/khanh-hoa/view-bien · /mua-ban/can-ho-chung-cu/da-nang/view-bien · /cho-thue/can-ho-chung-cu/da-nang/view-bien ·
+/mua-ban/can-ho-chung-cu/da-nang/gia-re. Hết lượt ở /mua-ban/hue/gia-re → **22/11 xin tiếp từ trang này** rồi các trang đặc điểm còn lại trong sitemap.
+**Cowork:** RA\VIEC.md mục **0L** (21/11, gấp nhất) — 53 câu đặc điểm 0 tin đúng, mỗi câu lọc 2 tin ghi rõ đặc điểm.
+**Trục THÀNH PHỐ × giá / đặc điểm (anh "Làm" 21/11) — ĐANG DỞ, CHƯA COMMIT (`src/lib/pseo.ts`):** `/<mục>/<tỉnh>/<thành phố>/<đuôi>`
+("Nhà đất Nha Trang dưới 2 tỷ", "… gần biển", Quy Nhơn, Đà Lạt…), breadcrumb Tỉnh → Thành phố → đặc điểm, trang mới nhường trang cũ khi trùng
+tin (`hangMoi`). Build lần 1 qua nhưng làm mất 30 trang cũ trong sitemap → đã sửa thứ tự nhường; build lần 2 dừng giữa chừng (mã 4) → **build
+lại, so sitemap máy với web phải 0 trang mất**, rồi commit → anh "Push" → nạp tệp → xin index.
 
 **5. TRẠNG THÁI 21/11/2026:**
 - Câu "… tháng 11": 321/330 trang có trong tiêu đề. Tra Google: căn hộ ĐN #1 · nhà đất Huế #1 · nhà ĐN #2 · đất ĐN #2 · thuê căn hộ ĐN #2 ·
@@ -275,6 +384,16 @@ từng mảnh khi anh đã nói hết · hỏi lại nhiều · nói dài. Anh n
 **19:50 15/11 (phiên local_a9ad552b, anh: "bàn giao"):** ô Mô tả điện thoại mặc định 4 dòng (cả khi trống, chữ gợi ý gọn 4 dòng), tối đa 0,58 màn hình. Đã thử đổi sang `<textarea>` cho con trỏ chuẩn → B / I ra dấu "****", anh bác ("phá định dạng") → ĐÃ TRẢ về contenteditable. Gốc giọt nước: Chrome chỉ ẩn/hiện giọt nước theo khung cuộn cho ô gõ thường, contenteditable luôn coi là thấy → CHƯA có cách giữ cả chữ đậm lẫn giọt nước chuẩn; hỏi anh trước khi đổi cơ chế. Chi tiết cuối `.claude/LOI-O-MO-TA-15-11.md`. CHƯA commit, CHƯA push.
 
 **20:00 15/11 (phiên local_470b13ab, anh: "không làm được, commit, bàn giao, cút"):** commit 490c5d0b (chỉ ContentEditor, CHƯA push): ô Mô tả điện thoại `display:flex` cột — gốc trong mã Chrome: chữ nằm thẳng trong ô cuộn thì con trỏ vẽ ở lớp không cuộn → lơ lửng; nay con trỏ cuộn theo chữ, khuất/hiện đúng (anh thử tay, em nhìn 19:55). **CÒN LỖI P1:** con trỏ ở dòng cuối khung → tay cầm thò dưới mép khung, đè thanh địa chỉ. Chi tiết + việc tiếp: cuối `.claude/LOI-O-MO-TA-15-11.md`. Tệp tạm (dòng TẠM, `_do-cuon.js`, `api/thu-log`) còn trên máy, xoá trước Push.
+
+## ⛔⛔⛔ LUẬT TÀI KHOẢN — ANH CHỐT 26/11/2026 (thay mọi luật tài khoản cũ khác chỗ này; CẤM hỏi lại)
+1. Đăng nhập: **Google · Zalo · Số điện thoại + mật khẩu.** BỎ email (đăng nhập, đăng ký, quên mật khẩu). Không ép nhập số lúc đăng nhập.
+2. **KHÔNG GỘP tài khoản** (`WEB_TU_GOP = false` xac-minh-sdt, `TU_GAN = false` gopTaiKhoan) — 26/11 Claude bật gộp, anh mắng, đã trả.
+3. **Số đã xác thực ở đâu cũng GHI VÀO TÀI KHOẢN đang dùng**: đăng nhập bằng số (`api/xac-thuc/dai-dien`) · xác minh lúc đăng tin /
+   Cài đặt (`xac-minh-sdt`; số là số chính tài khoản khác → `sdt_lien_he`) · thêm số khác (`so-phu`, nhận đúng mã là ghi, không từ chối).
+   Đọc số tài khoản MỘT luật: `src/lib/soTaiKhoan.ts` (Cài đặt, form đăng tin). Gốc lỗi 12/11 (d7e546ea): tắt gộp thì tắt luôn ghi số.
+4. **Đăng tin: chưa có số thì hỏi xác thực MỘT LẦN DUY NHẤT**; có số (chính / đăng nhập / số thêm) thì không hỏi. Nhiều số → khách chọn.
+5. Quên mật khẩu 3 bước: số → mã (kiểm ngay, `doi-mat-khau` buoc kiem-ma) → mật khẩu mới.
+6. Thông báo Admin (`baoLoi`): mỗi việc ghi MỘT lần tới khi xử lý, không ghi lại.
 
 ## ⛔⛔⛔ KHÔNG GỘP TÀI KHOẢN — KỂ CẢ ĐĂNG HỘ (anh chốt 14/11/2026)
 **Từ giờ KHÔNG GỘP TÀI KHOẢN gì cả, kể cả tin đăng hộ. Tài khoản nào lấy tài khoản đó** — tin của tài khoản nào thì nằm ở tài khoản đó,

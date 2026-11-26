@@ -32,8 +32,9 @@ export async function POST(req: Request) {
   // Số chính của chính tài khoản → không thêm lại
   const { data: hs } = await admin.from("profiles").select("phone").eq("id", uid).maybeSingle();
   if (chuanHoaSdt(hs?.phone ?? "") === sdt) return loi("Đây là số chính của tài khoản.");
-  // SỐ ĐANG Ở TÀI KHOẢN KHÁC → KHÔNG TỪ CHỐI (anh 26/11/2026: "khách muốn thêm số thì tài khoản phải ghi vào", "cấm hỏi và yêu cầu
-  // lại"): nhận đúng mã tới số = chính chủ số → số ghi vào tài khoản đang dùng (số phụ ở tài khoản khác chuyển sang đây).
+  // SỐ ĐANG Ở TÀI KHOẢN KHÁC → KHÔNG TỪ CHỐI, KHÔNG ĐỤNG TÀI KHOẢN KIA (anh 26/11/2026: "một khách có thể có 2, 3, 4 tài khoản",
+  // "không gộp vì liên quan đến tiền", "xác thực số ở tài khoản nào thì số đi với tài khoản đó"): bảng sdt_nguoi_dung khoá mỗi số một
+  // dòng → số đang là số phụ của tài khoản khác thì ghi vào hồ sơ tài khoản đang dùng (user_metadata.so_them).
   const { data: soPhu } = await admin.from("sdt_nguoi_dung").select("user_id").eq("sdt", sdt).maybeSingle();
 
   if (b.buoc === "gui-ma") {
@@ -47,8 +48,15 @@ export async function POST(req: Request) {
   if (b.buoc !== "xac-nhan") return loi("Bước không hợp lệ.");
   const kiem = await kiemMa(sdt, "xac-minh-sdt", b.ma ?? "");
   if (!kiem.ok) return loi(kiem.loi);
+  if (soPhu && soPhu.user_id !== uid) {
+    const meta = (u.user?.user_metadata ?? {}) as Record<string, unknown>;
+    const soThem = [...new Set([...(Array.isArray(meta.so_them) ? (meta.so_them as string[]) : []), sdt])];
+    const { error: e2 } = await admin.auth.admin.updateUserById(uid, { user_metadata: { ...meta, so_them: soThem } });
+    if (e2) return loi("Chưa lưu được số. Vui lòng thử lại.", 500);
+    return NextResponse.json({ ok: true, sdt, id: `meta:${sdt}` });
+  }
   const { data: dong, error } = soPhu
-    ? await admin.from("sdt_nguoi_dung").update({ user_id: uid, da_xac_minh: true }).eq("sdt", sdt).select("id").single()
+    ? await admin.from("sdt_nguoi_dung").update({ da_xac_minh: true }).eq("sdt", sdt).eq("user_id", uid).select("id").single()
     : await admin.from("sdt_nguoi_dung").insert({ user_id: uid, sdt, da_xac_minh: true }).select("id").single();
   if (error) return loi("Chưa lưu được số. Vui lòng thử lại.", 500);
   return NextResponse.json({ ok: true, sdt, id: dong?.id }); // id thật → nút Bỏ xoá được ngay, không phải tải lại trang

@@ -39,7 +39,9 @@ export default function SoDienThoaiKhac() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: true });
       if (error) { setAn(true); return; }   // chưa chạy migration → ẩn
-      setDs((data ?? []) as So[]);
+      // + số ghi trong hồ sơ tài khoản (so_them — số đang là số phụ của tài khoản khác, 26/11/2026)
+      const soThem = ((user.user_metadata as Record<string, unknown> | undefined)?.so_them as string[] | undefined) ?? [];
+      setDs([...((data ?? []) as So[]), ...soThem.filter((x) => !(data ?? []).some((d) => d.sdt === x)).map((x) => ({ id: `meta:${x}`, sdt: x, da_xac_minh: true }))]);
     })();
   }, []);
 
@@ -71,7 +73,16 @@ export default function SoDienThoaiKhac() {
 
   async function xoa(id: string) {
     if (!window.confirm("Bỏ số này khỏi tài khoản?")) return;
-    const { error } = await createClient().from("sdt_nguoi_dung").delete().eq("id", id);
+    const supabase = createClient();
+    if (id.startsWith("meta:")) {
+      const so = id.slice(5);
+      const user = await nguoiDungHienTai(supabase);
+      const ds0 = ((user?.user_metadata as Record<string, unknown> | undefined)?.so_them as string[] | undefined) ?? [];
+      const { error } = await supabase.auth.updateUser({ data: { so_them: ds0.filter((x) => x !== so) } });
+      if (!error) setDs((cu) => (cu ?? []).filter((x) => x.id !== id));
+      return;
+    }
+    const { error } = await supabase.from("sdt_nguoi_dung").delete().eq("id", id);
     if (!error) setDs((cu) => (cu ?? []).filter((x) => x.id !== id));
   }
 

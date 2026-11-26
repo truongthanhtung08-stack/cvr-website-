@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
+import { soCuaTaiKhoan } from "@/lib/soTaiKhoan";
 import { PageHeader } from "@/components/Ui";
 import SoDienThoaiKhac from "@/components/SoDienThoaiKhac";
 import XacMinhSdt from "@/components/XacMinhSdt";
@@ -27,11 +28,7 @@ export default function AccountSettingsPage() {
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name ?? "");
-      // Số đã xác minh nhưng chưa hợp nhất được (dính tiền — xac-minh-sdt choAdminGop) nằm ở user_metadata.sdt_lien_he: vẫn là số của
-      // tài khoản này, phải hiện (anh 26/11/2026: "bổ sung số điện thoại không ghi vào tài khoản")
-      const sdtXacMinh = (profile as { sdt_lien_he_xac_minh?: boolean }).sdt_lien_he_xac_minh
-        ? String((user?.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he ?? "") : "";
-      setPhone(profile.phone || sdtXacMinh);
+      setPhone(soCuaTaiKhoan(profile as { phone?: string | null; sdt_lien_he_xac_minh?: boolean }, user)); // một luật: lib/soTaiKhoan (26/11/2026)
       setCity(profile.city ?? "");
     }
   }, [profile, user]);
@@ -97,7 +94,11 @@ export default function AccountSettingsPage() {
         </div>
 
         <div className="mt-4">
-          <XacMinhSdt tieuDe={phone ? "Đổi số điện thoại" : "Thêm số điện thoại"} onXong={() => window.location.reload()} />
+          <XacMinhSdt tieuDe={phone ? "Đổi số điện thoại" : "Thêm số điện thoại"} onXong={async () => {
+            // Đổi số → tin đang hiện số cũ đổi theo (26/11/2026), rồi tải lại để ô Số điện thoại hiện số mới
+            if (phone) await dongBoTenAnhTin({ soCu: phone });
+            window.location.reload();
+          }} />
         </div>
 
         <button

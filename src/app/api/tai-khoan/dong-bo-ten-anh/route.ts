@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
+import { chuanHoaSdt } from "@/lib/phone";
+import { soCuaTaiKhoan } from "@/lib/soTaiKhoan";
 
 // ============================================================================
 // ĐỔI TÊN / ẢNH TÀI KHOẢN → TIN CỦA TÀI KHOẢN ĐỔI THEO (chủ dự án 05/11/2026: "tên tài khoản, ảnh đại diện của tài khoản — thể
@@ -15,7 +17,7 @@ import { optionsMiniApp, postMiniApp } from "@/lib/goiTuMiniApp";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type Tin = { id: string; details: { contact?: { name?: string; avatar?: string } } & Record<string, unknown> | null };
+type Tin = { id: string; details: { contact?: { name?: string; avatar?: string; phone?: string } } & Record<string, unknown> | null };
 
 // Web + Zalo Mini App (Cài đặt đổi tên) — CORS: src/lib/goiTuMiniApp.ts
 export const POST = postMiniApp(xuLy);
@@ -28,14 +30,17 @@ async function xuLy(req: Request) {
   const { data: u } = await admin.auth.getUser(token);
   const uid = u?.user?.id;
   if (!uid) return NextResponse.json({ ok: false }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { tenCu?: string | null; anhCu?: string | null };
+  // soCu (26/11/2026, anh: "khách đổi thông tin trong Cài đặt thì hiển thị trên tin"): đổi SỐ ĐIỆN THOẠI → tin đang hiện số cũ đổi theo
+  const b = (await req.json().catch(() => ({}))) as { tenCu?: string | null; anhCu?: string | null; soCu?: string | null };
   const tenCu = (b.tenCu ?? "").trim();
   const anhCu = (b.anhCu ?? "").trim();
-  if (!tenCu && !anhCu) return NextResponse.json({ ok: true, soTin: 0 });
+  const soCu = chuanHoaSdt(b.soCu ?? "");
+  if (!tenCu && !anhCu && !soCu) return NextResponse.json({ ok: true, soTin: 0 });
 
-  const { data: hs } = await admin.from("profiles").select("full_name,avatar_url").eq("id", uid).maybeSingle();
+  const { data: hs } = await admin.from("profiles").select("full_name,avatar_url,phone,sdt_lien_he_xac_minh").eq("id", uid).maybeSingle();
   const tenMoi = (hs?.full_name ?? "").trim();
   const anhMoi = (hs?.avatar_url ?? "").trim();
+  const soMoi = soCuaTaiKhoan(hs, u.user);
 
   const { data: ds } = await admin.from("listings").select("id,details").eq("owner_id", uid);
   let soTin = 0;
@@ -44,6 +49,11 @@ async function xuLy(req: Request) {
     let doi = false;
     if (tenCu && tenMoi && tenMoi !== tenCu && (lh.name ?? "").trim() === tenCu) { lh.name = tenMoi; doi = true; }
     if (anhCu && anhMoi && anhMoi !== anhCu && (lh.avatar ?? "").trim() === anhCu) { lh.avatar = anhMoi; doi = true; }
+    // Số: tin ghi số cũ (một số, hoặc "số A - số B") → thay đúng số cũ bằng số mới; tin ghi số khác thì giữ (quyền của khách)
+    if (soCu && soMoi && soMoi !== soCu) {
+      const ds = (lh.phone ?? "").split(" - ").map((x) => x.trim()).filter(Boolean);
+      if (ds.some((x) => chuanHoaSdt(x) === soCu)) { lh.phone = [...new Set(ds.map((x) => (chuanHoaSdt(x) === soCu ? soMoi : x)))].join(" - "); doi = true; }
+    }
     if (!doi) continue;
     const { error } = await admin.from("listings").update({ details: { ...(t.details ?? {}), contact: lh } }).eq("id", t.id);
     if (!error) soTin++;

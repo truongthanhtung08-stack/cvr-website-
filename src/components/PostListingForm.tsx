@@ -49,6 +49,7 @@ import { getTier, type TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
 import { chuanHoaSdt, tachNhieuSdt } from "@/lib/phone";
 import XacMinhSdt from "@/components/XacMinhSdt";
+import { soCuaTaiKhoan } from "@/lib/soTaiKhoan";
 import ODiaChiGoiY from "@/components/ODiaChiGoiY";
 import { ganNhanPhimEnter, enterSangOTiep } from "@/lib/oTiepTheo";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
@@ -774,16 +775,22 @@ export default function PostListingForm() {
           else void supabase.from("customer_requests").select("id").eq("user_id", user.id).eq("loai", "dang_du_an").eq("status", "xong").limit(1)
             .then(({ data }) => setDuocDangDuAn(!!data?.length), () => {});
           // Số tài khoản; chưa có mà đang chờ admin gộp (choAdminGop) → số đã xác minh nhớ trong phiên — không hỏi lại
-          setSoTaiKhoan(chuanHoaSdt(p.phone ?? "") || chuanHoaSdt(String((user.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he ?? "")));
+          // Số tài khoản — một luật (lib/soTaiKhoan, 26/11/2026): hồ sơ → số đăng nhập đã xác thực → số đã xác minh lúc đăng tin
+          const soTk = soCuaTaiKhoan(p as { phone?: string | null; sdt_lien_he_xac_minh?: boolean }, user) || chuanHoaSdt(String((user.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he ?? ""));
+          setSoTaiKhoan(soTk);
           void supabase.from("sdt_nguoi_dung").select("sdt").eq("user_id", user.id).eq("da_xac_minh", true).then(({ data }) => {
-            const chinh = chuanHoaSdt(p.phone ?? "");
+            const chinh = soTk;
             // HIỆN HẾT CÁC SỐ KHÁCH ĐÃ CÓ để chọn (chủ dự án 06/11/2026): số chính · số thêm trong Cài đặt · số đã xác minh lúc đăng tin
             const lienHe = chuanHoaSdt(String((user.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he ?? ""));
-            setDsSo([...new Set([chinh, lienHe, ...(data ?? []).map((x) => chuanHoaSdt(x.sdt))].filter(Boolean))]);
+            const soMeta = (((user.user_metadata as Record<string, unknown> | undefined)?.so_them as string[] | undefined) ?? []).map((x) => chuanHoaSdt(x));
+            setDsSo([...new Set([chinh, lienHe, ...(data ?? []).map((x) => chuanHoaSdt(x.sdt)), ...soMeta].filter(Boolean))]);
+            // Chưa có số chính mà đã có số thêm ĐÃ XÁC MINH (Cài đặt) → dùng số đó, không hỏi lại (anh 26/11/2026: "hỏi số 1 lần duy nhất")
+            const soThem = [...(data ?? []).map((x) => chuanHoaSdt(x.sdt)), ...soMeta].find(Boolean);
+            if (!soTk && soThem) { setSoTaiKhoan(soThem); setSoDaXacMinh(true); setContactPhone((v) => v || soThem); }
           }, () => {});
           setContactName((v) => v || p.full_name || "");
           setTenTaiKhoan((p.full_name ?? "").trim() || chuanHoaSdt(p.phone ?? ""));
-          setContactPhone((v) => v || p.phone || ""); // MỘT NGUỒN: số trong hồ sơ tài khoản (05/11/2026)
+          setContactPhone((v) => v || soTk); // MỘT NGUỒN: số của tài khoản (lib/soTaiKhoan, 26/11/2026)
           // Email kỹ thuật (zalo_… / sdt_…@users.coastalland.vn) không bao giờ điền vào tin (26/10/2026)
           setContactEmail((v) => v || emailThat(p.email));
           // Ảnh đại diện mặc định = ảnh tài khoản (tự đặt / Google / Zalo) — chuẩn: tên + avatar theo tài khoản
