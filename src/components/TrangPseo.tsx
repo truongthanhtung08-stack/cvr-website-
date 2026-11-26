@@ -61,21 +61,28 @@ export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
 export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   const [listings, articles, hetHan] = await Promise.all([getListings(), getArticles(), getListingsHetHan()]);
   if (dk.giaRe) danhDauGiaRe([...listings, ...hetHan]); // mốc trung bình trên cả bộ tin — cùng mốc với sitemap (pseo.ts)
-  // TRANG ĐẶC ĐIỂM — giá rẻ là MỘT trong nhiều đặc điểm, mọi đặc điểm cùng một cấu trúc (anh 26/11/2026: "nhà đất Đà Nẵng giá rẻ" =
-  // mục đích Mua bán → TẤT CẢ tin Mua bán tại Đà Nẵng, không mỏng). Trang hiện mọi tin cùng mục đích + nơi (+ loại hình):
-  //   tin ĐÚNG đặc điểm trước, rồi tin còn lại; mỗi phần còn hạn → hết hạn; trong đó VIP → Basic; mỗi cấp mới → cũ.
-  //   Giá rẻ: cả danh sách xếp giá rẻ → cao (bán: giá/m², thuê: giá) — tin rẻ tự lên đầu.
-  const coDD = !!(dk.giaRe || dk.dacDiem);
-  const dkGoc: DieuKien = { ...dk, giaRe: undefined, dacDiem: undefined };
+  const heading = dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
+  const path = duongDan(dk);
+  // MỌI TRANG pSEO MỘT CẤU TRÚC (anh 26/11/2026: "cả ngàn trang pSEO, không riêng giá rẻ"; "không trang nào mỏng"; giá rẻ là một trong
+  // nhiều đặc điểm). Danh sách theo mức chính xác: ① đúng 100% câu của trang → ② cùng loại hình + nơi (bỏ đặc điểm / giá / phòng ngủ /
+  // pháp lý / hướng) → ③ cùng loại hình cả tỉnh → ④ cùng mục đích cả tỉnh. Mỗi mức VIP → Basic → mới nhất (giá rẻ: rẻ → cao);
+  // tin còn hạn hết các mức rồi mới đến tin hết hạn (cùng thứ tự mức). Trang đang top / giữ bản cũ (giuSoCu): như cũ.
+  const items = listings.filter((l) => khop(l, dk)); // đúng 100% — ItemList cho Google + số liệu trang
   const giaSapXep = (l: Listing) => (dk.muc === "ban" ? giaMoiM2(l) : l.priceVnd) ?? Infinity;
   const ngay = (l: Listing) => Date.parse(l.bumpedAt ?? l.postedAt ?? "") || 0;
   const phu = (a: Listing, b: Listing) => (dk.giaRe ? giaSapXep(a) - giaSapXep(b) : ngay(b) - ngay(a));
-  const dung = (l: Listing) => (dk.giaRe ? true : khop(l, dk)) ? 0 : 1;
-  const xep = (a: Listing, b: Listing) => dung(a) - dung(b) || tierRank(a.badge) - tierRank(b.badge) || phu(a, b);
-  const items = coDD ? listings.filter((l) => khop(l, dkGoc)).sort(xep) : listings.filter((l) => khop(l, dk));
-  const hetHanDD = coDD ? hetHan.filter((l) => khop(l, dkGoc)).sort((a, b) => dung(a) - dung(b) || phu(a, b)) : [];
-  const heading = dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
-  const path = duongDan(dk);
+  const MUC: DieuKien[] = [
+    dk,
+    { muc: dk.muc, tinh: dk.tinh, cat: dk.cat, phuong: dk.phuong, thanhPho: dk.thanhPho },
+    { muc: dk.muc, tinh: dk.tinh, cat: dk.cat },
+    { muc: dk.muc, tinh: dk.tinh },
+  ];
+  const mucCua = (l: Listing) => { const i = MUC.findIndex((m) => khop(l, m)); return i < 0 ? 9 : i; };
+  const theoMuc = (ds: Listing[], vip: boolean) => ds.map((l) => ({ l, m: mucCua(l) })).filter((x) => x.m < 9)
+    .sort((a, b) => a.m - b.m || (vip ? tierRank(a.l.badge) - tierRank(b.l.badge) : 0) || phu(a.l, b.l)).map((x) => x.l);
+  const motCauTruc = !giuSoCu(path);
+  const danhSach = motCauTruc ? theoMuc(listings, true) : items;
+  const danhSachHetHan = motCauTruc ? theoMuc(hetHan, false) : [];
   // MỌI trục hiện kết quả qua CÙNG bộ lọc của web (pseo.ts boLocCua, anh 26/11/2026): 100% → chính xác → tương đối → liên quan,
   // mỗi mức VIP → còn hạn → hết hạn → ngày đăng. Đặc điểm / kiệt / đường đi qua ô từ khoá.
   const boLoc = boLocCua(dk);
@@ -86,7 +93,7 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   // Trang ít tin (< 8 — dưới một dải thẻ): thêm "Bất động sản tương tự" dưới danh sách (anh 18/11/2026). Trang đang top / đóng băng giữ nguyên.
   // Trang đặc điểm: bộ lọc đã xếp sẵn tin liên quan trong danh sách → không thêm khối riêng (khỏi lặp tin).
   // HTML nhẹ như trang tin: 8 thẻ bỏ mô tả, "Xem thêm" tự nạp theo mã.
-  const tuongTu = !quaTuKhoa && items.length < 8 && !TRANG_TOP.has(path) && !TRANG_DONG_BANG.has(path) ? tinTuongTuTrang(listings, dk, items) : [];
+  const tuongTu = !motCauTruc && !quaTuKhoa && items.length < 8 && !TRANG_TOP.has(path) && !TRANG_DONG_BANG.has(path) ? tinTuongTuTrang(listings, dk, items) : [];
   const tuongTuNhe = tuongTu.slice(0, 8).map(({ desc: _d, searchText: _s, ...the }) => the);
   return (
     <>
@@ -96,9 +103,9 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
         {/* Đường dẫn phân cấp: CHỈ cho Google (JSON-LD) — không hiện trên màn hình (chủ dự án 17/10/2026: dòng này nằm
             trên ô tìm làm rối; điện thoại đã có thanh "← Quay lại"). SEO không mất: Google đọc từ dữ liệu cấu trúc. */}
         <BreadcrumbJsonLd items={duongDanPhanCap(dk)} />
-        {coDD ? (
-          // trang đặc điểm: giữ đúng thứ tự máy chủ đã xếp (đúng đặc điểm → còn lại · còn hạn → hết hạn · VIP → Basic)
-          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} items={goiNheTin(items)} itemsHetHan={goiNheTin(hetHanDD)} sapXepDau="lien-quan" articles={goiNheBaiViet(articles)} />
+        {motCauTruc ? (
+          // giữ đúng thứ tự máy chủ đã xếp (mức chính xác · VIP → Basic → mới / rẻ · còn hạn rồi hết hạn)
+          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} items={goiNheTin(danhSach)} itemsHetHan={goiNheTin(danhSachHetHan)} sapXepDau="lien-quan" articles={goiNheBaiViet(articles)} />
         ) : (
           <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} ketQuaDau={ketQuaDau} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
         )}
