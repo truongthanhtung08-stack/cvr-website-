@@ -15,12 +15,12 @@ import NewsSection from "@/components/NewsSection";
 import Footer from "@/components/Footer";
 import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { HomeExpandProvider, HomeCollapsible, AnKhiMo } from "@/components/HomeExpand";
-import { getListings, getListingsThe, demTinTheoTinh } from "@/lib/listingsDb";
+import { getListings, getListingsThe, getListingsHetHan } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
 import { getArticles, getProjectsNoiBat } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
-import { THANH_PHO } from "@/lib/pseo";
-import { slugKhuVuc } from "@/lib/khuVuc";
+import { THANH_PHO, khop } from "@/lib/pseo";
+import { slugKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
 import { layThuongHieu, tieuDeThuongHieu } from "@/lib/thuongHieu";
 
@@ -47,7 +47,7 @@ export default async function Home() {
   // tinDu: bản đầy đủ (cùng lần đọc có cache) — chỉ dùng ở máy chủ để dựng cụm gợi ý, không gửi xuống máy khách
   const [listings, tinDu, projects, articles, homeAreas, featuredSlug, heroBanners, soTinTinh] = await Promise.all([
     getListingsThe(), getListings(), getProjectsNoiBat(), getArticles(), getHomeAreas(),
-    getFeaturedArticleSlug(), getHeroBanners(), demTinTheoTinh().catch(() => ({ tinh: new Map<string, number>(), phuong: new Map<string, number>() })),
+    getFeaturedArticleSlug(), getHeroBanners(), getListingsHetHan().catch(() => []),
   ]);
 
   // 20/10/2026 (trang chủ 603 KB > ngưỡng 450): thẻ chỉ cần phần đầu — bỏ toàn văn bài viết và phần giới thiệu, bảng giá,
@@ -120,14 +120,17 @@ export default async function Home() {
             const ten = decodeURIComponent(a.href.match(/[?&]tinh=([^&]+)/)?.[1] ?? "");
             const tp = ten ? THANH_PHO.find((t) => t.name === ten) : undefined;
             // SỐ TIN THẬT (chủ dự án 31/10/2026: cấm số liệu mẫu). 06/11 đếm cả tỉnh, tin bán — thay ngày 26/11 bằng luật dưới.
-            const tinhO = normalizeVi(tp?.tinh ?? ten);
             // 26/11/2026 (anh): "tất cả số lượng tin của 1 khu vực" — còn hạn + hết hạn, đúng mục Mua bán của trang ô trỏ tới
             // Ô THÀNH PHỐ (Nha Trang, Quy Nhơn…) = đúng tin các phường mới của thành phố cũ đó (bảng sáp nhập), khớp trang thành phố;
             // ô TỈNH (Đà Nẵng, Huế, Quảng Ngãi) = cả tỉnh (anh 26/11/2026: "thành phố / phường thuộc tỉnh phải hiểu cho đúng")
-            const so = !ten ? null : tp
-              ? tp.phuong.reduce((t, p) => t + (soTinTinh.phuong.get(`${normalizeVi(tp.tinh)}|${normalizeVi(p)}`) ?? 0), 0)
-              : soTinTinh.tinh.get(tinhO) ?? 0;
-            const b = so === null ? a : { ...a, count: `${so.toLocaleString("vi-VN")} tin` };
+            // anh 26/11/2026: ghi CẢ HAI số Mua bán · Cho thuê, đúng số tin thật của nơi đó
+            // ĐẾM CÙNG LUẬT TRANG KHU VỰC (pseo.ts khop): tin còn hạn + hết hạn khớp đúng Mua bán / Cho thuê của tỉnh (ô thành phố:
+            // các phường mới của thành phố đó) → số trên ô = số tin trang /mua-ban|/cho-thue/<tỉnh>[/<thành phố>] có
+            const kvO = timKhuVuc(slugKhuVuc(tp?.tinh ?? ten));
+            const tatCaTin = [...tinDu, ...soTinTinh];
+            const dem = (muc: "ban" | "thue") => !ten || !kvO ? null : tatCaTin.filter((l) => khop(l, { muc, tinh: kvO, thanhPho: tp })).length;
+            const so = dem("ban"), soThue = dem("thue");
+            const b = so === null ? a : { ...a, count: `${so.toLocaleString("vi-VN")} mua bán · ${(soThue ?? 0).toLocaleString("vi-VN")} cho thuê` };
             return tp ? { ...b, href: `/mua-ban/${slugKhuVuc(tp.tinh)}/${tp.slug}` } : b;
           }))} />
           {/* cuoiTrang: khi đang mở danh sách Tin tức thì Tin tức là khối cuối (khối Tìm kiếm phổ biến ẩn) → cách footer đúng chuẩn */}

@@ -1,5 +1,6 @@
 "use client";
 
+import { veDauTrang } from "@/lib/khoaCuon";
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { cauDaHieu } from "@/lib/locTuCau";
 import { batDauTim, xongTim } from "@/components/VachTim";
@@ -288,6 +289,7 @@ export default function ListingBrowser({
   }, [nguon]);
   const nguonNap = nguon === "tat-ca" ? mucDichTong : nguon;
   const doiMucDichTong = (v: "tat-ca" | "ban" | "thue") => {
+    veDauTrang(); // chọn Mua bán / Cho thuê cũng hiện kết quả từ đầu trang như mọi trường lọc (anh 26/11/2026)
     setMucDichTong(v);
     setPage(1);
     const u = new URL(window.location.href);
@@ -417,7 +419,8 @@ export default function ListingBrowser({
   const doiBoLoc = (nf: Filters) => {
     // CHỌN / ĐỔI BẤT KỲ TRƯỜNG LỌC NÀO (hoặc bấm tìm) → kết quả mới hiện TỪ ĐẦU TRANG (anh 26/11/2026). Trước đây chỉ trường làm đổi trang
     // (Khoảng giá…) mới về đầu; Loại BĐS lọc tại chỗ nên khách vẫn đứng giữa trang, tưởng không có gì đổi.
-    window.scrollTo({ top: 0, behavior: "instant" });
+    // Bảng chọn đang mở (khoá cuộn) thì scrollTo không ăn, đóng bảng trang trả về chỗ cũ → veDauTrang đặt chỗ trả về = đầu trang
+    veDauTrang();
     const doiTruong = nf.keyword === filtersSong.keyword || !nf.keyword.trim();
     if (doiTruong) {
       // GIỮ NGUYÊN CÂU KHÁCH GÕ trong ô và trên địa chỉ, như Google (07/11/2026: câu đọc hết thành trường — "đất giá rẻ hòa xuân" — thì

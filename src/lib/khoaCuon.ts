@@ -40,6 +40,13 @@ export function khoaCuon(): () => void {
   };
 }
 
+/** Về đầu trang kể cả khi đang có bảng khoá cuộn (anh 26/11/2026: chọn trường lọc xong kết quả phải hiện từ đầu trang). Đang khoá
+ *  thì scrollTo không có tác dụng và lúc nhả khoá trang trả về chỗ cũ → đặt chỗ trả về = 0. Không khoá thì cuộn ngay. */
+export function veDauTrang(): void {
+  if (dangMo > 0) { viTri = 0; document.body.style.top = "0px"; }
+  else window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+}
+
 // BẢNG NỔI CÓ NỀN MỜ (bảng chọn, bảng quyền lợi, đặc điểm gói, xác thực số…) — đang mở thì trang phía sau đứng yên
 // (chủ dự án 22/10/2026: "hiện bảng nhưng vuốt thì phần khác của trang cứ chạy"). Một dòng: useKhoaCuon(dangMo, dong):
 // khoá cuộn + nút Quay lại của điện thoại đóng đúng bảng này (truyền dong).
