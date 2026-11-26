@@ -741,7 +741,8 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
     ds.filter((p) => cungTinh(p) && !p.dk.giaRe && !p.dk.dacDiem && (!dk.cat || p.dk.cat?.slug === dk.cat.slug) && (p.dk.cat || p.dk.phuong || p.dk.duong || p.dk.kiet || p.dk.thanhPho)),
     (p) => tieuDe(p.dk),
   );
-  them("Theo loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe && !p.dk.dacDiem), (p) => tieuDe(p.dk));
+  // Trang tỉnh (chưa có loại hình): loại hình là thu hẹp ĐÚNG ý → tên nhóm khác để khối kiểu Google giữ lại (anh 26/11/2026: gom về một mối)
+  them(dk.cat ? "Theo loại hình" : "Loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe && !p.dk.dacDiem), (p) => tieuDe(p.dk));
   them("Theo thành phố", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "thanhPho")), (p) => tieuDe(p.dk));
   if (dk.thanhPho && !dk.cat && !dk.giaDuoi && !dk.giaRe && !dk.dacDiem)
     them("Nhà đất " + dk.thanhPho.name, ds.filter((p) => p.dk.thanhPho?.slug === dk.thanhPho!.slug && !p.dk.cat && (p.dk.giaDuoi || p.dk.giaRe || p.dk.dacDiem)), (p) => tieuDe(p.dk));
@@ -763,6 +764,13 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   if (dk.cat) {
     them("Tỉnh, thành khác", ds.filter((p) => p.dk.tinh.slug !== dk.tinh.slug && laLoai(p, dk.cat) && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong && !p.dk.giaRe && !p.dk.dacDiem), (p) => p.dk.tinh.name);
   }
+  // GOM VỀ MỘT MỐI (anh 26/11/2026: "chỉ cần 1 URL là có cả nghìn từ khoá"): trang gốc dẫn tới ĐỦ mọi trang con trực tiếp của nó
+  // (cây: tỉnh → loại hình / phường / thành phố / đặc điểm → con của loại hình), trang con dẫn ngược về gốc qua breadcrumb →
+  // chỉ xin index trang gốc, Google tự đi xuống cả nhóm. CHỈ THÊM link chưa có — trang top không mất link nào.
+  // Nhóm "Theo loại hình" / "Tỉnh, thành khác" bị khối kiểu Google lọc bỏ → không tính là đã có
+  const daCo = new Set(nhom.filter((g) => g.tieuDe !== "Theo loại hình" && g.tieuDe !== "Tỉnh, thành khác").flatMap((g) => g.links.map((x) => x.href)));
+  const con = trangIndex(tinConHan).filter((p) => p.dk.muc === dk.muc && p.path !== hien && !daCo.has(p.path) && (() => { const c = cha(p.dk); return !!c && duongDan(c) === hien; })());
+  if (con.length) nhom.push({ tieuDe: "Thuộc " + tieuDe(dk), links: con.sort((a, b) => b.n - a.n).map((p) => ({ href: p.path, nhan: tieuDe(p.dk), day: tieuDe(p.dk) })) });
   return nhom;
 }
 
