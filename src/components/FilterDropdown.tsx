@@ -333,7 +333,8 @@ export default function FilterDropdown({
                 }`
         }`}
       >
-        <span className="truncate">{active && summary ? summary : label}</span>
+        {/* PC: chữ không bị cắt (anh 26/11/2026, ảnh "Mua bán · ...") — overflow-hidden làm min-w-fit của ô đo ra 0 */}
+        <span className="truncate sm:overflow-visible">{active && summary ? summary : label}</span>
         <svg
           className={`h-4 w-4 shrink-0 transition-transform ${compact ? "text-white/60" : pill ? (active ? "text-cvr-ink" : "text-cvr-faint") : active ? "text-cvr-blue" : "text-cvr-faint"} ${open ? "rotate-180" : ""}`}
           fill="none"
