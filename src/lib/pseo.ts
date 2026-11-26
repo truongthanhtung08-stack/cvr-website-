@@ -402,13 +402,15 @@ export type Crumb = { name: string; href: string };
 export function duongDanPhanCap(dk: DieuKien): Crumb[] {
   const g = goc(dk.muc);
   const cu = giuSoCu(duongDan(dk));
+  // MỘT THỰC THỂ (anh 26/11/2026: trang phường / con để Google hiểu, đưa lên câu LÕI của tỉnh / thành phố): tầng mục = đúng tên menu
+  // "Mua bán" / "Cho thuê"; tầng tỉnh, loại hình = CHỮ LÕI không chữ "Bán" ("Nhà đất Đà Nẵng", "Căn hộ chung cư Đà Nẵng") — cùng chữ
+  // liên kết nội bộ đang trỏ về trang lõi. Trang đang top / giữ bản cũ (giuSoCu) giữ tên cũ.
+  const loi = (s: string) => (dk.muc === "ban" ? viHoa(s.replace(/^Bán\s+/, "")) : s);
   const c: Crumb[] = [
-    { name: dk.muc === "thue" ? "Nhà đất cho thuê" : "Nhà đất bán", href: g },
-    // NỐI NGƯỢC LÊN BẰNG ĐÚNG CHỮ LÕI (anh 09/11/2026): tầng tỉnh = "Bán nhà đất Đà Nẵng", tầng loại hình = chữ lõi "Bán căn hộ Đà Nẵng" —
-    // mọi trang con, trang tin trỏ về trang lõi với cùng chữ → Google hiểu trang lõi nhắm từ khoá ngắn đó. Trang đang top giữ tên cũ.
-    { name: cu ? dk.tinh.name : tieuDe({ muc: dk.muc, tinh: dk.tinh }), href: `${g}/${dk.tinh.slug}` },
+    { name: cu ? (dk.muc === "thue" ? "Nhà đất cho thuê" : "Nhà đất bán") : dk.muc === "thue" ? "Cho thuê" : "Mua bán", href: g },
+    { name: cu ? dk.tinh.name : loi(tieuDe({ muc: dk.muc, tinh: dk.tinh })), href: `${g}/${dk.tinh.slug}` },
   ];
-  if (dk.cat) c.push({ name: cu ? dk.cat.label : tieuDe({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat }), href: duongDan({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat }) });
+  if (dk.cat) c.push({ name: cu ? dk.cat.label : loi(tieuDe({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat })), href: duongDan({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat }) });
   // Thành phố + đặc điểm / mức giá: Tỉnh → Thành phố → đặc điểm (21/11/2026)
   const dacDiemNhan = dk.giaRe ? "Giá rẻ" : dk.dacDiem ? viHoa(dk.dacDiem.nhan) : "";
   if (dk.thanhPho && !dk.cat && (dk.giaDuoi || dk.giaRe || dk.dacDiem)) {
