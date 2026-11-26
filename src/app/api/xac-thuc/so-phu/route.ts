@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { phatMa, kiemMa, guiMaQuaZalo } from "@/lib/maXacThuc";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
-import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
 
 // ============================================================================
 // THÊM SỐ ĐIỆN THOẠI KHÁC — MỘT ĐƯỜNG DUY NHẤT (chủ dự án 05/11/2026: "khách có nhiều số, muốn thêm số chỉ một con đường — dẫn
@@ -10,7 +9,7 @@ import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
 // Trước đây thêm số không cần mã, nằm "chờ xác minh" chờ Coastal Land duyệt.
 //   gui-ma   { sdt }       → gửi mã 6 số qua Zalo của số đó
 //   xac-nhan { sdt, ma }   → lưu vào sdt_nguoi_dung, da_xac_minh = true
-// MỘT SỐ MỘT TÀI KHOẢN: số đang thuộc tài khoản khác → từ chối, mời liên hệ Coastal Land.
+// Số đang ở tài khoản khác: nhận đúng mã là ghi vào tài khoản đang dùng (26/11/2026).
 // ============================================================================
 
 export const runtime = "nodejs";
@@ -33,13 +32,9 @@ export async function POST(req: Request) {
   // Số chính của chính tài khoản → không thêm lại
   const { data: hs } = await admin.from("profiles").select("phone").eq("id", uid).maybeSingle();
   if (chuanHoaSdt(hs?.phone ?? "") === sdt) return loi("Đây là số chính của tài khoản.");
-  // Số đang thuộc tài khoản khác (số chính hoặc số phụ đã xác minh) → từ chối
-  const tim = await timTaiKhoan(admin, sdt, { boQuaAdmin: true });
-  if (tim === "trung" || (tim && tim.id !== uid))
-    return loi("Số này đã thuộc một tài khoản khác. Nếu đây đúng là số của bạn, vui lòng liên hệ Coastal Land.", 409);
+  // SỐ ĐANG Ở TÀI KHOẢN KHÁC → KHÔNG TỪ CHỐI (anh 26/11/2026: "khách muốn thêm số thì tài khoản phải ghi vào", "cấm hỏi và yêu cầu
+  // lại"): nhận đúng mã tới số = chính chủ số → số ghi vào tài khoản đang dùng (số phụ ở tài khoản khác chuyển sang đây).
   const { data: soPhu } = await admin.from("sdt_nguoi_dung").select("user_id").eq("sdt", sdt).maybeSingle();
-  if (soPhu && soPhu.user_id !== uid)
-    return loi("Số này đã thuộc một tài khoản khác. Nếu đây đúng là số của bạn, vui lòng liên hệ Coastal Land.", 409);
 
   if (b.buoc === "gui-ma") {
     const phat = await phatMa(sdt, "zalo", "xac-minh-sdt");
@@ -53,7 +48,7 @@ export async function POST(req: Request) {
   const kiem = await kiemMa(sdt, "xac-minh-sdt", b.ma ?? "");
   if (!kiem.ok) return loi(kiem.loi);
   const { data: dong, error } = soPhu
-    ? await admin.from("sdt_nguoi_dung").update({ da_xac_minh: true }).eq("sdt", sdt).eq("user_id", uid).select("id").single()
+    ? await admin.from("sdt_nguoi_dung").update({ user_id: uid, da_xac_minh: true }).eq("sdt", sdt).select("id").single()
     : await admin.from("sdt_nguoi_dung").insert({ user_id: uid, sdt, da_xac_minh: true }).select("id").single();
   if (error) return loi("Chưa lưu được số. Vui lòng thử lại.", 500);
   return NextResponse.json({ ok: true, sdt, id: dong?.id }); // id thật → nút Bỏ xoá được ngay, không phải tải lại trang
