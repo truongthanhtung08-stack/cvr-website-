@@ -385,6 +385,20 @@ từng mảnh khi anh đã nói hết · hỏi lại nhiều · nói dài. Anh n
 
 **20:00 15/11 (phiên local_470b13ab, anh: "không làm được, commit, bàn giao, cút"):** commit 490c5d0b (chỉ ContentEditor, CHƯA push): ô Mô tả điện thoại `display:flex` cột — gốc trong mã Chrome: chữ nằm thẳng trong ô cuộn thì con trỏ vẽ ở lớp không cuộn → lơ lửng; nay con trỏ cuộn theo chữ, khuất/hiện đúng (anh thử tay, em nhìn 19:55). **CÒN LỖI P1:** con trỏ ở dòng cuối khung → tay cầm thò dưới mép khung, đè thanh địa chỉ. Chi tiết + việc tiếp: cuối `.claude/LOI-O-MO-TA-15-11.md`. Tệp tạm (dòng TẠM, `_do-cuon.js`, `api/thu-log`) còn trên máy, xoá trước Push.
 
+## ⏳ BÀN GIAO 26/11/2026 TỐI (phiên 48bbe210, anh: "làm hết rồi bàn giao qua bên kia", KHÔNG push nữa)
+**Đã lên web (đã kiểm web thật):** d1e18781 · 4b13d8e0 · 23092d23 · 1549e288 — tin hết hạn như tin thường (PC như điện thoại, dòng "Tin hết hạn,
+vui lòng liên hệ người đăng tin để biết thêm thông tin.", bấm số / Zalo ra số kể cả đã đăng nhập — `api/xem-so` + `LienHeReveal`), ô khu vực
+trang chủ đếm tin Mua bán còn + hết hạn (= số thẻ trang, Diamond hiện 2 lần nên trang hơn 1), tài khoản một nguồn số (`lib/soTaiKhoan`),
+Cài đặt một mục Số điện thoại, quên mật khẩu 3 bước, bỏ email, "Tài khoản". ⚠️ Vercel KHÔNG tự dựng khi push (webhook hỏng từ chiều 26/11) →
+phải vào vercel.com → cvr-website → Deployments → ⋯ → Create Deployment → "main" → Deploy to Production.
+**07251ba2 (đã push, Vercel đang dựng lúc bàn giao — CHƯA KIỂM web thật):** chọn / đổi BẤT KỲ trường lọc nào hoặc bấm tìm → về đầu trang
+(`ListingBrowser.doiBoLoc`). Trước chỉ Khoảng giá về đầu, Loại BĐS đứng giữa trang. Việc tiếp: thử trên web thật khổ điện thoại ở trang tổng
+Mua bán + Cho thuê, /mua-ban, /cho-thue: cuộn xuống → chọn từng trường (Khu vực, Loại BĐS, Giá, Diện tích, Lọc thêm, ô tìm) → scrollY = 0.
+**CHƯA LÀM — web chậm (anh nhắc nhiều lần):** Lighthouse web thật 26/11 trưa: trang chủ LCP 5,5 s · /mua-ban 3,5 · Nha Trang 3,8 · trang tin
+4,9; TBT 0,66–1,06 s (máy bận dựng DOM lớn). Đã bỏ 16 thẻ máy tính dựng thừa trên điện thoại (4b13d8e0) — CHƯA đo lại sau đó. Đo lại trước,
+rồi tìm phần nặng tiếp (HTML trang chủ 605 KB: khối nổi bật 152 KB, Tìm kiếm phổ biến 73 KB, menu/đầu trang).
+**Tệp phiên khác đang sửa, KHÔNG add:** pseo.ts, TrangPseo.tsx, locDanhSach.ts (bản đang sửa dở), ChonCoTim, PostListingForm (hunk nhom=), admin/ListingForm.
+
 ## ⛔⛔⛔ LUẬT TÀI KHOẢN — ANH CHỐT 26/11/2026 (thay mọi luật tài khoản cũ khác chỗ này; CẤM hỏi lại)
 1. Đăng nhập: **Google · Zalo · Số điện thoại + mật khẩu.** BỎ email (đăng nhập, đăng ký, quên mật khẩu). Không ép nhập số lúc đăng nhập.
 2. **KHÔNG GỘP tài khoản** (`WEB_TU_GOP = false` xac-minh-sdt, `TU_GAN = false` gopTaiKhoan) — 26/11 Claude bật gộp, anh mắng, đã trả.
