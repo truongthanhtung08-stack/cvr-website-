@@ -532,6 +532,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       const d4 = new Date(s).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
                       return <><span className="sm:hidden">{d4.slice(0, 6) + d4.slice(8)}</span><span className="hidden sm:inline">{d4}</span></>;
                     };
+                    // Tin đã qua hạn gói: bỏ cả "Hiệu lực · Hết hạn" (anh 26/11/2026)
+                    if (l.hetHanLuc && Date.parse(l.hetHanLuc) <= Date.now()) return [];
                     return [
                       l.postedAt && <>Hiệu lực: {ngay(l.postedAt)}</>,
                       l.hetHanLuc && <>Hết hạn: {ngay(l.hetHanLuc)}</>,
