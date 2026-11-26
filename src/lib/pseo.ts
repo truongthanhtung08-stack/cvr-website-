@@ -172,6 +172,14 @@ export const DAC_DIEM: DacDiem[] = [
   { slug: "studio", nhan: "studio", khop: (l) => /căn hộ|chung cư/i.test(l.type ?? "") && /studio|căn hộ mini|chung cư mini/.test(chuTin(l)) },
 ];
 const dacDiemCua = (muc: Muc, slug: string) => DAC_DIEM.find((d) => d.slug === slug && (!d.muc || d.muc === muc));
+// CÂU VỀ GIÁ GOM MỘT CHỖ (anh 26/11/2026: "giá rẻ / giảm giá mạnh … cho vào 1 chỗ"): giảm giá mạnh, cần bán gấp không mở trang riêng —
+// chuyển 301 về trang giá rẻ cùng mục đích + loại hình + nơi (tin xếp giá thấp → cao).
+const GOM_VE_GIA_RE = new Set(["giam-gia-manh", "can-ban-gap"]);
+/** Trang giảm giá mạnh / cần bán gấp → đường trang giá rẻ tương ứng (chuyển 301); trang khác → null */
+export function trangGomVe(dk: DieuKien): string | null {
+  if (!dk.dacDiem || !GOM_VE_GIA_RE.has(dk.dacDiem.slug)) return null;
+  return duongDan({ ...dk, dacDiem: undefined, giaRe: true });
+}
 
 // TRỤC THÀNH PHỐ (#5 kế hoạch SEO, 17/10/2026): người tìm gõ tên THÀNH PHỐ LỚN ("bán nhà Nha Trang"
 // 185 cụm, "đất Đà Lạt" 167, "căn hộ Quy Nhơn" 147), tên này gần như không đổi dù địa giới đổi
@@ -525,7 +533,7 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
   // mọi loại hình, cùng mốc giá với trang loại hình; mở trang theo cùng cổng (≥ 5 tin, khác rõ trang tỉnh, không trùng mốc bên cạnh)
   for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, giaDuoi: g });
   if (laGiaRe(l)) ds.push({ muc, tinh, giaRe: true });
-  const ddCua = DAC_DIEM.filter((d) => (!d.muc || d.muc === muc) && d.khop(l));
+  const ddCua = DAC_DIEM.filter((d) => (!d.muc || d.muc === muc) && !GOM_VE_GIA_RE.has(d.slug) && d.khop(l)); // giá: gom về trang giá rẻ
   for (const dacDiem of ddCua) ds.push({ muc, tinh, dacDiem });
   if (phuong) ds.push({ muc, tinh, phuong });
   const thanhPho = phuong ? thanhPhoCuaPhuong(tinh.name, phuong) : undefined;
@@ -533,7 +541,7 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
     ds.push({ muc, tinh, thanhPho });
     for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, thanhPho, giaDuoi: g });
     if (laGiaRe(l)) ds.push({ muc, tinh, thanhPho, giaRe: true });
-    for (const dacDiem of DAC_DIEM.filter((d) => (!d.muc || d.muc === muc) && d.khop(l))) ds.push({ muc, tinh, thanhPho, dacDiem });
+    for (const dacDiem of ddCua) ds.push({ muc, tinh, thanhPho, dacDiem });
   }
   if (muc === "ban") {
     if (l.viTri === "kiet") ds.push({ muc, tinh, kiet: true });
