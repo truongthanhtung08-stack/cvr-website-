@@ -176,12 +176,10 @@ const dacDiemCua = (muc: Muc, slug: string) => DAC_DIEM.find((d) => d.slug === s
 // chính chủ / cần bán gấp / tháng 11" → top đều là CÙNG MỘT trang lõi của đối thủ, không có trang giá rẻ riêng; "dưới 3 tỷ", "gần biển"
 // mới có trang riêng). Các đặc điểm KHÔNG phải bộ lọc rõ không sinh trang riêng nữa: bỏ khỏi sitemap + liên kết, đường cũ 301 về trang
 // lõi cùng mục đích + loại hình + nơi. Khoảng giá, gần biển, view biển, phòng ngủ, pháp lý… vẫn là trang riêng.
-// Mọi đặc điểm (anh 26/11/2026: "cả NGÀN cái đặc điểm quy về khu vực và loại hình") — trừ trang đặc điểm đang có hạng Google (cấm đụng top).
-const GIU_DAC_DIEM = new Set(["/mua-ban/nha-mat-pho/da-nang/gan-bien"]); // #5 "nhà đất đà nẵng gần biển" (tra 26/11/2026)
-const giuDacDiem = (dk: DieuKien) => GIU_DAC_DIEM.has(duongDan(dk));
-/** Trang giá rẻ / đặc điểm → đường trang lõi (khu vực + loại hình) để chuyển 301; trang khác → null */
+const GOM_VE_LOI = new Set(["giam-gia-manh", "can-ban-gap", "chinh-chu"]);
+/** Trang giá rẻ / chính chủ / cần bán gấp / giảm giá mạnh → đường trang lõi để chuyển 301; trang khác → null */
 export function trangGomVe(dk: DieuKien): string | null {
-  if (!dk.giaRe && !(dk.dacDiem && !giuDacDiem(dk))) return null;
+  if (!dk.giaRe && !(dk.dacDiem && GOM_VE_LOI.has(dk.dacDiem.slug))) return null;
   return duongDan({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat, thanhPho: dk.thanhPho });
 }
 
@@ -536,15 +534,15 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
   // CHA TỔNG + MỨC GIÁ (anh 13/11/2026: "xây đặc điểm cho lõi chung theo gợi ý Google" — "nhà đất đà nẵng dưới 1 / 2 / 3 tỷ"):
   // mọi loại hình, cùng mốc giá với trang loại hình; mở trang theo cùng cổng (≥ 5 tin, khác rõ trang tỉnh, không trùng mốc bên cạnh)
   for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, giaDuoi: g });
-  // giá rẻ + mọi đặc điểm gom về trang lõi (trangGomVe) — chỉ còn trang đặc điểm đang có hạng (GIU_DAC_DIEM)
-  const ddCua = DAC_DIEM.filter((d) => (!d.muc || d.muc === muc) && d.khop(l));
-  for (const dacDiem of ddCua) if (giuDacDiem({ muc, tinh, dacDiem })) ds.push({ muc, tinh, dacDiem });
+  // giá rẻ, chính chủ, cần bán gấp, giảm giá mạnh gom về trang lõi (GOM_VE_LOI) — không sinh trang riêng
+  const ddCua = DAC_DIEM.filter((d) => (!d.muc || d.muc === muc) && !GOM_VE_LOI.has(d.slug) && d.khop(l));
+  for (const dacDiem of ddCua) ds.push({ muc, tinh, dacDiem });
   if (phuong) ds.push({ muc, tinh, phuong });
   const thanhPho = phuong ? thanhPhoCuaPhuong(tinh.name, phuong) : undefined;
   if (thanhPho) {
     ds.push({ muc, tinh, thanhPho });
     for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, thanhPho, giaDuoi: g });
-    for (const dacDiem of ddCua) if (giuDacDiem({ muc, tinh, thanhPho, dacDiem })) ds.push({ muc, tinh, thanhPho, dacDiem });
+    for (const dacDiem of ddCua) ds.push({ muc, tinh, thanhPho, dacDiem });
   }
   if (muc === "ban") {
     if (l.viTri === "kiet") ds.push({ muc, tinh, kiet: true });
@@ -563,7 +561,7 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
     if (thanhPho) ds.push({ muc, tinh, cat, thanhPho });
     for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, cat, giaDuoi: g });
     if (CO_PHONG_NGU.includes(cat.slug) && l.beds && l.beds <= 4) ds.push({ muc, tinh, cat, phongNgu: l.beds });
-    for (const dacDiem of ddCua) if (giuDacDiem({ muc, tinh, cat, dacDiem })) ds.push({ muc, tinh, cat, dacDiem });
+    for (const dacDiem of ddCua) ds.push({ muc, tinh, cat, dacDiem });
   }
   return ds;
 }
