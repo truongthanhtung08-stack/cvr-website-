@@ -80,40 +80,40 @@ export default function AccountSettingsPage() {
           <Field label="Họ và tên">
             <input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inp} />
           </Field>
-          {/* SỐ ĐIỆN THOẠI CHỈ ĐỔI QUA XÁC THỰC MÃ (chủ dự án 05/11/2026: "nhập số phải xác thực") — ô chỉ để xem; thêm / đổi số ở
-              khung bên dưới: nhận mã qua Zalo của chính số đó, nhập đúng mã mới lưu. */}
-          <Field label="Số điện thoại">
-            <input value={phone || "Chưa có"} disabled className={inp + " opacity-60"} />
-          </Field>
-          <Field label="Email (không thể đổi)">
-            <input value={emailThat(profile.email)} disabled className={inp + " opacity-60"} />
-          </Field>
+          {/* Số điện thoại: MỘT mục riêng bên dưới (26/11/2026). Email chỉ hiện khi có email thật */}
+          {emailThat(profile.email) && (
+            <Field label="Email">
+              <input value={emailThat(profile.email)} disabled className={inp + " opacity-60"} />
+            </Field>
+          )}
           <Field label="Khu vực">
             <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Đà Nẵng / Huế…" className={inp} />
           </Field>
         </div>
 
-        <div className="mt-4">
-          <XacMinhSdt tieuDe={phone ? "Đổi số điện thoại" : "Thêm số điện thoại"} onXong={async () => {
-            // Đổi số → tin đang hiện số cũ đổi theo (26/11/2026), rồi tải lại để ô Số điện thoại hiện số mới
-            if (phone) await dongBoTenAnhTin({ soCu: phone });
-            window.location.reload();
-          }} />
-        </div>
-
-        <button
-          type="submit"
-          disabled={saving}
-          className="mt-5 rounded-lg bg-cvr-ink px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
-        >
-          {saving ? "Đang lưu…" : "Lưu thay đổi"}
-        </button>
+        {/* "Lưu thay đổi" CHỈ HIỆN khi khách đã sửa tên / khu vực (anh 26/11/2026: "nút nào cần thì hiện, không cần thì ẩn") */}
+        {(fullName.trim() !== (tenDaLuu.current ?? profile.full_name ?? "").trim() || city.trim() !== (profile.city ?? "").trim()) && (
+          <button
+            type="submit"
+            disabled={saving}
+            className="mt-5 rounded-lg bg-cvr-ink px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
+          >
+            {saving ? "Đang lưu…" : "Lưu thay đổi"}
+          </button>
+        )}
       </form>
+
+      {/* SỐ ĐIỆN THOẠI — MỘT MỤC (anh 26/11/2026: "lủng củng"): chưa có số → một nút "+ Thêm số điện thoại" (xác thực mã Zalo, ghi vào
+          tài khoản). Có số → danh sách: số chính + số khác, một nút "+ Thêm số". Không còn khối "Đổi số" riêng. */}
+      {phone ? (
+        <SoDienThoaiKhac soChinh={phone} />
+      ) : (
+        <ThemSoChinh />
+      )}
 
       {/* Thông tin cá nhân (ảnh, tên) đứng ĐẦU trang như chuẩn — khối số phụ xếp sau (05/11/2026) */}
       {/* Môi giới hay dùng 2 số để đăng tin — khai đủ ở đây thì tin mới gom về
           một tài khoản được. Xem src/components/SoDienThoaiKhac.tsx */}
-      <SoDienThoaiKhac />
 
       <KhoiHoaDon profile={profile} />
 
@@ -247,5 +247,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1.5 block text-sm font-medium text-cvr-body">{label}</span>
       {children}
     </label>
+  );
+}
+
+// Tài khoản CHƯA CÓ SỐ: một nút, bấm mới mở khung xác thực (mã Zalo tới chính số đó) — xong số ghi vào tài khoản (26/11/2026)
+function ThemSoChinh() {
+  const [mo, setMo] = useState(false);
+  return (
+    <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+      <h2 className="text-base font-semibold text-cvr-ink">Số điện thoại</h2>
+      {mo ? (
+        <div className="mt-4"><XacMinhSdt tieuDe="Thêm số điện thoại" onXong={() => window.location.reload()} /></div>
+      ) : (
+        <button type="button" onClick={() => setMo(true)} className="mt-3 text-sm font-semibold text-cvr-blue hover:underline">+ Thêm số điện thoại</button>
+      )}
+    </section>
   );
 }

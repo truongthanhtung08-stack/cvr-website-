@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
+import { soCuaTaiKhoan } from "@/lib/soTaiKhoan";
 import { signOut, useAuth, anhDaiDien, emailThat } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
@@ -37,7 +38,7 @@ export default function TaiKhoanCaNhanPage() {
         <div className="min-w-0 flex-1">
           <p className="break-words text-[15px] font-semibold text-cvr-ink">{profile.full_name || "Thành viên"}</p>
           {/* Dưới tên: số + email, mỗi thứ một dòng — giống Tổng quan (05/11/2026) */}
-          {profile.phone && <p className="text-sm text-cvr-muted">{profile.phone}</p>}
+          {soCuaTaiKhoan(profile, user) && <p className="text-sm text-cvr-muted">{soCuaTaiKhoan(profile, user)}</p>}
           {emailThat(profile.email) && <p className="break-all text-sm text-cvr-muted">{emailThat(profile.email)}</p>}
           <p className="mt-0.5 text-[13px] text-cvr-muted">{roleLabel(profile.role)}</p>
         </div>

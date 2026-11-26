@@ -11,6 +11,7 @@ import BieuTuong, { type TenBieuTuong } from "@/components/BieuTuong";
 import { cayLoaiHinh } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth, displayName, anhDaiDien, signOut, lienHeTaiKhoan } from "@/lib/useAuth";
+import { useProfile } from "@/lib/useProfile";
 import { usePathname } from "next/navigation";
 import { useSoViecKhach, tongSoViec, nhanSoDo } from "@/lib/useSoTinCanXem";
 import AnhDaiDien from "@/components/AnhDaiDien";
@@ -299,11 +300,13 @@ function MobileMenu({
   open,
   onClose,
   user,
+  hoSo,
   onLogout,
 }: {
   open: boolean;
   onClose: () => void;
   user: ReturnType<typeof useAuth>["user"];
+  hoSo?: { phone?: string | null; sdt_lien_he_xac_minh?: boolean | null } | null;
   onLogout: () => void;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -358,7 +361,7 @@ function MobileMenu({
               <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-10 w-10 shrink-0 bg-[#2c2c2e] text-[15px] text-[#f5f5f7] ring-1 ring-[#3a3a3c]" />
               <span className="min-w-0">
                 <span className="block break-words text-[17px] font-medium leading-tight text-[#f5f5f7]">{displayName(user)}</span>
-                {lienHeTaiKhoan(user).length ? lienHeTaiKhoan(user).map((x) => <span key={x} className="mt-0.5 block break-all text-[14px] leading-tight text-[#a1a1a6]">{x}</span>) : <span className="mt-0.5 block text-[14px] leading-tight text-[#a1a1a6]">Thành viên</span>}
+                {lienHeTaiKhoan(user, hoSo).length ? lienHeTaiKhoan(user, hoSo).map((x) => <span key={x} className="mt-0.5 block break-all text-[14px] leading-tight text-[#a1a1a6]">{x}</span>) : <span className="mt-0.5 block text-[14px] leading-tight text-[#a1a1a6]">Thành viên</span>}
               </span>
             </Link>
           )}
@@ -551,6 +554,8 @@ export default function Header() {
     } catch { /* bỏ qua */ }
   }, [menuOpen]);
   const { user } = useAuth();
+  // Số tài khoản đọc từ hồ sơ — MỘT nguồn với trang Tài khoản / Cài đặt (26/11/2026)
+  const { profile: hoSo } = useProfile();
   // Chấm đỏ thông báo của tài khoản — mọi trang, mọi máy như nhau (06/11/2026)
   const soViec = useSoViecKhach(user?.id, usePathname() || "/");
 
@@ -596,7 +601,7 @@ export default function Header() {
               drawer menu (kiểu Batdongsan) → thanh header mobile chỉ Logo · ♡ · ☰. */}
           <div className="hidden items-center xl:flex">
             {user ? (
-              <AccountMenu name={displayName(user)} anh={anhDaiDien(user)} phu={lienHeTaiKhoan(user)} onLogout={signOut} soViec={soViec} />
+              <AccountMenu name={displayName(user)} anh={anhDaiDien(user)} phu={lienHeTaiKhoan(user, hoSo)} onLogout={signOut} soViec={soViec} />
             ) : (
               // Chưa đăng nhập: CHỈ "Đăng nhập" — trang đăng nhập tự lo cả tài khoản mới, không cần nút Đăng ký (chủ dự án 25/10/2026)
               <Link
@@ -654,7 +659,7 @@ export default function Header() {
 
       {/* Menu mobile để NGOÀI <header>: header có backdrop-filter (.nav-glass) — mọi
           phần tử fixed nằm bên trong sẽ bị neo vào header thay vì vào màn hình. */}
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={signOut} />
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} user={user} hoSo={hoSo} onLogout={signOut} />
     </>
   );
 }

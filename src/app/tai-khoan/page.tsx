@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
+import { soCuaTaiKhoan } from "@/lib/soTaiKhoan";
 import { useAuth, anhDaiDien, emailThat } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
 import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
@@ -132,9 +133,9 @@ export default function AccountOverviewPage() {
       <Link href="/tai-khoan/ca-nhan" className="flex items-center gap-4 rounded-2xl border border-cvr-line bg-white p-4 shadow-sm transition hover:border-cvr-ink/30">
         <AnhDaiDien url={profile.avatar_url || anhDaiDien(user)} ten={profile.full_name || "T"} className="h-14 w-14 shrink-0 bg-cvr-surface text-xl text-cvr-ink ring-1 ring-cvr-line" />
         <span className="min-w-0">
-          <span className="block break-words text-[17px] font-semibold tracking-tight text-cvr-ink">{profile.full_name?.trim() || profile.phone || emailThat(profile.email)}</span>
+          <span className="block break-words text-[17px] font-semibold tracking-tight text-cvr-ink">{profile.full_name?.trim() || soCuaTaiKhoan(profile, user) || emailThat(profile.email)}</span>
           {/* THỐNG NHẤT trang Tài khoản (chủ dự án 05/11/2026): dưới tên đủ số + email, mỗi thứ một dòng. Email KHÔNG hiện trên tin. */}
-          {profile.phone && <span className="block text-sm text-cvr-muted">{profile.phone}</span>}
+          {soCuaTaiKhoan(profile, user) && <span className="block text-sm text-cvr-muted">{soCuaTaiKhoan(profile, user)}</span>}
           {emailThat(profile.email) && <span className="block break-all text-sm text-cvr-muted">{emailThat(profile.email)}</span>}
         </span>
       </Link>

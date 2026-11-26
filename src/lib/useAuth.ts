@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { napSupabase, coPhienDangNhap } from "@/lib/supabase/nap";
 import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
+import { soCuaTaiKhoan } from "@/lib/soTaiKhoan";
 
 // Hook đọc trạng thái đăng nhập thật từ Supabase Auth (thay demo localStorage "cvr-member").
 // Có guard: thiếu env Supabase (vd chạy dev chưa có .env.local) → coi như chưa đăng nhập,
@@ -103,9 +104,11 @@ export function useRoiKhiMatPhien() {
 
 // Số + email của tài khoản để hiện dưới tên (menu tài khoản) — THỐNG NHẤT với Tổng quan, trang Tài khoản (05/11/2026).
 // Email chỉ hiện trong khu tài khoản, KHÔNG hiện trên tin đăng.
-export function lienHeTaiKhoan(user: User | null): string[] {
+// hoSo (26/11/2026, anh: "một tài khoản mà hai nguồn"): số đọc MỘT luật với trang Tài khoản / Cài đặt (lib/soTaiKhoan) — trước menu
+// đọc số đăng nhập, trang Tài khoản đọc số hồ sơ → cùng tài khoản hiện hai số khác nhau.
+export function lienHeTaiKhoan(user: User | null, hoSo?: { phone?: string | null; sdt_lien_he_xac_minh?: boolean | null } | null): string[] {
   const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
-  const so = user?.phone ? user.phone.replace(/^\+?84/, "0") : String(meta.phone ?? "");
+  const so = hoSo ? soCuaTaiKhoan(hoSo, user) : user?.phone ? user.phone.replace(/^\+?84/, "0") : String(meta.phone ?? "");
   return [so, emailThat(user?.email)].filter(Boolean);
 }
 

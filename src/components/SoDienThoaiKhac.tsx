@@ -21,8 +21,10 @@ import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 type So = { id: string; sdt: string; da_xac_minh: boolean };
 
-export default function SoDienThoaiKhac() {
+// soChinh (26/11/2026): MỘT mục "Số điện thoại" trong Cài đặt — số chính đứng đầu, rồi các số khác, một nút "+ Thêm số" (bấm mới mở ô nhập)
+export default function SoDienThoaiKhac({ soChinh = "" }: { soChinh?: string }) {
   const [ds, setDs] = useState<So[] | null>(null);
+  const [moThem, setMoThem] = useState(false);
   const [an, setAn] = useState(false);
   const [moi, setMoi] = useState("");
   const [loi, setLoi] = useState("");
@@ -64,7 +66,7 @@ export default function SoDienThoaiKhac() {
     if (!j.ok) { setLoi(j.loi || "Chưa thêm được số."); return; }
     if (buoc === "gui-ma") { setDaGui(true); return; }
     setDs((cu) => [...(cu ?? []).filter((x) => x.sdt !== so), { id: String(j.id ?? so), sdt: so, da_xac_minh: true }]);
-    setMoi(""); setMa(""); setDaGui(false);
+    setMoi(""); setMa(""); setDaGui(false); setMoThem(false);
   }
   function them(e: React.FormEvent) {
     e.preventDefault();
@@ -90,18 +92,22 @@ export default function SoDienThoaiKhac() {
 
   return (
     <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
-      <h2 className="text-base font-semibold text-cvr-ink">Số điện thoại khác của tôi</h2>
+      <h2 className="text-base font-semibold text-cvr-ink">Số điện thoại</h2>
 
-      {ds.length > 0 && (
-        <ul className="mt-4 divide-y divide-cvr-line">
+      <ul className="mt-3 divide-y divide-cvr-line">
+        {soChinh && (
+          <li className="flex items-center justify-between gap-3 py-2.5">
+            <strong className="font-semibold text-cvr-ink">{soChinh}</strong>
+            <span className="shrink-0 text-sm text-cvr-muted">Số chính</span>
+          </li>
+        )}
           {ds.map((s) => (
             <li key={s.id} className="flex items-center justify-between gap-3 py-2.5">
               <span className="flex min-w-0 items-center gap-2">
                 <strong className="font-semibold text-cvr-ink">{s.sdt}</strong>
-                {s.da_xac_minh ? (
-                  <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Đã xác minh</span>
-                ) : (
-                  <button type="button" onClick={() => { setMoi(s.sdt); setDaGui(false); setMa(""); }} className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 hover:underline">Chưa xác minh — xác minh</button>
+                {/* Số đã xác minh không cần nhãn (mọi số thêm đều qua mã); số cũ chưa xác minh mới hiện nút */}
+                {!s.da_xac_minh && (
+                  <button type="button" onClick={() => { setMoi(s.sdt); setDaGui(false); setMa(""); setMoThem(true); }} className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 hover:underline">Xác minh</button>
                 )}
               </span>
               <button
@@ -113,9 +119,11 @@ export default function SoDienThoaiKhac() {
               </button>
             </li>
           ))}
-        </ul>
-      )}
+      </ul>
 
+      {!moThem && !daGui ? (
+        <button type="button" onClick={() => setMoThem(true)} className="mt-3 text-sm font-semibold text-cvr-blue hover:underline">+ Thêm số</button>
+      ) : (
       <form onSubmit={them} className="mt-4 flex flex-wrap gap-2">
         <input
           type="tel"
@@ -143,6 +151,7 @@ export default function SoDienThoaiKhac() {
           />
         )}
       </form>
+      )}
       {loi && <p className="mt-2 text-sm font-medium text-red-600">{loi}</p>}
     </section>
   );

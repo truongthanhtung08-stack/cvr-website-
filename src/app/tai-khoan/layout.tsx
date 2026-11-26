@@ -113,7 +113,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                       pathname === "/tai-khoan/ca-nhan" ? "bg-cvr-ink text-white" : "text-cvr-ink hover:bg-cvr-surface"
                     }`}
                   >
-                    Hồ sơ
+                    Tài khoản
                   </Link>
                   <div className="space-y-0.5">
                     {/* MỘT danh sách với trang Hồ sơ điện thoại (/tai-khoan/ca-nhan), kể cả Trang quản trị cho admin (12/11/2026) */}
