@@ -415,6 +415,9 @@ export default function ListingBrowser({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ đọc ref
   }, []);
   const doiBoLoc = (nf: Filters) => {
+    // CHỌN / ĐỔI BẤT KỲ TRƯỜNG LỌC NÀO (hoặc bấm tìm) → kết quả mới hiện TỪ ĐẦU TRANG (anh 26/11/2026). Trước đây chỉ trường làm đổi trang
+    // (Khoảng giá…) mới về đầu; Loại BĐS lọc tại chỗ nên khách vẫn đứng giữa trang, tưởng không có gì đổi.
+    window.scrollTo({ top: 0, behavior: "instant" });
     const doiTruong = nf.keyword === filtersSong.keyword || !nf.keyword.trim();
     if (doiTruong) {
       // GIỮ NGUYÊN CÂU KHÁCH GÕ trong ô và trên địa chỉ, như Google (07/11/2026: câu đọc hết thành trường — "đất giá rẻ hòa xuân" — thì
