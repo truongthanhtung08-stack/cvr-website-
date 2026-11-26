@@ -25,7 +25,7 @@ import { tuSuaTkKhoa } from "@/lib/gopTaiKhoan";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  let b: { email?: string; sdt?: string; ma?: string; matKhauMoi?: string };
+  let b: { email?: string; sdt?: string; ma?: string; matKhauMoi?: string; buoc?: string };
   try {
     b = await req.json();
   } catch {
@@ -41,6 +41,12 @@ export async function POST(req: Request) {
   // người chỉ có số điện thoại, không có email — bắt buộc email ở bước quên mật
   // khẩu là khoá luôn đường vào của họ.
   if (!email && !sdt) return NextResponse.json({ ok: false, loi: "Thiếu email hoặc số điện thoại." }, { status: 400 });
+  // BƯỚC 2 "kiem-ma" (26/11/2026, anh: quy trình quên mật khẩu phải logic): chỉ kiểm mã đúng — chưa dùng mã, chưa đổi gì. Đúng thì
+  // khách sang bước 3 đặt mật khẩu mới (gửi lại cùng mã, lúc đó mới dùng mã + đổi mật khẩu).
+  if (b.buoc === "kiem-ma") {
+    const k = await kiemMa(email || sdt, "quen-mat-khau", ma, true);
+    return NextResponse.json(k.ok ? { ok: true } : { ok: false, loi: k.loi }, { status: k.ok ? 200 : 400 });
+  }
   if (matKhauMoi.length < 6)
     return NextResponse.json({ ok: false, loi: "Mật khẩu cần ít nhất 6 ký tự." }, { status: 400 });
 

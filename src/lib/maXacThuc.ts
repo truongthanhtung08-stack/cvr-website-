@@ -76,7 +76,8 @@ export type KetQuaKiem = { ok: true } | { ok: false; loi: string };
 
 // Kiểm mã. Đúng thì đánh dấu ĐÃ DÙNG ngay trong lượt này — một mã không bao giờ
 // dùng được hai lần.
-export async function kiemMa(dinhDanh: string, viec: Viec, ma: string): Promise<KetQuaKiem> {
+// giuMa: CHỈ KIỂM, chưa dùng mã (quên mật khẩu bước 2 — kiểm mã đúng trước, bước 3 đặt mật khẩu mới dùng mã; 26/11/2026)
+export async function kiemMa(dinhDanh: string, viec: Viec, ma: string, giuMa = false): Promise<KetQuaKiem> {
   const db = createAdminClient();
   if (!db) return { ok: false, loi: "Hệ thống xác thực chưa sẵn sàng." };
 
@@ -102,7 +103,7 @@ export async function kiemMa(dinhDanh: string, viec: Viec, ma: string): Promise<
     return { ok: false, loi: con > 0 ? `Mã không đúng. Còn ${con} lần thử.` : "Nhập sai quá nhiều lần. Bấm gửi lại mã mới." };
   }
 
-  await db.from("ma_xac_thuc").update({ da_dung: true }).eq("id", dong.id);
+  if (!giuMa) await db.from("ma_xac_thuc").update({ da_dung: true }).eq("id", dong.id);
   return { ok: true };
 }
 

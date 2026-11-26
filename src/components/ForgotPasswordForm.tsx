@@ -22,7 +22,9 @@ import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 // ============================================================================
 
 export default function ForgotPasswordForm() {
-  const [buoc, setBuoc] = useState<"email" | "ma">("email");
+  // 3 BƯỚC TÁCH RIÊNG (anh 26/11/2026: "quy trình rất không logic"): ① số điện thoại → ② mã (kiểm đúng NGAY) → ③ mật khẩu mới.
+  // Trước đây bước 2 dồn mã + mật khẩu + nhập lại: mã sai cũng phải gõ xong mật khẩu mới biết.
+  const [buoc, setBuoc] = useState<"email" | "ma" | "matkhau">("email");
   // MỘT Ô cho cả email lẫn số điện thoại — khách được đăng tin hộ nhiều người
   // chỉ có số điện thoại, bắt nhập email là khoá luôn đường vào của họ.
   const [dinhDanh, setDinhDanh] = useState("");
@@ -58,6 +60,26 @@ export default function ForgotPasswordForm() {
       if (!kq.ok) return setLoi(kq.loi || "Không gửi được mã.");
       setKenh(kq.kenh === "zalo" ? "zalo" : "email");
       setBuoc("ma");
+    } catch {
+      setLoi("Không kết nối được máy chủ.");
+    } finally {
+      setDangChay(false);
+    }
+  }
+
+  async function kiemMaNhap(e: React.FormEvent) {
+    e.preventDefault();
+    setLoi("");
+    if (ma.trim().length !== 6) return setLoi("Mã gồm 6 chữ số.");
+    setDangChay(true);
+    try {
+      const kq = await fetch("/api/xac-thuc/doi-mat-khau", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buoc: "kiem-ma", sdt: chuanHoaSdt(dinhDanh), ma: ma.trim() }),
+      }).then((x) => x.json());
+      if (!kq.ok) return setLoi(kq.loi || "Mã không đúng.");
+      setBuoc("matkhau");
     } catch {
       setLoi("Không kết nối được máy chủ.");
     } finally {
@@ -142,31 +164,43 @@ export default function ForgotPasswordForm() {
             </button>
           </form>
         </>
-      ) : (
+      ) : buoc === "ma" ? (
         <>
           <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
-            Mã 6 số vừa gửi tới{" "}
-            <strong className="font-semibold text-cvr-ink">
-              {kenh === "zalo" ? `Zalo ${chuanHoaSdt(dinhDanh)}` : dinhDanh.trim()}
-            </strong>
-            , hiệu lực 10 phút.
+            Mã 6 số vừa gửi tới <strong className="font-semibold text-cvr-ink">Zalo {chuanHoaSdt(dinhDanh)}</strong>, hiệu lực 10 phút.
           </p>
-          <form onSubmit={datLai} className="mt-5 space-y-4">
+          <form onSubmit={kiemMaNhap} className="mt-5 space-y-4">
             <input
               value={ma}
-              onChange={(e) => setMa(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) => setMa(e.target.value.replace(/D/g, "").slice(0, 6))}
               inputMode="numeric"
               autoComplete="one-time-code"
               autoFocus
               placeholder="______"
               className="h-14 w-full rounded-lg border border-cvr-line text-center text-2xl font-semibold tracking-[0.5em] text-cvr-ink outline-none focus:border-cvr-ink"
             />
+            {loi && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{loi}</p>}
+            <button
+              type="submit"
+              disabled={dangChay || ma.length !== 6}
+              className="h-12 w-full rounded-lg bg-cvr-ink text-[15px] font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
+            >
+              {dangChay ? "Đang kiểm mã…" : "Xác nhận mã"}
+            </button>
+            <button type="button" onClick={() => { setBuoc("email"); setMa(""); setLoi(""); }} className="w-full text-sm text-cvr-muted hover:text-cvr-ink">
+              ← Nhập lại số điện thoại
+            </button>
+          </form>
+        </>
+      ) : (
+        <>
+          <form onSubmit={datLai} className="mt-5 space-y-4">
             <div>
               <label className="text-sm font-medium text-cvr-body">Mật khẩu mới</label>
-              <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" placeholder="Ít nhất 6 ký tự" className={oCls} />
+              <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" autoFocus placeholder="Ít nhất 6 ký tự" className={oCls} />
             </div>
             <div>
-              <label className="text-sm font-medium text-cvr-body">Xác minh mật khẩu</label>
+              <label className="text-sm font-medium text-cvr-body">Nhập lại mật khẩu mới</label>
               <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" placeholder="Nhập lại mật khẩu mới" className={oCls} />
             </div>
             {loi && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{loi}</p>}
@@ -175,10 +209,7 @@ export default function ForgotPasswordForm() {
               disabled={dangChay}
               className="h-12 w-full rounded-lg bg-cvr-ink text-[15px] font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
             >
-              {dangChay ? "Đang đặt lại…" : "Đặt lại và đăng nhập"}
-            </button>
-            <button type="button" onClick={() => { setBuoc("email"); setMa(""); setLoi(""); }} className="w-full text-sm text-cvr-muted hover:text-cvr-ink">
-              ← Nhập lại số điện thoại
+              {dangChay ? "Đang lưu…" : "Lưu mật khẩu và đăng nhập"}
             </button>
           </form>
         </>
