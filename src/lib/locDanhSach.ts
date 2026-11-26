@@ -499,6 +499,9 @@ export function boLocKhoiDau(
     if (g.beds && !f.beds) f.beds = g.beds;
     if (g.direction && !f.direction) f.direction = g.direction;
     if (g.legal && !f.legal) f.legal = g.legal;
+    // Trang pSEO đặc điểm (pseo.ts boLocCua, 26/11/2026): chỉ khi trang truyền vào — bộ lọc thường không truyền hai ô này, không đổi
+    if (g.keyword && !f.keyword.trim()) f.keyword = g.keyword;
+    if (g.dacDiem?.length && !f.dacDiem?.length) f.dacDiem = [...g.dacDiem];
   }
   return f;
 }

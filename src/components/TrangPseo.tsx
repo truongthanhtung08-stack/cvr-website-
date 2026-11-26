@@ -8,7 +8,7 @@ import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import LienKetPseo from "@/components/LienKetPseo";
 import HoiDapPseo, { hoiDapPseo, giaTheoNhom, GiaTheoNhomPseo } from "@/components/HoiDapPseo";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
-import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
+import { goiNheBaiViet } from "@/lib/goiNhe";
 import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, danhDauGiaRe, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
@@ -45,19 +45,19 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   const items = listings.filter((l) => khop(l, dk));
   // Trang giá rẻ: xếp rẻ → cao theo giá/m² (anh 21/11/2026) — danh sách + ItemList cho Google cùng thứ tự
   if (dk.giaRe) items.sort((x, y) => (giaMoiM2(x) ?? Infinity) - (giaMoiM2(y) ?? Infinity));
-  const itemsHetHan = hetHan.filter((l) => khop(l, dk));
   const heading = dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
   const path = duongDan(dk);
-  // Trục có ô lọc tương ứng (tỉnh, phường, loại hình, giá, phòng ngủ, pháp lý, hướng): danh sách
-  // dùng chung dữ liệu /api/danh-sach + MỞ SẴN bộ lọc (file pSEO: "Preset filter bar"), khách nới
-  // lọc được như trang thường. Trục đường / kiệt: không có ô lọc → nhận đúng danh sách tin khớp.
+  // MỌI trục hiện kết quả qua CÙNG bộ lọc của web (pseo.ts boLocCua, anh 26/11/2026): 100% → chính xác → tương đối → liên quan,
+  // mỗi mức VIP → còn hạn → hết hạn → ngày đăng. Đặc điểm / kiệt / đường đi qua ô từ khoá.
   const boLoc = boLocCua(dk);
+  const quaTuKhoa = !!(dk.giaRe || dk.dacDiem || dk.kiet || dk.duong);
   const soLieu = soLieuTrang(items, dk.muc, !giuSoCu(path));
   // Trang 1 máy chủ dựng sẵn (lib/ketQuaDau, 21/10/2026): HTML có tin thật khách nhìn thấy — thay khung chờ + danh sách ẩn cũ
-  const ketQuaDau = boLoc ? await ketQuaTrangDau(dk.muc, { initialFilters: boLoc }) : undefined;
+  const ketQuaDau = await ketQuaTrangDau(dk.muc, { initialFilters: boLoc });
   // Trang ít tin (< 8 — dưới một dải thẻ): thêm "Bất động sản tương tự" dưới danh sách (anh 18/11/2026). Trang đang top / đóng băng giữ nguyên.
+  // Trang đặc điểm: bộ lọc đã xếp sẵn tin liên quan trong danh sách → không thêm khối riêng (khỏi lặp tin).
   // HTML nhẹ như trang tin: 8 thẻ bỏ mô tả, "Xem thêm" tự nạp theo mã.
-  const tuongTu = items.length < 8 && !TRANG_TOP.has(path) && !TRANG_DONG_BANG.has(path) ? tinTuongTuTrang(listings, dk, items) : [];
+  const tuongTu = !quaTuKhoa && items.length < 8 && !TRANG_TOP.has(path) && !TRANG_DONG_BANG.has(path) ? tinTuongTuTrang(listings, dk, items) : [];
   const tuongTuNhe = tuongTu.slice(0, 8).map(({ desc: _d, searchText: _s, ...the }) => the);
   return (
     <>
@@ -67,19 +67,7 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
         {/* Đường dẫn phân cấp: CHỈ cho Google (JSON-LD) — không hiện trên màn hình (chủ dự án 17/10/2026: dòng này nằm
             trên ô tìm làm rối; điện thoại đã có thanh "← Quay lại"). SEO không mất: Google đọc từ dữ liệu cấu trúc. */}
         <BreadcrumbJsonLd items={duongDanPhanCap(dk)} />
-        {boLoc ? (
-          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} ketQuaDau={ketQuaDau} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
-        ) : (
-          <ListingBrowser
-            purpose={dk.muc}
-            heading={heading}
-            soLieu={soLieu}
-            items={goiNheTin(items)}
-            sapXepDau={dk.giaRe ? (dk.muc === "ban" ? "gia-m2" : "gia-tang") : undefined}
-            itemsHetHan={goiNheTin(itemsHetHan)}
-            articles={goiNheBaiViet(articles)}
-          />
-        )}
+        <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} ketQuaDau={ketQuaDau} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
         {tuongTu.length > 0 && (
           <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
             <ListingShowcase

@@ -92,11 +92,15 @@ export const PHAP_LY: PhapLy[] = [
   { slug: "hop-dong-mua-ban", nhan: "hợp đồng mua bán", boLoc: "Hợp đồng mua bán", khop: (s) => /hợp đồng mua bán/i.test(s) },
 ];
 
-// Điều kiện trang → bộ lọc mở sẵn của ListingBrowser. Đường / kiệt không có ô lọc riêng → null
-// (trang đó nhận đúng danh sách tin khớp thay vì bộ lọc).
-export function boLocCua(dk: DieuKien): Partial<Filters> | null {
-  if (dk.duong || dk.kiet || dk.giaRe || dk.dacDiem) return null; // giá rẻ: không có ô lọc riêng → trang nhận đúng danh sách tin khớp
+// Điều kiện trang → bộ lọc mở sẵn của ListingBrowser. MỌI trang pSEO hiện kết quả qua CÙNG bộ lọc của web (anh 26/11/2026: khách
+// search Google vào trang chỉ có 1 tin chính xác 100% → tin đó đầu tiên, bên dưới hiện tiếp nhiều tin theo mức chính xác → tương đối →
+// liên quan, mỗi mức VIP → còn hạn → hết hạn → ngày đăng — trang không mỏng). Đặc điểm / kiệt / đường không có ô lọc riêng → ô từ khoá
+// (bộ lọc xếp tin đúng chữ lên đầu, như khách tự gõ câu đó trên web). Giá rẻ → đặc điểm "giá rẻ" của bộ lọc.
+export function boLocCua(dk: DieuKien): Partial<Filters> {
+  const tuKhoa = dk.dacDiem ? dk.dacDiem.nhan : dk.kiet ? "kiệt hẻm" : dk.duong ? dk.duong : "";
   return {
+    ...(tuKhoa ? { keyword: tuKhoa } : {}),
+    ...(dk.giaRe ? { dacDiem: ["giá rẻ"] } : {}),
     locations: dk.thanhPho
       ? dk.thanhPho.phuong.map((ward) => ({ province: dk.tinh.name, ward }))
       : [dk.phuong ? { province: dk.tinh.name, ward: dk.phuong } : { province: dk.tinh.name }],
