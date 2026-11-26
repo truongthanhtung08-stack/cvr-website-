@@ -59,6 +59,18 @@ async function xuLy(req: Request) {
 
   if (!listingId) return loi("Thiếu mã tin.", 400);
 
+  // ĐÃ ĐĂNG NHẬP, TIN HẾT HẠN (anh 26/11/2026: "tin hết hạn không liên hệ được khi đăng nhập"): hàm CSDL reveal_contact chỉ trả số tin
+  // đang hiện → trình duyệt hỏi lại đây kèm phiên đăng nhập; trả số như tin thường, ghi khách quan tâm theo số + tên tài khoản.
+  const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (token) {
+    const admin = createAdminClient();
+    const { data: u } = admin ? await admin.auth.getUser(token) : { data: null };
+    if (admin && u?.user) {
+      const { data: hs } = await admin.from("profiles").select("phone,full_name").eq("id", u.user.id).maybeSingle();
+      return traSo(listingId, chuanHoaSdt(hs?.phone ?? ""), hs?.full_name ?? undefined, null);
+    }
+  }
+
   // CHỈ XÁC MINH SỐ (vd để gửi đánh giá — chủ dự án chốt 01/10/2026): không trả số người
   // đăng, không ghi lead; xác minh xong chỉ phát vé.
   const chiXacMinh = body.chiXacMinh === true;

@@ -32,6 +32,16 @@ const MOB_LAN = 10; // điện thoại: ban đầu 10 tin, mỗi lần "Xem thê
 export default function FeaturedListings({ items = featuredListings }: { items?: Listing[] }) {
   const [activeTab, setActiveTab] = useState("Tất cả");
   const [slideIdx, setSlideIdx] = useState(0);
+  // TỐC ĐỘ ĐIỆN THOẠI (anh 26/11/2026: "web load rất chậm"): bộ thẻ MÁY TÍNH (16 thẻ, ẩn trên điện thoại) chỉ dựng khi màn ≥ 640px.
+  // Trước đây trang dựng sẵn cả hai bộ — điện thoại phải dựng thêm 16 thẻ ẩn (đo 26/11: chạy mã 6,7 s, LCP 5,8 s). Giao diện không đổi.
+  const [laPC, setLaPC] = useState(false);
+  useEffect(() => {
+    const m = window.matchMedia("(min-width: 640px)");
+    const doi = () => setLaPC(m.matches);
+    doi();
+    m.addEventListener("change", doi);
+    return () => m.removeEventListener("change", doi);
+  }, []);
   // Chạm thì dừng rồi TỰ CHẠY LẠI — màn cảm ứng không có động tác rê chuột ra,
   // để setPaused(true) trơ như cũ là chạm một cái slide chết tới khi tải lại trang.
   const { dung: paused, chamVao: chamDai, setDung: setPaused } = useTamDung(6000);
@@ -205,7 +215,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 onMouseLeave={() => setPaused(false)}
                 onTouchStart={chamDai}
               >
-                {slides.map((items, i) => (
+                {laPC && slides.map((items, i) => (
                   <div key={i} className="w-full shrink-0 snap-start">
                     {/* Mobile 1 tin/hàng (thẻ đủ rộng để đọc) · tablet 2 · desktop 4 */}
                   {/* items-start: thẻ tự giãn theo nội dung, KHÔNG kéo cao bằng thẻ cao nhất hàng → không khoảng trắng dưới (chủ dự án 24/10/2026) */}

@@ -95,7 +95,17 @@ function useReveal(listingId: string) {
       if (rpcErr) throw rpcErr;
       // Hiện ĐÚNG chuẩn 0 + 10 số — khớp với file gốc và với ô nhập trong admin,
       // kể cả tin cũ đã lưu lẫn dấu chấm / khoảng trắng / +84.
-      const ds = tachNhieuSdt((data as string | null) ?? "");
+      let ds = tachNhieuSdt((data as string | null) ?? "");
+      // Tin HẾT HẠN: hàm CSDL chỉ trả số tin đang hiện → hỏi máy chủ web (cho cả tin hết hạn) kèm phiên đăng nhập (26/11/2026)
+      if (!ds.length) {
+        const token = (await supabase.auth.getSession()).data.session?.access_token ?? "";
+        const j = await fetch("/api/xem-so", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ listingId }),
+        }).then((x) => x.json()).catch(() => null);
+        ds = tachNhieuSdt((j?.ok && j.sdt) || "");
+      }
       if (!ds.length) {
         setError("Tin này chưa có số điện thoại.");
         return;

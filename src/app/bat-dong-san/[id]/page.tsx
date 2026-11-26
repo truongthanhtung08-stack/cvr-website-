@@ -434,43 +434,18 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               · ĐIỆN THOẠI: dải mảnh "Tin đã hết hạn…" → TOÀN BỘ tin như thường → khung
                 "Gửi yêu cầu liên hệ" (thay số) → BĐS dành cho bạn ở CUỐI.
               Cả hai: số trong mô tả đã che, không hiện số người đăng. */}
+          {/* PC NHƯ ĐIỆN THOẠI (anh 26/11/2026): tin hết hạn hiện thẳng nội dung + dòng hết hạn, liên hệ bấm được — bỏ khung "đã hết hạn"
+              + gợi ý đẩy lên đầu ở máy tính (phải bấm "Xem nội dung tin" mới thấy tin) */}
           {hetHan && (
-            <div className="-mx-4 mb-0 flex items-start gap-2.5 bg-[#f1ecf8] px-4 py-3 text-[13.5px] leading-relaxed text-cvr-ink sm:mx-0 lg:hidden">
+            <div className="-mx-4 mb-0 flex items-start gap-2.5 bg-[#f1ecf8] px-4 py-3 text-[13.5px] leading-relaxed text-cvr-ink sm:mx-0 sm:mb-4 sm:rounded-xl">
               <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#6b4fa0]" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
               <p>
-                <b>Tin đã hết hạn hiển thị{l.hetHanLuc ? ` ngày ${new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}` : ""}.</b>
+                <b>Tin hết hạn, vui lòng liên hệ người đăng tin để biết thêm thông tin.</b>{/* anh duyệt nguyên văn 26/11/2026, bỏ ngày */}
               </p>
-            </div>
-          )}
-          {hetHan && (
-            <div className="hidden lg:block">
-              <div className="mt-4 rounded-2xl border border-cvr-line bg-cvr-surface px-5 py-5 text-center sm:mt-6">
-                <p className="text-[17px] font-semibold tracking-tight text-cvr-ink">Tin đăng này đã hết hạn trên Coastal Land.</p>
-                <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
-                  Bạn có thể tham khảo những gợi ý dưới đây hoặc dùng công cụ tìm kiếm để tìm những tin đăng mới nhất.
-                </p>
-                <a href="#noi-dung-tin" className="mt-4 inline-flex h-10 items-center rounded-full border border-cvr-line bg-white px-5 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
-                  Xem nội dung tin
-                </a>
-              </div>
-              <ListingShowcase
-                items={relatedNhe} idsDayDu={relatedIds}
-                sectionKey="bds-tuong-tu"
-                purpose={purpose === "thue" || purpose === "can-thue" ? "thue" : "ban"}
-                title="Bất động sản dành cho bạn"
-                heading="Bất động sản dành cho bạn"
-                relevance
-                emptyNote="Chưa có bất động sản tương tự."
-              />
             </div>
           )}
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
           <HomeCollapsible>
-          {hetHan && (
-            <h2 id="noi-dung-tin" className="mb-4 mt-8 hidden scroll-mt-14 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px] lg:block">
-              Nội dung tin đăng
-            </h2>
-          )}
 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
           {/* Điện thoại: Gallery đã chốt. Máy tính: khung slide kiểu Batdongsan nằm trong cột trái (KhungAnhPC, 18/10/2026) */}
@@ -871,7 +846,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               không chừa khoảng trống trên đầu). */}
           {/* Tin hết hạn: máy tính đã đưa gợi ý lên đầu trang; ĐIỆN THOẠI để ở cuối như Batdongsan. */}
           {hetHan && (
-            <div className="lg:hidden">
+            <div>
               <ListingShowcase
                 items={relatedNhe} idsDayDu={relatedIds}
                 sectionKey="bds-danh-cho-ban-mb"
