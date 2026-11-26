@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import TrangPseo, { metadataPseo } from "@/components/TrangPseo";
 import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
-import { giaiMaDanhSach, trangIndex } from "@/lib/pseo";
+import { giaiMaDanhSach, trangGomVe, trangIndex } from "@/lib/pseo";
 
 // pSEO Template 1 — /mua-ban/<loại>/<tỉnh>[/<phường | mức giá | pháp lý | phòng ngủ>] và /mua-ban/<tỉnh>/<phường>
 // Luật lập chỉ mục + tiêu đề: src/lib/pseo.ts.
@@ -32,5 +32,8 @@ export default async function Page({ params }: { params: Promise<{ loai: string;
   const { loai, duong } = await params;
   const dk = await dieuKien(loai, duong);
   if (!dk) notFound();
+  // giá rẻ / chính chủ / cần bán gấp / giảm giá mạnh gom về trang lõi (pseo.ts GOM_VE_LOI, 26/11/2026)
+  const ve = trangGomVe(dk);
+  if (ve) permanentRedirect(ve);
   return <TrangPseo dk={dk} />;
 }
