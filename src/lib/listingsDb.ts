@@ -493,7 +493,8 @@ export async function getListingsHetHan(): Promise<Listing[]> {
   }
   return ds
     .filter((r) => !isSeedRow(r) && !conHan(r) && !laTinTim(r.purpose))
-    .map((r) => ({ ...rowToListing(r), hetHan: true }));
+    // 1 tháng đầu sau hạn hiện như tin thường (quaMotThang, anh 26/11/2026)
+    .map((r) => { const l = rowToListing(r); return { ...l, hetHan: quaMotThang(l.hetHanLuc ?? r.tier_expires_at) }; });
 }
 
 // SỐ TIN THEO TỈNH cho ô "Bất động sản theo khu vực" trang chủ (anh 26/11/2026: "tất cả số lượng tin của 1 khu vực, còn + hết hạn,
@@ -795,7 +796,16 @@ export async function tinDaHetHan(id: string): Promise<boolean> {
   const r = rows?.[0];
   if (!r) return false;
   // Qua giờ hết hạn là hết hạn ngay — không chờ cron đổi status.
-  return r.status === "expired" || (r.status === "approved" && !!r.tier_expires_at && new Date(r.tier_expires_at).getTime() <= Date.now());
+  const het = r.status === "expired" || (r.status === "approved" && !!r.tier_expires_at && new Date(r.tier_expires_at).getTime() <= Date.now());
+  return het && quaMotThang(r.tier_expires_at); // 1 tháng đầu sau hạn: trang tin như tin thường (anh 26/11/2026)
+}
+
+// HIỂN THỊ NHƯ TIN THƯỜNG THÊM 1 THÁNG SAU HẠN GÓI / CHƯƠNG TRÌNH (anh 26/11/2026: "sau 1 tháng + thời hạn gói (chương trình) thì mới
+// ghi hết hạn", áp cả tin khách đăng lẫn đăng hộ): gói, hạn, tính
+// tiền KHÔNG đổi (một nguồn Admin); chỉ nhãn "Tin hết hạn" + thẻ mờ hiện khi đã quá hạn hơn 30 ngày. Không có ngày hạn → coi như quá.
+const MOT_THANG_MS = 30 * 24 * 3600 * 1000;
+export function quaMotThang(han?: string | null): boolean {
+  return !han || Date.now() - Date.parse(han) > MOT_THANG_MS;
 }
 
 export async function getListingDetail(id: string): Promise<ListingFull | null> {
