@@ -8,7 +8,9 @@ import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import LienKetPseo from "@/components/LienKetPseo";
 import HoiDapPseo, { hoiDapPseo, giaTheoNhom, GiaTheoNhomPseo } from "@/components/HoiDapPseo";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
-import { goiNheBaiViet } from "@/lib/goiNhe";
+import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
+import { tierRank } from "@/lib/packages";
+import type { Listing } from "@/lib/data";
 import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, danhDauGiaRe, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
@@ -23,13 +25,30 @@ import { giaMoiM2 } from "@/lib/chiSoGia";
 // đang chạy, chỉ nhận đúng tin khớp điều kiện) → liên kết nội bộ.
 // ============================================================================
 
+function titleCongThuc(dk: DieuKien): string {
+  const hoa = (s: string) => s.split(" ").map((w) => (w ? w[0].toLocaleUpperCase("vi") + w.slice(1) : w)).join(" ");
+  const phan = tieuDe(dk).replace(/^(Mua bán|Bán|Cho thuê)\s+/i, "");
+  const goc = hoa(`${dk.muc === "ban" ? "Mua Bán" : "Cho Thuê"} ${phan}`);
+  const coLoc = !!(dk.giaRe || dk.dacDiem || dk.giaDuoi || dk.phapLy || dk.phongNgu || dk.huong || dk.duong || dk.kiet);
+  const thang = thangHienTai().replace(/^tháng (\d{1,2})\/(\d{4})$/, "T$1/$2");
+  const coRe = goc.length < 45 && !coLoc ? `${goc} Giá Rẻ` : goc;
+  if (`${coRe} ${thang}`.length <= 52) return `${coRe} ${thang}`;
+  if (`${goc} ${thang}`.length <= 52) return `${goc} ${thang}`;
+  return goc;
+}
+
 export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
   const [tin, tinXet] = await Promise.all([getListings().catch(() => []), getTinXetTrang()]);
   const trang = tatCaTrang(tinXet).get(duongDan(dk)); // cổng đếm cả tin hết hạn (29/10/2026)
   // Một câu một đặc điểm (anh 21/11/2026): trang giá rẻ không thêm "tháng" — "Nhà đất Đà Nẵng giá rẻ"
-  const title = dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
-  const description = moTa(dk, tin.filter((l) => khop(l, dk)));
   const path = duongDan(dk);
+  // TITLE THEO CÔNG THỨC (anh 26/11/2026, tệp "Phân tích từ khóa và cấu trúc pSEO" + KE-HOACH-TU-KHOA sheet plan final):
+  // {Mua Bán | Cho Thuê} {Loại hình} {Khu vực} {Giá Rẻ} T{MM}/{YYYY} — giữ phần đầu; thêm "Giá Rẻ" khi phần đầu < 45 ký tự và trang không
+  // có bộ lọc riêng; thêm tháng khi cả câu ≤ 52 ký tự. H1 giữ nguyên. Trang đang top / giữ bản cũ (giuSoCu): title như cũ.
+  const title = giuSoCu(path)
+    ? (dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`)
+    : titleCongThuc(dk);
+  const description = moTa(dk, tin.filter((l) => khop(l, dk)));
   return {
     title: tieuDeGoogle(title),
     description,
@@ -42,9 +61,19 @@ export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
 export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   const [listings, articles, hetHan] = await Promise.all([getListings(), getArticles(), getListingsHetHan()]);
   if (dk.giaRe) danhDauGiaRe([...listings, ...hetHan]); // mốc trung bình trên cả bộ tin — cùng mốc với sitemap (pseo.ts)
-  const items = listings.filter((l) => khop(l, dk));
-  // Trang giá rẻ: xếp rẻ → cao theo giá/m² (anh 21/11/2026) — danh sách + ItemList cho Google cùng thứ tự
-  if (dk.giaRe) items.sort((x, y) => (giaMoiM2(x) ?? Infinity) - (giaMoiM2(y) ?? Infinity));
+  // TRANG ĐẶC ĐIỂM — giá rẻ là MỘT trong nhiều đặc điểm, mọi đặc điểm cùng một cấu trúc (anh 26/11/2026: "nhà đất Đà Nẵng giá rẻ" =
+  // mục đích Mua bán → TẤT CẢ tin Mua bán tại Đà Nẵng, không mỏng). Trang hiện mọi tin cùng mục đích + nơi (+ loại hình):
+  //   tin ĐÚNG đặc điểm trước, rồi tin còn lại; mỗi phần còn hạn → hết hạn; trong đó VIP → Basic; mỗi cấp mới → cũ.
+  //   Giá rẻ: cả danh sách xếp giá rẻ → cao (bán: giá/m², thuê: giá) — tin rẻ tự lên đầu.
+  const coDD = !!(dk.giaRe || dk.dacDiem);
+  const dkGoc: DieuKien = { ...dk, giaRe: undefined, dacDiem: undefined };
+  const giaSapXep = (l: Listing) => (dk.muc === "ban" ? giaMoiM2(l) : l.priceVnd) ?? Infinity;
+  const ngay = (l: Listing) => Date.parse(l.bumpedAt ?? l.postedAt ?? "") || 0;
+  const phu = (a: Listing, b: Listing) => (dk.giaRe ? giaSapXep(a) - giaSapXep(b) : ngay(b) - ngay(a));
+  const dung = (l: Listing) => (dk.giaRe ? true : khop(l, dk)) ? 0 : 1;
+  const xep = (a: Listing, b: Listing) => dung(a) - dung(b) || tierRank(a.badge) - tierRank(b.badge) || phu(a, b);
+  const items = coDD ? listings.filter((l) => khop(l, dkGoc)).sort(xep) : listings.filter((l) => khop(l, dk));
+  const hetHanDD = coDD ? hetHan.filter((l) => khop(l, dkGoc)).sort((a, b) => dung(a) - dung(b) || phu(a, b)) : [];
   const heading = dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`;
   const path = duongDan(dk);
   // MỌI trục hiện kết quả qua CÙNG bộ lọc của web (pseo.ts boLocCua, anh 26/11/2026): 100% → chính xác → tương đối → liên quan,
@@ -67,7 +96,12 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
         {/* Đường dẫn phân cấp: CHỈ cho Google (JSON-LD) — không hiện trên màn hình (chủ dự án 17/10/2026: dòng này nằm
             trên ô tìm làm rối; điện thoại đã có thanh "← Quay lại"). SEO không mất: Google đọc từ dữ liệu cấu trúc. */}
         <BreadcrumbJsonLd items={duongDanPhanCap(dk)} />
-        <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} ketQuaDau={ketQuaDau} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
+        {coDD ? (
+          // trang đặc điểm: giữ đúng thứ tự máy chủ đã xếp (đúng đặc điểm → còn lại · còn hạn → hết hạn · VIP → Basic)
+          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} items={goiNheTin(items)} itemsHetHan={goiNheTin(hetHanDD)} sapXepDau="lien-quan" articles={goiNheBaiViet(articles)} />
+        ) : (
+          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} ketQuaDau={ketQuaDau} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
+        )}
         {tuongTu.length > 0 && (
           <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
             <ListingShowcase
