@@ -715,7 +715,8 @@ export default function FilterBar({
   };
   const loiRaNhap = (close: () => void, datLai: () => void) => <NutXem nhan={chuXem} onClick={() => apDungNhap(close)} onReset={datLai} />;
   // Điện thoại: mỗi ô rộng vừa nội dung (hàng cuộn ngang). Máy tính: các ô CHIA ĐỀU hàng, chọn xong không đổi cỡ (01/11/2026).
-  const ddClass = "shrink-0 sm:min-w-0 sm:flex-1";
+  // PC: mỗi trường rộng ít nhất bằng chữ (anh 26/11/2026: "Mua bán · Cho thuê bị che"), dư chỗ giãn đều, màn hẹp xuống hàng — không cắt chữ
+  const ddClass = "shrink-0 sm:min-w-fit sm:flex-1";
 
   // ===== "Loại nhà đất" — dòng 2 (bố cục Batdongsan) =====
   const typeDropdown = (
