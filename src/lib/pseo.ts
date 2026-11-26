@@ -181,7 +181,7 @@ const GIU_DAC_DIEM = new Set(["/mua-ban/nha-mat-pho/da-nang/gan-bien"]); // #5 "
 const giuDacDiem = (dk: DieuKien) => GIU_DAC_DIEM.has(duongDan(dk));
 /** Trang giá rẻ / đặc điểm → đường trang lõi (khu vực + loại hình) để chuyển 301; trang khác → null */
 export function trangGomVe(dk: DieuKien): string | null {
-  if (!dk.giaRe && !(dk.dacDiem && !giuDacDiem(dk))) return null;
+  if (!dk.giaRe && !dk.kiet && !dk.huong && !dk.duong && !(dk.dacDiem && !giuDacDiem(dk))) return null;
   return duongDan({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat, thanhPho: dk.thanhPho });
 }
 
@@ -547,12 +547,8 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
     for (const dacDiem of ddCua) if (giuDacDiem({ muc, tinh, thanhPho, dacDiem })) ds.push({ muc, tinh, thanhPho, dacDiem });
   }
   if (muc === "ban") {
-    if (l.viTri === "kiet") ds.push({ muc, tinh, kiet: true });
-    if (l.duong) ds.push({ muc, tinh, duong: l.duong });
-    const huong = l.huong && HUONG.find((h) => cungTen(h, l.huong!));
-    if (huong) ds.push({ muc, tinh, huong });
+    // kiệt/hẻm, tên đường, hướng: gom về trang khu vực + loại hình (trangGomVe, 26/11/2026) — không sinh trang riêng
     for (const cat of danhMuc("ban").filter((c) => c.types.includes(l.type))) {
-      if (huong) ds.push({ muc, tinh, cat, huong });
       const pl = l.phapLy && PHAP_LY.find((p) => p.khop(l.phapLy!));
       if (pl) ds.push({ muc, tinh, cat, phapLy: pl });
     }
