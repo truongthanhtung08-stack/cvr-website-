@@ -9,7 +9,6 @@ import { useEffect } from "react";
 // file cũ làm sửa code xong không thấy đổi — đúng cái bẫy đã mất nhiều thời gian.
 export default function PwaRegister() {
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") return;
     if (!("serviceWorker" in navigator)) return;
     // CHỈ WEB THẬT (anh 08/11/2026: "F5 rất nhiều lần vẫn không có thay đổi"): bản build chạy xem thử (link 192.168.x.x, localhost) cũng là
     // "production" → service worker giữ bản cũ trên điện thoại anh đang kiểm. Ngoài coastalland.vn: gỡ service worker + xoá đệm, không đăng ký.
@@ -18,6 +17,8 @@ export default function PwaRegister() {
       if ("caches" in window) caches.keys().then((ks) => ks.forEach((k) => caches.delete(k))).catch(() => {});
       return;
     }
+    // Gỡ đệm chạy TRƯỚC (anh 26/11/2026: localhost dev giữ JS cũ vì bản dev thoát trước khi kịp gỡ service worker cũ)
+    if (process.env.NODE_ENV !== "production") return;
 
     const onLoad = () => {
       navigator.serviceWorker.register("/sw.js").then((reg) => {
