@@ -715,7 +715,8 @@ function SidebarLink({ active, onClick, count, children }: { active: boolean; on
             : "border-cvr-line bg-cvr-surface text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
         }`}
       >
-        <span className="truncate">{children}</span>
+        {/* PC: không cắt chữ (anh 26/11/2026: "Dưới 500 tr…" bị che) — ô hẹp thì xuống dòng */}
+        <span className="truncate lg:overflow-visible lg:whitespace-normal">{children}</span>
         {count != null && (
           <span className={active ? "text-white/70" : "text-cvr-faint"}>({count})</span>
         )}
