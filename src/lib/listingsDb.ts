@@ -509,7 +509,9 @@ export async function demTinTheoTinh(): Promise<{ tinh: Map<string, number>; phu
     const rows = await rest(`select=id,purpose,ward,district,province&status=in.(approved,expired)&order=id&offset=${tu}&limit=1000`);
     if (!rows) break;
     for (const r of rows) {
-      if (isSeedRow(r) || laTinTim(r.purpose)) continue;
+      // Ô khu vực trỏ trang MUA BÁN → chỉ đếm tin mua bán, để số trên ô = đúng số tin trang đó hiện (anh 26/11/2026: "số lượng tin,
+      // trang phải hiện đúng và chính xác theo số tin trên web") — còn hạn + hết hạn
+      if (isSeedRow(r) || laTinTim(r.purpose) || (r.purpose ?? "ban") !== "ban") continue;
       const moi = dongBoHaiHe(heCuaTin(r.district), { tinh: r.province, quan: r.district ?? "", phuong: r.ward ?? "" }).moi;
       const k = normalizeVi(moi.tinh || r.province || "");
       if (!k) continue;

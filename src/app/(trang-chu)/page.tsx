@@ -121,7 +121,7 @@ export default async function Home() {
             const tp = ten ? THANH_PHO.find((t) => t.name === ten) : undefined;
             // SỐ TIN THẬT (chủ dự án 31/10/2026: cấm số liệu mẫu). 06/11 đếm cả tỉnh, tin bán — thay ngày 26/11 bằng luật dưới.
             const tinhO = normalizeVi(tp?.tinh ?? ten);
-            // 26/11/2026 (anh): "tất cả số lượng tin của 1 khu vực" — cả Mua bán lẫn Cho thuê, còn hạn + hết hạn
+            // 26/11/2026 (anh): "tất cả số lượng tin của 1 khu vực" — còn hạn + hết hạn, đúng mục Mua bán của trang ô trỏ tới
             // Ô THÀNH PHỐ (Nha Trang, Quy Nhơn…) = đúng tin các phường mới của thành phố cũ đó (bảng sáp nhập), khớp trang thành phố;
             // ô TỈNH (Đà Nẵng, Huế, Quảng Ngãi) = cả tỉnh (anh 26/11/2026: "thành phố / phường thuộc tỉnh phải hiểu cho đúng")
             const so = !ten ? null : tp
