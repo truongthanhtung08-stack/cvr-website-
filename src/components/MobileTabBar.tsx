@@ -203,7 +203,7 @@ export default function MobileTabBar() {
         { href: "/tai-khoan/khach-hang", label: "Khách hàng", icon: "users" as const, on: pathname.startsWith("/tai-khoan/khach-hang") },
       {
         href: "/tai-khoan/ca-nhan",
-        label: "Hồ sơ", // MỘT TÊN với thanh trang công khai + menu ≡ (07/11/2026)
+        label: "Tài khoản", // MỘT TÊN với thanh trang công khai + menu ≡ (anh 26/11/2026)
         icon: "user" as const,
         on: pathname !== "/tai-khoan" && !pathname.startsWith("/tai-khoan/tin-dang") && !pathname.startsWith("/tai-khoan/khach-hang"),
       },
@@ -229,7 +229,7 @@ export default function MobileTabBar() {
     { href: ZALO_OA_URL, label: "Tin nhắn", icon: "home" as const, on: false, ngoai: true },
     {
       href: user ? "/tai-khoan" : "/dang-nhap",
-      label: "Hồ sơ", // chủ dự án 07/11/2026: "Tài khoản = Hồ sơ"
+      label: "Tài khoản", // anh 26/11/2026: "Hồ sơ" → "Tài khoản"
       icon: "user" as const,
       on: onHoSo,
     },

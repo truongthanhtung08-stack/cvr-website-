@@ -113,7 +113,8 @@ async function traSo(listingId: string, sdtKhach: string, ten: string | undefine
     .eq("id", listingId)
     .maybeSingle();
 
-  if (!tin || tin.status !== "approved") return loi("Tin không còn hiển thị.", 404);
+  // Tin HẾT HẠN vẫn xem số, gọi được như tin thường (anh 26/11/2026: "tin hết hạn vẫn ghi là hết hạn, mọi thứ còn lại như tin bình thường")
+  if (!tin || (tin.status !== "approved" && tin.status !== "expired")) return loi("Tin không còn hiển thị.", 404);
 
   // Người đăng hay ghi HAI SỐ trong một ô ("0707.435.555 / 0918.339.739") → giữ đủ cả hai,
   // trang tin hiện riêng từng số để bấm gọi được (gộp lại thì không gọi được số nào).

@@ -11,7 +11,6 @@ import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import { ContactActions, ContactBarMobile } from "@/components/LienHeReveal";
-import YeuCauLienHeLai, { NutYeuCauLienHe } from "@/components/YeuCauLienHeLai";
 import KhoiDanhGiaTin from "@/components/KhoiDanhGiaTin";
 import ShareButtons from "@/components/ShareButtons";
 import { ZALO_MINI_APP_URL } from "@/lib/lienHe";
@@ -245,14 +244,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // TIN HẾT HẠN: liên hệ tạm ẩn — kể cả số người đăng TỰ GHI trong mô tả ("Liên hệ 0905…").
   // Che ngay ở dữ liệu (trước khi gửi xuống trình duyệt) để số không lọt vào mã trang.
   // Đúng dạng SĐT Việt Nam (0/+84 + 3/5/7/8/9 + 8 số, cho phép cách/chấm/gạch) — không chạm giá tiền.
-  const cheSo = (s: string) => s.replace(/(?<![\d.,])(?:\+?84[\s.\-]?|0)[35789](?:[\s.\-]?\d){8}(?!\d)/g, "••••");
   // TIN CÒN HẠN: số trong mô tả ẩn đuôi như Batdongsan "0905 042 ***" — đủ số chỉ ở nút Hiện số
   // (chủ dự án 09/10/2026). Che ngay ở dữ liệu để số đủ không lọt vào mã trang.
   const anDuoi = (s: string) => s.replace(/(?<![\d.,])((?:\+?84[\s.\-]?|0)[35789](?:[\s.\-]?\d){8})(?!\d)/g, (so) => {
     const c = so.replace(/\D/g, "").replace(/^84/, "0");
     return `${c.slice(0, 4)} ${c.slice(4, 7)} ∗∗∗`; // ∗ (U+2217): dấu * thường bị khung mô tả hiểu là chữ đậm nên mất
   });
-  const che = hetHan ? cheSo : anDuoi;
+  // Tin hết hạn che số như tin thường (anh 26/11/2026) — số đủ chỉ hiện khi khách bấm Hiện số
+  const che = anDuoi;
   const d = {
     ...dGoc,
     descriptionParas: dGoc.descriptionParas.map(che),
@@ -834,9 +833,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         )}
                         <p className="min-w-0 break-words text-[17px] font-semibold leading-snug text-cvr-ink">{contact.name}</p>
                       </div>
-                      {hetHan
-                        ? <div className="mt-4"><YeuCauLienHeLai listingId={l.id} /></div>
-                        : <ContactActions listingId={l.id} phoneMask={phoneMask} />}
+                      {/* Tin hết hạn: liên hệ như tin thường (anh 26/11/2026) */}
+                      <ContactActions listingId={l.id} phoneMask={phoneMask} />
                     </>
                   ) : (
                     <p className="text-sm leading-relaxed text-cvr-muted">
@@ -906,7 +904,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
         {contact && (
         <div data-do-cao="lienhe-h" className="an-khi-go-phim fixed inset-x-0 bottom-0 z-40 flex items-center justify-evenly gap-3 border-t border-cvr-line bg-white/95 px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
-          {hetHan ? <NutYeuCauLienHe /> : <ContactBarMobile listingId={l.id} phoneMask={phoneMask} avatar={contact.avatar} ten={contact.name} />}
+          <ContactBarMobile listingId={l.id} phoneMask={phoneMask} avatar={contact.avatar} ten={contact.name} />
         </div>
         )}
         {/* LIÊN KẾT VỀ TRANG pSEO (15/10/2026): trang tin dẫn về các trang "loại hình × tỉnh",

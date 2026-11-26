@@ -27,10 +27,14 @@ export default function AccountSettingsPage() {
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name ?? "");
-      setPhone(profile.phone ?? "");
+      // Số đã xác minh nhưng chưa hợp nhất được (dính tiền — xac-minh-sdt choAdminGop) nằm ở user_metadata.sdt_lien_he: vẫn là số của
+      // tài khoản này, phải hiện (anh 26/11/2026: "bổ sung số điện thoại không ghi vào tài khoản")
+      const sdtXacMinh = (profile as { sdt_lien_he_xac_minh?: boolean }).sdt_lien_he_xac_minh
+        ? String((user?.user_metadata as Record<string, unknown> | undefined)?.sdt_lien_he ?? "") : "";
+      setPhone(profile.phone || sdtXacMinh);
       setCity(profile.city ?? "");
     }
-  }, [profile]);
+  }, [profile, user]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

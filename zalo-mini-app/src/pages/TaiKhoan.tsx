@@ -43,7 +43,7 @@ export default function TaiKhoan() {
     ] },
     // Nhóm "Hồ sơ" = ĐÚNG danh sách trang Hồ sơ web điện thoại (src/lib/menuTaiKhoan.ts, cùng thứ tự). Mini App không có Nạp tiền (Zalo cấm,
     // bản 78) → "Ví" chỉ xem số dư; "Dự án của tôi" chỉ có trên web.
-    { ten: "Hồ sơ", muc: [
+    { ten: "Tài khoản", muc: [
       { ten: "Ví", icon: "vi", app: "/vi", phu: nguoiDung ? vnd(Number(h?.balance ?? 0)) : undefined },
       { ten: "Hóa đơn", icon: "hoaDon", app: "/hoa-don" },
       { ten: "Gói hội viên", icon: "hoiVien", app: "/hoi-vien" },
@@ -73,7 +73,7 @@ export default function TaiKhoan() {
 
   return (
     <Page style={{ paddingBottom: 72 }}>
-      <TieuDe title="Hồ sơ" showBackIcon={false} />
+      <TieuDe title="Tài khoản" showBackIcon={false} />
       <div className="tk-dau">
         {nguoiDung ? (
           <>

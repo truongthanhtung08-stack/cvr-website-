@@ -14,7 +14,6 @@ const MapView = dynamic(() => import("@/components/MapViewMo"), {
   ssr: false,
   loading: () => <div className="flex h-full items-center justify-center text-sm text-cvr-muted">Đang tải bản đồ…</div>,
 });
-import PropertyCard from "@/components/PropertyCard";
 import TheTinMobile from "@/components/TheTinMobile";
 import FilterBar from "@/components/FilterBar";
 import { cauThanhBoLoc, boLocKhoiDau } from "@/lib/locDanhSach";
@@ -587,10 +586,8 @@ export default function ListingBrowser({
                   24/10/2026: khe 10px xám vừa (#e5e5ea — đậm hơn làm chìm dải màu 1px trên thẻ VIP) cho rõ từng tin, thẻ vẫn vuông (cùng chuẩn trang chủ) */}
               <div className="reveal is-visible cards-stagger -mx-4 grid grid-cols-1 gap-2.5 bg-[#e5e5ea] sm:hidden">
                 {pageItems.flatMap((item, i) => [(
-                  // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
-                  item.hetHan
-                    ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={cumDam} />
-                    : <TheTinMobile key={khoaThe(item)} item={item} terms={cumDam} uuTien={i === 0} />
+                  // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn CÙNG thẻ, nhãn "Tin hết hạn" (anh 26/11/2026)
+                  <TheTinMobile key={khoaThe(item)} item={item} terms={cumDam} uuTien={i === 0} />
                 )])}
               </div>
               {/* DESKTOP (≥ 640px): MỖI TIN MỘT HÀNG, nội dung đúng thẻ điện thoại theo cấp, khung ảnh theo cấp (TheTinMobile pc, chủ dự án
@@ -599,9 +596,7 @@ export default function ListingBrowser({
                   cách nhau 20px — cùng kiểu các khối lọc bên phải */}
               <div className="reveal is-visible cards-stagger hidden sm:flex sm:flex-col sm:gap-5">
                 {pageItems.flatMap((item, i) => [(
-                  item.hetHan
-                    ? <PropertyCard key={khoaThe(item)} item={item} layout="list" showTime terms={cumDam} />
-                    : <div key={khoaThe(item)} className="overflow-hidden rounded-xl bg-white shadow-lux"><TheTinMobile item={item} terms={cumDam} pc uuTien={i === 0} /></div>
+                  <div key={khoaThe(item)} className="overflow-hidden rounded-xl bg-white shadow-lux"><TheTinMobile item={item} terms={cumDam} pc uuTien={i === 0} /></div>
                 )])}
               </div>
 

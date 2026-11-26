@@ -40,9 +40,9 @@ export default function ForgotPasswordForm() {
     e.preventDefault();
     setLoi("");
     const v = dinhDanh.trim();
-    if (!v) return setLoi("Nhập email hoặc số điện thoại của tài khoản.");
+    // CHỈ SỐ ĐIỆN THOẠI (anh 26/11/2026: bỏ email — một số một tài khoản), mã gửi qua Zalo của số đó
     const laSo = laSdtVN(chuanHoaSdt(v));
-    if (!laSo && !v.includes("@")) return setLoi("Nhập đúng email hoặc số điện thoại (10 số).");
+    if (!laSo) return setLoi("Nhập đúng số điện thoại (10 số).");
     setDangChay(true);
     try {
       const r = await fetch("/api/xac-thuc/gui-ma", {
@@ -120,17 +120,15 @@ export default function ForgotPasswordForm() {
 
       {buoc === "email" ? (
         <>
-          <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
-            Nhập số điện thoại hoặc email của tài khoản, chúng tôi gửi mã 6 số để bạn đặt lại mật khẩu.
-          </p>
           <form onSubmit={guiMa} className="mt-5 space-y-4">
             <div>
-              <label className="text-sm font-medium text-cvr-body">Số điện thoại hoặc email</label>
+              <label className="text-sm font-medium text-cvr-body">Số điện thoại</label>
               <input
                 value={dinhDanh}
                 onChange={(e) => setDinhDanh(e.target.value)}
-                autoComplete="username"
-                placeholder="0905123456 hoặc email@congty.com"
+                autoComplete="tel"
+                inputMode="tel"
+                placeholder="0905123456"
                 className={oCls}
               />
             </div>
@@ -140,7 +138,7 @@ export default function ForgotPasswordForm() {
               disabled={dangChay}
               className="h-12 w-full rounded-lg bg-cvr-ink text-[15px] font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
             >
-              {dangChay ? "Đang gửi mã…" : "Gửi mã"}
+              {dangChay ? "Đang gửi mã…" : "Nhận mã Zalo"}
             </button>
           </form>
         </>
@@ -180,7 +178,7 @@ export default function ForgotPasswordForm() {
               {dangChay ? "Đang đặt lại…" : "Đặt lại và đăng nhập"}
             </button>
             <button type="button" onClick={() => { setBuoc("email"); setMa(""); setLoi(""); }} className="w-full text-sm text-cvr-muted hover:text-cvr-ink">
-              ← Nhập lại email / số điện thoại
+              ← Nhập lại số điện thoại
             </button>
           </form>
         </>

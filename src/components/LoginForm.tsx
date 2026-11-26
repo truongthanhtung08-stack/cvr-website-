@@ -25,9 +25,9 @@ export default function LoginForm() {
   // Đăng nhập mạng xã hội dở dang (huỷ/lỗi ở callback) → báo nhẹ, người dùng thử lại.
   const [notice, setNotice] = useState(() => {
     const e = searchParams.get("error") ?? "";
-    if (e === "oauth") return "Đăng nhập Google chưa hoàn tất. Vui lòng thử lại hoặc dùng email.";
+    if (e === "oauth") return "Đăng nhập Google chưa hoàn tất. Vui lòng thử lại hoặc dùng số điện thoại.";
     if (e === "zalo_chua_cau_hinh")
-      return "Đăng nhập Zalo chưa được kích hoạt. Vui lòng dùng Google hoặc email trong lúc chờ.";
+      return "Đăng nhập Zalo chưa được kích hoạt. Vui lòng dùng số điện thoại hoặc Google.";
     // Kèm MÃ (và câu trả lời của Zalo nếu có) để biết hỏng ở khâu nào.
     if (e.startsWith("zalo_")) {
       const chiTiet = searchParams.get("chi_tiet");
@@ -66,8 +66,7 @@ export default function LoginForm() {
     try {
       const cu = localStorage.getItem("cl-dang-nhap-email");
       if (cu) {
-        setEmail(cu);
-        setMoEmail(true); // đã từng dùng email → mở sẵn khối cho nhanh
+        setEmail(cu); // không tự mở khối email nữa (bỏ cửa Email, 26/11/2026)
       } else {
         setGhiNho(localStorage.getItem("cl-ghi-nho") !== "0");
       }
@@ -181,7 +180,7 @@ export default function LoginForm() {
                 <Link href="/quen-mat-khau" className="font-semibold underline">
                   Đặt lại mật khẩu
                 </Link>{" "}
-                — nhận mã 6 số qua email hoặc Zalo, đặt mật khẩu mới rồi vào luôn.
+                — nhận mã 6 số qua Zalo, đặt mật khẩu mới rồi vào luôn.
               </p>
               <p className="text-cvr-blue-ink/80">
                 Hoặc bạn từng vào bằng <strong>Google</strong>? Tài khoản đó không có mật khẩu —
@@ -198,7 +197,8 @@ export default function LoginForm() {
       <div className="mt-5 space-y-3">
         {/* 4 cửa theo thứ tự chủ dự án chốt 27/09/2026: Gmail · Số điện thoại · Zalo · Email.
             Nút Email mở khối email + mật khẩu ngay bên dưới. */}
-        <SocialAuth onEmail={moEmail ? undefined : () => setMoEmail(true)} />
+        {/* BỎ cửa Email (anh 26/11/2026: "bỏ đăng nhập bằng email" — một số một tài khoản): còn Google · Số điện thoại · Zalo */}
+        <SocialAuth />
       </div>
 
 

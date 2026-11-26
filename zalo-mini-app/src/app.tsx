@@ -43,7 +43,7 @@ const TAB = [
   { duong: "/", nhan: "Home", icon: "trangChu" },
   { duong: "/da-luu", nhan: "Lưu", icon: "tim" },
   { duong: "/dang-tin", nhan: "Đăng tin", icon: "dangTin" },
-  { duong: "/tai-khoan", nhan: "Hồ sơ", icon: "taiKhoan" },
+  { duong: "/tai-khoan", nhan: "Tài khoản", icon: "taiKhoan" },
 ] as const;
 const tabCua = (p: string) => p;
 

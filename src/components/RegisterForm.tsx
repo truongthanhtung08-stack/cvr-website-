@@ -43,7 +43,7 @@ export default function RegisterForm() {
   // /dang-ky?cach=sdt (từ trang đăng nhập bằng số) → mở thẳng form, khỏi chọn lại cách.
   useEffect(() => {
     const c = new URLSearchParams(window.location.search).get("cach");
-    if (c === "sdt" || c === "email") setCach(c);
+    if (c === "sdt") setCach(c); // bỏ đăng ký bằng email (anh 26/11/2026)
   }, []);
 
   // Bước nhập
@@ -246,7 +246,7 @@ export default function RegisterForm() {
         {/* 4 cửa theo thứ tự chủ dự án chốt 27/09/2026: Gmail · Số điện thoại · Zalo · Email
             (email là cột riêng cho khách doanh nghiệp). Số điện thoại & email mở form ngay tại đây. */}
         <div className="mt-5">
-          <SocialAuth onSoDienThoai={() => setCach("sdt")} onEmail={() => setCach("email")} />
+          <SocialAuth onSoDienThoai={() => setCach("sdt")} /* bỏ cửa Email (anh 26/11/2026) */ />
         </div>
 
         <p className="mt-6 text-center text-sm text-cvr-muted">

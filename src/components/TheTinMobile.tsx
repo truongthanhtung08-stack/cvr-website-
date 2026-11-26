@@ -16,8 +16,10 @@ import { freshText, type Listing } from "@/lib/data";
 import { getTier, tierFromBadge, HUY_HIEU_CLS, type TierId } from "@/lib/packages";
 import { useSaved } from "@/lib/useSaved";
 import { tieuDeThe } from "@/lib/chuThuong";
-import { videoPosterUrl } from "@/lib/media";
-import { anhNho } from "@/lib/asset";
+import { videoPosterUrl, isVideoUrl } from "@/lib/media";
+import { anhNho, asset } from "@/lib/asset";
+import { docRest } from "@/lib/supabase/nap";
+import { anhTheoThuTu } from "@/lib/anhTin";
 import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { thongSoTheoCap } from "@/lib/thongSoThe";
 import DemAnhVideo, { IconPlay } from "@/components/DemAnhVideo";
@@ -149,13 +151,35 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true, u
 // uuTien = thẻ ĐẦU danh sách: ảnh đầu tải ngay. Thẻ khác tải khi khách cuộn gần tới — trước đây thẻ nào cũng tải ngay, trang chủ bắt
 // điện thoại tải trước 10+ ảnh cùng lúc, ảnh đầu trang phải xếp hàng (đo 20/10/2026: 8,8 giây mới hiện).
 export default function TheTinMobile({ item, terms = [], tuChay = false, pc = false, moTa = true, dcCu = true, uuTien = false }: { item: Listing; terms?: string[]; tuChay?: boolean; pc?: boolean; moTa?: boolean; dcCu?: boolean; uuTien?: boolean }) {
-  const t: TierId = item.badge ? tierFromBadge(item.badge) : "basic";
+  // Tin HẾT HẠN (anh 26/11/2026: "vẫn ghi là hết hạn, mọi thứ còn lại như tin bình thường"): cùng thẻ như tin thường, không còn hạng
+  // → thẻ Basic + nhãn "Tin hết hạn" góc trên trái ảnh
+  const t: TierId = item.badge && !item.hetHan ? tierFromBadge(item.badge) : "basic";
   const tier = getTier(t);
   const href = duongDanTin(item);
   const anh = (item.images?.length ? item.images : [item.image]).filter(Boolean);
   const [xem, setXem] = useState(-1);
   // Bấm ảnh trên thẻ → danh sách kiểu Facebook: video + ảnh + bản đồ (chủ dự án 09/10/2026)
   const [ds, setDs] = useState(false);
+  // ĐỦ ẢNH + ĐỦ VIDEO khi khách bấm mở (anh 26/11/2026: "ảnh khách up lên phải đủ ảnh, đủ video"): dữ liệu thẻ chỉ mang 6 ảnh
+  // + 1 video cho trang danh sách nhẹ (goiNhe.ts) — trước đây danh sách ảnh / ảnh lớn mở từ thẻ dùng luôn phần đó, tin 17 ảnh chỉ
+  // xem được 6. Nay lúc mở mới đọc ĐỦ ảnh + video của đúng tin này (gọi thẳng Supabase, không qua máy chủ Vercel; trang danh sách
+  // không nặng thêm). Lỗi mạng → vẫn xem phần đang có.
+  const [duTin, setDuTin] = useState<{ anh: string[]; video: string[] } | null>(null);
+  const anhDu = duTin?.anh ?? anh;
+  const videoDu = duTin?.video ?? (item.video ? [item.video] : []);
+  const thieu = (item.imageCount ?? 0) > anh.length || (item.soVideo ?? 0) > (item.video ? 1 : 0);
+  useEffect(() => {
+    if (!(ds || xem >= 0) || !thieu || duTin) return;
+    let huy = false;
+    docRest<{ images: string[] | null; anh_bia: string | null }[]>(`listings?select=images,anh_bia:details->>anh_bia&id=eq.${encodeURIComponent(item.id)}`)
+      .then((r) => {
+        const goc = r?.[0]?.images ?? [];
+        if (!huy && goc.length) setDuTin({ anh: anhTheoThuTu(goc, r?.[0]?.anh_bia).map(asset), video: goc.filter(isVideoUrl).map(asset) });
+      })
+      .catch(() => {});
+    return () => { huy = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ds, xem >= 0, thieu, item.id]);
   const { has, toggle } = useSaved();
   const daLuu = has(item.id);
   const coSo = t !== "basic"; // Diamond · Gold · Silver: Zalo + Hiện số trên thẻ
@@ -194,7 +218,16 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
 
   // Chỉ báo tin có bao nhiêu ảnh, bao nhiêu video (chủ dự án 09/10/2026) — cùng kiểu với khung ảnh trang tin (DemAnhVideo)
   // Góc DƯỚI TRÁI: góc dưới phải là chỗ dấu COASTAL LAND trên ảnh — không che (chủ dự án 24/10/2026)
-  const dem = <DemAnhVideo soAnh={soAnh} soVideo={item.soVideo ?? (item.hasVideo ? 1 : 0)} className="absolute bottom-3 left-3" />;
+  const dem = (
+    <>
+      <DemAnhVideo soAnh={soAnh} soVideo={item.soVideo ?? (item.hasVideo ? 1 : 0)} className="absolute bottom-3 left-3" />
+      {item.hetHan && (
+        <span className="absolute left-2 top-2 z-[2] rounded-full bg-black/65 px-2 py-[3px] text-[11px] font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] backdrop-blur-md">
+          Tin hết hạn
+        </span>
+      )}
+    </>
+  );
   // Huy hiệu = THẺ TREO từ dải màu đỉnh ảnh (cùng màu dải, nhỏ gọn) — chủ dự án 24/10/2026: "màu và huy hiệu đồng nhất, nhỏ lại cho Pro".
   const huyHieu = t !== "basic" && (
     <span
@@ -388,8 +421,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
             <div className="flex min-w-0 flex-1 flex-col">{tieuDePC}<div className="mt-2">{soPC}{moTaDong}</div><div className="mt-auto pt-3">{cuoiCu}</div></div>
           </>
         )}
-        {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
-        {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
+        {ds && <PhotoList images={anhDu} videos={videoDu} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
+        {xem >= 0 && <PhotoViewer images={anhDu} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
       </article>
     );
   }
@@ -414,8 +447,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
           {nutThich}
           {nutChiaSe}
         </div>
-        {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
-        {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
+        {ds && <PhotoList images={anhDu} videos={videoDu} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
+        {xem >= 0 && <PhotoViewer images={anhDu} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
       </article>
     );
   }
@@ -458,8 +491,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
           </div>
         )}
       </div>
-      {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
-        {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
+      {ds && <PhotoList images={anhDu} videos={videoDu} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
+        {xem >= 0 && <PhotoViewer images={anhDu} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
     </article>
   );
 }

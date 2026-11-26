@@ -199,9 +199,12 @@ async function xuLy(req: Request) {
   //   khách vẫn đăng tin, nạp tiền bình thường bằng tài khoản đang dùng; email báo chủ dự án). Tắt hẳn tự gộp → đặt cờ này false.
   // TẠM THỜI KHÔNG GỘP GÌ HẾT (anh 12/11/2026: "đăng nhập tài khoản nào làm tài khoản ấy" · "tạm thời KHÔNG GỘP gì hết") — xác minh số chỉ
   // xác minh, khách ở nguyên tài khoản đang đăng nhập; trùng số với tài khoản khác → choAdminGop (ghi Admin → Tổng quan, anh xem).
-  const WEB_TU_GOP = false;
-  // CHỈ GỘP TRONG LÚC ĐĂNG TIN (06/11/2026: "mọi thứ khác khách tự thay đổi trong Cài đặt, kể cả thêm số thì cứ thêm") — Cài đặt / nạp tiền không gộp
-  const duDieuKienGop = WEB_TU_GOP && b.dangTin === true;
+  // ⭐ CHUẨN 26/11/2026 (anh: "làm CHUẨN", "số điện thoại bổ sung phải ghi vào tài khoản"): MỘT SỐ = MỘT TÀI KHOẢN. Xác minh đúng
+  // mã tới số (ở Cài đặt hay lúc đăng tin) mà số đã thuộc tài khoản khác → hợp nhất ngay (khối dưới), số ghi vào tài khoản. Trước đây
+  // tắt (12/11) nên số không bao giờ ghi vào tài khoản, khách thấy "Chưa có". Dính tiền (ví, gói, hội viên) vẫn không tự gộp
+  // (choAdminGop) — số vẫn hiện ở Cài đặt (sdt_lien_he), Admin xử lý.
+  const WEB_TU_GOP = true;
+  const duDieuKienGop = WEB_TU_GOP;
 
   // TÀI KHOẢN SINH RA TỪ ZALO (email kỹ thuật zalo_…) mà số này đã có tài khoản cũ → gộp
   // NGƯỢC: tài khoản Zalo nhập vào tài khoản cũ, Zalo gắn sang tài khoản cũ (0049), mở

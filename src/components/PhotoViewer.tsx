@@ -331,6 +331,8 @@ export default function PhotoViewer({
 
           <div className="min-w-0 flex-1">
             {title && <p className="truncate text-[15px] font-semibold text-white">{title}</p>}
+            {/* Số thứ tự ảnh 1/n (anh 26/11/2026: "bấm lên xem ảnh phải đếm được số ảnh") — đã bỏ 08/11, nay trả lại */}
+            {images.length > 1 && <p className="text-xs text-white/75">{idx + 1} / {images.length}</p>}
           </div>
 
           <button

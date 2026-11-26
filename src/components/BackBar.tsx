@@ -77,7 +77,7 @@ const MUC: Record<string, { ten: string; cha: string; chaCon?: string }> = {
 const TAI_KHOAN_CON: Record<string, string> = {
   "tin-dang": "Tin đăng",
   "khach-hang": "Khách hàng",
-  "ca-nhan": "Hồ sơ", // một tên với thanh dưới + menu (07/11/2026)
+  "ca-nhan": "Tài khoản", // một tên với thanh dưới + menu (anh 26/11/2026: "Hồ sơ" → "Tài khoản")
   "tuong-tac": "Khách hàng",
   "hoa-don": "Hóa đơn của tôi",
   "nap-tien": "Nạp tiền",

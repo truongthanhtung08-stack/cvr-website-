@@ -307,7 +307,21 @@ export function locDanhSach(
   const khopDung = coTuKhoa ? [...chuTrong, ...khopDu.filter((l) => !daCo.has(l.id))] : khopDu;
   // Khách đã nói loại hình: tin khớp chữ ngoài bộ lọc đã nằm trong bảng gợi ý (xếp theo tỉnh + đặc điểm) — không chen trước
   const tuongTu = coTuKhoa ? [...(filters.types.length ? [] : chuNgoai), ...goiY.filter((l) => !daCo.has(l.id) || (filters.types.length > 0 && !dungLoc.has(l.id)))] : goiY;
-  let ketQua = [...khopDung, ...ketQuaHetHan, ...tuongTu, ...goiYHetHan];
+  // TIN HẾT HẠN XẾP NHƯ TIN THƯỜNG THEO NGÀY ĐĂNG (anh 26/11/2026: "tin hết hạn hiển thị như bình thường theo cơ chế, hiện theo ngày đăng"):
+  // xếp mặc định (cấp → mới nhất), không gõ câu → chèn tin hết hạn vào giữa tin còn hạn đúng chỗ theo cấp (hết hạn = Basic) rồi ngày
+  // đăng; thứ tự các tin còn hạn giữ nguyên. Gõ câu / xếp theo giá, diện tích → như cũ (khớp đúng câu trước, trang giá rẻ còn hạn trước).
+  const ngayTin = (l: Listing) => Date.parse(l.bumpedAt ?? l.postedAt ?? "") || 0;
+  const hangTin = (l: Listing) => (l.hetHan ? tierRank(undefined) : tierRank(l.badge));
+  const chenTheoNgay = (ds: Listing[], hh: Listing[]) => {
+    const kq = [...ds];
+    for (const h of [...hh].sort((a, b) => ngayTin(b) - ngayTin(a))) {
+      const vt = kq.findIndex((l) => hangTin(l) > hangTin(h) || (hangTin(l) === hangTin(h) && ngayTin(l) < ngayTin(h)));
+      kq.splice(vt < 0 ? kq.length : vt, 0, h);
+    }
+    return kq;
+  };
+  const khopVaHetHan = sort === "moi" && !coTuKhoa ? chenTheoNgay(khopDung, ketQuaHetHan) : [...khopDung, ...ketQuaHetHan];
+  let ketQua = [...khopVaHetHan, ...tuongTu, ...goiYHetHan];
   // KHÔNG BAO GIỜ 0 KẾT QUẢ (chủ dự án 21/10/2026): mọi tầng trên đều trống thì nới dần, dừng ở bậc đầu có tin, vẫn bám nhu cầu:
   // ① khách nói loại hình → cùng loại ở MỌI nơi, nơi gần chỗ khách nói trước · ② khách nói nơi → mọi loại trong tỉnh đó ·
   // ③ còn lại (câu không hiểu, không chữ nào khớp) → tin mới nhất của mục, theo cấp rồi ngày đăng. Nhãn "Gợi ý tương tự" như cũ.
@@ -425,7 +439,8 @@ export function locDanhSach(
   // Đếm theo tỉnh: cùng bộ lọc đang chọn (loại hình, giá…), chỉ bỏ khu vực — lỗi 20/10/2026: "Bán condotel Đà Nẵng
   // theo khu vực" ghi Đà Nẵng (45) = mọi tin bán của tỉnh, trong khi trang chỉ có 3 tin condotel.
   const m = new Map<string, number>();
-  for (const { item: l } of smartFilter(base, { ...filters, keyword: "", locations: [] }).filter((h) => h.tier === 1)) {
+  // Tính CẢ tin hết hạn (anh 26/11/2026: "phải hiện đủ tất cả số lượng tin, còn + hết hạn")
+  for (const { item: l } of smartFilter([...base, ...gocHetHan], { ...filters, keyword: "", locations: [] }).filter((h) => h.tier === 1)) {
     if (l.banSao) continue; // bản kèm không phải tin riêng — không đếm
     const p = l.location.split(",").pop()?.trim() ?? "";
     if (p) m.set(p, (m.get(p) ?? 0) + 1);

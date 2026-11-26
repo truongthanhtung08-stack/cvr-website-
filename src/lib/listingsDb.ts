@@ -22,8 +22,9 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
+import { anhTheoThuTu as anhTheoThuTuChung } from "@/lib/anhTin";
 import { fieldsSplit, fieldsFor, amenityGroups, tienIchCho, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, O_LOAI_CON, type Field } from "@/lib/listingSpec";
-import { lapCha } from "@/lib/filters";
+import { lapCha, normalizeVi } from "@/lib/filters";
 import { tenLoaiHinhDayDu, loaiConDaTrongTen } from "@/lib/categories";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
@@ -132,10 +133,9 @@ function tierHieuLuc(r: Row): Row["tier"] {
 
 // ẢNH (không video) theo thứ tự hiển thị. Tin admin ĐĂNG HỘ có details.anh_bia = ảnh hợp khung
 // 4:3 nhất trong 5 ảnh đầu (chủ dự án 09/10/2026) → đưa lên đầu. Tin khách tự đăng giữ ảnh khách chọn.
+// Luật dùng chung với thẻ tin (bấm ảnh thẻ → tải đủ ảnh): src/lib/anhTin.ts
 function anhTheoThuTu(r: Row): string[] {
-  const ds = r.images.filter((s) => !isVideoUrl(s));
-  const bia = (r.details as { anh_bia?: string } | null)?.anh_bia;
-  return bia && ds.includes(bia) ? [bia, ...ds.filter((s) => s !== bia)] : ds;
+  return anhTheoThuTuChung(r.images, (r.details as { anh_bia?: string } | null)?.anh_bia);
 }
 
 // Số kiểu VN: 7.2 → "7,2" · 1500 → "1.500"
@@ -479,18 +479,46 @@ export async function getListingsTim(muc: "mua" | "can-thue"): Promise<Listing[]
 // toàn bộ tin còn hạn ở Mua bán / Cho thuê / Tìm kiếm, gắn nhãn "Tin hết hạn" (thẻ mờ).
 // Gồm cả tin cron chưa kịp đổi status (approved nhưng đã quá giờ). Trang chủ, sitemap,
 // gợi ý KHÔNG dùng hàm này — ở đó chỉ có tin còn hạn.
-// NHÌN XA: tin hết hạn dồn lên hàng nghìn → chỉ lấy tin hết hạn trong 90 NGÀY gần nhất,
-// tối đa 300 tin, mới hết hạn trước — trang danh sách không phình theo năm tháng.
+// BỎ GIỚI HẠN 90 NGÀY / 300 TIN (anh 26/11/2026: "bao nhiêu đếm hết"): đo 26/11 kho có 355 tin hết hạn, giới hạn cũ làm mất tin ở
+// trang danh sách + số đếm. Nay lấy HẾT, theo từng lượt 250 dòng: mỗi lượt phải DƯỚI 2 MB thì bộ nhớ đệm (thẻ "listings") mới lưu
+// được — đo 26/11: 1.000 dòng = 2,58 MB, không lưu được → lượt xem nào cũng đọc lại Supabase (tốn tiền). 250 dòng ≈ 0,65 MB.
 export async function getListingsHetHan(): Promise<Listing[]> {
-  // LÀM TRÒN THEO NGÀY (17/10/2026): mốc tính tới từng mili giây làm mỗi lần gọi là một địa chỉ MỚI → bộ nhớ đệm không
-  // bao giờ trúng, trang kết quả dựng lần đầu phải chờ Supabase 1,5–2,5 giây (và tốn thêm lượt gọi). Tròn ngày → cả ngày
-  // dùng chung một bản đệm; lệch tối đa 1 ngày ở mép 90 ngày là không đáng kể.
-  const tu = new Date(Math.floor((Date.now() - 90 * 86_400_000) / 86_400_000) * 86_400_000).toISOString();
-  const rows = await rest(`select=${COLS}&status=in.(approved,expired)&tier_expires_at=gte.${tu}&order=tier_expires_at.desc.nullslast&limit=300`);
-  if (!rows) return [];
-  return rows
+  const ds: Row[] = [];
+  const LUOT = 250;
+  for (let tu = 0; tu < 100_000; tu += LUOT) {
+    const rows = await rest(`select=${COLS}&status=in.(approved,expired)&order=tier_expires_at.desc.nullslast,id&offset=${tu}&limit=${LUOT}`);
+    if (!rows) break;
+    ds.push(...rows);
+    if (rows.length < LUOT) break;
+  }
+  return ds
     .filter((r) => !isSeedRow(r) && !conHan(r) && !laTinTim(r.purpose))
     .map((r) => ({ ...rowToListing(r), hetHan: true }));
+}
+
+// SỐ TIN THEO TỈNH cho ô "Bất động sản theo khu vực" trang chủ (anh 26/11/2026: "tất cả số lượng tin của 1 khu vực, còn + hết hạn,
+// chỉ ghi số lượng", "bao nhiêu đếm hết"): đếm MỌI tin trên web — Mua bán + Cho thuê, còn hạn + hết hạn, không giới hạn.
+// Chỉ đọc 5 cột nhỏ, theo từng trang 1.000 dòng (giới hạn Supabase); bộ nhớ đệm thẻ "listings" như mọi lần đọc tin.
+// Khoá = tên tỉnh hệ mới đã bỏ dấu (normalizeVi) — cùng cách trang chủ so tên ô.
+// Trả thêm số tin theo PHƯỜNG hệ mới (khoá "tỉnh|phường" đã bỏ dấu) — ô THÀNH PHỐ (Nha Trang, Quy Nhơn…) cộng đúng các phường
+// mới của thành phố cũ đó (THANH_PHO.phuong, theo bảng sáp nhập), khớp trang /mua-ban/<tỉnh>/<thành phố> (anh 26/11/2026).
+export async function demTinTheoTinh(): Promise<{ tinh: Map<string, number>; phuong: Map<string, number> }> {
+  const m = new Map<string, number>();
+  const mp = new Map<string, number>();
+  for (let tu = 0; tu < 100_000; tu += 1000) {
+    const rows = await rest(`select=id,purpose,ward,district,province&status=in.(approved,expired)&order=id&offset=${tu}&limit=1000`);
+    if (!rows) break;
+    for (const r of rows) {
+      if (isSeedRow(r) || laTinTim(r.purpose)) continue;
+      const moi = dongBoHaiHe(heCuaTin(r.district), { tinh: r.province, quan: r.district ?? "", phuong: r.ward ?? "" }).moi;
+      const k = normalizeVi(moi.tinh || r.province || "");
+      if (!k) continue;
+      m.set(k, (m.get(k) ?? 0) + 1);
+      if (moi.phuong) { const kp = `${k}|${normalizeVi(moi.phuong)}`; mp.set(kp, (mp.get(kp) ?? 0) + 1); }
+    }
+    if (rows.length < 1000) break;
+  }
+  return { tinh: m, phuong: mp };
 }
 
 // TIN DÙNG ĐỂ XÉT TRANG pSEO ĐỦ TIN (mở trang, index, sitemap, liên kết nội bộ, trang giá) — chủ dự án 29/10/2026: "tính hết tin

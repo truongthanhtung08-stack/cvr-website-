@@ -90,6 +90,15 @@ async function ghiSo(khoa: string, t: SuCo): Promise<boolean> {
   // để dành cho mã OTP và thông báo của khách.
   if (!admin) return true;
 
+  // BÁO MỘT LẦN (anh 26/11/2026: "gửi thông báo thì gửi 1 lần, không gửi lại trên Admin"): việc cùng khoá đã ghi mà CHƯA xử lý → không
+  // ghi thêm dòng, không email. Trước đây mỗi lần cron chạy / khách bấm lại là thêm một dòng (thuế 2 dòng mỗi ngày, Zalo từ chối 2 dòng…).
+  const { count: dangMo } = await admin
+    .from("su_co")
+    .select("id", { count: "exact", head: true })
+    .eq("khoa", khoa)
+    .eq("da_xu_ly", false);
+  if ((dangMo ?? 0) > 0) return true;
+
   const { data } = await admin
     .from("su_co")
     .select("bao_luc")

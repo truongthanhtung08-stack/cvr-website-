@@ -246,12 +246,12 @@ const TAI_KHOAN_LINKS: { label: string; href: string }[] = [
   { label: "Tổng quan", href: "/tai-khoan" },
   { label: "Tin đăng", href: "/tai-khoan/tin-dang" },
   { label: "Khách hàng", href: "/tai-khoan/khach-hang" },
-  { label: "Hồ sơ", href: "/tai-khoan/ca-nhan" }, // MỘT TÊN với thanh dưới (chủ dự án 07/11/2026: "Tài khoản = Hồ sơ")
+  { label: "Tài khoản", href: "/tai-khoan/ca-nhan" }, // MỘT TÊN với thanh dưới (anh 26/11/2026: "Hồ sơ" → "Tài khoản")
 ];
 // Điện thoại: hai mục tài khoản ở nhóm cuối menu (Tổng quan = dòng ảnh đại diện, Tin đăng = nút cạnh Đăng tin)
 const TAI_KHOAN_PHU: { label: string; href: string; icon: TenBieuTuong }[] = [
   { label: "Khách hàng", href: "/tai-khoan/khach-hang", icon: "khachHang" },
-  { label: "Hồ sơ", href: "/tai-khoan/ca-nhan", icon: "taiKhoan" },
+  { label: "Tài khoản", href: "/tai-khoan/ca-nhan", icon: "taiKhoan" },
 ];
 
 function AccountMenu({ name, anh, phu, onLogout, soViec = {} }: { name: string; anh: string; phu: string[]; onLogout: () => void; soViec?: Record<string, number> }) {
