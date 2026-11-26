@@ -21,7 +21,6 @@ import { getArticles, getProjectsNoiBat } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
 import { THANH_PHO, khop } from "@/lib/pseo";
 import { slugKhuVuc, timKhuVuc } from "@/lib/khuVuc";
-import { normalizeVi } from "@/lib/filters";
 import { layThuongHieu, tieuDeThuongHieu } from "@/lib/thuongHieu";
 
 // Tiêu đề trang chủ phải CÓ TỪ KHOÁ — trước đây để trống nên Google chỉ thấy
