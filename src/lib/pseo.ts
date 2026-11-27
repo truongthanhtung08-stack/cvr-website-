@@ -618,7 +618,7 @@ export function banGocCua(l: Listing, tatCa: Listing[]): Listing | null {
 let nhoTrang: { khoa: string; kq: Map<string, TrangPseo> } | null = null;
 // HẾT HẠN THẬT theo ngày hạn (anh 26/11/2026: tin quá hạn < 1 tháng hiện như tin thường → cờ hetHan = false; cổng trang Google
 // phải đọc ngày hạn thật, không đọc cờ hiển thị — đọc cờ là cổng "chỉ thêm" tính sai, đóng 15 trang 27/11)
-const CO_TU_KHOA = new Set((nhomTuKhoa as { url: string }[]).map((x) => x.url));
+const CO_TU_KHOA = new Set((nhomTuKhoa as { url: string }[]).map((x) => x.url)); // nhóm có câu khách gõ (lõi + longtail)
 export const NHOM_CHA: [Muc, string[]][] = [
   ["ban", ["nha", "dat", "can-ho-chung-cu", "nghi-duong", "kho-nha-xuong"]],
   ["thue", ["nha", "dat", "can-ho-chung-cu", "homestay-farmstay", "kho-nha-xuong", "phong-tro", "van-phong-mat-bang"]],

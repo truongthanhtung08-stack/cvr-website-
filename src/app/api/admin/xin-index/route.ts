@@ -17,7 +17,7 @@ import { docSoXinIndex, ghiSoXinIndex, duongTuUrl, trangThaiIndex } from "@/lib/
 // Chi phí: chỉ chạy khi anh mở trang Admin này — đọc sitemap + tin đang có (đã có bộ nhớ đệm "listings").
 // ============================================================================
 export const dynamic = "force-dynamic";
-const CO_TU_KHOA = new Set((nhomTuKhoa as { url: string }[]).map((x) => x.url));
+const CO_TU_KHOA = new Map((nhomTuKhoa as { url: string; loi: string; longtail: string[] }[]).map((x) => [x.url, x]));
 
 const loi = (message: string, status = 400) => NextResponse.json({ ok: false, message }, { status });
 
@@ -79,7 +79,7 @@ export async function GET() {
   // mỗi dòng = khu vực + mục đích + loại cha = MỘT URL; title đúng chữ đang chạy trên web (titleGoogle — một chỗ với trang).
   const TEN_CHA: Record<string, string> = { "": "Nhà đất", nha: "Nhà", dat: "Đất", "can-ho-chung-cu": "Căn hộ chung cư", "nghi-duong": "BĐS nghỉ dưỡng",
     "homestay-farmstay": "BĐS nghỉ dưỡng", "kho-nha-xuong": "BĐS công nghiệp", "phong-tro": "Phòng trọ", "van-phong-mat-bang": "Văn phòng, mặt bằng" };
-  const nhomCha: { khuVuc: string; muc: string; cha: string; duong: string; ten: string; manh: boolean; daIndex: boolean; xin: string | null }[] = [];
+  const nhomCha: { khuVuc: string; muc: string; cha: string; duong: string; ten: string; loi: string; longtail: string[]; manh: boolean; daIndex: boolean; xin: string | null }[] = [];
   for (const noi of NOI_NHOM) for (const [muc, cats] of NHOM_CHA) for (const slug of ["", ...cats]) {
     if (slug === "can-ho-chung-cu" && /^(quang-ngai|quang-tri)/.test(noi)) continue;
     const [t, tp] = noi.split("/");
@@ -90,7 +90,7 @@ export async function GET() {
     const duong = duongDan(dk);
     // Chỉ nhóm CÓ câu khách gõ (gợi ý Google, src/data/nhom-tu-khoa.json) — "cái nào không có thì BỎ" (anh 27/11/2026)
     if (!CO_TU_KHOA.has(duong)) continue;
-    nhomCha.push({ khuVuc: dk.thanhPho?.name ?? tinh.name, muc: muc === "thue" ? "Cho thuê" : "Mua bán", cha: TEN_CHA[slug], duong, ten: titleGoogle(dk),
+    nhomCha.push({ khuVuc: dk.thanhPho?.name ?? tinh.name, muc: muc === "thue" ? "Cho thuê" : "Mua bán", cha: TEN_CHA[slug], duong, ten: titleGoogle(dk), loi: CO_TU_KHOA.get(duong)!.loi, longtail: CO_TU_KHOA.get(duong)!.longtail,
       manh: /^(da-nang|hue|khanh-hoa\/nha-trang|gia-lai\/quy-nhon)$/.test(noi), ...trangThaiIndex(duong, so, gSet) });
   }
   return NextResponse.json({ ok: true, trang, nhomCha, google: so.google ? { ngay: so.google.ngay, soTrang: so.google.ds.length } : null });

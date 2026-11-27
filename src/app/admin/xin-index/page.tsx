@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 // ADMIN → XIN INDEX — GỌN MỘT BẢNG (anh 27/11/2026: "Admin quá lộn xộn — lấy loại hình CHA theo bộ lọc; title trên Google TỔNG,
 // nhóm vào trang TỔNG; ghi rõ trang, URL, index, lộ trình"). Mỗi dòng = khu vực + mục đích + loại cha = MỘT trang tổng; mọi loại con và
 // đặc điểm của nhóm gom về trang này. Index: danh sách Search Console dán vào "Cập nhật từ Search Console" + nút "Đã xin" / "Đã index".
-type Nhom = { khuVuc: string; muc: string; cha: string; duong: string; ten: string; manh: boolean; daIndex: boolean; xin: string | null };
+type Nhom = { khuVuc: string; muc: string; cha: string; duong: string; ten: string; loi: string; longtail: string[]; manh: boolean; daIndex: boolean; xin: string | null };
 type Google = { ngay: string; soTrang: number } | null;
 
 const SITE = "https://coastalland.vn";
@@ -95,6 +95,8 @@ export default function XinIndexPage() {
                 <th className="px-3 py-2 font-medium">Khu vực</th>
                 <th className="px-3 py-2 font-medium">Mục đích</th>
                 <th className="px-3 py-2 font-medium">Loại cha</th>
+                <th className="px-3 py-2 font-medium">Câu lõi</th>
+                <th className="px-3 py-2 font-medium">Câu longtail</th>
                 <th className="px-3 py-2 font-medium">Title trên Google</th>
                 <th className="px-3 py-2 font-medium">URL</th>
                 <th className="px-3 py-2 font-medium">Index</th>
@@ -108,6 +110,10 @@ export default function XinIndexPage() {
                   <td className="whitespace-nowrap px-3 py-2 text-cvr-ink">{t.khuVuc}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-cvr-body">{t.muc}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-cvr-body">{t.cha}</td>
+                  <td className="whitespace-nowrap px-3 py-2 font-medium text-cvr-ink">{t.loi}</td>
+                  <td className="min-w-[220px] px-3 py-2 text-xs text-cvr-body">
+                    <details><summary className="cursor-pointer">{t.longtail.length} câu</summary><p className="mt-1 leading-relaxed">{t.longtail.join(" · ")}</p></details>
+                  </td>
                   <td className="min-w-[280px] px-3 py-2"><a href={SITE + t.duong} target="_blank" rel="noreferrer" className="font-medium text-cvr-ink hover:underline">{t.ten}</a></td>
                   <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-cvr-muted">{t.duong}</td>
                   <td className="whitespace-nowrap px-3 py-2">
