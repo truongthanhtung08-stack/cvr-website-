@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { loiTinSeo, type TinKiem } from "@/lib/kiemTinSeo";
-import { saleTypeGroups, rentTypeGroups, loaiHinhTheoLoaiCon, normalizeVi } from "@/lib/filters";
+import { saleTypeGroups, rentTypeGroups, normalizeVi } from "@/lib/filters";
 import { nhomChonLoaiHinh, tenLoaiHinhMenu, tachChonLoaiHinh } from "@/lib/categories";
 // Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
 // dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
@@ -397,6 +397,17 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   const phuongXa = lay(COT.phuongXa);
   const quanHuyen = lay(COT.quanHuyen);
   if (!phuongXa && !quanHuyen) loi.push("Thiếu phường/xã");
+  // ĐỊA CHỈ CHI TIẾT BẮT BUỘC (anh 27/11/2026: "trỏ đến địa chỉ chi tiết, không phải chỉ trỏ đến phường xã") — số nhà + tên đường,
+  // hoặc tên đường / khu / dự án / thôn khi tin gốc không ghi số. Trống → trang tin + bản đồ chỉ còn mức phường.
+  // TIN CÓ DỰ ÁN → GHI DỰ ÁN NGAY (anh 27/11/2026: "lọc tin có dự án là lọc ngay dự án ghi vào"): tiêu đề / địa chỉ / mô tả nhắc
+  // khu đô thị, dự án, chung cư có tên mà ten_du_an trống → lỗi đỏ; dự án chưa có hồ sơ thì Cowork lọc hồ sơ vào sheet "Dự án" cùng tệp.
+  {
+    const chu = `${lay(COT.tieuDe)} | ${lay(COT.diaChi)} | ${lay(COT.moTa)}`;
+    // Tên riêng phải VIẾT HOA chữ đầu ("KĐT Ân Phú", "chung cư HAGL") — "khu dân cư an ninh" là câu tả, không phải dự án
+    const m = chu.match(/(?:[Kk]hu đô thị|KĐT|[Kk]đt|[Kk]hu dân cư|KDC|[Dd]ự án|[Cc]hung cư|[Tt]ổ hợp|[Kk]hu nghỉ dưỡng|[Rr]esort)\s+(?:[A-ZĐÀ-Ỹ0-9][^\s,.;|()]*)(?:\s+[A-ZĐÀ-Ỹ0-9][^\s,.;|()]*)*/u);
+    if (m && !lay(COT.tenDuAn).trim()) loi.push(`Tin nhắc "${m[0].trim()}" mà thiếu ten_du_an — ghi tên dự án; chưa có hồ sơ thì lọc hồ sơ vào sheet "Dự án"`);
+  }
+  if (!lay(COT.diaChi).trim()) loi.push("Thiếu dia_chi — ghi số nhà + tên đường (không có số thì tên đường / khu / dự án / thôn) đúng tin gốc");
 
   if (!lay(COT.dienTich).trim()) loi.push("Thiếu diện tích");
 
@@ -420,21 +431,25 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     loi.push(`loai_hinh "${loaiHinh}" không có trong danh mục ${mucDich === "thue" ? "cho thuê" : "mua bán"}`);
   const loaiHinhGhi = theoMenu?.type ?? dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
   // Loại con thuộc loại hình anh em cùng mục cha → theo loại con (loaiHinhTheoLoaiCon — một luật với lúc đọc tin, 31/10/2026)
-  const theoCon = loaiHinhTheoLoaiCon(loaiHinhGhi, mucDich, chuanLoaiCon(lay(COT.loaiCanHo) || lay(COT.loaiDat)));
-  if (theoCon) canhBao.push(`loai_hinh "${loaiHinhGhi}" nhưng loại con "${theoCon.loaiCon || loaiHinhGhi}" thuộc loại hình "${theoCon.type}" — đã đổi sang "${theoCon.type}"`);
-  const loaiHinhChuan = theoCon?.type ?? loaiHinhGhi;
+  // LOẠI CHA GIỮ ĐÚNG NHƯ ĐÃ CHỌN (anh 27/11/2026: "Đất / Đất nền / Đất nền dự án chọn cái nào cũng được, loại con chọn phù hợp …
+  // chọn bất loại nào, không phải cả loạt loại hình đó") — KHÔNG tự đổi loại cha theo loại con nữa (trước: loaiHinhTheoLoaiCon).
+  const loaiHinhChuan = loaiHinhGhi;
+  // Loại con hợp lệ = có trong ô loại con của loại cha HOẶC của loại anh em cùng nhóm (Đất · Đất nền · Đất nền dự án · Đất khác…;
+  // Căn hộ · Chung cư · Căn hộ dịch vụ…; Kho · Nhà xưởng · Đất công nghiệp…)
+  const nhomCha = (mucDich === "thue" ? rentTypeGroups : saleTypeGroups).find((g) => g.items.includes(loaiHinhChuan));
+  const loaiConNhom = [...new Set([loaiHinhChuan, ...(nhomCha?.items ?? [])].flatMap((t) => oLoaiCon(t, mucDich)?.options ?? []))];
   // LOẠI CON BẮT BUỘC cho căn hộ, đất (chủ dự án 29/10/2026) — chỉ áp đăng tin hàng loạt, form đăng tin giữ nguyên
   const oLoai = fieldsFor(loaiHinhChuan, mucDich).map((f) => f.key);
-  if (oLoai.includes("loaiCanho") && !lay(COT.loaiCanHo).trim()) loi.push("Thiếu loai_can_ho — căn hộ phải ghi loại con đúng tin gốc (vd Chung cư thương mại, Căn hộ cao cấp)");
-  if (oLoai.includes("landType") && /^đất/i.test(loaiHinhChuan) && !lay(COT.loaiDat).trim()) loi.push("Thiếu loai_dat — đất phải ghi loại con đúng tin gốc (vd Đất nền dự án, Đất ở đô thị, Đất thổ cư)");
+  // LOẠI CON KHÔNG BẮT BUỘC (anh 27/11/2026: "loại hình con tuỳ loại mà chọn, không bắt buộc") — có ghi thì phải thuộc danh sách của nhóm.
+  void oLoai;
   // Loại con phải ĐÚNG danh sách của loại hình (listingSpec — một nguồn); tên cũ tự đổi sang tên chuẩn (chuanLoaiCon).
   // Lời khách (tiêu đề, mô tả) nói khác ô đang ghi → báo để sửa theo lời khách (loaiConTheoLoiKhach) — chủ dự án 29/10/2026.
   const loaiConDung = (cot: string, khoa: string): string => {
     const v = chuanLoaiCon(lay(cot));
     const o = fieldsFor(loaiHinhChuan, mucDich).find((f) => f.key === khoa);
     if (!v || !o?.options) return v;
-    const khop = o.options.find((x) => chuanHoa(x) === chuanHoa(v));
-    if (!khop) { loi.push(`${cot} "${lay(cot)}" không có trong danh sách ${o.label} của "${loaiHinhChuan}": ${o.options.join(" · ")}`); return v; }
+    const khop = o.options.find((x) => chuanHoa(x) === chuanHoa(v)) ?? loaiConNhom.find((x) => chuanHoa(x) === chuanHoa(v));
+    if (!khop) { loi.push(`${cot} "${lay(cot)}" không có trong danh sách loại con của nhóm "${loaiHinhChuan}": ${loaiConNhom.join(" · ")}`); return v; }
     const theoKhach = loaiConTheoLoiKhach(khoa, khop, `${lay(COT.tieuDe)} ${lay(COT.moTa)}`);
     if (theoKhach) canhBao.push(`${cot} "${khop}" nhưng lời khách viết là "${theoKhach}" — ghi theo lời khách, không theo ô thông số trang nguồn`);
     return khop;

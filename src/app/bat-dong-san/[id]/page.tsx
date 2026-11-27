@@ -306,6 +306,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     ...(l.postedAt ? { datePosted: l.postedAt } : {}),
     address: {
       "@type": "PostalAddress",
+      // Địa chỉ CHI TIẾT (số nhà, tên đường) — anh 27/11/2026: "trỏ đến địa chỉ chi tiết, không phải chỉ phường xã"
+      ...(d.addressDetail?.trim() ? { streetAddress: d.addressDetail.trim() } : {}),
       addressLocality: l.location,
       ...(tinhTP ? { addressRegion: tinhTP } : {}),
       addressCountry: "VN",
