@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 // HAI trạng thái, một luật với Admin → Từ khoá lõi (src/lib/xinIndex.ts): ĐÃ INDEX · CHƯA INDEX ("đã xin dd/mm" chỉ là ghi chú).
 // Gốc = danh sách trang đã index của Search Console, dán vào "Cập nhật từ Search Console". Mỗi ngày: tab "Chưa index", xin 10 trang
 // trên cùng ở Search Console → Kiểm tra URL, bấm "Đã xin"; Kiểm tra URL báo đã có trên Google → bấm "Đã index".
-type Trang = { duong: string; nhom: string; uuTien: boolean; soTin: number | null; duTin: boolean; daIndex: boolean; xin: string | null };
+type Trang = { duong: string; ten?: string; nhom: string; uuTien: boolean; soTin: number | null; duTin: boolean; daIndex: boolean; xin: string | null };
 type Google = { ngay: string; soTrang: number } | null;
 type Loc = "chua" | "da" | "thieu" | "tat-ca";
 
@@ -121,7 +121,8 @@ export default function XinIndexPage() {
             <thead className="bg-cvr-surface text-left text-xs text-cvr-muted">
               <tr>
                 <th className="px-3 py-2 font-medium">#</th>
-                <th className="px-3 py-2 font-medium">Trang</th>
+                <th className="px-3 py-2 font-medium">Tên trang</th>
+                <th className="px-3 py-2 font-medium">URL</th>
                 <th className="px-3 py-2 font-medium">Loại trang</th>
                 <th className="px-3 py-2 text-right font-medium">Số tin</th>
                 <th className="px-3 py-2 font-medium">Index</th>
@@ -132,8 +133,9 @@ export default function XinIndexPage() {
               {hien.slice(0, 300).map((t, i) => (
                 <tr key={t.duong} className="border-t border-cvr-line align-middle">
                   <td className="px-3 py-2 text-cvr-muted">{i + 1}</td>
+                  <td className="px-3 py-2 font-medium text-cvr-ink">{t.ten || ""}</td>
                   <td className="px-3 py-2">
-                    <a href={SITE + t.duong} target="_blank" rel="noreferrer" className="break-all text-cvr-ink hover:underline">{t.duong}</a>
+                    <a href={SITE + t.duong} target="_blank" rel="noreferrer" className="break-all text-cvr-body hover:underline">{SITE + t.duong}</a>
                     {t.uuTien && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Cha</span>}
                   </td>
                   <td className="px-3 py-2 text-cvr-body">{t.nhom}</td>

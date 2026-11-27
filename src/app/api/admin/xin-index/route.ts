@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import sitemap from "@/app/sitemap";
 import { getTinXetTrang } from "@/lib/listingsDb";
-import { tatCaTrang } from "@/lib/pseo";
+import { tatCaTrang, tieuDe } from "@/lib/pseo";
 import { laLoiUuTien } from "@/lib/tuKhoaLoiStore";
 import { timKhuVuc } from "@/lib/khuVuc";
 import { docSoXinIndex, ghiSoXinIndex, duongTuUrl, trangThaiIndex } from "@/lib/xinIndex";
@@ -56,8 +56,13 @@ export async function GET() {
     const duong = e.url.replace(/^https:\/\/coastalland\.vn/, "") || "/";
     const n = nhomCua(duong);
     const p = pseo.get(duong);
+    // TÊN TRANG = câu từ khoá của trang (anh 27/11/2026: "ghi rõ trên Admin: Trang, URL, đã index, chưa index")
+    const seg = duong.split("/").filter(Boolean);
+    const tinh = seg.length === 2 && (seg[0] === "mua-ban" || seg[0] === "cho-thue") ? timKhuVuc(seg[1]) : undefined;
+    const ten = p ? tieuDe(p.dk) : tinh ? tieuDe({ muc: seg[0] === "cho-thue" ? "thue" : "ban", tinh }) : "";
     return {
       duong,
+      ten,
       nhom: n.ten,
       thuTu: n.so,
       uuTien: laLoiUuTien(duong),
