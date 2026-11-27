@@ -51,15 +51,7 @@ async function choAdminGop(admin: NonNullable<ReturnType<typeof createAdminClien
   // Nhớ số trên tài khoản đang dùng (user_metadata.sdt_lien_he) → đăng tin / nạp tiền lần sau không hỏi lại, tin mang số này
   const { data: uu } = await admin.auth.admin.getUserById(uid);
   await admin.auth.admin.updateUserById(uid, { user_metadata: { ...(uu?.user?.user_metadata ?? {}), sdt_lien_he: sdt } }).then(() => {}, () => {});
-  await baoLoi({
-    noi: "gop-tai-khoan",
-    mucDo: "nhe",
-    tomTat: "Khách có tài khoản khác cùng số điện thoại — chưa gộp",
-    chiTiet: `Số ${sdt} (khách đã xác minh) · tài khoản đang dùng ${uid} · tài khoản khác cùng số ${ids.join(", ")}`,
-    hauQua: "Khách vẫn đăng tin, nạp tiền bình thường bằng tài khoản đang dùng; tin, tiền, gói ở tài khoản kia giữ nguyên.",
-    canLam: "Anh quyết: gộp thì vào Admin → Khách hàng, đối chiếu ví, gói, voucher; không gộp thì để nguyên.",
-    khoa: `gop-tay:${sdt}`,
-  }).catch(() => {});
+  // KHÔNG báo Admin "chưa gộp" (luật 26/11/2026: KHÔNG GỘP tài khoản — không có gì để anh quyết; anh 27/11: chỉ báo việc thật, 1 lần)
   return NextResponse.json({ ok: true, sdt, soTinGop: 0, choAdminGop: true });
 }
 

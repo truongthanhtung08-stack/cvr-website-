@@ -136,7 +136,8 @@ export async function guiThongBao(t: NoiDungThongBao): Promise<KetQuaKenh[]> {
     }).catch(() => {});
   }
   const zalo = ketQua.find((k) => k.kenh === "zalo");
-  if (zalo && !zalo.daGui && t.phone && t.znsTemplateId && zalo.lyDo && !/đang tắt/.test(zalo.lyDo)) {
+  // -133 = Zalo cấm gửi 22h–7h: không phải sự cố cần anh xử lý → không ghi (anh 27/11/2026: chỉ báo 1 lần, việc thật)
+  if (zalo && !zalo.daGui && t.phone && t.znsTemplateId && zalo.lyDo && !/đang tắt|-133/.test(zalo.lyDo)) {
     const { baoLoi } = await import("@/lib/baoLoi");
     await baoLoi({
       noi: "thong-bao-zalo",

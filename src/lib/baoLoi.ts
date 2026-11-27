@@ -70,6 +70,10 @@ export async function baoLoi(t: SuCo): Promise<void> {
   // Log vẫn giữ nguyên — đây là đường tra cứu cuối cùng khi cả hai đường kia hỏng.
   console.error(`[su-co][${t.mucDo}] ${t.noi} — ${t.tomTat}`, t.chiTiet ?? "");
 
+  // CHỈ WEB THẬT GHI SỔ (anh 27/11/2026: "thông báo 1 lần"): máy thử trên máy anh (localhost, chung CSDL thật) từng ghi sự cố giả
+  // ("chưa cắm RESEND_API_KEY", "chưa lấy được access token Zalo") vào Admin → Tổng quan. Ngoài Vercel: chỉ ghi log.
+  if (process.env.VERCEL !== "1") return;
+
   try {
     const daBaoGanDay = await ghiSo(khoa, t);
     // Lỗi 'nhẹ' và việc nội bộ chỉ ghi sổ (hiện ở Tổng quan), không làm phiền hòm thư.
