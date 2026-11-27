@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import sitemap from "@/app/sitemap";
 import { getTinXetTrang } from "@/lib/listingsDb";
-import { tatCaTrang, tieuDe } from "@/lib/pseo";
+import { tatCaTrang, tieuDe, titleGoogle, giaiMaDanhSach, duongDan, NHOM_CHA, NOI_NHOM } from "@/lib/pseo";
 import { laLoiUuTien } from "@/lib/tuKhoaLoiStore";
 import { timKhuVuc } from "@/lib/khuVuc";
 import { docSoXinIndex, ghiSoXinIndex, duongTuUrl, trangThaiIndex } from "@/lib/xinIndex";
@@ -73,7 +73,23 @@ export async function GET() {
     };
   });
   trang.sort((a, b) => a.thuTu - b.thuTu || Number(b.uuTien) - Number(a.uuTien) || (b.soTin ?? 0) - (a.soTin ?? 0) || a.duong.localeCompare(b.duong));
-  return NextResponse.json({ ok: true, trang, google: so.google ? { ngay: so.google.ngay, soTrang: so.google.ds.length } : null });
+  // NHÓM LOẠI CHA (anh 27/11/2026: "Admin quá lộn xộn — lấy loại hình CHA theo bộ lọc, ghi rõ trang, URL, index, lộ trình"):
+  // mỗi dòng = khu vực + mục đích + loại cha = MỘT URL; title đúng chữ đang chạy trên web (titleGoogle — một chỗ với trang).
+  const TEN_CHA: Record<string, string> = { "": "Nhà đất", nha: "Nhà", dat: "Đất", "can-ho-chung-cu": "Căn hộ chung cư", "nghi-duong": "BĐS nghỉ dưỡng",
+    "homestay-farmstay": "BĐS nghỉ dưỡng", "kho-nha-xuong": "BĐS công nghiệp", "phong-tro": "Phòng trọ", "van-phong-mat-bang": "Văn phòng, mặt bằng" };
+  const nhomCha: { khuVuc: string; muc: string; cha: string; duong: string; ten: string; manh: boolean; daIndex: boolean; xin: string | null }[] = [];
+  for (const noi of NOI_NHOM) for (const [muc, cats] of NHOM_CHA) for (const slug of ["", ...cats]) {
+    if (slug === "can-ho-chung-cu" && /^(quang-ngai|quang-tri)/.test(noi)) continue;
+    const [t, tp] = noi.split("/");
+    const tinh = timKhuVuc(t);
+    if (!tinh) continue;
+    const dk = slug ? giaiMaDanhSach(muc, slug, noi.split("/"), []) : tp ? giaiMaDanhSach(muc, t, [tp], []) : { muc, tinh };
+    if (!dk) continue;
+    const duong = duongDan(dk);
+    nhomCha.push({ khuVuc: dk.thanhPho?.name ?? tinh.name, muc: muc === "thue" ? "Cho thuê" : "Mua bán", cha: TEN_CHA[slug], duong, ten: titleGoogle(dk),
+      manh: /^(da-nang|hue|khanh-hoa\/nha-trang|gia-lai\/quy-nhon)$/.test(noi), ...trangThaiIndex(duong, so, gSet) });
+  }
+  return NextResponse.json({ ok: true, trang, nhomCha, google: so.google ? { ngay: so.google.ngay, soTrang: so.google.ds.length } : null });
 }
 
 // POST { duong, kq: "da-xin" | "da-co" | "bo" } → ghi tay một trang

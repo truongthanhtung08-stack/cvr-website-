@@ -2,36 +2,30 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-// ADMIN → XIN INDEX (anh 09/11/2026; hệ thống lại 12/11/2026: "page nào đã index, page nào chưa index — thống nhất").
-// HAI trạng thái, một luật với Admin → Từ khoá lõi (src/lib/xinIndex.ts): ĐÃ INDEX · CHƯA INDEX ("đã xin dd/mm" chỉ là ghi chú).
-// Gốc = danh sách trang đã index của Search Console, dán vào "Cập nhật từ Search Console". Mỗi ngày: tab "Chưa index", xin 10 trang
-// trên cùng ở Search Console → Kiểm tra URL, bấm "Đã xin"; Kiểm tra URL báo đã có trên Google → bấm "Đã index".
-type Trang = { duong: string; ten?: string; nhom: string; uuTien: boolean; soTin: number | null; duTin: boolean; daIndex: boolean; xin: string | null };
+// ADMIN → XIN INDEX — GỌN MỘT BẢNG (anh 27/11/2026: "Admin quá lộn xộn — lấy loại hình CHA theo bộ lọc; title trên Google TỔNG,
+// nhóm vào trang TỔNG; ghi rõ trang, URL, index, lộ trình"). Mỗi dòng = khu vực + mục đích + loại cha = MỘT trang tổng; mọi loại con và
+// đặc điểm của nhóm gom về trang này. Index: danh sách Search Console dán vào "Cập nhật từ Search Console" + nút "Đã xin" / "Đã index".
+type Nhom = { khuVuc: string; muc: string; cha: string; duong: string; ten: string; manh: boolean; daIndex: boolean; xin: string | null };
 type Google = { ngay: string; soTrang: number } | null;
-type Loc = "chua" | "da" | "thieu" | "tat-ca";
 
 const SITE = "https://coastalland.vn";
 const SEARCH_CONSOLE = "https://search.google.com/search-console?resource_id=https%3A%2F%2Fcoastalland.vn%2F";
 const homNay = () => new Date().toISOString().slice(0, 10);
-const ngayVN = (s: string) => s.split("-").reverse().join("/");
-const LOC: [Loc, string][] = [["chua", "Chưa index"], ["da", "Đã index"], ["thieu", "Chưa đủ tin"], ["tat-ca", "Tất cả"]];
-const thuoc = (t: Trang, l: Loc) => (l === "da" ? t.daIndex : l === "chua" ? !t.daIndex && t.duTin : l === "thieu" ? !t.daIndex && !t.duTin : true);
+const ngayVN = (s: string) => s.split("-").reverse().slice(0, 2).join("/");
+const MOI_NGAY = 10; // hạn mức xin index của Google mỗi ngày
 
 export default function XinIndexPage() {
-  const [ds, setDs] = useState<Trang[] | null>(null);
+  const [ds, setDs] = useState<Nhom[] | null>(null);
   const [google, setGoogle] = useState<Google>(null);
   const [loi, setLoi] = useState<string>();
-  const [loc, setLoc] = useState<Loc>("chua");
-  const [nhom, setNhom] = useState("");
   const [vuaChep, setVuaChep] = useState("");
   const [moDan, setMoDan] = useState(false);
   const [dan, setDan] = useState("");
-  const [ngayG, setNgayG] = useState(homNay());
   const [dangGui, setDangGui] = useState(false);
 
   const nap = () =>
     fetch("/api/admin/xin-index").then((r) => r.json())
-      .then((j) => (j.ok ? (setDs(j.trang), setGoogle(j.google)) : setLoi(j.message ?? "Lỗi")))
+      .then((j) => (j.ok ? (setDs(j.nhomCha), setGoogle(j.google)) : setLoi(j.message ?? "Lỗi")))
       .catch(() => setLoi("Không tải được danh sách"));
   useEffect(() => { nap(); }, []);
 
@@ -40,114 +34,90 @@ export default function XinIndexPage() {
     if (!j?.ok) setLoi(j?.message ?? "Không lưu được");
     return j?.ok ? j : null;
   };
-  const danhDau = async (duong: string, kq: "da-xin" | "da-co" | "bo") => {
+  const danhDau = async (duong: string, kq: "da-xin" | "da-co") => {
     const j = await gui({ duong, kq });
     if (j) setDs((cu) => cu?.map((t) => (t.duong === duong ? { ...t, daIndex: j.daIndex, xin: j.xin } : t)) ?? null);
   };
   const capNhatGoogle = async () => {
     setDangGui(true); setLoi(undefined);
-    const urls = dan.split(/\s+/).filter(Boolean);
-    if (await gui({ google: { ngay: ngayG, urls } })) { setMoDan(false); setDan(""); await nap(); }
+    if (await gui({ google: { ngay: homNay(), urls: dan.split(/\s+/).filter(Boolean) } })) { setMoDan(false); setDan(""); await nap(); }
     setDangGui(false);
   };
+  const chep = (duong: string) => { navigator.clipboard?.writeText(SITE + duong).catch(() => {}); setVuaChep(duong); };
 
-  const chep = (duong: string) => {
-    navigator.clipboard?.writeText(SITE + duong).catch(() => {});
-    setVuaChep(duong);
-  };
-
-  const cacNhom = useMemo(() => [...new Set((ds ?? []).map((t) => t.nhom))], [ds]);
-  const trongNhom = useMemo(() => (ds ?? []).filter((t) => !nhom || t.nhom === nhom), [ds, nhom]);
-  // Chưa index: trang chưa xin lên trước (cần xin), đã xin xếp sau
-  const hien = useMemo(() => {
-    const h = trongNhom.filter((t) => thuoc(t, loc));
-    return loc === "chua" ? [...h.filter((t) => !t.xin), ...h.filter((t) => t.xin)] : h;
-  }, [trongNhom, loc]);
-  const homNayDaXin = (ds ?? []).filter((t) => t.xin === homNay()).length;
-
+  // LỘ TRÌNH: đã index → giữ, thêm tin · đã xin → chờ Google · chưa index → xin 10 trang/ngày từ hôm nay, 4 khu làm mạnh trước
+  const loTrinh = useMemo(() => {
+    const m = new Map<string, string>();
+    const cho = (ds ?? []).filter((t) => !t.daIndex && !t.xin).sort((a, b) => Number(b.manh) - Number(a.manh));
+    cho.forEach((t, i) => {
+      const d = new Date(); d.setDate(d.getDate() + Math.floor(i / MOI_NGAY));
+      m.set(t.duong, `Xin index ${ngayVN(d.toISOString().slice(0, 10))}`);
+    });
+    for (const t of ds ?? []) if (t.daIndex) m.set(t.duong, "Giữ — thêm tin mới mỗi tuần"); else if (t.xin) m.set(t.duong, `Đã xin ${ngayVN(t.xin)} — chờ Google`);
+    return m;
+  }, [ds]);
+  const dem = (f: (t: Nhom) => boolean) => (ds ?? []).filter(f).length;
   const nut = "rounded-lg border border-cvr-line px-2.5 py-1 text-xs font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink";
 
   return (
-    <div className="max-w-6xl space-y-4">
+    <div className="max-w-7xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Xin index</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Xin index — nhóm từ khoá theo loại cha</h1>
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-cvr-body">Hôm nay đã xin <b className="text-cvr-ink">{homNayDaXin}</b>/10</span>
-          <a href={SEARCH_CONSOLE} target="_blank" rel="noreferrer" className="rounded-lg bg-cvr-ink px-4 py-2 font-semibold text-white transition hover:bg-cvr-ink/90">
-            Mở Search Console ↗
-          </a>
+          <span className="text-cvr-body">Hôm nay đã xin <b className="text-cvr-ink">{dem((t) => t.xin === homNay())}</b>/{MOI_NGAY}</span>
+          <a href={SEARCH_CONSOLE} target="_blank" rel="noreferrer" className="rounded-lg bg-cvr-ink px-4 py-2 font-semibold text-white transition hover:bg-cvr-ink/90">Mở Search Console ↗</a>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-cvr-line bg-white p-4 text-sm shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-cvr-body">
-            Search Console: {google ? <><b className="text-cvr-ink">{google.soTrang}</b> trang đã index · cập nhật {ngayVN(google.ngay)}</> : "chưa cập nhật"}
-          </span>
-          <button type="button" className={nut} onClick={() => setMoDan((v) => !v)}>Cập nhật từ Search Console</button>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-cvr-line bg-white p-4 text-sm shadow-sm">
+        <span className="text-cvr-body">
+          <b className="text-cvr-ink">{dem(() => true)}</b> nhóm · <b className="text-emerald-700">{dem((t) => t.daIndex)}</b> đã index ·{" "}
+          <b className="text-amber-700">{dem((t) => !t.daIndex)}</b> chưa index
+          {google && <> · Search Console cập nhật {ngayVN(google.ngay)}</>}
+        </span>
+        <button type="button" className={nut} onClick={() => setMoDan((v) => !v)}>Cập nhật từ Search Console</button>
         {moDan && (
-          <div className="mt-3 space-y-2">
-            <textarea value={dan} onChange={(e) => setDan(e.target.value)} rows={6} placeholder="https://coastalland.vn/…"
-              className="w-full rounded-lg border border-cvr-line p-2 font-mono text-xs" />
-            <div className="flex flex-wrap items-center gap-2">
-              <input type="date" value={ngayG} onChange={(e) => setNgayG(e.target.value)} className="rounded-lg border border-cvr-line px-2 py-1 text-xs" />
-              <button type="button" disabled={dangGui || !dan.trim()} onClick={capNhatGoogle}
-                className="rounded-lg bg-cvr-ink px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Lưu</button>
-            </div>
+          <div className="w-full space-y-2">
+            <textarea value={dan} onChange={(e) => setDan(e.target.value)} rows={5} placeholder="https://coastalland.vn/…" className="w-full rounded-lg border border-cvr-line p-2 font-mono text-xs" />
+            <button type="button" disabled={dangGui || !dan.trim()} onClick={capNhatGoogle} className="rounded-lg bg-cvr-ink px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Lưu</button>
           </div>
         )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        {LOC.map(([k, ten]) => (
-          <button key={k} type="button" onClick={() => setLoc(k)}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${loc === k ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink"}`}>
-            {ten} · {trongNhom.filter((t) => thuoc(t, k)).length}
-          </button>
-        ))}
-        <select value={nhom} onChange={(e) => setNhom(e.target.value)} className="ml-auto rounded-lg border border-cvr-line px-3 py-1.5 text-sm text-cvr-body">
-          <option value="">Mọi loại trang</option>
-          {cacNhom.map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
       </div>
 
       {loi && <p className="text-sm font-medium text-red-600">{loi}</p>}
       {!ds && !loi && <p className="text-sm text-cvr-muted">Đang tải…</p>}
 
       {ds && (
-        <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead className="bg-cvr-surface text-left text-xs text-cvr-muted">
               <tr>
-                <th className="px-3 py-2 font-medium">#</th>
-                <th className="px-3 py-2 font-medium">Tên trang</th>
+                <th className="px-3 py-2 font-medium">Khu vực</th>
+                <th className="px-3 py-2 font-medium">Mục đích</th>
+                <th className="px-3 py-2 font-medium">Loại cha</th>
+                <th className="px-3 py-2 font-medium">Title trên Google</th>
                 <th className="px-3 py-2 font-medium">URL</th>
-                <th className="px-3 py-2 font-medium">Loại trang</th>
-                <th className="px-3 py-2 text-right font-medium">Số tin</th>
                 <th className="px-3 py-2 font-medium">Index</th>
+                <th className="px-3 py-2 font-medium">Lộ trình</th>
                 <th className="px-3 py-2" />
               </tr>
             </thead>
             <tbody>
-              {hien.slice(0, 300).map((t, i) => (
+              {ds.map((t) => (
                 <tr key={t.duong} className="border-t border-cvr-line align-middle">
-                  <td className="px-3 py-2 text-cvr-muted">{i + 1}</td>
-                  <td className="px-3 py-2 font-medium text-cvr-ink">{t.ten || ""}</td>
-                  <td className="px-3 py-2">
-                    <a href={SITE + t.duong} target="_blank" rel="noreferrer" className="break-all text-cvr-body hover:underline">{SITE + t.duong}</a>
-                    {t.uuTien && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Cha</span>}
-                  </td>
-                  <td className="px-3 py-2 text-cvr-body">{t.nhom}</td>
-                  <td className="px-3 py-2 text-right text-cvr-body">{t.soTin ?? ""}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-cvr-ink">{t.khuVuc}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-cvr-body">{t.muc}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-cvr-body">{t.cha}</td>
+                  <td className="px-3 py-2 font-medium text-cvr-ink">{t.ten}</td>
+                  <td className="px-3 py-2"><a href={SITE + t.duong} target="_blank" rel="noreferrer" className="break-all text-cvr-body hover:underline">{SITE + t.duong}</a></td>
                   <td className="whitespace-nowrap px-3 py-2">
-                    {t.daIndex ? <span className="font-medium text-emerald-700">✓ Đã index</span>
-                      : <span className="font-medium text-amber-700">Chưa index{t.xin && <span className="font-normal text-cvr-muted"> · đã xin {ngayVN(t.xin)}</span>}</span>}
+                    {t.daIndex ? <span className="font-medium text-emerald-700">Đã index</span> : <span className="font-medium text-amber-700">Chưa index</span>}
                   </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-cvr-body">{loTrinh.get(t.duong)}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-right">
                     <div className="flex justify-end gap-1.5">
                       <button type="button" className={nut} onClick={() => chep(t.duong)}>{vuaChep === t.duong ? "Đã chép" : "Chép link"}</button>
-                      {!t.daIndex && t.duTin && t.xin !== homNay() && <button type="button" className={nut} onClick={() => danhDau(t.duong, "da-xin")}>Đã xin</button>}
+                      {!t.daIndex && t.xin !== homNay() && <button type="button" className={nut} onClick={() => danhDau(t.duong, "da-xin")}>Đã xin</button>}
                       {!t.daIndex && <button type="button" className={nut} onClick={() => danhDau(t.duong, "da-co")}>Đã index</button>}
                     </div>
                   </td>
@@ -155,7 +125,6 @@ export default function XinIndexPage() {
               ))}
             </tbody>
           </table>
-          {hien.length > 300 && <p className="border-t border-cvr-line px-3 py-2 text-xs text-cvr-muted">Hiện 300 / {hien.length} trang — chọn loại trang để xem phần còn lại.</p>}
         </div>
       )}
     </div>

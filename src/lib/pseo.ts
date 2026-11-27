@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { findCategory, nhomPseo, rentCategories, saleCategories, type Category } from "@/lib/categories";
-import { khuVucList, slugKhuVuc, timKhuVuc, type KhuVuc } from "@/lib/khuVuc";
+import { khuVucList, slugKhuVuc, timKhuVuc, tieuDeKhuVuc, type KhuVuc } from "@/lib/khuVuc";
 import { normalizeVi, type Filters } from "@/lib/filters";
 import { choCuCua, newProvinceOf, oldNamesOf, phuongMoiCuaQuan } from "@/lib/locations";
 import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
@@ -617,6 +617,11 @@ export function banGocCua(l: Listing, tatCa: Listing[]): Listing | null {
 let nhoTrang: { khoa: string; kq: Map<string, TrangPseo> } | null = null;
 // HẾT HẠN THẬT theo ngày hạn (anh 26/11/2026: tin quá hạn < 1 tháng hiện như tin thường → cờ hetHan = false; cổng trang Google
 // phải đọc ngày hạn thật, không đọc cờ hiển thị — đọc cờ là cổng "chỉ thêm" tính sai, đóng 15 trang 27/11)
+export const NHOM_CHA: [Muc, string[]][] = [
+  ["ban", ["nha", "dat", "can-ho-chung-cu", "nghi-duong", "kho-nha-xuong"]],
+  ["thue", ["nha", "dat", "can-ho-chung-cu", "homestay-farmstay", "kho-nha-xuong", "phong-tro", "van-phong-mat-bang"]],
+];
+export const NOI_NHOM = ["da-nang", "hue", "khanh-hoa", "khanh-hoa/nha-trang", "gia-lai", "gia-lai/quy-nhon", "lam-dong", "quang-ngai", "quang-tri", "dak-lak"];
 const hetHanThat = (l: Listing) => !!l.hetHan || (!!l.hetHanLuc && Date.parse(l.hetHanLuc) <= Date.now());
 export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const khoa = phienBanTuKhoa() + "|" + tinConHan.map((l) => l.id + (l.bumpedAt ?? "")).join(","); // bảng từ khoá đổi → tính lại
@@ -631,6 +636,18 @@ export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
       const q = m.get(p.path);
       if (p.index && q) q.index = true;
     }
+  }
+  // ⑧ MỞ HẾT TRANG NHÓM (anh 27/11/2026: "mở và up hết lên web", "index trước, có tin dữ liệu tự động vào"): MỘT nhóm từ khoá =
+  // khu vực (8 tỉnh + Nha Trang, Quy Nhơn) + mục đích + LOẠI CHA của bộ lọc → trang luôn mở cho Google, kể cả khi chưa có tin
+  // (trang vẫn hiện tin cùng loại cả tỉnh bên dưới). Quảng Ngãi, Quảng Trị không có chung cư → bỏ căn hộ. CHỈ THÊM, không đóng trang nào.
+  for (const [muc, cats] of NHOM_CHA) for (const noi of NOI_NHOM) for (const slug of cats) {
+    if (slug === "can-ho-chung-cu" && /^(quang-ngai|quang-tri)/.test(noi)) continue;
+    const dk = giaiMaDanhSach(muc, slug, noi.split("/"), []);
+    if (!dk) continue;
+    const path = duongDan(dk);
+    const p = m.get(path);
+    if (p) p.index = true;
+    else m.set(path, { dk, path, n: 0, moiNhat: 0, index: true, ids: new Set() });
   }
   nhoTrang = { khoa, kq: m };
   return m;
@@ -843,4 +860,30 @@ export function soLieuTrang(tin: Listing[], muc: Muc, phoBien = false): string {
     phan.push(`Cập nhật ${thang}/${nam}`);
   }
   return phan.join(" · ");
+}
+
+// ── TITLE TRÊN GOOGLE — MỘT CHỖ (trang pSEO + Admin → Xin index; anh 27/11/2026: "ghi đúng title trên Google") ─────────────
+export function titleCongThuc(dk: DieuKien): string {
+  const hoa = (s: string) => s.split(" ").map((w) => (w ? w[0].toLocaleUpperCase("vi") + w.slice(1) : w)).join(" ");
+  // PHƯỜNG / THÀNH PHỐ ghi kèm TỈNH, gọn như người gõ (anh 26/11/2026: "họ nói Đà Nẵng, mình ghi Hòa Xuân Đà Nẵng"):
+  // "Phường Hòa Xuân, Đà Nẵng" → "Hòa Xuân Đà Nẵng" · "Nha Trang" → "Nha Trang Khánh Hòa"
+  let phan = tieuDe(dk).replace(/^(Mua bán|Bán|Cho thuê)\s+/i, "");
+  // Trang đang có hạng giữ đúng tiêu đề đang trên web: /mua-ban/hue/phuong-vy-da #2 "nhà đất vỹ dạ" (tra 26/11/2026)
+  if (duongDan(dk) === "/mua-ban/hue/phuong-vy-da") { /* giữ nguyên */ }
+  else if (dk.phuong) phan = phan.replace(`${dk.phuong}, ${dk.tinh.name}`, `${dk.phuong.replace(/^(Phường|Xã|Đặc khu)\s+/i, "")} ${dk.tinh.name}`);
+  else if (dk.thanhPho && !phan.includes(dk.tinh.name)) phan = phan.replace(dk.thanhPho.name, `${dk.thanhPho.name} ${dk.tinh.name}`);
+  const goc = hoa(`${dk.muc === "ban" ? "Mua Bán" : "Cho Thuê"} ${phan}`);
+  const coLoc = !!(dk.giaRe || dk.dacDiem || dk.giaDuoi || dk.phapLy || dk.phongNgu || dk.huong || dk.duong || dk.kiet);
+  const thang = thangHienTai().replace(/^tháng (\d{1,2})\/(\d{4})$/, "T$1/$2");
+  const coRe = goc.length < 45 && !coLoc ? `${goc} Giá Rẻ` : goc;
+  if (`${coRe} ${thang}`.length <= 52) return `${coRe} ${thang}`;
+  if (`${goc} ${thang}`.length <= 52) return `${goc} ${thang}`;
+  return goc;
+}
+
+/** Title đang chạy trên web: trang lõi tỉnh theo tieuDeKhuVuc (route /mua-ban|cho-thue/<tỉnh>), trang đang top giữ bản cũ, còn lại theo công thức. */
+export function titleGoogle(dk: DieuKien): string {
+  const laTinh = !dk.cat && !dk.thanhPho && !dk.phuong && !dk.giaDuoi && !dk.giaRe && !dk.dacDiem && !dk.phapLy && !dk.phongNgu && !dk.huong && !dk.duong && !dk.kiet;
+  if (laTinh) return tieuDeKhuVuc(dk.muc, dk.tinh.name);
+  return giuSoCu(duongDan(dk)) ? (dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`) : titleCongThuc(dk);
 }

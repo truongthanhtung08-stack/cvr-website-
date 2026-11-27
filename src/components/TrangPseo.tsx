@@ -13,7 +13,7 @@ import { tierRank } from "@/lib/packages";
 import type { Listing } from "@/lib/data";
 import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
-import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, danhDauGiaRe, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
+import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, danhDauGiaRe, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, titleGoogle, type DieuKien } from "@/lib/pseo";
 import { tieuDeGoogle } from "@/lib/thang";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 import { giaMoiM2 } from "@/lib/chiSoGia";
@@ -25,24 +25,6 @@ import { giaMoiM2 } from "@/lib/chiSoGia";
 // đang chạy, chỉ nhận đúng tin khớp điều kiện) → liên kết nội bộ.
 // ============================================================================
 
-function titleCongThuc(dk: DieuKien): string {
-  const hoa = (s: string) => s.split(" ").map((w) => (w ? w[0].toLocaleUpperCase("vi") + w.slice(1) : w)).join(" ");
-  // PHƯỜNG / THÀNH PHỐ ghi kèm TỈNH, gọn như người gõ (anh 26/11/2026: "họ nói Đà Nẵng, mình ghi Hòa Xuân Đà Nẵng"):
-  // "Phường Hòa Xuân, Đà Nẵng" → "Hòa Xuân Đà Nẵng" · "Nha Trang" → "Nha Trang Khánh Hòa"
-  let phan = tieuDe(dk).replace(/^(Mua bán|Bán|Cho thuê)\s+/i, "");
-  // Trang đang có hạng giữ đúng tiêu đề đang trên web: /mua-ban/hue/phuong-vy-da #2 "nhà đất vỹ dạ" (tra 26/11/2026)
-  if (duongDan(dk) === "/mua-ban/hue/phuong-vy-da") { /* giữ nguyên */ }
-  else if (dk.phuong) phan = phan.replace(`${dk.phuong}, ${dk.tinh.name}`, `${dk.phuong.replace(/^(Phường|Xã|Đặc khu)\s+/i, "")} ${dk.tinh.name}`);
-  else if (dk.thanhPho && !phan.includes(dk.tinh.name)) phan = phan.replace(dk.thanhPho.name, `${dk.thanhPho.name} ${dk.tinh.name}`);
-  const goc = hoa(`${dk.muc === "ban" ? "Mua Bán" : "Cho Thuê"} ${phan}`);
-  const coLoc = !!(dk.giaRe || dk.dacDiem || dk.giaDuoi || dk.phapLy || dk.phongNgu || dk.huong || dk.duong || dk.kiet);
-  const thang = thangHienTai().replace(/^tháng (\d{1,2})\/(\d{4})$/, "T$1/$2");
-  const coRe = goc.length < 45 && !coLoc ? `${goc} Giá Rẻ` : goc;
-  if (`${coRe} ${thang}`.length <= 52) return `${coRe} ${thang}`;
-  if (`${goc} ${thang}`.length <= 52) return `${goc} ${thang}`;
-  return goc;
-}
-
 export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
   const [tin, tinXet] = await Promise.all([getListings().catch(() => []), getTinXetTrang()]);
   const trang = tatCaTrang(tinXet).get(duongDan(dk)); // cổng đếm cả tin hết hạn (29/10/2026)
@@ -51,9 +33,7 @@ export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
   // TITLE THEO CÔNG THỨC (anh 26/11/2026, tệp "Phân tích từ khóa và cấu trúc pSEO" + KE-HOACH-TU-KHOA sheet plan final):
   // {Mua Bán | Cho Thuê} {Loại hình} {Khu vực} {Giá Rẻ} T{MM}/{YYYY} — giữ phần đầu; thêm "Giá Rẻ" khi phần đầu < 45 ký tự và trang không
   // có bộ lọc riêng; thêm tháng khi cả câu ≤ 52 ký tự. H1 giữ nguyên. Trang đang top / giữ bản cũ (giuSoCu): title như cũ.
-  const title = giuSoCu(path)
-    ? (dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`)
-    : titleCongThuc(dk);
+  const title = titleGoogle(dk); // một chỗ dùng chung với Admin → Xin index (pseo.ts)
   const description = moTa(dk, tin.filter((l) => khop(l, dk)));
   return {
     title: tieuDeGoogle(title),
