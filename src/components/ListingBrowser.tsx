@@ -49,6 +49,7 @@ export default function ListingBrowser({
   nguon,
   ketQuaDau,
   soLieu,
+  cauTim,
   initialFilters,
   chiId,
   boQuaId,
@@ -112,6 +113,8 @@ export default function ListingBrowser({
   boQuaId?: string[];
   // Trang pSEO: dòng số liệu riêng của trang dưới H1 (giá rao · diện tích · cập nhật) — thay câu chung
   soLieu?: string;
+  /** Câu từ khoá của trang nhóm (pseo.cauTuKhoa) — hiện ngay dưới H1 */
+  cauTim?: string;
 }) {
   // coDiaDanh trong điều kiện tính lại của các useMemo dùng địa danh: dữ liệu về sau lần tính đầu thì phải tính lại
   const coDiaDanh = useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
@@ -506,6 +509,7 @@ export default function ListingBrowser({
               điểm yếu với khách (chủ dự án chốt 11/9/2026). Câu này chỉ còn nói
               phạm vi hoạt động. Ẩn trên mobile cho gọn như trước. */}
           {/* khách tìm "giá rẻ" → khoảng giá của riêng phân khúc rẻ (kq.khoangRe), không phải cả trang */}
+          {cauTim && !trangChu ? <p className="mt-1 text-sm text-cvr-body">{cauTim}</p> : null}
           {trangChu ? null : kq?.khoangRe || soLieu ? (
             <p className="mt-1 text-sm text-cvr-muted">{kq?.khoangRe || soLieu}</p>
           ) : active ? (

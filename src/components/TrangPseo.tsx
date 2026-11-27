@@ -13,7 +13,7 @@ import { tierRank } from "@/lib/packages";
 import type { Listing } from "@/lib/data";
 import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
-import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, danhDauGiaRe, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, titleGoogle, type DieuKien } from "@/lib/pseo";
+import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, danhDauGiaRe, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, titleGoogle, cauTuKhoa, type DieuKien } from "@/lib/pseo";
 import { tieuDeGoogle } from "@/lib/thang";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 import { giaMoiM2 } from "@/lib/chiSoGia";
@@ -34,7 +34,7 @@ export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
   // {Mua Bán | Cho Thuê} {Loại hình} {Khu vực} {Giá Rẻ} T{MM}/{YYYY} — giữ phần đầu; thêm "Giá Rẻ" khi phần đầu < 45 ký tự và trang không
   // có bộ lọc riêng; thêm tháng khi cả câu ≤ 52 ký tự. H1 giữ nguyên. Trang đang top / giữ bản cũ (giuSoCu): title như cũ.
   const title = titleGoogle(dk); // một chỗ dùng chung với Admin → Xin index (pseo.ts)
-  const description = moTa(dk, tin.filter((l) => khop(l, dk)));
+  const description = cauTuKhoa(path) ?? moTa(dk, tin.filter((l) => khop(l, dk)));
   return {
     title: tieuDeGoogle(title),
     description,
@@ -91,9 +91,9 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
         <BreadcrumbJsonLd items={duongDanPhanCap(dk)} />
         {motCauTruc ? (
           // giữ đúng thứ tự máy chủ đã xếp (mức chính xác · VIP → Basic → mới / rẻ · còn hạn rồi hết hạn)
-          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} items={goiNheTin(danhSach)} itemsHetHan={goiNheTin(danhSachHetHan)} sapXepDau="lien-quan" articles={goiNheBaiViet(articles)} />
+          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} cauTim={cauTuKhoa(path)} items={goiNheTin(danhSach)} itemsHetHan={goiNheTin(danhSachHetHan)} sapXepDau="lien-quan" articles={goiNheBaiViet(articles)} />
         ) : (
-          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} ketQuaDau={ketQuaDau} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
+          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} cauTim={cauTuKhoa(path)} nguon={dk.muc} ketQuaDau={ketQuaDau} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
         )}
         {tuongTu.length > 0 && (
           <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">

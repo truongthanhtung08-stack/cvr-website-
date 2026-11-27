@@ -890,3 +890,11 @@ export function titleGoogle(dk: DieuKien): string {
   if (laTinh) return tieuDeKhuVuc(dk.muc, dk.tinh.name);
   return giuSoCu(duongDan(dk)) ? (dk.giaRe || dk.dacDiem ? tieuDe(dk) : `${tieuDe(dk)} ${thangHienTai()}`) : titleCongThuc(dk);
 }
+
+// CÂU TỪ KHOÁ DƯỚI H1 (anh 27/11/2026: "index cho Google thế nào khi trang không có từ khoá"): mỗi trang nhóm loại cha mang câu ghép từ
+// chính longtail khách gõ của nhóm (src/data/nhom-tu-khoa.json — đặc điểm + phường/nơi), viết thành câu, không liệt kê thô.
+const CAU_NHOM = new Map((nhomTuKhoa as { url: string; cau?: string }[]).filter((x) => x.cau).map((x) => [x.url, x.cau!]));
+export function cauTuKhoa(path: string): string | undefined {
+  const c = CAU_NHOM.get(path);
+  return c ? `${c} — cập nhật ${thangHienTai()}.` : undefined;
+}
