@@ -6,6 +6,7 @@ import { getTinXetTrang } from "@/lib/listingsDb";
 import { tatCaTrang, tieuDe, titleGoogle, giaiMaDanhSach, duongDan, NHOM_CHA, NOI_NHOM } from "@/lib/pseo";
 import { laLoiUuTien } from "@/lib/tuKhoaLoiStore";
 import { timKhuVuc } from "@/lib/khuVuc";
+import nhomTuKhoa from "@/data/nhom-tu-khoa.json";
 import { docSoXinIndex, ghiSoXinIndex, duongTuUrl, trangThaiIndex } from "@/lib/xinIndex";
 
 // ============================================================================
@@ -16,6 +17,7 @@ import { docSoXinIndex, ghiSoXinIndex, duongTuUrl, trangThaiIndex } from "@/lib/
 // Chi phí: chỉ chạy khi anh mở trang Admin này — đọc sitemap + tin đang có (đã có bộ nhớ đệm "listings").
 // ============================================================================
 export const dynamic = "force-dynamic";
+const CO_TU_KHOA = new Set((nhomTuKhoa as { url: string }[]).map((x) => x.url));
 
 const loi = (message: string, status = 400) => NextResponse.json({ ok: false, message }, { status });
 
@@ -86,6 +88,8 @@ export async function GET() {
     const dk = slug ? giaiMaDanhSach(muc, slug, noi.split("/"), []) : tp ? giaiMaDanhSach(muc, t, [tp], []) : { muc, tinh };
     if (!dk) continue;
     const duong = duongDan(dk);
+    // Chỉ nhóm CÓ câu khách gõ (gợi ý Google, src/data/nhom-tu-khoa.json) — "cái nào không có thì BỎ" (anh 27/11/2026)
+    if (!CO_TU_KHOA.has(duong)) continue;
     nhomCha.push({ khuVuc: dk.thanhPho?.name ?? tinh.name, muc: muc === "thue" ? "Cho thuê" : "Mua bán", cha: TEN_CHA[slug], duong, ten: titleGoogle(dk),
       manh: /^(da-nang|hue|khanh-hoa\/nha-trang|gia-lai\/quy-nhon)$/.test(noi), ...trangThaiIndex(duong, so, gSet) });
   }

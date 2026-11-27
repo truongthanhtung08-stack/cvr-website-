@@ -1,3 +1,4 @@
+import nhomTuKhoa from "@/data/nhom-tu-khoa.json";
 import type { Listing } from "@/lib/data";
 import { findCategory, nhomPseo, rentCategories, saleCategories, type Category } from "@/lib/categories";
 import { khuVucList, slugKhuVuc, timKhuVuc, tieuDeKhuVuc, type KhuVuc } from "@/lib/khuVuc";
@@ -617,6 +618,7 @@ export function banGocCua(l: Listing, tatCa: Listing[]): Listing | null {
 let nhoTrang: { khoa: string; kq: Map<string, TrangPseo> } | null = null;
 // HẾT HẠN THẬT theo ngày hạn (anh 26/11/2026: tin quá hạn < 1 tháng hiện như tin thường → cờ hetHan = false; cổng trang Google
 // phải đọc ngày hạn thật, không đọc cờ hiển thị — đọc cờ là cổng "chỉ thêm" tính sai, đóng 15 trang 27/11)
+const CO_TU_KHOA = new Set((nhomTuKhoa as { url: string }[]).map((x) => x.url));
 export const NHOM_CHA: [Muc, string[]][] = [
   ["ban", ["nha", "dat", "can-ho-chung-cu", "nghi-duong", "kho-nha-xuong"]],
   ["thue", ["nha", "dat", "can-ho-chung-cu", "homestay-farmstay", "kho-nha-xuong", "phong-tro", "van-phong-mat-bang"]],
@@ -645,6 +647,7 @@ export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
     const dk = giaiMaDanhSach(muc, slug, noi.split("/"), []);
     if (!dk) continue;
     const path = duongDan(dk);
+    if (!CO_TU_KHOA.has(path)) continue; // chỉ nhóm có câu khách gõ (src/data/nhom-tu-khoa.json) — "cái nào không có thì BỎ"
     const p = m.get(path);
     if (p) p.index = true;
     else m.set(path, { dk, path, n: 0, moiNhat: 0, index: true, ids: new Set() });

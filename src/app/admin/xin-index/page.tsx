@@ -108,12 +108,12 @@ export default function XinIndexPage() {
                   <td className="whitespace-nowrap px-3 py-2 text-cvr-ink">{t.khuVuc}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-cvr-body">{t.muc}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-cvr-body">{t.cha}</td>
-                  <td className="px-3 py-2 font-medium text-cvr-ink">{t.ten}</td>
-                  <td className="px-3 py-2"><a href={SITE + t.duong} target="_blank" rel="noreferrer" className="break-all text-cvr-body hover:underline">{SITE + t.duong}</a></td>
+                  <td className="min-w-[280px] px-3 py-2"><a href={SITE + t.duong} target="_blank" rel="noreferrer" className="font-medium text-cvr-ink hover:underline">{t.ten}</a></td>
+                  <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-cvr-muted">{t.duong}</td>
                   <td className="whitespace-nowrap px-3 py-2">
                     {t.daIndex ? <span className="font-medium text-emerald-700">Đã index</span> : <span className="font-medium text-amber-700">Chưa index</span>}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-cvr-body">{loTrinh.get(t.duong)}</td>
+                  <td className="min-w-[150px] px-3 py-2 text-xs text-cvr-body">{loTrinh.get(t.duong)}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-right">
                     <div className="flex justify-end gap-1.5">
                       <button type="button" className={nut} onClick={() => chep(t.duong)}>{vuaChep === t.duong ? "Đã chép" : "Chép link"}</button>
