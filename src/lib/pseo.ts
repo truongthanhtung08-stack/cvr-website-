@@ -898,3 +898,31 @@ export function cauTuKhoa(path: string): string | undefined {
   const c = CAU_NHOM.get(path);
   return c ? `${c} — cập nhật ${thangHienTai()}.` : undefined;
 }
+
+// TỪ KHOÁ CỦA TRANG NHÓM (khối "Tìm kiếm phổ biến"): mọi longtail của nhóm; câu khớp một trang con đang mở (giá rẻ, gần biển, view biển,
+// dưới X tỷ / triệu, phường) thì kèm link sang trang đó. `tin` = bộ tin xét trang (còn hạn + hết hạn) để biết trang con nào đang mở.
+export type TuKhoaTrang = { cau: string; href?: string };
+const NHOM_DAY = new Map((nhomTuKhoa as { url: string; loi: string; longtail: string[] }[]).map((x) => [x.url, x]));
+export function loiNhom(path: string): string | undefined {
+  return NHOM_DAY.get(path)?.loi;
+}
+export function tuKhoaTrang(path: string, tin: Listing[]): TuKhoaTrang[] {
+  const n = NHOM_DAY.get(path);
+  if (!n) return [];
+  const mo = new Set(trangIndex(tin).map((p) => p.path));
+  const boDau = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return n.longtail.map((c) => {
+    const cau = c.charAt(0).toLocaleUpperCase("vi") + c.slice(1);
+    const thu: string[] = [];
+    if (/giá rẻ|\brẻ\b/.test(c)) thu.push(`${path}/${GIA_RE_SLUG}`);
+    if (/gần biển|ven biển|sát biển/.test(c)) thu.push(`${path}/gan-bien`);
+    if (/view biển|hướng biển/.test(c)) thu.push(`${path}/view-bien`);
+    const g = c.match(/dưới\s*(\d+)\s*(tỷ|triệu)/);
+    if (g) thu.push(`${path}/gia-duoi-${g[1]}-${g[2] === "tỷ" ? "ty" : "trieu"}`);
+    // phường / nơi: thử từng cụm 1–3 chữ cuối câu thành slug phường
+    const chu = c.split(" ");
+    for (let k = 1; k <= 3 && k <= chu.length; k++) thu.push(`${path}/phuong-${boDau(chu.slice(-k).join(" "))}`, `${path}/xa-${boDau(chu.slice(-k).join(" "))}`);
+    const href = thu.find((h) => mo.has(h));
+    return href ? { cau, href } : { cau };
+  });
+}

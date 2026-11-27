@@ -6,6 +6,7 @@ import ListingShowcase from "@/components/ListingShowcase";
 import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import LienKetPseo from "@/components/LienKetPseo";
+import TuKhoaPhoBien from "@/components/TuKhoaPhoBien";
 import HoiDapPseo, { hoiDapPseo, giaTheoNhom, GiaTheoNhomPseo } from "@/components/HoiDapPseo";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
@@ -13,7 +14,7 @@ import { tierRank } from "@/lib/packages";
 import type { Listing } from "@/lib/data";
 import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
-import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, danhDauGiaRe, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, titleGoogle, cauTuKhoa, type DieuKien } from "@/lib/pseo";
+import { TRANG_DONG_BANG, TRANG_GIU_THEM, TRANG_TOP, danhDauGiaRe, tinTuongTuTrang, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, titleGoogle, cauTuKhoa, tuKhoaTrang, loiNhom, type DieuKien } from "@/lib/pseo";
 import { tieuDeGoogle } from "@/lib/thang";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 import { giaMoiM2 } from "@/lib/chiSoGia";
@@ -112,6 +113,7 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
         {TRANG_GIU_THEM.has(path) && <GiaTheoNhomPseo g={giaTheoNhom(dk, items)} coTrangGia={trangGiaNhaDat(dk.tinh, [...listings, ...hetHan]).index} cu />}
         <GiaTheoNhomPseo g={giaTheoNhom(dk, items)} coTrangGia={trangGiaNhaDat(dk.tinh, [...listings, ...hetHan]).index} cu={TRANG_DONG_BANG.has(path)} id={TRANG_GIU_THEM.has(path) ? "gia-theo-khu-vuc" : undefined} />
         <HoiDapPseo hoiDap={hoiDapPseo(dk, items, TRANG_DONG_BANG.has(path))} />
+        <TuKhoaPhoBien loi={loiNhom(path) ?? tieuDe(dk)} ds={tuKhoaTrang(path, [...listings, ...hetHan])} />
         <LienKetPseo nhom={lienKetCho(dk, [...listings, ...hetHan])} cau={tieuDe(dk)} kieuGoogle />
       </main>
       <Footer />

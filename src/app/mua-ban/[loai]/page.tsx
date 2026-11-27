@@ -16,7 +16,8 @@ const DANH_MUC = [...saleCategories, ...nhomPseo("ban")];
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
-import { TRANG_DONG_BANG, giuSoCu, lienKetChoDu, lienKetLoaiHinh, moTaSoLieu, moTaTinh, cauTuKhoa } from "@/lib/pseo";
+import TuKhoaPhoBien from "@/components/TuKhoaPhoBien";
+import { TRANG_DONG_BANG, giuSoCu, lienKetChoDu, lienKetLoaiHinh, moTaSoLieu, moTaTinh, cauTuKhoa, tuKhoaTrang, loiNhom } from "@/lib/pseo";
 import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 
@@ -142,6 +143,7 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
           {/* Bảng giá theo loại hình của cả tỉnh: ĐÃ GỠ (03/10/2026) — gộp tin nhiều phường ra một
               giá cho cả thành phố là sai luật "giá khu vực = số liệu đúng khu vực". Có số liệu chuẩn
               (docs/YEU-CAU-COWORK-LICH-SU-GIA.md) mới làm lại. */}
+          <TuKhoaPhoBien loi={loiNhom(`/mua-ban/${kv.slug}`) ?? kv.name} ds={tuKhoaTrang(`/mua-ban/${kv.slug}`, [...listings, ...hetHan])} />
           <LienKetPseo nhom={nhomLienKet} kieuGoogle />
           <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>

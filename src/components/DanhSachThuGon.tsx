@@ -15,7 +15,7 @@ export default function DanhSachThuGon({ children, soHien = 6, className, the = 
   const Khung = the;
   // Ẩn bằng CSS (nth-child) — bản build thật truyền danh sách từ máy chủ dạng "lười" nên không gắn thuộc tính từng mục được
   // (đo trên web 24/10/2026: nút có mà 18 ô vẫn hiện). Chuỗi lớp phải viết nguyên văn để Tailwind sinh CSS.
-  const AN: Record<number, string> = { 8: "[&>*:nth-child(n+9)]:hidden" };
+  const AN: Record<number, string> = { 8: "[&>*:nth-child(n+9)]:hidden", 24: "[&>*:nth-child(n+25)]:hidden" };
   const anCss = anBangCss && !mo ? ` ${AN[soHien] ?? ""}` : "";
   const hien = anBangCss || mo ? children : children.slice(0, soHien);
   return (

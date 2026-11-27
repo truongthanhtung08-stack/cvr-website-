@@ -16,7 +16,8 @@ const DANH_MUC = [...rentCategories, ...nhomPseo("thue")];
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
-import { TRANG_DONG_BANG, giuSoCu, lienKetChoDu, lienKetLoaiHinh, moTaSoLieu, moTaTinh, cauTuKhoa } from "@/lib/pseo";
+import TuKhoaPhoBien from "@/components/TuKhoaPhoBien";
+import { TRANG_DONG_BANG, giuSoCu, lienKetChoDu, lienKetLoaiHinh, moTaSoLieu, moTaTinh, cauTuKhoa, tuKhoaTrang, loiNhom } from "@/lib/pseo";
 import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
 
 // ============================================================================
@@ -134,6 +135,7 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
           {/* Bảng giá theo loại hình của cả tỉnh: ĐÃ GỠ (03/10/2026) — gộp tin nhiều phường ra một
               giá cho cả thành phố là sai luật "giá khu vực = số liệu đúng khu vực". Có số liệu chuẩn
               (docs/YEU-CAU-COWORK-LICH-SU-GIA.md) mới làm lại. */}
+          <TuKhoaPhoBien loi={loiNhom(`/cho-thue/${kv.slug}`) ?? kv.name} ds={tuKhoaTrang(`/cho-thue/${kv.slug}`, [...listings, ...(await getListingsHetHan().catch(() => []))])} />
           <LienKetPseo nhom={lienKetChoDu({ muc: "thue", tinh: kv }, listings, await getListingsHetHan().catch(() => []))} kieuGoogle />
           <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>
